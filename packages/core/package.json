@@ -4,17 +4,17 @@
   "description": "",
   "author": "Abdelrahman Awad <logaretm1@gmail.com>",
   "license": "MIT",
-    "module": "dist/core.esm.js",
+  "module": "dist/core.esm.js",
   "unpkg": "dist/core.js",
   "main": "dist/core.js",
   "types": "dist/core.d.ts",
   "homepage": "https://formwerk.dev/",
-    "repository": {
+  "repository": {
     "url": "https://github.com/formwerkjs/formwerk.git",
     "type": "git",
     "directory": "packages/core"
   },
-    "sideEffects": false,
+  "sideEffects": false,
   "keywords": [
     "VueJS",
     "Vue",
@@ -23,8 +23,11 @@
     "inputs",
     "form"
   ],
-    "files": [
+  "files": [
     "dist/*.js",
     "dist/*.d.ts"
-  ]
+  ],
+  "peerDependencies": {
+    "vue": "^3.3.11"
+  }
 }
