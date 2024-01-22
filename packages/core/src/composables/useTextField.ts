@@ -11,6 +11,10 @@ export interface TextInputDOMAttributes extends InputBaseAttributes {
   name?: string;
   value?: string;
   type?: TextInputDOMType;
+  maxlength?: number;
+  minlength?: number;
+  pattern?: string;
+  placeholder?: string;
 }
 
 export interface TextInputDOMProps
@@ -30,6 +34,10 @@ export interface TextFieldProps {
   name?: MaybeRefOrGetter<string>;
   value?: MaybeRefOrGetter<string>;
   type?: MaybeRefOrGetter<TextInputDOMType>;
+  maxLength?: MaybeRefOrGetter<number>;
+  minLength?: MaybeRefOrGetter<number>;
+  pattern?: MaybeRefOrGetter<string | undefined>;
+  placeholder?: MaybeRefOrGetter<string | undefined>;
 
   required?: MaybeRefOrGetter<boolean>;
   readonly?: MaybeRefOrGetter<boolean>;
@@ -40,7 +48,7 @@ export function useTextField(props: TextFieldProps, elementRef?: Ref<HTMLInputEl
   const inputId = uniqId();
   const inputRef = elementRef || ref<HTMLInputElement>();
   const { fieldValue } = useFieldValue<string>(toValue(props.modelValue));
-  const { errorMessage, onInvalid, updateValidity } = useInputValidity(inputRef);
+  const { errorMessage, onInvalid, updateValidity, validityDetails, isInvalid } = useInputValidity(inputRef);
 
   useSyncModel({
     model: fieldValue,
@@ -77,6 +85,10 @@ export function useTextField(props: TextFieldProps, elementRef?: Ref<HTMLInputEl
     required: toValue(props.required),
     readonly: toValue(props.readonly),
     disabled: toValue(props.disabled),
+    maxlength: toValue(props.maxLength),
+    minlength: toValue(props.minLength),
+    pattern: toValue(props.pattern),
+    placeholder: toValue(props.placeholder),
     'aria-describedby': errorMessage.value ? errorMessageProps.id : props.description ? descriptionProps.id : undefined,
     'aria-invalid': errorMessage.value ? true : undefined,
     ...handlers,
@@ -90,5 +102,7 @@ export function useTextField(props: TextFieldProps, elementRef?: Ref<HTMLInputEl
     errorMessage,
     errorMessageProps,
     descriptionProps,
+    validityDetails,
+    isInvalid,
   };
 }
