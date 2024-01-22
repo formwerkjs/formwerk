@@ -27,7 +27,7 @@ export interface TextInputDOMProps
 
 export interface TextFieldProps {
   label: MaybeRefOrGetter<string>;
-  modelValue: MaybeRefOrGetter<string>;
+  modelValue?: MaybeRefOrGetter<string>;
   description?: MaybeRefOrGetter<string>;
 
   // TODO: Vue cannot resolve these types if they are mapped from up there
@@ -44,7 +44,7 @@ export interface TextFieldProps {
   disabled?: MaybeRefOrGetter<boolean>;
 }
 
-export function useTextField(props: TextFieldProps, elementRef?: Ref<HTMLInputElement>) {
+export function useTextField(props: TextFieldProps, elementRef?: Ref<HTMLInputElement | HTMLTextAreaElement>) {
   const inputId = uniqId();
   const inputRef = elementRef || ref<HTMLInputElement>();
   const { fieldValue } = useFieldValue<string>(toValue(props.modelValue));
@@ -87,7 +87,7 @@ export function useTextField(props: TextFieldProps, elementRef?: Ref<HTMLInputEl
     disabled: toValue(props.disabled),
     maxlength: toValue(props.maxLength),
     minlength: toValue(props.minLength),
-    pattern: toValue(props.pattern),
+    pattern: inputRef.value?.tagName === 'TEXTAREA' ? undefined : toValue(props.pattern),
     placeholder: toValue(props.placeholder),
     'aria-describedby': errorMessage.value ? errorMessageProps.id : props.description ? descriptionProps.id : undefined,
     'aria-invalid': errorMessage.value ? true : undefined,

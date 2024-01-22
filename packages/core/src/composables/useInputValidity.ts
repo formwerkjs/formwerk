@@ -1,6 +1,6 @@
 import { Ref, computed, nextTick, ref, shallowRef } from 'vue';
 
-export function useInputValidity(inputRef?: Ref<HTMLInputElement | undefined>) {
+export function useInputValidity(inputRef?: Ref<HTMLInputElement | HTMLTextAreaElement | undefined>) {
   const errorMessage = ref<string>();
   const validityDetails = shallowRef<ValidityState>();
   const isInvalid = computed(() => !!errorMessage.value);
