@@ -4,16 +4,9 @@ import { watch } from 'vue';
 
 const props = defineProps<TextFieldProps>();
 
-const {
-  inputProps,
-  inputRef,
-  labelProps,
-  fieldValue,
-  errorMessage,
-  errorMessageProps,
-} = useTextField(props);
+const { inputProps, inputRef, labelProps, fieldValue, errorMessage, errorMessageProps } = useTextField(props);
 
-watch(fieldValue, (value) => {
+watch(fieldValue, value => {
   console.log(value, inputRef.value.validity, inputRef.value.validationMessage);
 });
 </script>

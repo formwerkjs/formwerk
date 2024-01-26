@@ -62,7 +62,6 @@ async function build(pkg) {
     if (format === 'umd') {
       minifiedStats = await minify({ bundleName, pkg, code });
     }
-
   }
 
   await generateDts(pkg);

@@ -10,11 +10,11 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 const formatNameMap = {
-  'core': 'FormwerkCore'
+  core: 'FormwerkCore',
 };
 
- const pkgNameMap = {
-  'core': 'core',
+const pkgNameMap = {
+  core: 'core',
 };
 
 const formatMap = {
@@ -42,11 +42,7 @@ async function createConfig(pkg, format) {
     bundleName: `${pkgNameMap[pkg]}${formatMap[format] ? '.' + formatMap[format] : ''}.js`,
     input: {
       input: slashes(path.resolve(__dirname, `../packages/${pkg}/src/index.ts`)),
-      external: ['vue',
-        isEsm ? '@vue/devtools-api' : undefined,
-  ].filter(
-        Boolean,
-      ) as string[],
+      external: ['vue', isEsm ? '@vue/devtools-api' : undefined].filter(Boolean) as string[],
       plugins: [
         replace({
           preventAssignment: true,
