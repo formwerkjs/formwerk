@@ -2,7 +2,7 @@
   "compilerOptions": {
     "baseUrl": ".",
     "rootDir": ".",
-    "moduleResolution": "node",
+    "moduleResolution": "Bundler",
     "target": "es2020",
     "module": "esnext",
     "lib": ["esnext", "dom"],
@@ -25,5 +25,6 @@
     "types": ["vitest/globals"],
     "typeRoots": ["node_modules/@types", "node_modules"]
   },
-  "include": ["packages/*/src", "packages/*/tests", "vitest.setup.ts", "vitest.setup.ts"]
+  "include": ["packages/*/src", "packages/*/tests", "vitest.setup.ts", "vitest.setup.ts"],
+  "exclude": ["packages/playground"]
 }

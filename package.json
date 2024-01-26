@@ -18,7 +18,8 @@
     "docs:dev": "cd ./docs && pnpm dev && cd -",
     "postinstall": "husky install",
     "release": "./scripts/release.sh",
-    "play:dev": "cd ./packages/playground && pnpm dev && cd -"
+    "play:dev": "cd ./packages/playground && pnpm dev && cd -",
+    "dev": "tsx scripts/watch.ts"
   },
   "devDependencies": {
     "@changesets/cli": "^2.27.1",

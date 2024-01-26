@@ -22,11 +22,29 @@ const formatMap = {
   umd: '',
 };
 
-async function createConfig(pkg, format) {
+const createPlugins = ({ version, format, pkg }) => {
+  const isEsm = format === 'es';
   const tsPlugin = typescript({
     declarationDir: normalizePath(path.resolve(__dirname, `../packages/${pkg}/dist`)),
   });
 
+  return [
+    replace({
+      preventAssignment: true,
+      values: {
+        __VERSION__: version,
+        __DEV__: isEsm ? `(process.env.NODE_ENV !== 'production')` : 'false',
+      },
+    }),
+    tsPlugin,
+    resolve({
+      dedupe: [],
+    }),
+    commonjs(),
+  ];
+};
+
+async function createConfig(pkg, format) {
   // An import assertion in a dynamic import
   const { default: info } = await import(normalizePath(path.resolve(__dirname, `../packages/${pkg}/package.json`)), {
     assert: {
@@ -43,20 +61,7 @@ async function createConfig(pkg, format) {
     input: {
       input: slashes(path.resolve(__dirname, `../packages/${pkg}/src/index.ts`)),
       external: ['vue', isEsm ? '@vue/devtools-api' : undefined].filter(Boolean) as string[],
-      plugins: [
-        replace({
-          preventAssignment: true,
-          values: {
-            __VERSION__: version,
-            __DEV__: isEsm ? `(process.env.NODE_ENV !== 'production')` : 'false',
-          },
-        }),
-        tsPlugin,
-        resolve({
-          dedupe: [],
-        }),
-        commonjs(),
-      ],
+      plugins: createPlugins({ version, pkg, format }),
     },
     output: {
       banner: `/**
@@ -83,4 +88,4 @@ async function createConfig(pkg, format) {
   return config;
 }
 
-export { formatNameMap, pkgNameMap, formatMap, createConfig };
+export { formatNameMap, pkgNameMap, formatMap, createConfig, createPlugins };
