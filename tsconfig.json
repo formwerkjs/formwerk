@@ -5,7 +5,10 @@
     "moduleResolution": "node",
     "target": "es2020",
     "module": "esnext",
-    "lib": ["esnext", "dom"],
+    "lib": [
+      "esnext",
+      "dom"
+    ],
     "sourceMap": true,
     "declaration": true,
     "declarationMap": true,
@@ -20,10 +23,23 @@
     "allowSyntheticDefaultImports": true,
     "resolveJsonModule": true,
     "paths": {
-      "@/*": ["packages/*/src"]
+      "@/*": [
+        "packages/*/src"
+      ]
     },
-    "types": ["vitest/globals"],
-    "typeRoots": ["node_modules/@types", "node_modules"]
+    "types": [
+      "vitest/globals"
+    ],
+    "typeRoots": [
+      "node_modules/@types",
+      "node_modules"
+    ]
   },
-  "include": ["packages/*/src", "packages/*/tests", "vitest.setup.ts", "vitest.setup.ts"]
+  "include": [
+    "packages/*/src",
+    "packages/*/tests",
+    "./vite-env.d.ts",
+    "vitest.setup.ts",
+    "vitest.setup.ts"
+  ]
 }
