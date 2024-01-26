@@ -17,7 +17,8 @@
     "typecheck": "pnpm tsc --noEmit --project ./tsconfig.json --skipLibCheck",
     "docs:dev": "cd ./docs && pnpm dev && cd -",
     "postinstall": "husky install",
-    "release": "./scripts/release.sh"
+    "release": "./scripts/release.sh",
+    "play:dev": "cd ./packages/playground && pnpm dev && cd -"
   },
   "devDependencies": {
     "@changesets/cli": "^2.27.1",
