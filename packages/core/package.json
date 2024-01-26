@@ -29,5 +29,8 @@
   ],
   "peerDependencies": {
     "vue": "^3.3.11"
+  },
+  "dependencies": {
+    "type-fest": "^4.10.1"
   }
 }

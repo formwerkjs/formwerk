@@ -69,5 +69,8 @@
   },
   "keywords": [],
   "author": "Abdelrahman Awad <logaretm1@gmail.com>",
-  "license": "MIT"
+  "license": "MIT",
+  "dependencies": {
+    "klona": "^2.0.6"
+  }
 }
