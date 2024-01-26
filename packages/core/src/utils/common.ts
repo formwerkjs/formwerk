@@ -1,7 +1,7 @@
 import { InjectionKey, getCurrentInstance, inject } from 'vue';
 import { isContainerValue, isNotNestedPath } from './assertions';
-import { isObject } from 'util';
-import { toNumber } from 'packages/shared';
+import { isObject, toNumber } from 'packages/shared';
+import { AriaDescriptionProps, AriaLabelProps } from '../types/common';
 
 /**
  * A typed version of Object.keys
@@ -98,4 +98,27 @@ export function applyModelModifiers<TValue = unknown>(value: TValue, modifiers: 
   }
 
   return value;
+}
+
+export function uniqId() {
+  return crypto.randomUUID();
+}
+
+export function createLabelProps(inputId: string): AriaLabelProps {
+  return {
+    id: `${inputId}-l`,
+    for: inputId,
+  };
+}
+
+export function createDescriptionProps(inputId: string): AriaDescriptionProps {
+  return {
+    id: `${inputId}-d`,
+  };
+}
+
+export function createErrorProps(inputId: string): AriaDescriptionProps {
+  return {
+    id: `${inputId}-r`,
+  };
 }
