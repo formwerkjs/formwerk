@@ -1,5 +1,5 @@
 import { MaybeRefOrGetter, getCurrentInstance, toValue, watch } from 'vue';
-import { isEqual } from '../utils/common';
+import { isEqual } from '../utils';
 
 export type SyncModelOptions<TValue = unknown> = {
   model: MaybeRefOrGetter<TValue>;
