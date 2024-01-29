@@ -1,5 +1,5 @@
 <template>
-  <form>
+  <form class="flex flex-col gap-4">
     <InputText
       name="email"
       label="Email"
@@ -24,6 +24,36 @@
 
     <Switch label="Toggle me" />
 
+    <RadioGroup name="radio" label="Radio Vertical (inputs)">
+      <InputRadioItem label="Radio 1" value="1" />
+      <InputRadioItem label="Radio 2" value="2" />
+      <InputRadioItem label="Radio 3" value="3" />
+    </RadioGroup>
+
+    <RadioGroup name="radio2" label="Radio Horizontal (inputs)" orientation="horizontal">
+      <InputRadioItem label="Radio 1" value="1" />
+
+      <InputRadioItem label="Radio 2" value="2" />
+
+      <InputRadioItem label="Radio 3" value="3" />
+    </RadioGroup>
+
+    <RadioGroup name="radio3" label="Radio Items (non-inputs, vertical)" orientation="vertical">
+      <RadioItem label="Radio 1" value="1" />
+
+      <RadioItem label="Radio 2" value="2" />
+
+      <RadioItem label="Radio 3" value="3" />
+    </RadioGroup>
+
+    <RadioGroup name="radio4" label="Radio Items (non-inputs, horizontal)" orientation="horizontal">
+      <RadioItem label="Radio 1" value="1" />
+
+      <RadioItem label="Radio 2" value="2" />
+
+      <RadioItem label="Radio 3" value="3" />
+    </RadioGroup>
+
     <pre>{{ model }}</pre>
 
     <button class="bg-blue-500 text-white px-4 py-1.5 rounded-md">KeKL</button>
@@ -39,6 +69,9 @@ import InputTextArea from './components/InputTextArea.vue';
 import InputSearch from './components/InputSearch.vue';
 import SwitchInput from './components/SwitchInput.vue';
 import Switch from './components/Switch.vue';
+import RadioGroup from './components/RadioGroup.vue';
+import InputRadioItem from './components/InputRadioItem.vue';
+import RadioItem from './components/RadioItem.vue';
 
 const model = ref('');
 
