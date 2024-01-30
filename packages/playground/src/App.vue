@@ -32,21 +32,29 @@
 
     <RadioGroup name="radio2" label="Radio Horizontal (inputs)" orientation="horizontal">
       <InputRadioItem label="Radio 1" value="1" />
-
       <InputRadioItem label="Radio 2" value="2" />
+      <InputRadioItem label="Radio 3" value="3" />
+    </RadioGroup>
 
+    <RadioGroup name="radio2rtl" label="Radio Horizontal (inputs, RTL)" orientation="horizontal" dir="rtl">
+      <InputRadioItem label="Radio 1" value="1" />
+      <InputRadioItem label="Radio 2" value="2" />
       <InputRadioItem label="Radio 3" value="3" />
     </RadioGroup>
 
     <RadioGroup name="radio3" label="Radio Items (non-inputs, vertical)" orientation="vertical">
       <RadioItem label="Radio 1" value="1" />
-
       <RadioItem label="Radio 2" value="2" />
-
       <RadioItem label="Radio 3" value="3" />
     </RadioGroup>
 
     <RadioGroup name="radio4" label="Radio Items (non-inputs, horizontal)" orientation="horizontal">
+      <RadioItem label="Radio 1" value="1" />
+      <RadioItem label="Radio 2" value="2" />
+      <RadioItem label="Radio 3" value="3" />
+    </RadioGroup>
+
+    <RadioGroup name="radio5" label="Radio Items (non-inputs, horizontal, RTL)" orientation="horizontal" dir="rtl">
       <RadioItem label="Radio 1" value="1" />
 
       <RadioItem label="Radio 2" value="2" />

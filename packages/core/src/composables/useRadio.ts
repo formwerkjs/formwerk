@@ -10,7 +10,13 @@ import {
   ref,
   toValue,
 } from 'vue';
-import { createDescriptionProps, createErrorProps, createLabelProps, uniqId } from '../utils/common';
+import {
+  createDescriptionProps,
+  createErrorProps,
+  createLabelProps,
+  getNextCycleArrIdx,
+  uniqId,
+} from '../utils/common';
 import { useInputValidity } from './useInputValidity';
 import { useFieldValue } from './useFieldValue';
 import { InputEvents, PressEvents } from '../types/common';
@@ -36,8 +42,11 @@ export interface RadioItemContext {
 
 export const RadioGroupKey: InjectionKey<RadioGroupContext<any>> = Symbol('RadioGroupKey');
 
+export type Direction = 'ltr' | 'rtl';
+
 export interface RadioGroupProps<TValue = string> {
   orientation?: MaybeRefOrGetter<'horizontal' | 'vertical'>;
+  dir?: MaybeRefOrGetter<'ltr' | 'rtl'>;
   label: MaybeRefOrGetter<string>;
   description?: MaybeRefOrGetter<string>;
 
@@ -49,14 +58,15 @@ export interface RadioGroupProps<TValue = string> {
   required?: MaybeRefOrGetter<boolean>;
 }
 
-const ORIENTATION_ARROWS: Record<'horizontal' | 'vertical', [string, string]> = {
-  horizontal: ['ArrowLeft', 'ArrowRight'],
-  vertical: ['ArrowUp', 'ArrowDown'],
+const ORIENTATION_ARROWS: Record<'horizontal' | 'vertical', Record<Direction, string[]>> = {
+  horizontal: { ltr: ['ArrowLeft', 'ArrowRight'], rtl: ['ArrowRight', 'ArrowLeft'] },
+  vertical: { ltr: ['ArrowUp', 'ArrowDown'], rtl: ['ArrowUp', 'ArrowDown'] },
 };
 
 export function useRadioGroup<TValue = string>(props: RadioGroupProps<TValue>) {
   const groupId = uniqId();
-  const getOrientationArrows = () => ORIENTATION_ARROWS[toValue(props.orientation) ?? 'vertical'];
+  const getOrientationArrows = () =>
+    ORIENTATION_ARROWS[toValue(props.orientation) ?? 'vertical'][toValue(props.dir) || 'ltr'];
 
   const radios: RadioItemContext[] = [];
   const labelProps = createLabelProps(groupId);
@@ -65,34 +75,31 @@ export function useRadioGroup<TValue = string>(props: RadioGroupProps<TValue>) {
   const { fieldValue } = useFieldValue(toValue(props.modelValue));
   const { setValidity, errorMessage } = useInputValidity();
 
-  function focusAndCheckNext() {
-    const checkedIdx = radios.findIndex(radio => radio.isChecked());
-    let nextCandidate: RadioItemContext | undefined;
-    for (let i = checkedIdx + 1; i < radios.length; i++) {
-      if (!radios[i].isDisabled()) {
-        nextCandidate = radios[i];
-        break;
-      }
+  function handleArrowNext() {
+    const currentIdx = radios.findIndex(radio => radio.isChecked());
+    if (currentIdx < 0) {
+      radios[0]?.setChecked();
+      return;
     }
 
+    const nextCandidate = radios[getNextCycleArrIdx(currentIdx + 1, radios)];
     nextCandidate?.setChecked();
   }
 
-  function focusAndCheckPrev() {
-    const checkedIdx = radios.findIndex(radio => radio.isChecked());
-    let prevCandidate: RadioItemContext | undefined;
-    for (let i = checkedIdx - 1; i >= 0; i--) {
-      if (!radios[i].isDisabled()) {
-        prevCandidate = radios[i];
-        break;
-      }
+  function handleArrowPrevious() {
+    const currentIdx = radios.findIndex(radio => radio.isChecked());
+    if (currentIdx === -1) {
+      radios[0]?.setChecked();
+      return;
     }
 
+    const prevCandidate = radios[getNextCycleArrIdx(currentIdx - 1, radios)];
     prevCandidate?.setChecked();
   }
 
   const radioGroupProps = computed(() => {
     return {
+      dir: toValue(props.dir) ?? 'ltr',
       role: 'radiogroup',
       'aria-labelledby': labelProps.id,
       'aria-describedby': errorMessage.value
@@ -106,13 +113,13 @@ export function useRadioGroup<TValue = string>(props: RadioGroupProps<TValue>) {
 
         if (e.key === next) {
           e.preventDefault();
-          focusAndCheckNext();
+          handleArrowNext();
           return;
         }
 
         if (e.key === prev) {
           e.preventDefault();
-          focusAndCheckPrev();
+          handleArrowPrevious();
           return;
         }
       },

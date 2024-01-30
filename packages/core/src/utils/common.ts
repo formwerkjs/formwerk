@@ -75,3 +75,9 @@ export function propsToValues<TProps extends Record<string, MaybeRefOrGetter<any
       .map(([key, value]) => [key, toValue(value)]),
   );
 }
+
+export function getNextCycleArrIdx(idx: number, arr: unknown[]): number {
+  const r = idx % arr.length;
+
+  return r < 0 ? r + arr.length : r;
+}
