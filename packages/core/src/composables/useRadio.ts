@@ -4,22 +4,25 @@ import {
   Ref,
   computed,
   inject,
+  nextTick,
   onBeforeUnmount,
   provide,
   reactive,
   ref,
   toValue,
 } from 'vue';
-import {
-  createDescriptionProps,
-  createErrorProps,
-  createLabelProps,
-  getNextCycleArrIdx,
-  uniqId,
-} from '../utils/common';
+import { createDescribedByProps, createLabelProps, getNextCycleArrIdx, uniqId, withRefCapture } from '../utils/common';
 import { useInputValidity } from './useInputValidity';
 import { useFieldValue } from './useFieldValue';
-import { InputEvents, PressEvents } from '../types/common';
+import {
+  AriaDescribableProps,
+  AriaLabelableProps,
+  AriaValidatableProps,
+  InputBaseAttributes,
+  InputEvents,
+  PressEvents,
+  RovingTabIndex,
+} from '../types/common';
 
 export interface RadioGroupContext<TValue> {
   name: string;
@@ -58,6 +61,12 @@ export interface RadioGroupProps<TValue = string> {
   required?: MaybeRefOrGetter<boolean>;
 }
 
+interface RadioGroupDomProps extends AriaLabelableProps, AriaDescribableProps, AriaValidatableProps {
+  role: 'radiogroup';
+  dir: Direction;
+  onKeydown(e: KeyboardEvent): void;
+}
+
 const ORIENTATION_ARROWS: Record<'horizontal' | 'vertical', Record<Direction, string[]>> = {
   horizontal: { ltr: ['ArrowLeft', 'ArrowRight'], rtl: ['ArrowRight', 'ArrowLeft'] },
   vertical: { ltr: ['ArrowUp', 'ArrowDown'], rtl: ['ArrowUp', 'ArrowDown'] },
@@ -70,10 +79,13 @@ export function useRadioGroup<TValue = string>(props: RadioGroupProps<TValue>) {
 
   const radios: RadioItemContext[] = [];
   const labelProps = createLabelProps(groupId);
-  const descriptionProps = createDescriptionProps(groupId);
-  const errorMessageProps = createErrorProps(groupId);
   const { fieldValue } = useFieldValue(toValue(props.modelValue));
   const { setValidity, errorMessage } = useInputValidity();
+  const { describedBy, descriptionProps, errorMessageProps } = createDescribedByProps({
+    inputId: groupId,
+    errorMessage,
+    description: props.description,
+  });
 
   function handleArrowNext() {
     const currentIdx = radios.findIndex(radio => radio.isChecked());
@@ -97,16 +109,12 @@ export function useRadioGroup<TValue = string>(props: RadioGroupProps<TValue>) {
     prevCandidate?.setChecked();
   }
 
-  const radioGroupProps = computed(() => {
+  const radioGroupProps = computed<RadioGroupDomProps>(() => {
     return {
       dir: toValue(props.dir) ?? 'ltr',
       role: 'radiogroup',
       'aria-labelledby': labelProps.id,
-      'aria-describedby': errorMessage.value
-        ? errorMessageProps.id
-        : props.description
-          ? descriptionProps.id
-          : undefined,
+      'aria-describedby': describedBy(),
       'aria-invalid': errorMessage.value ? true : undefined,
       onKeydown(e: KeyboardEvent) {
         const [prev, next] = getOrientationArrows();
@@ -185,6 +193,18 @@ export interface RadioFieldProps<TValue = string> {
   disabled?: MaybeRefOrGetter<boolean>;
 }
 
+export interface RadioFieldDomInputProps extends AriaLabelableProps, InputBaseAttributes {
+  type: 'radio';
+}
+
+export interface RadioFieldDomProps extends AriaLabelableProps {
+  tabindex: RovingTabIndex;
+  'aria-checked'?: boolean;
+  'aria-readonly'?: boolean;
+  'aria-disabled'?: boolean;
+  'aria-required'?: boolean;
+}
+
 export function useRadioField<TValue = string>(
   props: RadioFieldProps<TValue>,
   elementRef?: Ref<HTMLInputElement | undefined>,
@@ -238,24 +258,36 @@ export function useRadioField<TValue = string>(
     setChecked: () => {
       group?.setValue(props.value);
       focus();
+      nextTick(() => {
+        group?.setValidity(inputRef.value?.validationMessage ?? '');
+      });
 
       return true;
     },
   });
 
-  const inputProps = computed(() => ({
-    type: 'radio',
-    ...createBindings(true),
-  }));
+  const inputProps = computed<RadioFieldDomInputProps>(() =>
+    withRefCapture(
+      {
+        type: 'radio',
+        ...createBindings(true),
+      },
+      inputRef,
+      elementRef,
+    ),
+  );
 
-  const radioProps = computed(() => ({
-    role: 'radio',
-    ref: (element: any) => {
-      inputRef.value = element;
-    },
-    tabindex: checked.value ? '0' : registration?.canReceiveFocus() ? '0' : '-1',
-    ...createBindings(false),
-  }));
+  const radioProps = computed<RadioFieldDomProps>(() =>
+    withRefCapture(
+      {
+        role: 'radio',
+        tabindex: checked.value ? '0' : registration?.canReceiveFocus() ? '0' : '-1',
+        ...createBindings(false),
+      },
+      inputRef,
+      elementRef,
+    ),
+  );
 
   return {
     inputRef,

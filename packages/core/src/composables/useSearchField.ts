@@ -7,7 +7,7 @@ import {
   Numberish,
   TextInputBaseAttributes,
 } from '../types/common';
-import { createDescribedByProps, createLabelProps, createRefCapture, propsToValues, uniqId } from '../utils/common';
+import { createDescribedByProps, createLabelProps, propsToValues, uniqId, withRefCapture } from '../utils/common';
 import { useFieldValue } from './useFieldValue';
 import { useInputValidity } from './useInputValidity';
 import { useSyncModel } from './useModelSync';
@@ -105,26 +105,24 @@ export function useSearchField(props: SearchFieldProps, elementRef?: Ref<HTMLInp
     onInvalid,
   };
 
-  const inputProps = computed<SearchInputDOMProps>(() => {
-    const baseProps: SearchInputDOMProps = {
-      ...propsToValues(props, ['name', 'pattern', 'placeholder', 'required', 'readonly', 'disabled']),
-      id: inputId,
-      'aria-labelledby': labelProps.id,
-      value: fieldValue.value,
-      type: 'search',
-      maxlength: toValue(props.maxLength),
-      minlength: toValue(props.minLength),
-      'aria-describedby': describedBy(),
-      'aria-invalid': errorMessage.value ? true : undefined,
-      ...handlers,
-    };
-
-    if (!elementRef) {
-      (baseProps as any).ref = createRefCapture(inputRef);
-    }
-
-    return baseProps;
-  });
+  const inputProps = computed<SearchInputDOMProps>(() =>
+    withRefCapture(
+      {
+        ...propsToValues(props, ['name', 'pattern', 'placeholder', 'required', 'readonly', 'disabled']),
+        id: inputId,
+        'aria-labelledby': labelProps.id,
+        value: fieldValue.value,
+        type: 'search',
+        maxlength: toValue(props.maxLength),
+        minlength: toValue(props.minLength),
+        'aria-describedby': describedBy(),
+        'aria-invalid': errorMessage.value ? true : undefined,
+        ...handlers,
+      },
+      inputRef,
+      elementRef,
+    ),
+  );
 
   return {
     inputRef,
