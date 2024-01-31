@@ -205,6 +205,12 @@ export function useRadioField<TValue = string>(
         group?.setValue(props.value);
       }
     },
+    onChange() {
+      group?.setValidity(inputRef.value?.validationMessage ?? '');
+    },
+    onInvalid() {
+      group?.setValidity(inputRef.value?.validationMessage ?? '');
+    },
   };
 
   const isDisabled = () => toValue(props.disabled || group?.disabled) ?? false;

@@ -30,7 +30,7 @@
       <InputRadioItem label="Radio 3" value="3" />
     </RadioGroup>
 
-    <RadioGroup name="radio2" label="Radio Horizontal (inputs)" orientation="horizontal">
+    <RadioGroup name="radio2" label="Radio Horizontal (inputs)" orientation="horizontal" required>
       <InputRadioItem label="Radio 1" value="1" />
       <InputRadioItem label="Radio 2" value="2" />
       <InputRadioItem label="Radio 3" value="3" />
