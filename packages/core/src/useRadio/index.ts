@@ -186,18 +186,18 @@ export function useRadioGroup<TValue = string>(props: RadioGroupProps<TValue>) {
   };
 }
 
-export interface RadioFieldProps<TValue = string> {
+export interface RadioItemProps<TValue = string> {
   label: MaybeRefOrGetter<string>;
   value: TValue;
 
   disabled?: MaybeRefOrGetter<boolean>;
 }
 
-export interface RadioFieldDomInputProps extends AriaLabelableProps, InputBaseAttributes {
+export interface RadioItemDomInputProps extends AriaLabelableProps, InputBaseAttributes {
   type: 'radio';
 }
 
-export interface RadioFieldDomProps extends AriaLabelableProps {
+export interface RadioItemDomProps extends AriaLabelableProps {
   tabindex: RovingTabIndex;
   'aria-checked'?: boolean;
   'aria-readonly'?: boolean;
@@ -205,8 +205,8 @@ export interface RadioFieldDomProps extends AriaLabelableProps {
   'aria-required'?: boolean;
 }
 
-export function useRadioField<TValue = string>(
-  props: RadioFieldProps<TValue>,
+export function useRadioItem<TValue = string>(
+  props: RadioItemProps<TValue>,
   elementRef?: Ref<HTMLInputElement | undefined>,
 ) {
   const inputId = uniqId();
@@ -266,7 +266,7 @@ export function useRadioField<TValue = string>(
     },
   });
 
-  const inputProps = computed<RadioFieldDomInputProps>(() =>
+  const inputProps = computed<RadioItemDomInputProps>(() =>
     withRefCapture(
       {
         type: 'radio',
@@ -277,7 +277,7 @@ export function useRadioField<TValue = string>(
     ),
   );
 
-  const radioProps = computed<RadioFieldDomProps>(() =>
+  const radioProps = computed<RadioItemDomProps>(() =>
     withRefCapture(
       {
         role: 'radio',

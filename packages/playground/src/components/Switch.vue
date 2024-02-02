@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import { useSwitchField, SwitchFieldProps } from '@formwerk/core';
+import { useSwitch, SwitchProps } from '@formwerk/core';
 
-const props = defineProps<SwitchFieldProps>();
+const props = defineProps<SwitchProps>();
 
-const { switchProps, labelProps, isPressed } = useSwitchField(props);
+const { switchProps, labelProps, isPressed } = useSwitch(props);
 </script>
 
 <template>

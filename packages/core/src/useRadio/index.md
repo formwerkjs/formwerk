@@ -19,7 +19,7 @@ You can build radio groups using either native HTML `input[type="radio"]` elemen
 Provides the behavior, state and accessibility implementation for group components.
 
 - A radio group can have a `v-model` bound to it.
-- A radio group considers all children that call `useRadioField` as one item of the group.
+- A radio group considers all children that call `useRadioItem` as one item of the group.
 
 This is how you would build a custom radio group component using the `useRadioGroup` composable.
 
@@ -54,21 +54,21 @@ const { radioGroupProps, labelProps, descriptionProps, errorMessageProps, errorM
 </template>
 ```
 
-## useRadioField
+## useRadioItem
 
 Provides the behavior, state and accessibility implementation for radio items. Radio items can be built with or without `input` elements depending on your styling and behavior needs.
 
 ### With input elements (recommended)
 
-This is how you would build a custom radio item component using the `useRadioField` composable.
+This is how you would build a custom radio item component using the `useRadioItem` composable.
 
 ```vue
 <script setup lang="ts">
-import { RadioFieldProps, useRadioField } from '@formwerk/core';
+import { RadioItemProps, useRadioItem } from '@formwerk/core';
 
-const props = defineProps<RadioFieldProps>();
+const props = defineProps<RadioItemProps>();
 
-const { labelProps, inputProps } = useRadioField(props);
+const { labelProps, inputProps } = useRadioItem(props);
 </script>
 
 <template>
@@ -86,11 +86,11 @@ For special styling needs, you don't have to use the `input` element. You will b
 
 ```vue
 <script setup lang="ts">
-import { RadioFieldProps, useRadioField } from '@formwerk/core';
+import { RadioItemProps, useRadioItem } from '@formwerk/core';
 
-const props = defineProps<RadioFieldProps>();
+const props = defineProps<RadioItemProps>();
 
-const { labelProps, radioProps, isChecked } = useRadioField(props);
+const { labelProps, radioProps, isChecked } = useRadioItem(props);
 </script>
 
 <template>

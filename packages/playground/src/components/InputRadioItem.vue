@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import { RadioFieldProps, useRadioField } from '@formwerk/core';
+import { RadioItemProps, useRadioItem } from '@formwerk/core';
 
-const props = defineProps<RadioFieldProps>();
+const props = defineProps<RadioItemProps>();
 
-const { labelProps, inputRef, inputProps } = useRadioField(props);
+const { labelProps, inputRef, inputProps } = useRadioItem(props);
 </script>
 
 <template>
