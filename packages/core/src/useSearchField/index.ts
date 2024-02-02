@@ -1,32 +1,23 @@
-import { MaybeRefOrGetter, Ref, computed, shallowRef, toValue } from 'vue';
-import {
-  createDescribedByProps,
-  createLabelProps,
-  createRefCapture,
-  propsToValues,
-  uniqId,
-  withRefCapture,
-} from '../utils/common';
+import { MaybeRefOrGetter, Ref, computed, ref, toValue } from 'vue';
 import {
   AriaDescribableProps,
   AriaLabelableProps,
-  TextInputBaseAttributes,
-  InputEvents,
   AriaValidatableProps,
+  InputEvents,
   Numberish,
-} from '../types/common';
-import { useFieldValue } from './useFieldValue';
-import { useSyncModel } from './useModelSync';
-import { useInputValidity } from './useInputValidity';
+  TextInputBaseAttributes,
+} from '@core/types/common';
+import { createDescribedByProps, createLabelProps, propsToValues, uniqId, withRefCapture } from '@core/utils/common';
+import { useFieldValue } from '@core/composables/useFieldValue';
+import { useInputValidity } from '@core/composables/useInputValidity';
+import { useSyncModel } from '@core/composables/useModelSync';
 
-export type TextInputDOMType = 'text' | 'password' | 'email' | 'number' | 'tel' | 'url';
-
-export interface TextInputDOMAttributes extends TextInputBaseAttributes {
-  type?: TextInputDOMType;
+export interface SearchInputDOMAttributes extends TextInputBaseAttributes {
+  type?: 'search';
 }
 
-export interface TextInputDOMProps
-  extends TextInputDOMAttributes,
+export interface SearchInputDOMProps
+  extends SearchInputDOMAttributes,
     AriaLabelableProps,
     AriaDescribableProps,
     AriaValidatableProps,
@@ -34,15 +25,16 @@ export interface TextInputDOMProps
   id: string;
 }
 
-export interface TextFieldProps {
+export interface SearchFieldProps {
   label: MaybeRefOrGetter<string>;
   modelValue?: MaybeRefOrGetter<string>;
   description?: MaybeRefOrGetter<string>;
 
+  onSubmit?: (value: string) => void;
+
   // TODO: Vue cannot resolve these types if they are mapped from up there
   name?: MaybeRefOrGetter<string>;
   value?: MaybeRefOrGetter<string>;
-  type?: MaybeRefOrGetter<TextInputDOMType>;
   maxLength?: MaybeRefOrGetter<Numberish>;
   minLength?: MaybeRefOrGetter<Numberish>;
   pattern?: MaybeRefOrGetter<string | undefined>;
@@ -53,9 +45,10 @@ export interface TextFieldProps {
   disabled?: MaybeRefOrGetter<boolean>;
 }
 
-export function useTextField(props: TextFieldProps, elementRef?: Ref<HTMLInputElement | HTMLTextAreaElement>) {
+export function useSearchField(props: SearchFieldProps, elementRef?: Ref<HTMLInputElement>) {
   const inputId = uniqId();
-  const inputRef = elementRef || shallowRef<HTMLInputElement>();
+  const inputRef = elementRef || ref<HTMLInputElement>();
+
   const { fieldValue } = useFieldValue<string>(toValue(props.modelValue));
   const { errorMessage, onInvalid, updateValidity, validityDetails, isInvalid } = useInputValidity(inputRef);
 
@@ -73,6 +66,16 @@ export function useTextField(props: TextFieldProps, elementRef?: Ref<HTMLInputEl
     description: props.description,
   });
 
+  const clearBtnProps = {
+    tabindex: '-1',
+    type: 'button' as const,
+    ariaLabel: 'Clear search',
+    onClick() {
+      fieldValue.value = '';
+      updateValidity();
+    },
+  };
+
   const handlers: InputEvents = {
     onInput: (event: Event) => {
       fieldValue.value = (event.target as HTMLInputElement).value;
@@ -85,27 +88,41 @@ export function useTextField(props: TextFieldProps, elementRef?: Ref<HTMLInputEl
     onBlur() {
       updateValidity();
     },
+    onKeydown(e: KeyboardEvent) {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        fieldValue.value = '';
+        updateValidity();
+      }
+
+      if (e.key === 'Enter' && !inputRef.value?.form && props.onSubmit) {
+        e.preventDefault();
+        if (!isInvalid.value) {
+          props.onSubmit(fieldValue.value || '');
+        }
+      }
+    },
     onInvalid,
   };
 
-  const inputProps = computed<TextInputDOMProps>(() => {
-    return withRefCapture(
+  const inputProps = computed<SearchInputDOMProps>(() =>
+    withRefCapture(
       {
-        ...propsToValues(props, ['name', 'type', 'placeholder', 'required', 'readonly', 'disabled']),
+        ...propsToValues(props, ['name', 'pattern', 'placeholder', 'required', 'readonly', 'disabled']),
         id: inputId,
         'aria-labelledby': labelProps.id,
         value: fieldValue.value,
+        type: 'search',
         maxlength: toValue(props.maxLength),
         minlength: toValue(props.minLength),
-        pattern: inputRef.value?.tagName === 'TEXTAREA' ? undefined : toValue(props.pattern),
         'aria-describedby': describedBy(),
         'aria-invalid': errorMessage.value ? true : undefined,
         ...handlers,
       },
       inputRef,
       elementRef,
-    );
-  });
+    ),
+  );
 
   return {
     inputRef,
@@ -115,6 +132,7 @@ export function useTextField(props: TextFieldProps, elementRef?: Ref<HTMLInputEl
     errorMessage,
     errorMessageProps,
     descriptionProps,
+    clearBtnProps,
     validityDetails,
     isInvalid,
   };

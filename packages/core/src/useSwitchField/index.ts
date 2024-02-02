@@ -1,7 +1,7 @@
 import { MaybeRefOrGetter, Ref, computed, shallowRef, toValue } from 'vue';
 import { AriaDescribableProps, AriaLabelableProps, InputBaseAttributes, InputEvents } from '../types/common';
 import { createLabelProps, uniqId, withRefCapture } from '../utils/common';
-import { useFieldValue } from './useFieldValue';
+import { useFieldValue } from '../composables/useFieldValue';
 
 export interface SwitchInputDOMProps
   extends InputBaseAttributes,

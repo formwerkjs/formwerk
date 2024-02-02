@@ -12,8 +12,8 @@ import {
   toValue,
 } from 'vue';
 import { createDescribedByProps, createLabelProps, getNextCycleArrIdx, uniqId, withRefCapture } from '../utils/common';
-import { useInputValidity } from './useInputValidity';
-import { useFieldValue } from './useFieldValue';
+import { useInputValidity } from '../composables/useInputValidity';
+import { useFieldValue } from '../composables/useFieldValue';
 import {
   AriaDescribableProps,
   AriaLabelableProps,
