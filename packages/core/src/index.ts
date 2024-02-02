@@ -1,4 +1,4 @@
 export * from './useTextField';
 export * from './useSearchField';
-export * from './useSwitchField';
+export * from './useSwitch';
 export * from './useRadio';

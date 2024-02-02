@@ -1,12 +1,5 @@
 import { MaybeRefOrGetter, Ref, computed, shallowRef, toValue } from 'vue';
-import {
-  createDescribedByProps,
-  createLabelProps,
-  createRefCapture,
-  propsToValues,
-  uniqId,
-  withRefCapture,
-} from '../utils/common';
+import { createDescribedByProps, createLabelProps, propsToValues, uniqId, withRefCapture } from '../utils/common';
 import {
   AriaDescribableProps,
   AriaLabelableProps,

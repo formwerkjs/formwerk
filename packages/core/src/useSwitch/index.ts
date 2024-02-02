@@ -1,20 +1,16 @@
 import { MaybeRefOrGetter, Ref, computed, shallowRef, toValue } from 'vue';
-import { AriaDescribableProps, AriaLabelableProps, InputBaseAttributes, InputEvents } from '../types/common';
-import { createLabelProps, uniqId, withRefCapture } from '../utils/common';
-import { useFieldValue } from '../composables/useFieldValue';
+import { AriaDescribableProps, AriaLabelableProps, InputBaseAttributes, InputEvents } from '@core/types/common';
+import { createLabelProps, uniqId, withRefCapture } from '@core/utils/common';
+import { useFieldValue } from '@core/composables/useFieldValue';
 
-export interface SwitchInputDOMProps
-  extends InputBaseAttributes,
-    AriaLabelableProps,
-    AriaDescribableProps,
-    InputEvents {
+export interface SwitchDOMProps extends InputBaseAttributes, AriaLabelableProps, AriaDescribableProps, InputEvents {
   id: string;
   checked: boolean;
   name?: string;
   role?: string;
 }
 
-export type SwitchFieldProps = {
+export type SwitchProps = {
   label: MaybeRefOrGetter<string>;
   name?: MaybeRefOrGetter<string>;
   modelValue?: MaybeRefOrGetter<boolean>;
@@ -23,7 +19,7 @@ export type SwitchFieldProps = {
   disabled?: MaybeRefOrGetter<boolean>;
 };
 
-export function useSwitchField(props: SwitchFieldProps, elementRef?: Ref<HTMLInputElement>) {
+export function useSwitch(props: SwitchProps, elementRef?: Ref<HTMLInputElement>) {
   const id = uniqId();
   const inputRef = elementRef || shallowRef<HTMLInputElement>();
   const { fieldValue: isPressed } = useFieldValue(toValue(props.modelValue) ?? false);
@@ -55,7 +51,7 @@ export function useSwitchField(props: SwitchFieldProps, elementRef?: Ref<HTMLInp
   /**
    * Use this if you are using a native input[type=checkbox] element.
    */
-  const inputProps = computed<SwitchInputDOMProps>(() =>
+  const inputProps = computed<SwitchDOMProps>(() =>
     withRefCapture(
       {
         id: id,
