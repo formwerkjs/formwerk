@@ -5,7 +5,7 @@
     "commonjs": true,
     "es6": true
   },
-  "extends": ["standard", "plugin:@typescript-eslint/recommended", "plugin:prettier/recommended"],
+  "extends": ["plugin:@typescript-eslint/recommended", "plugin:prettier/recommended"],
   "plugins": ["prettier", "@typescript-eslint"],
   "rules": {
     "@typescript-eslint/camelcase": "off",

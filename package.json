@@ -19,7 +19,8 @@
     "postinstall": "husky install",
     "release": "./scripts/release.sh",
     "play:dev": "cd ./packages/playground && pnpm dev && cd -",
-    "dev": "tsx scripts/watch.ts"
+    "dev": "tsx scripts/watch.ts",
+    "prepare": "husky"
   },
   "devDependencies": {
     "@changesets/cli": "^2.27.1",
