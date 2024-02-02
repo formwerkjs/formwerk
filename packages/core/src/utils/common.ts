@@ -1,5 +1,5 @@
 import { MaybeRefOrGetter, Ref, toValue } from 'vue';
-import { AriaDescriptionProps, AriaLabelProps } from '../types/common';
+import { AriaDescriptionProps, AriaLabelProps, AriaLabelableProps, Getter, Maybe } from '@core/types/common';
 
 export function uniqId() {
   return crypto.randomUUID();
@@ -10,11 +10,17 @@ export function isEqual(lhs: unknown, rhs: unknown) {
   return lhs === rhs;
 }
 
-export function createLabelProps(inputId: string): AriaLabelProps {
-  return {
+export function createLabelProps(inputId: string, label: MaybeRefOrGetter<Maybe<string>>) {
+  const labelProps: AriaLabelProps = {
     id: `${inputId}-l`,
     for: inputId,
   };
+
+  const labelledByProps: Getter<AriaLabelableProps> = () => ({
+    'aria-labelledby': toValue(label) ? labelProps.id : undefined,
+  });
+
+  return { labelProps, labelledByProps };
 }
 
 export function createDescriptionProps(inputId: string): AriaDescriptionProps {

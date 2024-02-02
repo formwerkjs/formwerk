@@ -59,7 +59,7 @@ export function useTextField(props: TextFieldProps, elementRef?: Ref<HTMLInputEl
     },
   });
 
-  const labelProps = createLabelProps(inputId);
+  const { labelProps, labelledByProps } = createLabelProps(inputId, props.label);
   const { errorMessageProps, descriptionProps, describedBy } = createDescribedByProps({
     inputId,
     errorMessage,
@@ -86,7 +86,7 @@ export function useTextField(props: TextFieldProps, elementRef?: Ref<HTMLInputEl
       {
         ...propsToValues(props, ['name', 'type', 'placeholder', 'required', 'readonly', 'disabled']),
         id: inputId,
-        'aria-labelledby': labelProps.id,
+        ...labelledByProps(),
         value: fieldValue.value,
         maxlength: toValue(props.maxLength),
         minlength: toValue(props.minLength),

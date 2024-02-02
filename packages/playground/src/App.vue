@@ -20,7 +20,7 @@
       pattern="[0-9]+"
     />
 
-    <SwitchInput label="Toggle me" />
+    <SwitchInput>Toggle me</SwitchInput>
 
     <Switch label="Toggle me" />
 

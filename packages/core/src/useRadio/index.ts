@@ -78,7 +78,7 @@ export function useRadioGroup<TValue = string>(props: RadioGroupProps<TValue>) {
     ORIENTATION_ARROWS[toValue(props.orientation) ?? 'vertical'][toValue(props.dir) || 'ltr'];
 
   const radios: RadioItemContext[] = [];
-  const labelProps = createLabelProps(groupId);
+  const { labelProps, labelledByProps } = createLabelProps(groupId, props.label);
   const { fieldValue } = useFieldValue(toValue(props.modelValue));
   const { setValidity, errorMessage } = useInputValidity();
   const { describedBy, descriptionProps, errorMessageProps } = createDescribedByProps({
@@ -113,7 +113,7 @@ export function useRadioGroup<TValue = string>(props: RadioGroupProps<TValue>) {
     return {
       dir: toValue(props.dir) ?? 'ltr',
       role: 'radiogroup',
-      'aria-labelledby': labelProps.id,
+      ...labelledByProps(),
       'aria-describedby': describedBy(),
       'aria-invalid': errorMessage.value ? true : undefined,
       onKeydown(e: KeyboardEvent) {
@@ -187,9 +187,9 @@ export function useRadioGroup<TValue = string>(props: RadioGroupProps<TValue>) {
 }
 
 export interface RadioItemProps<TValue = string> {
-  label: MaybeRefOrGetter<string>;
   value: TValue;
 
+  label?: MaybeRefOrGetter<string>;
   disabled?: MaybeRefOrGetter<boolean>;
 }
 
@@ -213,7 +213,7 @@ export function useRadioItem<TValue = string>(
   const group: RadioGroupContext<TValue> | null = inject(RadioGroupKey, null);
   const inputRef = elementRef || ref<HTMLInputElement>();
   const checked = computed(() => group?.modelValue === props.value);
-  const labelProps = createLabelProps(inputId);
+  const { labelProps, labelledByProps } = createLabelProps(inputId, props.label);
 
   const handlers: InputEvents & PressEvents = {
     onClick() {
@@ -247,7 +247,7 @@ export function useRadioItem<TValue = string>(
       [isInput ? 'readonly' : 'aria-readonly']: group?.readonly || undefined,
       [isInput ? 'disabled' : 'aria-disabled']: isDisabled() || undefined,
       [isInput ? 'required' : 'aria-required']: group?.required,
-      'aria-labelledby': labelProps.id,
+      ...labelledByProps(),
       ...handlers,
     };
   }

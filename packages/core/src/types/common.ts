@@ -56,3 +56,5 @@ export interface TextInputBaseAttributes extends InputBaseValidationAttributes {
 export type Maybe<T> = T | null | undefined;
 
 export type RovingTabIndex = '0' | '-1';
+
+export type Getter<T> = () => T;

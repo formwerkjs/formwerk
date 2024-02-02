@@ -11,7 +11,7 @@ export interface SwitchDOMProps extends InputBaseAttributes, AriaLabelableProps,
 }
 
 export type SwitchProps = {
-  label: MaybeRefOrGetter<string>;
+  label?: MaybeRefOrGetter<string>;
   name?: MaybeRefOrGetter<string>;
   modelValue?: MaybeRefOrGetter<boolean>;
 
@@ -23,7 +23,7 @@ export function useSwitch(props: SwitchProps, elementRef?: Ref<HTMLInputElement>
   const id = uniqId();
   const inputRef = elementRef || shallowRef<HTMLInputElement>();
   const { fieldValue: isPressed } = useFieldValue(toValue(props.modelValue) ?? false);
-  const labelProps = createLabelProps(id);
+  const { labelProps, labelledByProps } = createLabelProps(id, props.label);
 
   const handlers: InputEvents = {
     onKeydown: (evt: KeyboardEvent) => {
@@ -44,19 +44,15 @@ export function useSwitch(props: SwitchProps, elementRef?: Ref<HTMLInputElement>
     togglePressed();
   }
 
-  function handleClick() {
-    togglePressed();
-  }
-
   /**
    * Use this if you are using a native input[type=checkbox] element.
    */
   const inputProps = computed<SwitchDOMProps>(() =>
     withRefCapture(
       {
+        ...labelledByProps(),
         id: id,
         name: toValue(props.name),
-        'aria-labelledby': labelProps.id,
         disabled: toValue(props.disabled),
         readonly: toValue(props.readonly),
         checked: isPressed.value ?? false,
@@ -72,10 +68,10 @@ export function useSwitch(props: SwitchProps, elementRef?: Ref<HTMLInputElement>
    * Use this if you are using divs or buttons
    */
   const switchProps = computed(() => ({
+    ...labelledByProps(),
     role: 'switch',
     tabindex: '0',
     'aria-checked': isPressed.value ?? false,
-    'aria-labelledby': labelProps.id,
     'aria-readonly': toValue(props.readonly) ?? undefined,
     'aria-disabled': toValue(props.disabled) ?? undefined,
     onKeydown: handlers.onKeydown,
@@ -93,6 +89,5 @@ export function useSwitch(props: SwitchProps, elementRef?: Ref<HTMLInputElement>
     inputProps,
     switchProps,
     togglePressed,
-    handleClick,
   };
 }

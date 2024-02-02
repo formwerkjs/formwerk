@@ -59,7 +59,7 @@ export function useSearchField(props: SearchFieldProps, elementRef?: Ref<HTMLInp
     },
   });
 
-  const labelProps = createLabelProps(inputId);
+  const { labelProps, labelledByProps } = createLabelProps(inputId, props.label);
   const { errorMessageProps, descriptionProps, describedBy } = createDescribedByProps({
     inputId,
     errorMessage,
@@ -109,8 +109,8 @@ export function useSearchField(props: SearchFieldProps, elementRef?: Ref<HTMLInp
     withRefCapture(
       {
         ...propsToValues(props, ['name', 'pattern', 'placeholder', 'required', 'readonly', 'disabled']),
+        ...labelledByProps(),
         id: inputId,
-        'aria-labelledby': labelProps.id,
         value: fieldValue.value,
         type: 'search',
         maxlength: toValue(props.maxLength),
