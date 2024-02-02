@@ -22,6 +22,10 @@ async function minify({ code, pkg, bundleName }) {
     mangle: true,
   });
 
+  if (!output.code) {
+    throw new Error(`🚨 Minification error: ${pkg}/${bundleName}`);
+  }
+
   const fileName = bundleName.replace(/\.js$/, '.min.js');
   const filePath = `${pkgout}/${fileName}`;
   fs.outputFileSync(filePath, output.code);
