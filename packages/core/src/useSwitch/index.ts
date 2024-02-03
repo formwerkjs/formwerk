@@ -1,7 +1,8 @@
 import { MaybeRefOrGetter, Ref, computed, shallowRef, toValue } from 'vue';
 import { AriaDescribableProps, AriaLabelableProps, InputBaseAttributes, InputEvents } from '@core/types/common';
-import { createLabelProps, uniqId, withRefCapture } from '@core/utils/common';
+import { uniqId, withRefCapture } from '@core/utils/common';
 import { useFieldValue } from '@core/composables/useFieldValue';
+import { useLabel } from '@core/composables/useLabel';
 
 export interface SwitchDOMProps extends InputBaseAttributes, AriaLabelableProps, AriaDescribableProps, InputEvents {
   id: string;
@@ -23,7 +24,11 @@ export function useSwitch(props: SwitchProps, elementRef?: Ref<HTMLInputElement>
   const id = uniqId();
   const inputRef = elementRef || shallowRef<HTMLInputElement>();
   const { fieldValue: isPressed } = useFieldValue(toValue(props.modelValue) ?? false);
-  const { labelProps, labelledByProps } = createLabelProps(id, props.label);
+  const { labelProps, labelledByProps } = useLabel({
+    for: id,
+    label: props.label,
+    targetRef: inputRef,
+  });
 
   const handlers: InputEvents = {
     onKeydown: (evt: KeyboardEvent) => {
@@ -50,7 +55,7 @@ export function useSwitch(props: SwitchProps, elementRef?: Ref<HTMLInputElement>
   const inputProps = computed<SwitchDOMProps>(() =>
     withRefCapture(
       {
-        ...labelledByProps(),
+        ...labelledByProps.value,
         id: id,
         name: toValue(props.name),
         disabled: toValue(props.disabled),
@@ -68,7 +73,7 @@ export function useSwitch(props: SwitchProps, elementRef?: Ref<HTMLInputElement>
    * Use this if you are using divs or buttons
    */
   const switchProps = computed(() => ({
-    ...labelledByProps(),
+    ...labelledByProps.value,
     role: 'switch',
     tabindex: '0',
     'aria-checked': isPressed.value ?? false,

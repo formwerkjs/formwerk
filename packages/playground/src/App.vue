@@ -49,9 +49,9 @@
     </RadioGroup>
 
     <RadioGroup name="radio4" label="Radio Items (non-inputs, horizontal)" orientation="horizontal">
-      <RadioItem label="Radio 1" value="1" />
-      <RadioItem label="Radio 2" value="2" />
-      <RadioItem label="Radio 3" value="3" />
+      <RadioItem label="Drink 1" value="1" />
+      <RadioItem label="Drink 2" value="2" />
+      <RadioItem label="Drink 3" value="3" />
     </RadioGroup>
 
     <RadioGroup name="radio5" label="Radio Items (non-inputs, horizontal, RTL)" orientation="horizontal" dir="rtl">

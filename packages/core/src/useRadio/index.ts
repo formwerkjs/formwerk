@@ -11,7 +11,7 @@ import {
   ref,
   toValue,
 } from 'vue';
-import { createDescribedByProps, createLabelProps, getNextCycleArrIdx, uniqId, withRefCapture } from '../utils/common';
+import { createDescribedByProps, getNextCycleArrIdx, uniqId, withRefCapture } from '../utils/common';
 import { useInputValidity } from '../composables/useInputValidity';
 import { useFieldValue } from '../composables/useFieldValue';
 import {
@@ -23,6 +23,7 @@ import {
   PressEvents,
   RovingTabIndex,
 } from '../types/common';
+import { useLabel } from '@core/composables/useLabel';
 
 export interface RadioGroupContext<TValue> {
   name: string;
@@ -78,7 +79,11 @@ export function useRadioGroup<TValue = string>(props: RadioGroupProps<TValue>) {
     ORIENTATION_ARROWS[toValue(props.orientation) ?? 'vertical'][toValue(props.dir) || 'ltr'];
 
   const radios: RadioItemContext[] = [];
-  const { labelProps, labelledByProps } = createLabelProps(groupId, props.label);
+  const { labelProps, labelledByProps } = useLabel({
+    for: groupId,
+    label: props.label,
+  });
+
   const { fieldValue } = useFieldValue(toValue(props.modelValue));
   const { setValidity, errorMessage } = useInputValidity();
   const { describedBy, descriptionProps, errorMessageProps } = createDescribedByProps({
@@ -111,9 +116,9 @@ export function useRadioGroup<TValue = string>(props: RadioGroupProps<TValue>) {
 
   const radioGroupProps = computed<RadioGroupDomProps>(() => {
     return {
+      ...labelledByProps.value,
       dir: toValue(props.dir) ?? 'ltr',
       role: 'radiogroup',
-      ...labelledByProps(),
       'aria-describedby': describedBy(),
       'aria-invalid': errorMessage.value ? true : undefined,
       onKeydown(e: KeyboardEvent) {
@@ -213,7 +218,11 @@ export function useRadioItem<TValue = string>(
   const group: RadioGroupContext<TValue> | null = inject(RadioGroupKey, null);
   const inputRef = elementRef || ref<HTMLInputElement>();
   const checked = computed(() => group?.modelValue === props.value);
-  const { labelProps, labelledByProps } = createLabelProps(inputId, props.label);
+  const { labelProps, labelledByProps } = useLabel({
+    for: inputId,
+    label: props.label,
+    targetRef: inputRef,
+  });
 
   const handlers: InputEvents & PressEvents = {
     onClick() {
@@ -241,14 +250,14 @@ export function useRadioItem<TValue = string>(
 
   function createBindings(isInput: boolean) {
     return {
+      ...labelledByProps.value,
+      ...handlers,
       id: inputId,
       name: group?.name,
       [isInput ? 'checked' : 'aria-checked']: checked.value || undefined,
       [isInput ? 'readonly' : 'aria-readonly']: group?.readonly || undefined,
       [isInput ? 'disabled' : 'aria-disabled']: isDisabled() || undefined,
       [isInput ? 'required' : 'aria-required']: group?.required,
-      ...labelledByProps(),
-      ...handlers,
     };
   }
 

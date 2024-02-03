@@ -7,10 +7,11 @@ import {
   Numberish,
   TextInputBaseAttributes,
 } from '@core/types/common';
-import { createDescribedByProps, createLabelProps, propsToValues, uniqId, withRefCapture } from '@core/utils/common';
+import { createDescribedByProps, propsToValues, uniqId, withRefCapture } from '@core/utils/common';
 import { useFieldValue } from '@core/composables/useFieldValue';
 import { useInputValidity } from '@core/composables/useInputValidity';
 import { useSyncModel } from '@core/composables/useModelSync';
+import { useLabel } from '@core/composables/useLabel';
 
 export interface SearchInputDOMAttributes extends TextInputBaseAttributes {
   type?: 'search';
@@ -59,7 +60,12 @@ export function useSearchField(props: SearchFieldProps, elementRef?: Ref<HTMLInp
     },
   });
 
-  const { labelProps, labelledByProps } = createLabelProps(inputId, props.label);
+  const { labelProps, labelledByProps } = useLabel({
+    for: inputId,
+    label: props.label,
+    targetRef: inputRef,
+  });
+
   const { errorMessageProps, descriptionProps, describedBy } = createDescribedByProps({
     inputId,
     errorMessage,
@@ -109,7 +115,7 @@ export function useSearchField(props: SearchFieldProps, elementRef?: Ref<HTMLInp
     withRefCapture(
       {
         ...propsToValues(props, ['name', 'pattern', 'placeholder', 'required', 'readonly', 'disabled']),
-        ...labelledByProps(),
+        ...labelledByProps.value,
         id: inputId,
         value: fieldValue.value,
         type: 'search',

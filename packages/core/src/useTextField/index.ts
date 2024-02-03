@@ -1,5 +1,5 @@
 import { MaybeRefOrGetter, Ref, computed, shallowRef, toValue } from 'vue';
-import { createDescribedByProps, createLabelProps, propsToValues, uniqId, withRefCapture } from '../utils/common';
+import { createDescribedByProps, propsToValues, uniqId, withRefCapture } from '../utils/common';
 import {
   AriaDescribableProps,
   AriaLabelableProps,
@@ -11,6 +11,7 @@ import {
 import { useFieldValue } from '@core/composables/useFieldValue';
 import { useSyncModel } from '@core/composables/useModelSync';
 import { useInputValidity } from '@core/composables/useInputValidity';
+import { useLabel } from '@core/composables/useLabel';
 
 export type TextInputDOMType = 'text' | 'password' | 'email' | 'number' | 'tel' | 'url';
 
@@ -59,7 +60,12 @@ export function useTextField(props: TextFieldProps, elementRef?: Ref<HTMLInputEl
     },
   });
 
-  const { labelProps, labelledByProps } = createLabelProps(inputId, props.label);
+  const { labelProps, labelledByProps } = useLabel({
+    for: inputId,
+    label: props.label,
+    targetRef: inputRef,
+  });
+
   const { errorMessageProps, descriptionProps, describedBy } = createDescribedByProps({
     inputId,
     errorMessage,
@@ -85,15 +91,15 @@ export function useTextField(props: TextFieldProps, elementRef?: Ref<HTMLInputEl
     return withRefCapture(
       {
         ...propsToValues(props, ['name', 'type', 'placeholder', 'required', 'readonly', 'disabled']),
+        ...labelledByProps.value,
+        ...handlers,
         id: inputId,
-        ...labelledByProps(),
         value: fieldValue.value,
         maxlength: toValue(props.maxLength),
         minlength: toValue(props.minLength),
         pattern: inputRef.value?.tagName === 'TEXTAREA' ? undefined : toValue(props.pattern),
         'aria-describedby': describedBy(),
         'aria-invalid': errorMessage.value ? true : undefined,
-        ...handlers,
       },
       inputRef,
       elementRef,
