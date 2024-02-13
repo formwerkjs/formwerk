@@ -1,5 +1,5 @@
 import { MaybeRefOrGetter, Ref, ShallowRef, computed, getCurrentInstance, toValue } from 'vue';
-import { AriaDescriptionProps, AriaLabelProps } from '../types/common';
+import { AriaDescriptionProps, AriaLabelProps, Maybe } from '../types/common';
 
 export function uniqId() {
   return crypto.randomUUID();
@@ -74,4 +74,25 @@ export function propsToValues<TProps extends Record<string, MaybeRefOrGetter<any
       .filter(([key]) => keyDict[key])
       .map(([key, value]) => [key, toValue(value)]),
   );
+}
+
+export function getNextCycleArrIdx(idx: number, arr: unknown[]): number {
+  const r = idx % arr.length;
+
+  return r < 0 ? r + arr.length : r;
+}
+
+/**
+ * Injects a ref capture to the props object
+ */
+export function withRefCapture<TProps>(
+  props: TProps,
+  inputRef: Ref<HTMLElement | undefined>,
+  elementRef?: Ref<HTMLElement | undefined>,
+): TProps {
+  if (!elementRef) {
+    (props as any).ref = createRefCapture(inputRef);
+  }
+
+  return props;
 }

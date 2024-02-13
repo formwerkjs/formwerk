@@ -1,5 +1,12 @@
 import { MaybeRefOrGetter, Ref, computed, shallowRef, toValue } from 'vue';
-import { createDescribedByProps, createLabelProps, createRefCapture, propsToValues, uniqId } from '../utils/common';
+import {
+  createDescribedByProps,
+  createLabelProps,
+  createRefCapture,
+  propsToValues,
+  uniqId,
+  withRefCapture,
+} from '../utils/common';
 import {
   AriaDescribableProps,
   AriaLabelableProps,
@@ -82,26 +89,22 @@ export function useTextField(props: TextFieldProps, elementRef?: Ref<HTMLInputEl
   };
 
   const inputProps = computed<TextInputDOMProps>(() => {
-    const baseProps: TextInputDOMProps = {
-      ...propsToValues(props, ['name', 'type', 'placeholder', 'required', 'readonly', 'disabled']),
-      id: inputId,
-      'aria-labelledby': labelProps.id,
-      value: fieldValue.value,
-      maxlength: toValue(props.maxLength),
-      minlength: toValue(props.minLength),
-      pattern: inputRef.value?.tagName === 'TEXTAREA' ? undefined : toValue(props.pattern),
-      'aria-describedby': describedBy(),
-      'aria-invalid': errorMessage.value ? true : undefined,
-      ...handlers,
-    };
-
-    // If they passed an element ref then we don't need to override it.
-    if (!elementRef) {
-      // Capture the ref
-      (baseProps as any).ref = createRefCapture(inputRef);
-    }
-
-    return baseProps;
+    return withRefCapture(
+      {
+        ...propsToValues(props, ['name', 'type', 'placeholder', 'required', 'readonly', 'disabled']),
+        id: inputId,
+        'aria-labelledby': labelProps.id,
+        value: fieldValue.value,
+        maxlength: toValue(props.maxLength),
+        minlength: toValue(props.minLength),
+        pattern: inputRef.value?.tagName === 'TEXTAREA' ? undefined : toValue(props.pattern),
+        'aria-describedby': describedBy(),
+        'aria-invalid': errorMessage.value ? true : undefined,
+        ...handlers,
+      },
+      inputRef,
+      elementRef,
+    );
   });
 
   return {

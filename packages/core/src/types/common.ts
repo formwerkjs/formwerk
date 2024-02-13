@@ -31,6 +31,10 @@ export type InputEvents = {
   onKeydown?: (event: KeyboardEvent) => void;
 };
 
+export type PressEvents = {
+  onClick?: (event: MouseEvent) => void;
+};
+
 export type InputBaseAttributes = {
   readonly?: boolean;
   disabled?: boolean;
@@ -48,3 +52,7 @@ export interface TextInputBaseAttributes extends InputBaseValidationAttributes {
   pattern?: string;
   placeholder?: string;
 }
+
+export type Maybe<T> = T | null | undefined;
+
+export type RovingTabIndex = '0' | '-1';
