@@ -6,6 +6,7 @@ interface LabelProps {
   for: MaybeRefOrGetter<string>;
   label: MaybeRefOrGetter<Maybe<string>>;
   targetRef?: MaybeRefOrGetter<HTMLElement | undefined>;
+  handleClick?: () => void;
 }
 
 export function useLabel(props: LabelProps) {
@@ -17,6 +18,7 @@ export function useLabel(props: LabelProps) {
       ref: refCapture,
       id: `${toValue(props.for)}-l`,
       for: labelRef.value?.tagName === 'LABEL' ? toValue(props.for) : undefined,
+      onClick: props.handleClick || undefined,
     } as AriaLabelProps;
   });
 

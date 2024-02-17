@@ -64,6 +64,10 @@
 
     <pre>{{ model }}</pre>
 
+    <Slider label="Opacity" :min="0" :max="100" />
+
+    <MultiSlider label="Opacity" :min="0" :max="100" />
+
     <button class="bg-blue-500 text-white px-4 py-1.5 rounded-md">KeKL</button>
   </form>
 
@@ -80,6 +84,8 @@ import Switch from './components/Switch.vue';
 import RadioGroup from './components/RadioGroup.vue';
 import InputRadioItem from './components/InputRadioItem.vue';
 import RadioItem from './components/RadioItem.vue';
+import Slider from './components/Slider.vue';
+import MultiSlider from './components/MultiSlider.vue';
 
 const model = ref('');
 
