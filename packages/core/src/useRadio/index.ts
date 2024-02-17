@@ -20,6 +20,7 @@ import {
   AriaValidatableProps,
   InputBaseAttributes,
   InputEvents,
+  Orientation,
   PressEvents,
   RovingTabIndex,
 } from '../types/common';
@@ -49,7 +50,7 @@ export const RadioGroupKey: InjectionKey<RadioGroupContext<any>> = Symbol('Radio
 export type Direction = 'ltr' | 'rtl';
 
 export interface RadioGroupProps<TValue = string> {
-  orientation?: MaybeRefOrGetter<'horizontal' | 'vertical'>;
+  orientation?: MaybeRefOrGetter<Orientation>;
   dir?: MaybeRefOrGetter<'ltr' | 'rtl'>;
   label: MaybeRefOrGetter<string>;
   description?: MaybeRefOrGetter<string>;
@@ -68,7 +69,7 @@ interface RadioGroupDomProps extends AriaLabelableProps, AriaDescribableProps, A
   onKeydown(e: KeyboardEvent): void;
 }
 
-const ORIENTATION_ARROWS: Record<'horizontal' | 'vertical', Record<Direction, string[]>> = {
+const ORIENTATION_ARROWS: Record<Orientation, Record<Direction, string[]>> = {
   horizontal: { ltr: ['ArrowLeft', 'ArrowRight'], rtl: ['ArrowRight', 'ArrowLeft'] },
   vertical: { ltr: ['ArrowUp', 'ArrowDown'], rtl: ['ArrowUp', 'ArrowDown'] },
 };
