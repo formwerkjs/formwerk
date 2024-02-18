@@ -14,6 +14,7 @@ const mockSlider: () => SliderContext = () => ({
     getSliderRange: () => ({ min: 0, max: 100 }),
     getSliderStep: () => 1,
     getSliderLabelProps: () => ({}),
+    getValueForPagePosition: () => 0,
   }),
 });
 
@@ -28,10 +29,12 @@ export function useThumb(props: ThumbProps, elementRef?: Ref<HTMLElement>) {
     getCurrentValue() {
       return fieldValue.value || 0;
     },
-    setValue(value) {
-      fieldValue.value = value;
-    },
+    setValue,
   };
+
+  function setValue(value: number) {
+    fieldValue.value = value;
+  }
 
   const slider = inject(SliderInjectionKey, mockSlider, true).registerThumb(thumbContext);
 
@@ -71,13 +74,13 @@ export function useThumb(props: ThumbProps, elementRef?: Ref<HTMLElement>) {
   function increment() {
     const { max } = slider.getThumbRange();
     const nextValue = (fieldValue.value || 0) + slider.getSliderStep();
-    fieldValue.value = Math.min(nextValue, max);
+    setValue(Math.min(nextValue, max));
   }
 
   function decrement() {
     const { min } = slider.getThumbRange();
     const nextValue = (fieldValue.value || 0) - slider.getSliderStep();
-    fieldValue.value = Math.max(nextValue, min);
+    setValue(Math.max(nextValue, min));
   }
 
   function onKeydown(e: KeyboardEvent) {
@@ -100,6 +103,20 @@ export function useThumb(props: ThumbProps, elementRef?: Ref<HTMLElement>) {
     e.preventDefault();
     e.stopPropagation();
     thumbRef.value?.focus();
+
+    document.addEventListener('mousemove', onMousemove);
+    document.addEventListener('mouseup', onMouseup);
+  }
+
+  function onMousemove(e: MouseEvent) {
+    e.preventDefault();
+    e.stopPropagation();
+    setValue(slider.getValueForPagePosition(e.pageX));
+  }
+
+  function onMouseup() {
+    document.removeEventListener('mousemove', onMousemove);
+    document.removeEventListener('mouseup', onMouseup);
   }
 
   return { thumbProps };

@@ -46,6 +46,11 @@ export interface SliderRegistration {
    * Gets the props labelling the slider.
    */
   getSliderLabelProps(): AriaLabelableProps;
+
+  /**
+   * Gets the value for a given page position.
+   */
+  getValueForPagePosition(pageX: number): number;
 }
 
 export interface SliderContext {
@@ -81,11 +86,7 @@ export function useSlider(props: SliderProps) {
           return;
         }
 
-        // TODO: use client Y/Height for vertical sliders
-        const rect = trackRef.value.getBoundingClientRect();
-        const percent = (e.pageX - rect.left) / rect.width;
-        const targetValue = toNearestMultipleOf(percent * (toValue(props.max) || 100), toValue(props.step) || 1);
-
+        const targetValue = getValueForPagePosition(e.pageX);
         const closest = thumbs.value.reduce(
           (candidate, curr) => {
             const diff = Math.abs(curr.getCurrentValue() - targetValue);
@@ -100,6 +101,18 @@ export function useSlider(props: SliderProps) {
     },
     trackRef,
   );
+
+  function getValueForPagePosition(pageX: number) {
+    // TODO: use client Y/Height for vertical sliders
+    if (!trackRef.value) {
+      return 0;
+    }
+
+    const rect = trackRef.value.getBoundingClientRect();
+    const percent = (pageX - rect.left) / rect.width;
+
+    return toNearestMultipleOf(percent * (toValue(props.max) || 100), toValue(props.step) || 1);
+  }
 
   function registerThumb(ctx: ThumbContext) {
     thumbs.value.push(ctx);
@@ -127,6 +140,7 @@ export function useSlider(props: SliderProps) {
       getSliderLabelProps() {
         return labelledByProps.value;
       },
+      getValueForPagePosition,
     };
 
     onBeforeUnmount(() => unregisterThumb(ctx));
