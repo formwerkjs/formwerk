@@ -4,13 +4,13 @@ import Thumb from './Thumb.vue';
 
 const props = defineProps<SliderProps>();
 
-const { groupProps, labelProps } = useSlider(props);
+const { trackProps, groupProps, labelProps } = useSlider(props);
 </script>
 
 <template>
-  <div>
+  <div v-bind="groupProps">
     <div v-bind="labelProps">{{ label }}</div>
-    <div v-bind="groupProps" class="track">
+    <div v-bind="trackProps" class="track">
       <Thumb />
     </div>
   </div>

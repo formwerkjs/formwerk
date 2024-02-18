@@ -64,7 +64,7 @@
 
     <pre>{{ model }}</pre>
 
-    <Slider label="Opacity" :min="0" :max="100" />
+    <Slider label="Opacity" :min="0" :max="100" :step="2" />
 
     <MultiSlider label="Opacity" :min="0" :max="100" />
 

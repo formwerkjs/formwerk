@@ -1,7 +1,8 @@
-import { InjectionKey, MaybeRefOrGetter, Ref, computed, onBeforeUnmount, provide, ref, shallowRef, toValue } from 'vue';
+import { InjectionKey, MaybeRefOrGetter, computed, onBeforeUnmount, provide, ref, shallowRef, toValue } from 'vue';
 import { useLabel } from '@core/composables/useLabel';
 import { AriaLabelableProps, Orientation } from '@core/types/common';
-import { uniqId } from '@core/utils/common';
+import { uniqId, withRefCapture } from '@core/utils/common';
+import { toNearestMultipleOf } from '@core/utils/math';
 
 export interface SliderProps {
   label?: MaybeRefOrGetter<string>;
@@ -17,6 +18,7 @@ export interface SliderProps {
 export interface ThumbContext {
   focus(): void;
   getCurrentValue(): number;
+  setValue(value: number): void;
 }
 
 export interface ValueRange {
@@ -52,9 +54,9 @@ export interface SliderContext {
 
 export const SliderInjectionKey: InjectionKey<SliderContext> = Symbol('Slider');
 
-export function useSlider(props: SliderProps, trackElRef?: Ref<HTMLElement>) {
+export function useSlider(props: SliderProps) {
   const inputId = uniqId();
-  const trackRef = trackElRef || ref<HTMLElement>();
+  const trackRef = ref<HTMLElement>();
   const thumbs = shallowRef<ThumbContext[]>([]);
 
   const { labelProps, labelledByProps } = useLabel({
@@ -70,6 +72,34 @@ export function useSlider(props: SliderProps, trackElRef?: Ref<HTMLElement>) {
     role: 'group',
     'aria-orientation': toValue(props.orientation) || 'horizontal',
   }));
+
+  const trackProps = withRefCapture(
+    {
+      style: { 'container-type': 'inline-size' },
+      onMousedown(e: MouseEvent) {
+        if (!trackRef.value) {
+          return;
+        }
+
+        // TODO: use client Y/Height for vertical sliders
+        const rect = trackRef.value.getBoundingClientRect();
+        const percent = (e.pageX - rect.left) / rect.width;
+        const targetValue = toNearestMultipleOf(percent * (toValue(props.max) || 100), toValue(props.step) || 1);
+
+        const closest = thumbs.value.reduce(
+          (candidate, curr) => {
+            const diff = Math.abs(curr.getCurrentValue() - targetValue);
+
+            return diff < candidate.diff ? { thumb: curr, diff } : candidate;
+          },
+          { thumb: thumbs.value[0], diff: Infinity },
+        );
+
+        closest.thumb.setValue(targetValue);
+      },
+    },
+    trackRef,
+  );
 
   function registerThumb(ctx: ThumbContext) {
     thumbs.value.push(ctx);
@@ -121,5 +151,6 @@ export function useSlider(props: SliderProps, trackElRef?: Ref<HTMLElement>) {
     labelProps,
     groupProps,
     outputProps,
+    trackProps,
   };
 }

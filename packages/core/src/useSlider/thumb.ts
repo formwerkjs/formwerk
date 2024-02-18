@@ -28,6 +28,9 @@ export function useThumb(props: ThumbProps, elementRef?: Ref<HTMLElement>) {
     getCurrentValue() {
       return fieldValue.value || 0;
     },
+    setValue(value) {
+      fieldValue.value = value;
+    },
   };
 
   const slider = inject(SliderInjectionKey, mockSlider, true).registerThumb(thumbContext);
@@ -59,7 +62,9 @@ export function useThumb(props: ThumbProps, elementRef?: Ref<HTMLElement>) {
 
     return {
       position: 'absolute',
-      left: `${percent}%`,
+      left: '0',
+      willChange: 'transform',
+      transform: `translate3d(${percent}cqw, 0, 0)`,
     };
   }
 
@@ -93,6 +98,7 @@ export function useThumb(props: ThumbProps, elementRef?: Ref<HTMLElement>) {
 
   function onMousedown(e: MouseEvent) {
     e.preventDefault();
+    e.stopPropagation();
     thumbRef.value?.focus();
   }
 
