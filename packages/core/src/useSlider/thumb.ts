@@ -20,6 +20,7 @@ const mockSlider: () => SliderContext = () => ({
 
 export function useSliderThumb(props: SliderThumbProps, elementRef?: Ref<HTMLElement>) {
   const thumbRef = elementRef || ref<HTMLElement>();
+  const isDragging = ref(false);
   const { fieldValue } = useFieldValue(toValue(props.modelValue) ?? 0);
 
   const thumbContext: ThumbContext = {
@@ -110,6 +111,7 @@ export function useSliderThumb(props: SliderThumbProps, elementRef?: Ref<HTMLEle
 
     document.addEventListener('mousemove', onMousemove);
     document.addEventListener('mouseup', onMouseup);
+    isDragging.value = true;
   }
 
   function onMousemove(e: MouseEvent) {
@@ -121,7 +123,12 @@ export function useSliderThumb(props: SliderThumbProps, elementRef?: Ref<HTMLEle
   function onMouseup() {
     document.removeEventListener('mousemove', onMousemove);
     document.removeEventListener('mouseup', onMouseup);
+    isDragging.value = false;
   }
 
-  return { thumbProps, currentValue: fieldValue };
+  return {
+    thumbProps,
+    currentValue: fieldValue,
+    isDragging,
+  };
 }
