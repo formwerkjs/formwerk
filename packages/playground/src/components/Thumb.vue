@@ -3,9 +3,9 @@
 </template>
 
 <script setup lang="ts">
-import { useThumb, ThumbProps } from '@formwerk/core';
+import { useSliderThumb, SliderThumbProps } from '@formwerk/core';
 
-const props = defineProps<ThumbProps>();
+const props = defineProps<SliderThumbProps>();
 
-const { thumbProps } = useThumb(props);
+const { thumbProps } = useSliderThumb(props);
 </script>

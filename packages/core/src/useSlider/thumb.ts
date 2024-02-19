@@ -3,7 +3,7 @@ import { SliderContext, SliderInjectionKey, ThumbContext } from './slider';
 import { withRefCapture } from '@core/utils/common';
 import { useFieldValue } from '@core/composables/useFieldValue';
 
-export interface ThumbProps {
+export interface SliderThumbProps {
   label?: MaybeRefOrGetter<string>;
   modelValue?: MaybeRefOrGetter<number>;
 }
@@ -18,7 +18,7 @@ const mockSlider: () => SliderContext = () => ({
   }),
 });
 
-export function useThumb(props: ThumbProps, elementRef?: Ref<HTMLElement>) {
+export function useSliderThumb(props: SliderThumbProps, elementRef?: Ref<HTMLElement>) {
   const thumbRef = elementRef || ref<HTMLElement>();
   const { fieldValue } = useFieldValue(toValue(props.modelValue) ?? 0);
 
@@ -123,5 +123,5 @@ export function useThumb(props: ThumbProps, elementRef?: Ref<HTMLElement>) {
     document.removeEventListener('mouseup', onMouseup);
   }
 
-  return { thumbProps };
+  return { thumbProps, currentValue: fieldValue };
 }
