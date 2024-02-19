@@ -68,6 +68,10 @@
 
     <MultiSlider label="Opacity" :min="0" :max="100" />
 
+    <Slider label="Opacity" :min="0" :max="100" :step="2" orientation="vertical" />
+
+    <MultiSlider label="Opacity" :min="0" :max="100" orientation="vertical" />
+
     <button class="bg-blue-500 text-white px-4 py-1.5 rounded-md">KeKL</button>
   </form>
 

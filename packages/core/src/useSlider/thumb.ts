@@ -15,6 +15,7 @@ const mockSlider: () => SliderContext = () => ({
     getSliderStep: () => 1,
     getSliderLabelProps: () => ({}),
     getValueForPagePosition: () => 0,
+    getOrientation: () => 'horizontal',
   }),
 });
 
@@ -64,11 +65,16 @@ export function useSliderThumb(props: SliderThumbProps, elementRef?: Ref<HTMLEle
     const { min, max } = slider.getSliderRange();
     const percent = ((value - min) / (max - min)) * 100;
 
+    const orientation = slider.getOrientation();
+    const positionProp = orientation === 'vertical' ? 'top' : 'left';
+    const translateX = orientation === 'vertical' ? '0' : `${percent}cqw`;
+    const translateY = orientation === 'vertical' ? `${percent}cqh` : '0';
+
     return {
       position: 'absolute',
-      left: '0',
+      [positionProp]: '0',
       willChange: 'transform',
-      transform: `translate3d(${percent}cqw, 0, 0)`,
+      transform: `translate3d(${translateX}, ${translateY}, 0)`,
     };
   }
 
@@ -89,14 +95,18 @@ export function useSliderThumb(props: SliderThumbProps, elementRef?: Ref<HTMLEle
   }
 
   function onKeydown(e: KeyboardEvent) {
-    if (e.key === 'ArrowLeft' || e.key === 'ArrowDown') {
+    const isHorizontal = slider.getOrientation() === 'horizontal';
+    const incrKeys = isHorizontal ? ['ArrowRight', 'ArrowUp'] : ['ArrowDown', 'ArrowRight'];
+    const decrKeys = isHorizontal ? ['ArrowLeft', 'ArrowDown'] : ['ArrowUp', 'ArrowLeft'];
+
+    if (decrKeys.includes(e.key)) {
       e.preventDefault();
       decrement();
 
       return;
     }
 
-    if (e.key === 'ArrowRight' || e.key === 'ArrowUp') {
+    if (incrKeys.includes(e.key)) {
       e.preventDefault();
       increment();
 
@@ -121,7 +131,7 @@ export function useSliderThumb(props: SliderThumbProps, elementRef?: Ref<HTMLEle
   function onMousemove(e: MouseEvent) {
     e.preventDefault();
     e.stopPropagation();
-    setValue(clampValue(slider.getValueForPagePosition(e.pageX)));
+    setValue(clampValue(slider.getValueForPagePosition({ x: e.clientX, y: e.clientY })));
   }
 
   function onMouseup() {

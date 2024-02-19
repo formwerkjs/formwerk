@@ -15,6 +15,8 @@ export interface SliderProps {
   step?: MaybeRefOrGetter<number>;
 }
 
+export type Coordinate = { x: number; y: number };
+
 export interface ThumbContext {
   focus(): void;
   getCurrentValue(): number;
@@ -48,9 +50,14 @@ export interface SliderRegistration {
   getSliderLabelProps(): AriaLabelableProps;
 
   /**
+   * Gets the slider current orientation.
+   */
+  getOrientation(): Orientation;
+
+  /**
    * Gets the value for a given page position.
    */
-  getValueForPagePosition(pageX: number): number;
+  getValueForPagePosition(position: Coordinate): number;
 }
 
 export interface SliderContext {
@@ -78,38 +85,42 @@ export function useSlider(props: SliderProps) {
     'aria-orientation': toValue(props.orientation) || 'horizontal',
   }));
 
-  const trackProps = withRefCapture(
-    {
-      style: { 'container-type': 'inline-size', position: 'relative' },
-      onMousedown(e: MouseEvent) {
-        if (!trackRef.value) {
-          return;
-        }
+  const trackProps = computed(() => {
+    const isVertical = toValue(props.orientation) === 'vertical';
 
-        const targetValue = getValueForPagePosition(e.pageX);
-        const closest = thumbs.value.reduce(
-          (candidate, curr) => {
-            const diff = Math.abs(curr.getCurrentValue() - targetValue);
+    return withRefCapture(
+      {
+        style: { 'container-type': isVertical ? 'size' : 'inline-size', position: 'relative' },
+        onMousedown(e: MouseEvent) {
+          if (!trackRef.value) {
+            return;
+          }
 
-            return diff < candidate.diff ? { thumb: curr, diff } : candidate;
-          },
-          { thumb: thumbs.value[0], diff: Infinity },
-        );
+          const targetValue = getValueForPagePosition({ x: e.clientX, y: e.clientY });
+          const closest = thumbs.value.reduce(
+            (candidate, curr) => {
+              const diff = Math.abs(curr.getCurrentValue() - targetValue);
 
-        closest.thumb.setValue(targetValue);
+              return diff < candidate.diff ? { thumb: curr, diff } : candidate;
+            },
+            { thumb: thumbs.value[0], diff: Infinity },
+          );
+
+          closest.thumb.setValue(targetValue);
+        },
       },
-    },
-    trackRef,
-  );
+      trackRef,
+    );
+  });
 
-  function getValueForPagePosition(pageX: number) {
-    // TODO: use client Y/Height for vertical sliders
+  function getValueForPagePosition({ x, y }: Coordinate) {
     if (!trackRef.value) {
       return 0;
     }
 
+    const orientation = toValue(props.orientation) || 'horizontal';
     const rect = trackRef.value.getBoundingClientRect();
-    const percent = (pageX - rect.left) / rect.width;
+    const percent = orientation === 'horizontal' ? (x - rect.left) / rect.width : (y - rect.top) / rect.height;
 
     return toNearestMultipleOf(percent * (toValue(props.max) || 100), toValue(props.step) || 1);
   }
@@ -141,6 +152,7 @@ export function useSlider(props: SliderProps) {
         return labelledByProps.value;
       },
       getValueForPagePosition,
+      getOrientation: () => toValue(props.orientation) || 'horizontal',
     };
 
     onBeforeUnmount(() => unregisterThumb(ctx));
