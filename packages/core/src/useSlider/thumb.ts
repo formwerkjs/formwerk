@@ -71,16 +71,20 @@ export function useThumb(props: ThumbProps, elementRef?: Ref<HTMLElement>) {
     };
   }
 
+  function clampValue(value: number) {
+    const { max, min } = slider.getThumbRange();
+
+    return Math.min(Math.max(value, min), max);
+  }
+
   function increment() {
-    const { max } = slider.getThumbRange();
     const nextValue = (fieldValue.value || 0) + slider.getSliderStep();
-    setValue(Math.min(nextValue, max));
+    setValue(clampValue(nextValue));
   }
 
   function decrement() {
-    const { min } = slider.getThumbRange();
     const nextValue = (fieldValue.value || 0) - slider.getSliderStep();
-    setValue(Math.max(nextValue, min));
+    setValue(clampValue(nextValue));
   }
 
   function onKeydown(e: KeyboardEvent) {
@@ -111,7 +115,7 @@ export function useThumb(props: ThumbProps, elementRef?: Ref<HTMLElement>) {
   function onMousemove(e: MouseEvent) {
     e.preventDefault();
     e.stopPropagation();
-    setValue(slider.getValueForPagePosition(e.pageX));
+    setValue(clampValue(slider.getValueForPagePosition(e.pageX)));
   }
 
   function onMouseup() {
