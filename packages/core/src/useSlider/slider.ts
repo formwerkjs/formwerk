@@ -80,7 +80,7 @@ export function useSlider(props: SliderProps) {
 
   const trackProps = withRefCapture(
     {
-      style: { 'container-type': 'inline-size' },
+      style: { 'container-type': 'inline-size', position: 'relative' },
       onMousedown(e: MouseEvent) {
         if (!trackRef.value) {
           return;
