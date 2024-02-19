@@ -105,6 +105,10 @@ export function useSliderThumb(props: SliderThumbProps, elementRef?: Ref<HTMLEle
   }
 
   function onMousedown(e: MouseEvent) {
+    if (e.button !== 0) {
+      return;
+    }
+
     e.preventDefault();
     e.stopPropagation();
     thumbRef.value?.focus();
