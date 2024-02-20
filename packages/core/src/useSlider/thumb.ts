@@ -2,6 +2,7 @@ import { MaybeRefOrGetter, Ref, computed, inject, ref, toValue } from 'vue';
 import { SliderContext, SliderInjectionKey, ThumbContext } from './slider';
 import { withRefCapture } from '@core/utils/common';
 import { useFieldValue } from '@core/composables/useFieldValue';
+import { Direction, Orientation } from '@core/types/common';
 
 export interface SliderThumbProps {
   label?: MaybeRefOrGetter<string>;
@@ -16,6 +17,7 @@ const mockSlider: () => SliderContext = () => ({
     getSliderLabelProps: () => ({}),
     getValueForPagePosition: () => 0,
     getOrientation: () => 'horizontal',
+    getInlineDirection: () => 'ltr',
   }),
 });
 
@@ -63,10 +65,16 @@ export function useSliderThumb(props: SliderThumbProps, elementRef?: Ref<HTMLEle
   function getPositionStyle() {
     const value = fieldValue.value || 0;
     const { min, max } = slider.getSliderRange();
-    const percent = ((value - min) / (max - min)) * 100;
+    const dir = slider.getInlineDirection();
+    let percent = ((value - min) / (max - min)) * 100;
+    if (dir === 'rtl') {
+      percent = 1 - percent;
+    }
 
+    const inlineBound = dir === 'rtl' ? 'right' : 'left';
     const orientation = slider.getOrientation();
-    const positionProp = orientation === 'vertical' ? 'top' : 'left';
+
+    const positionProp = orientation === 'vertical' ? 'top' : inlineBound;
     const translateX = orientation === 'vertical' ? '0' : `${percent}cqw`;
     const translateY = orientation === 'vertical' ? `${percent}cqh` : '0';
 
@@ -94,10 +102,19 @@ export function useSliderThumb(props: SliderThumbProps, elementRef?: Ref<HTMLEle
     setValue(clampValue(nextValue));
   }
 
+  const keyMap: Record<Direction, Record<Orientation, { incrKeys: string[]; decrKeys: string[] }>> = {
+    ltr: {
+      horizontal: { incrKeys: ['ArrowRight', 'ArrowUp'], decrKeys: ['ArrowLeft', 'ArrowDown'] },
+      vertical: { incrKeys: ['ArrowDown', 'ArrowRight'], decrKeys: ['ArrowUp', 'ArrowLeft'] },
+    },
+    rtl: {
+      horizontal: { incrKeys: ['ArrowLeft', 'ArrowUp'], decrKeys: ['ArrowRight', 'ArrowDown'] },
+      vertical: { incrKeys: ['ArrowDown', 'ArrowLeft'], decrKeys: ['ArrowUp', 'ArrowRight'] },
+    },
+  };
+
   function onKeydown(e: KeyboardEvent) {
-    const isHorizontal = slider.getOrientation() === 'horizontal';
-    const incrKeys = isHorizontal ? ['ArrowRight', 'ArrowUp'] : ['ArrowDown', 'ArrowRight'];
-    const decrKeys = isHorizontal ? ['ArrowLeft', 'ArrowDown'] : ['ArrowUp', 'ArrowLeft'];
+    const { incrKeys, decrKeys } = keyMap[slider.getInlineDirection()][slider.getOrientation()];
 
     if (decrKeys.includes(e.key)) {
       e.preventDefault();

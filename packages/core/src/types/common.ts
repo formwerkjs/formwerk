@@ -60,3 +60,5 @@ export type RovingTabIndex = '0' | '-1';
 export type Getter<T> = () => T;
 
 export type Orientation = 'horizontal' | 'vertical';
+
+export type Direction = 'ltr' | 'rtl';

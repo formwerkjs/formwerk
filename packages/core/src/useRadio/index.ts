@@ -11,19 +11,20 @@ import {
   ref,
   toValue,
 } from 'vue';
-import { createDescribedByProps, getNextCycleArrIdx, uniqId, withRefCapture } from '../utils/common';
-import { useInputValidity } from '../composables/useInputValidity';
-import { useFieldValue } from '../composables/useFieldValue';
+import { createDescribedByProps, getNextCycleArrIdx, uniqId, withRefCapture } from '@core/utils/common';
+import { useInputValidity } from '@core/composables/useInputValidity';
+import { useFieldValue } from '@core/composables/useFieldValue';
 import {
   AriaDescribableProps,
   AriaLabelableProps,
   AriaValidatableProps,
+  Direction,
   InputBaseAttributes,
   InputEvents,
   Orientation,
   PressEvents,
   RovingTabIndex,
-} from '../types/common';
+} from '@core/types/common';
 import { useLabel } from '@core/composables/useLabel';
 
 export interface RadioGroupContext<TValue> {
@@ -46,8 +47,6 @@ export interface RadioItemContext {
 }
 
 export const RadioGroupKey: InjectionKey<RadioGroupContext<any>> = Symbol('RadioGroupKey');
-
-export type Direction = 'ltr' | 'rtl';
 
 export interface RadioGroupProps<TValue = string> {
   orientation?: MaybeRefOrGetter<Orientation>;

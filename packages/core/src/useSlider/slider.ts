@@ -9,6 +9,7 @@ export interface SliderProps {
   label?: MaybeRefOrGetter<string>;
 
   orientation?: MaybeRefOrGetter<Orientation>;
+  dir?: MaybeRefOrGetter<'ltr' | 'rtl'>;
   modelValue?: MaybeRefOrGetter<number | number[]>;
   min?: MaybeRefOrGetter<number>;
   max?: MaybeRefOrGetter<number>;
@@ -59,6 +60,11 @@ export interface SliderRegistration {
    * Gets the value for a given page position.
    */
   getValueForPagePosition(position: Coordinate): number;
+
+  /**
+   * Gets the inline direction of the slider.
+   */
+  getInlineDirection(): 'ltr' | 'rtl';
 }
 
 export interface SliderContext {
@@ -103,6 +109,7 @@ export function useSlider(props: SliderProps) {
     ...labelledByProps.value,
     id: inputId,
     role: 'group',
+    dir: toValue(props.dir),
     'aria-orientation': toValue(props.orientation) || 'horizontal',
   }));
 
@@ -120,6 +127,11 @@ export function useSlider(props: SliderProps) {
           const targetValue = getValueForPagePosition({ x: e.clientX, y: e.clientY });
           const closest = thumbs.value.reduce(
             (candidate, curr) => {
+              const { min, max } = getThumbRange(curr);
+              if (targetValue < min || targetValue > max) {
+                return candidate;
+              }
+
               const diff = Math.abs(curr.getCurrentValue() - targetValue);
 
               return diff < candidate.diff ? { thumb: curr, diff } : candidate;
@@ -141,30 +153,38 @@ export function useSlider(props: SliderProps) {
 
     const orientation = toValue(props.orientation) || 'horizontal';
     const rect = trackRef.value.getBoundingClientRect();
-    const percent = orientation === 'horizontal' ? (x - rect.left) / rect.width : (y - rect.top) / rect.height;
+    let percent = orientation === 'horizontal' ? (x - rect.left) / rect.width : (y - rect.top) / rect.height;
+    if (toValue(props.dir) === 'rtl') {
+      percent = 1 - percent;
+    }
 
     return toNearestMultipleOf(percent * (toValue(props.max) || 100), toValue(props.step) || 1);
   }
 
+  function getSliderRange() {
+    return { min: toValue(props.min) || 0, max: toValue(props.max) || 100 };
+  }
+
+  function getThumbRange(thumbCtx: ThumbContext) {
+    const { min: absoluteMin, max: absoluteMax } = getSliderRange();
+
+    const idx = thumbs.value.indexOf(thumbCtx);
+    const nextThumb = thumbs.value[idx + 1];
+    const prevThumb = thumbs.value[idx - 1];
+
+    const min = prevThumb ? prevThumb.getCurrentValue() : absoluteMin;
+    const max = nextThumb ? nextThumb.getCurrentValue() : absoluteMax;
+
+    return { min, max, absoluteMin, absoluteMax };
+  }
+
   function registerThumb(ctx: ThumbContext) {
     thumbs.value.push(ctx);
-    const getSliderRange = () => ({ min: toValue(props.min) || 0, max: toValue(props.max) || 100 });
     // Each thumb range is dependent on the previous and next thumb
     // i.e it's min cannot be less than the previous thumb's value
     // and it's max cannot be more than the next thumb's value
     const reg: SliderRegistration = {
-      getThumbRange() {
-        const { min: absoluteMin, max: absoluteMax } = getSliderRange();
-
-        const idx = thumbs.value.indexOf(ctx);
-        const nextThumb = thumbs.value[idx + 1];
-        const prevThumb = thumbs.value[idx - 1];
-
-        const min = prevThumb ? prevThumb.getCurrentValue() : absoluteMin;
-        const max = nextThumb ? nextThumb.getCurrentValue() : absoluteMax;
-
-        return { min, max, absoluteMin, absoluteMax };
-      },
+      getThumbRange: () => getThumbRange(ctx),
       getSliderRange,
       getSliderStep() {
         return toValue(props.step) || 1;
@@ -174,6 +194,7 @@ export function useSlider(props: SliderProps) {
       },
       getValueForPagePosition,
       getOrientation: () => toValue(props.orientation) || 'horizontal',
+      getInlineDirection: () => toValue(props.dir) || 'ltr',
     };
 
     onBeforeUnmount(() => unregisterThumb(ctx));
