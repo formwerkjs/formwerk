@@ -1,14 +1,15 @@
-import { InjectionKey, MaybeRefOrGetter, computed, onBeforeUnmount, provide, ref, shallowRef, toValue } from 'vue';
+import { InjectionKey, MaybeRefOrGetter, computed, onBeforeUnmount, provide, ref, toValue } from 'vue';
 import { useLabel } from '@core/composables/useLabel';
 import { AriaLabelableProps, Orientation } from '@core/types/common';
 import { uniqId, withRefCapture } from '@core/utils/common';
 import { toNearestMultipleOf } from '@core/utils/math';
+import { useSyncModel } from '@core/composables/useModelSync';
 
 export interface SliderProps {
   label?: MaybeRefOrGetter<string>;
 
   orientation?: MaybeRefOrGetter<Orientation>;
-  modelValue?: MaybeRefOrGetter<number>;
+  modelValue?: MaybeRefOrGetter<number | number[]>;
   min?: MaybeRefOrGetter<number>;
   max?: MaybeRefOrGetter<number>;
 
@@ -69,7 +70,27 @@ export const SliderInjectionKey: InjectionKey<SliderContext> = Symbol('Slider');
 export function useSlider(props: SliderProps) {
   const inputId = uniqId();
   const trackRef = ref<HTMLElement>();
-  const thumbs = shallowRef<ThumbContext[]>([]);
+  const thumbs = ref<ThumbContext[]>([]);
+  const sliderValue = computed(() => {
+    if (thumbs.value.length <= 1) {
+      return thumbs.value[0]?.getCurrentValue() || 0;
+    }
+
+    return thumbs.value.map(t => t.getCurrentValue());
+  });
+
+  useSyncModel({
+    model: sliderValue,
+    modelName: 'modelValue',
+    onModelPropUpdated: value => {
+      const arr = Array.isArray(value) ? value : [value];
+      thumbs.value.forEach((t, idx) => {
+        if (idx in arr) {
+          t.setValue(arr[idx] || 0);
+        }
+      });
+    },
+  });
 
   const { labelProps, labelledByProps } = useLabel({
     for: inputId,
@@ -178,5 +199,6 @@ export function useSlider(props: SliderProps) {
     groupProps,
     outputProps,
     trackProps,
+    sliderValue,
   };
 }
