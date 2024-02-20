@@ -36,8 +36,14 @@ export function useSliderThumb(props: SliderThumbProps, elementRef?: Ref<HTMLEle
     setValue,
   };
 
+  function clampValue(value: number) {
+    const { max, min } = slider.getThumbRange();
+
+    return Math.min(Math.max(value, min), max);
+  }
+
   function setValue(value: number) {
-    fieldValue.value = value;
+    fieldValue.value = clampValue(value);
   }
 
   const slider = inject(SliderInjectionKey, mockSlider, true).registerThumb(thumbContext);
@@ -86,20 +92,14 @@ export function useSliderThumb(props: SliderThumbProps, elementRef?: Ref<HTMLEle
     };
   }
 
-  function clampValue(value: number) {
-    const { max, min } = slider.getThumbRange();
-
-    return Math.min(Math.max(value, min), max);
-  }
-
   function increment() {
     const nextValue = (fieldValue.value || 0) + slider.getSliderStep();
-    setValue(clampValue(nextValue));
+    setValue(nextValue);
   }
 
   function decrement() {
     const nextValue = (fieldValue.value || 0) - slider.getSliderStep();
-    setValue(clampValue(nextValue));
+    setValue(nextValue);
   }
 
   const keyMap: Record<Direction, Record<Orientation, { incrKeys: string[]; decrKeys: string[] }>> = {
@@ -129,6 +129,20 @@ export function useSliderThumb(props: SliderThumbProps, elementRef?: Ref<HTMLEle
 
       return;
     }
+
+    if (e.key === 'Home') {
+      e.preventDefault();
+      setValue(slider.getSliderRange().min);
+
+      return;
+    }
+
+    if (e.key === 'End') {
+      e.preventDefault();
+      setValue(slider.getSliderRange().max);
+
+      return;
+    }
   }
 
   function onMousedown(e: MouseEvent) {
@@ -148,7 +162,7 @@ export function useSliderThumb(props: SliderThumbProps, elementRef?: Ref<HTMLEle
   function onMousemove(e: MouseEvent) {
     e.preventDefault();
     e.stopPropagation();
-    setValue(clampValue(slider.getValueForPagePosition({ x: e.clientX, y: e.clientY })));
+    setValue(slider.getValueForPagePosition({ x: e.clientX, y: e.clientY }));
   }
 
   function onMouseup() {
