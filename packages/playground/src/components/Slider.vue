@@ -18,6 +18,8 @@ const { trackProps, groupProps, labelProps } = useSlider(props);
 
 <style lang="postcss" scoped>
 .slider {
+  width: 150px;
+
   .track {
     @apply w-full py-2 flex items-center;
     &::before {
@@ -29,6 +31,7 @@ const { trackProps, groupProps, labelProps } = useSlider(props);
 
   &.vertical {
     height: 150px;
+    width: unset;
 
     .track {
       @apply h-full w-8  flex-col;

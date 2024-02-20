@@ -72,7 +72,7 @@
 
     <MultiSlider label="Opacity" :min="0" :max="100" orientation="vertical" />
 
-    <button class="bg-blue-500 text-white px-4 py-1.5 rounded-md">KeKL</button>
+    <button class="mt-9 bg-blue-500 text-white px-4 py-1.5 rounded-md">KeKL</button>
   </form>
 
   <InputSearch name="search" label="Search" :min-length="10" @submit="onSearchSubmit" />
