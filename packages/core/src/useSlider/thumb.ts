@@ -2,7 +2,7 @@ import { MaybeRefOrGetter, Ref, computed, inject, ref, toValue } from 'vue';
 import { SliderContext, SliderInjectionKey, ThumbContext } from './slider';
 import { withRefCapture } from '@core/utils/common';
 import { useFieldValue } from '@core/composables/useFieldValue';
-import { Direction, Orientation } from '@core/types/common';
+import { Direction } from '@core/types/common';
 
 export interface SliderThumbProps {
   label?: MaybeRefOrGetter<string>;
@@ -20,6 +20,8 @@ const mockSlider: () => SliderContext = () => ({
     getInlineDirection: () => 'ltr',
   }),
 });
+
+const PAGE_KEY_MULTIPLIER = 10;
 
 export function useSliderThumb(props: SliderThumbProps, elementRef?: Ref<HTMLElement>) {
   const thumbRef = elementRef || ref<HTMLElement>();
@@ -73,14 +75,14 @@ export function useSliderThumb(props: SliderThumbProps, elementRef?: Ref<HTMLEle
     const { min, max } = slider.getSliderRange();
     const dir = slider.getInlineDirection();
     let percent = ((value - min) / (max - min)) * 100;
-    if (dir === 'rtl') {
+    const orientation = slider.getOrientation();
+    if (dir === 'rtl' || orientation === 'vertical') {
       percent = 1 - percent;
     }
 
     const inlineBound = dir === 'rtl' ? 'right' : 'left';
-    const orientation = slider.getOrientation();
 
-    const positionProp = orientation === 'vertical' ? 'top' : inlineBound;
+    const positionProp = orientation === 'vertical' ? 'bottom' : inlineBound;
     const translateX = orientation === 'vertical' ? '0' : `${percent}cqw`;
     const translateY = orientation === 'vertical' ? `${percent}cqh` : '0';
 
@@ -92,29 +94,23 @@ export function useSliderThumb(props: SliderThumbProps, elementRef?: Ref<HTMLEle
     };
   }
 
-  function increment() {
-    const nextValue = (fieldValue.value || 0) + slider.getSliderStep();
+  function increment(multiple: number = 1) {
+    const nextValue = (fieldValue.value || 0) + slider.getSliderStep() * multiple;
     setValue(nextValue);
   }
 
-  function decrement() {
-    const nextValue = (fieldValue.value || 0) - slider.getSliderStep();
+  function decrement(multiple: number = 1) {
+    const nextValue = (fieldValue.value || 0) - slider.getSliderStep() * multiple;
     setValue(nextValue);
   }
 
-  const keyMap: Record<Direction, Record<Orientation, { incrKeys: string[]; decrKeys: string[] }>> = {
-    ltr: {
-      horizontal: { incrKeys: ['ArrowRight', 'ArrowUp'], decrKeys: ['ArrowLeft', 'ArrowDown'] },
-      vertical: { incrKeys: ['ArrowDown', 'ArrowRight'], decrKeys: ['ArrowUp', 'ArrowLeft'] },
-    },
-    rtl: {
-      horizontal: { incrKeys: ['ArrowLeft', 'ArrowUp'], decrKeys: ['ArrowRight', 'ArrowDown'] },
-      vertical: { incrKeys: ['ArrowDown', 'ArrowLeft'], decrKeys: ['ArrowUp', 'ArrowRight'] },
-    },
+  const keyMap: Record<Direction, { incrKeys: string[]; decrKeys: string[] }> = {
+    ltr: { incrKeys: ['ArrowRight', 'ArrowUp'], decrKeys: ['ArrowLeft', 'ArrowDown'] },
+    rtl: { incrKeys: ['ArrowLeft', 'ArrowUp'], decrKeys: ['ArrowRight', 'ArrowDown'] },
   };
 
   function onKeydown(e: KeyboardEvent) {
-    const { incrKeys, decrKeys } = keyMap[slider.getInlineDirection()][slider.getOrientation()];
+    const { incrKeys, decrKeys } = keyMap[slider.getInlineDirection()];
 
     if (decrKeys.includes(e.key)) {
       e.preventDefault();
@@ -140,6 +136,20 @@ export function useSliderThumb(props: SliderThumbProps, elementRef?: Ref<HTMLEle
     if (e.key === 'End') {
       e.preventDefault();
       setValue(slider.getSliderRange().max);
+
+      return;
+    }
+
+    if (e.key === 'PageUp') {
+      e.preventDefault();
+      increment(PAGE_KEY_MULTIPLIER);
+
+      return;
+    }
+
+    if (e.key === 'PageDown') {
+      e.preventDefault();
+      decrement(PAGE_KEY_MULTIPLIER);
 
       return;
     }

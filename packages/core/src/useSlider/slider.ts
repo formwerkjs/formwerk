@@ -154,7 +154,7 @@ export function useSlider(props: SliderProps) {
     const orientation = toValue(props.orientation) || 'horizontal';
     const rect = trackRef.value.getBoundingClientRect();
     let percent = orientation === 'horizontal' ? (x - rect.left) / rect.width : (y - rect.top) / rect.height;
-    if (toValue(props.dir) === 'rtl') {
+    if (toValue(props.dir) === 'rtl' || orientation === 'vertical') {
       percent = 1 - percent;
     }
 
