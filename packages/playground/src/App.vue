@@ -1,6 +1,7 @@
 <template>
   <form class="flex flex-col gap-4">
     <InputText
+      v-model="form.email"
       name="email"
       label="Email"
       :max-length="10"
@@ -11,6 +12,7 @@
     />
 
     <InputTextArea
+      v-model="form.area"
       name="email"
       label="Email"
       :max-length="10"
@@ -20,57 +22,74 @@
       pattern="[0-9]+"
     />
 
-    <SwitchInput>Toggle me</SwitchInput>
+    <SwitchInput v-model="form.switch">Toggle me</SwitchInput>
 
-    <Switch label="Toggle me" />
+    <Switch label="Toggle me" v-model="form.switch" />
 
-    <RadioGroup name="radio" label="Radio Vertical (inputs)">
+    <RadioGroup v-model="form.radio" name="radio" label="Radio Vertical (inputs)">
       <InputRadioItem label="Radio 1" value="1" />
       <InputRadioItem label="Radio 2" value="2" />
       <InputRadioItem label="Radio 3" value="3" />
     </RadioGroup>
 
-    <RadioGroup name="radio2" label="Radio Horizontal (inputs)" orientation="horizontal" required>
+    <RadioGroup v-model="form.radio2" name="radio2" label="Radio Horizontal (inputs)" orientation="horizontal" required>
       <InputRadioItem label="Radio 1" value="1" />
       <InputRadioItem label="Radio 2" value="2" />
       <InputRadioItem label="Radio 3" value="3" />
     </RadioGroup>
 
-    <RadioGroup name="radio2rtl" label="Radio Horizontal (inputs, RTL)" orientation="horizontal" dir="rtl">
+    <RadioGroup
+      v-model="form.radio2rtl"
+      name="radio2rtl"
+      label="Radio Horizontal (inputs, RTL)"
+      orientation="horizontal"
+      dir="rtl"
+    >
       <InputRadioItem label="Radio 1" value="1" />
       <InputRadioItem label="Radio 2" value="2" />
       <InputRadioItem label="Radio 3" value="3" />
     </RadioGroup>
 
-    <RadioGroup name="radio3" label="Radio Items (non-inputs, vertical)" orientation="vertical">
+    <RadioGroup v-model="form.radio3" name="radio3" label="Radio Items (non-inputs, vertical)" orientation="vertical">
       <RadioItem label="Radio 1" value="1" />
       <RadioItem label="Radio 2" value="2" />
       <RadioItem label="Radio 3" value="3" />
     </RadioGroup>
 
-    <RadioGroup name="radio4" label="Radio Items (non-inputs, horizontal)" orientation="horizontal">
+    <RadioGroup
+      v-model="form.radio4"
+      name="radio4"
+      label="Radio Items (non-inputs, horizontal)"
+      orientation="horizontal"
+    >
       <RadioItem label="Drink 1" value="1" />
       <RadioItem label="Drink 2" value="2" />
       <RadioItem label="Drink 3" value="3" />
     </RadioGroup>
 
-    <RadioGroup name="radio5" label="Radio Items (non-inputs, horizontal, RTL)" orientation="horizontal" dir="rtl">
+    <RadioGroup
+      v-model="form.radio5"
+      name="radio5"
+      label="Radio Items (non-inputs, horizontal, RTL)"
+      orientation="horizontal"
+      dir="rtl"
+    >
       <RadioItem label="Radio 1" value="1" />
-
       <RadioItem label="Radio 2" value="2" />
-
       <RadioItem label="Radio 3" value="3" />
     </RadioGroup>
 
-    <pre>{{ model }}</pre>
+    <Slider v-model="form.opacity" label="Opacity" :min="0" :max="100" />
 
-    <Slider label="Opacity" :min="0" :max="100" :step="2" />
+    <Slider v-model="form.opacity" dir="rtl" label="Opacity RTL" :min="0" :max="100" />
 
-    <MultiSlider label="Opacity" :min="0" :max="100" />
+    <MultiSlider v-model="form.opacity2" label="Opacity Multiple" :min="0" :max="100" />
 
-    <Slider label="Opacity" :min="0" :max="100" :step="2" orientation="vertical" />
+    <MultiSlider v-model="form.opacity2" dir="rtl" label="Opacity Multiple RTL" :min="0" :max="100" />
 
-    <MultiSlider label="Opacity" :min="0" :max="100" orientation="vertical" />
+    <Slider v-model="form.opacity3" label="Opacity" :min="0" :max="100" :step="2" orientation="vertical" />
+
+    <MultiSlider v-model="form.opacity4" label="Opacity" :min="0" :max="100" orientation="vertical" />
 
     <button class="mt-9 bg-blue-500 text-white px-4 py-1.5 rounded-md">KeKL</button>
   </form>
@@ -79,7 +98,7 @@
 </template>
 
 <script lang="ts" setup>
-import { ref } from 'vue';
+import { reactive } from 'vue';
 import InputText from './components/InputText.vue';
 import InputTextArea from './components/InputTextArea.vue';
 import InputSearch from './components/InputSearch.vue';
@@ -91,7 +110,22 @@ import RadioItem from './components/RadioItem.vue';
 import Slider from './components/Slider.vue';
 import MultiSlider from './components/MultiSlider.vue';
 
-const model = ref('');
+const form = reactive({
+  email: '',
+  area: '',
+  switch: false,
+  search: '',
+  radio: '',
+  radio2: '',
+  radio2rtl: '',
+  radio3: '',
+  radio4: '',
+  radio5: '',
+  opacity: 0,
+  opacity2: [0, 100],
+  opacity3: 0,
+  opacity4: [0, 100],
+});
 
 function onSearchSubmit(value: string) {
   console.log(value);
