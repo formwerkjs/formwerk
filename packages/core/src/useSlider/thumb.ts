@@ -83,8 +83,8 @@ export function useSliderThumb(props: SliderThumbProps, elementRef?: Ref<HTMLEle
     const inlineBound = dir === 'rtl' ? 'right' : 'left';
 
     const positionProp = orientation === 'vertical' ? 'bottom' : inlineBound;
-    const translateX = orientation === 'vertical' ? '0' : `${percent}cqw`;
-    const translateY = orientation === 'vertical' ? `${percent}cqh` : '0';
+    const translateX = orientation === 'vertical' ? '0' : `calc(${percent}cqw - 50%)`;
+    const translateY = orientation === 'vertical' ? `calc(${percent}cqh - 50%)` : '0';
 
     return {
       position: 'absolute',
