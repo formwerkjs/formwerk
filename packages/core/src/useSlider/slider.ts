@@ -158,7 +158,12 @@ export function useSlider(props: SliderProps) {
       percent = 1 - percent;
     }
 
-    return toNearestMultipleOf(percent * (toValue(props.max) || 100), toValue(props.step) || 1);
+    const min = toValue(props.min) || 0;
+    const max = toValue(props.max) || 100;
+
+    const value = percent * (max - min) + min;
+
+    return toNearestMultipleOf(value, toValue(props.step) || 1);
   }
 
   function getSliderRange() {
