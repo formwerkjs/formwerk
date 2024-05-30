@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import { RadioProps, useRadio } from '@formwerk/core';
+import { CheckboxProps, useCheckbox } from '@formwerk/core';
 
-const props = defineProps<RadioProps>();
+const props = defineProps<CheckboxProps>();
 
-const { labelProps, inputProps } = useRadio(props);
+const { labelProps, inputProps } = useCheckbox(props);
 </script>
 
 <template>

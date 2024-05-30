@@ -100,6 +100,22 @@
 
       <MultiSlider v-model="form.opacity4" label="Opacity" :min="0" :max="100" orientation="vertical" />
 
+      <CheckboxGroup v-model="form.checkboxGroup1" name="checkbox" label="Checkbox Group">
+        <CheckboxItem label="Checkbox 1" true-value="1" />
+        <CheckboxItem label="Checkbox 2" true-value="2" />
+        <CheckboxItem label="Checkbox 3" true-value="3" />
+      </CheckboxGroup>
+
+      <CheckboxItem label="Standalone Box" v-model="form.checkboxSolo1" />
+
+      <CheckboxGroup v-model="form.checkboxGroup2" name="checkbox" label="Checkbox Group (Inputs)">
+        <CheckboxInput label="Checkbox 1" true-value="1" />
+        <CheckboxInput label="Checkbox 2" true-value="2" />
+        <CheckboxInput label="Checkbox 3" true-value="3" />
+      </CheckboxGroup>
+
+      <CheckboxInput label="Standalone Input Box" :true-value="'lil'" v-model="form.checkboxSolo2" />
+
       <button class="mt-9 bg-blue-500 text-white px-4 py-1.5 rounded-md">KeKL</button>
     </div>
 
@@ -123,11 +139,15 @@ import InputRadioItem from './components/InputRadioItem.vue';
 import RadioItem from './components/RadioItem.vue';
 import Slider from './components/Slider.vue';
 import MultiSlider from './components/MultiSlider.vue';
+import CheckboxGroup from './components/CheckboxGroup.vue';
+import CheckboxItem from './components/CheckboxItem.vue';
+import CheckboxInput from './components/CheckboxInput.vue';
 
 const form = reactive({
   email: '',
   area: '',
   switch: false,
+  interestingSwitch: false,
   search: '',
   radio: '',
   radio2: '',
@@ -139,6 +159,10 @@ const form = reactive({
   opacity2: [0, 100],
   opacity3: 0,
   opacity4: [0, 100],
+  checkboxGroup1: undefined,
+  checkboxSolo1: undefined,
+  checkboxGroup2: undefined,
+  checkboxSolo2: undefined,
 });
 
 function onSearchSubmit(value: string) {
