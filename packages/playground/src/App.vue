@@ -114,7 +114,7 @@
         <CheckboxInput label="Checkbox 3" true-value="3" />
       </CheckboxGroup>
 
-      <CheckboxInput label="Standalone Input Box" :true-value="'lil'" v-model="form.checkboxSolo2" />
+      <CheckboxInput label="Standalone Input Box" :true-value="'lil'" indeterminate v-model="form.checkboxSolo2" />
 
       <button class="mt-9 bg-blue-500 text-white px-4 py-1.5 rounded-md">KeKL</button>
     </div>

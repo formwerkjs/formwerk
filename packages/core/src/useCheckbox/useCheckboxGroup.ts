@@ -8,11 +8,14 @@ import { uniqId, createDescribedByProps } from '../utils/common';
 
 export type CheckboxGroupValue<TCheckbox> = TCheckbox[];
 
+export type CheckboxGroupState = 'checked' | 'unchecked' | 'mixed';
+
 export interface CheckboxGroupContext<TCheckbox> {
   name: string;
   disabled: boolean;
   readonly: boolean;
   required: boolean;
+  groupState: CheckboxGroupState;
 
   readonly modelValue: CheckboxGroupValue<TCheckbox> | undefined;
   setValidity(message: string): void;
@@ -26,6 +29,7 @@ export interface CheckboxGroupContext<TCheckbox> {
 export interface CheckboxContext {
   isDisabled(): boolean;
   setChecked(force?: boolean): boolean;
+  isChecked(): boolean;
 }
 
 export const CheckboxGroupKey: InjectionKey<CheckboxGroupContext<any>> = Symbol('CheckboxGroupKey');
@@ -131,11 +135,24 @@ export function useCheckboxGroup<TCheckbox>(props: CheckboxGroupProps<TCheckbox>
     return (fieldValue.value ?? []).includes(value);
   }
 
+  const groupState = computed<CheckboxGroupState>(() => {
+    if (!fieldValue.value || !fieldValue.value.length) {
+      return 'unchecked';
+    }
+
+    if (fieldValue.value.length > 0 && fieldValue.value.length < checkboxes.length) {
+      return 'mixed';
+    }
+
+    return 'checked';
+  });
+
   const context: CheckboxGroupContext<TCheckbox> = reactive({
     name: computed(() => toValue(props.name) ?? groupId),
     disabled: computed(() => toValue(props.disabled) ?? false),
     readonly: computed(() => toValue(props.readonly) ?? false),
     required: computed(() => toValue(props.required) ?? false),
+    groupState,
     modelValue: fieldValue,
     setValidity,
     setValue,
@@ -149,6 +166,7 @@ export function useCheckboxGroup<TCheckbox>(props: CheckboxGroupProps<TCheckbox>
   return {
     labelProps,
     descriptionProps,
+    groupState,
     errorMessageProps,
     fieldValue,
     checkboxGroupProps,
