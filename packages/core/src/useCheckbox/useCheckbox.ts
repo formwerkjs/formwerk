@@ -7,10 +7,12 @@ import { useFieldValue } from '../composables/useFieldValue';
 import { useSyncModel } from '../composables/useModelSync';
 
 export interface CheckboxProps<TValue = string> {
+  name?: MaybeRefOrGetter<string>;
   label?: MaybeRefOrGetter<string>;
   disabled?: MaybeRefOrGetter<boolean>;
   trueValue?: MaybeRefOrGetter<TValue>;
   falseValue?: MaybeRefOrGetter<TValue>;
+  indeterminate?: MaybeRefOrGetter<boolean>;
 }
 
 export interface CheckboxDomInputProps extends AriaLabelableProps, InputBaseAttributes {
@@ -112,7 +114,6 @@ export function useCheckbox<TValue = string>(
       ...labelledByProps.value,
       ...createHandlers(isInput),
       id: inputId,
-      name: group?.name,
       [isInput ? 'checked' : 'aria-checked']: checked.value || undefined,
       [isInput ? 'readonly' : 'aria-readonly']: group?.readonly || undefined,
       [isInput ? 'disabled' : 'aria-disabled']: isDisabled() || undefined,
@@ -137,6 +138,8 @@ export function useCheckbox<TValue = string>(
     withRefCapture(
       {
         type: 'checkbox',
+        name: group?.name || props.name,
+        indeterminate: toValue(props.indeterminate) || false,
         ...createBindings(true),
       },
       inputRef,
