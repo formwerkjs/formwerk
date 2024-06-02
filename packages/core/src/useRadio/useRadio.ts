@@ -1,14 +1,13 @@
-import { MaybeRefOrGetter, Ref, computed, inject, nextTick, ref, toValue } from 'vue';
+import { Ref, computed, inject, nextTick, ref, toValue } from 'vue';
 import { uniqId, withRefCapture } from '../utils/common';
-import { AriaLabelableProps, InputBaseAttributes, RovingTabIndex } from '../types';
+import { AriaLabelableProps, InputBaseAttributes, Reactivify, RovingTabIndex } from '../types';
 import { useLabel } from '../composables/useLabel';
 import { RadioGroupContext, RadioGroupKey } from './useRadioGroup';
 
 export interface RadioProps<TValue = string> {
   value: TValue;
-
-  label?: MaybeRefOrGetter<string>;
-  disabled?: MaybeRefOrGetter<boolean>;
+  label?: string;
+  disabled?: boolean;
 }
 
 export interface RadioDomInputProps extends AriaLabelableProps, InputBaseAttributes {
@@ -24,7 +23,10 @@ export interface RadioDomProps extends AriaLabelableProps {
   'aria-required'?: boolean;
 }
 
-export function useRadio<TValue = string>(props: RadioProps<TValue>, elementRef?: Ref<HTMLInputElement | undefined>) {
+export function useRadio<TValue = string>(
+  props: Reactivify<RadioProps<TValue>>,
+  elementRef?: Ref<HTMLInputElement | undefined>,
+) {
   const inputId = uniqId();
   const group: RadioGroupContext<TValue> | null = inject(RadioGroupKey, null);
   const inputRef = elementRef || ref<HTMLInputElement>();
@@ -38,12 +40,12 @@ export function useRadio<TValue = string>(props: RadioProps<TValue>, elementRef?
   function createHandlers(isInput: boolean) {
     const baseHandlers = {
       onClick() {
-        group?.setValue(props.value);
+        group?.setValue(toValue(props.value));
       },
       onKeydown(e: KeyboardEvent) {
         if (e.code === 'Space') {
           e.preventDefault();
-          group?.setValue(props.value);
+          group?.setValue(toValue(props.value));
         }
       },
     };
@@ -86,7 +88,7 @@ export function useRadio<TValue = string>(props: RadioProps<TValue>, elementRef?
     isChecked: () => checked.value,
     isDisabled,
     setChecked: () => {
-      group?.setValue(props.value);
+      group?.setValue(toValue(props.value));
       focus();
       nextTick(() => {
         group?.setValidity(inputRef.value?.validationMessage ?? '');

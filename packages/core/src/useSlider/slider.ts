@@ -1,20 +1,20 @@
-import { InjectionKey, MaybeRefOrGetter, computed, onBeforeUnmount, provide, ref, toValue } from 'vue';
+import { InjectionKey, computed, onBeforeUnmount, provide, ref, toValue } from 'vue';
 import { useLabel } from '../composables/useLabel';
-import { AriaLabelableProps, Orientation } from '../types';
+import { AriaLabelableProps, Orientation, Reactivify } from '../types';
 import { uniqId, withRefCapture } from '../utils/common';
 import { toNearestMultipleOf } from '../utils/math';
 import { useSyncModel } from '../composables/useModelSync';
 
 export interface SliderProps {
-  label?: MaybeRefOrGetter<string>;
+  label?: string;
 
-  orientation?: MaybeRefOrGetter<Orientation>;
-  dir?: MaybeRefOrGetter<'ltr' | 'rtl'>;
-  modelValue?: MaybeRefOrGetter<number | number[]>;
-  min?: MaybeRefOrGetter<number>;
-  max?: MaybeRefOrGetter<number>;
+  orientation?: Orientation;
+  dir?: 'ltr' | 'rtl';
+  modelValue?: number | number[];
+  min?: number;
+  max?: number;
 
-  step?: MaybeRefOrGetter<number>;
+  step?: number;
 }
 
 export type Coordinate = { x: number; y: number };
@@ -73,7 +73,7 @@ export interface SliderContext {
 
 export const SliderInjectionKey: InjectionKey<SliderContext> = Symbol('Slider');
 
-export function useSlider(props: SliderProps) {
+export function useSlider(props: Reactivify<SliderProps>) {
   const inputId = uniqId();
   const trackRef = ref<HTMLElement>();
   const thumbs = ref<ThumbContext[]>([]);

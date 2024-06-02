@@ -1,9 +1,16 @@
-import { InjectionKey, MaybeRefOrGetter, toValue, computed, onBeforeUnmount, reactive, provide } from 'vue';
+import { InjectionKey, toValue, computed, onBeforeUnmount, reactive, provide } from 'vue';
 import { useFieldValue } from '../composables/useFieldValue';
 import { useInputValidity } from '../composables/useInputValidity';
 import { useLabel } from '../composables/useLabel';
 import { useSyncModel } from '../composables/useModelSync';
-import { Orientation, AriaLabelableProps, AriaDescribableProps, AriaValidatableProps, Direction } from '../types';
+import {
+  Orientation,
+  AriaLabelableProps,
+  AriaDescribableProps,
+  AriaValidatableProps,
+  Direction,
+  Reactivify,
+} from '../types';
 import { uniqId, createDescribedByProps, getNextCycleArrIdx } from '../utils/common';
 
 export interface RadioGroupContext<TValue> {
@@ -28,17 +35,17 @@ export interface RadioItemContext {
 export const RadioGroupKey: InjectionKey<RadioGroupContext<any>> = Symbol('RadioGroupKey');
 
 export interface RadioGroupProps<TValue = string> {
-  orientation?: MaybeRefOrGetter<Orientation>;
-  dir?: MaybeRefOrGetter<'ltr' | 'rtl'>;
-  label: MaybeRefOrGetter<string>;
-  description?: MaybeRefOrGetter<string>;
+  orientation?: Orientation;
+  dir?: 'ltr' | 'rtl';
+  label: string;
+  description?: string;
 
-  name?: MaybeRefOrGetter<string>;
-  modelValue?: MaybeRefOrGetter<TValue>;
+  name?: string;
+  modelValue?: TValue;
 
-  disabled?: MaybeRefOrGetter<boolean>;
-  readonly?: MaybeRefOrGetter<boolean>;
-  required?: MaybeRefOrGetter<boolean>;
+  disabled?: boolean;
+  readonly?: boolean;
+  required?: boolean;
 }
 
 interface RadioGroupDomProps extends AriaLabelableProps, AriaDescribableProps, AriaValidatableProps {
@@ -52,7 +59,7 @@ const ORIENTATION_ARROWS: Record<Orientation, Record<Direction, string[]>> = {
   vertical: { ltr: ['ArrowUp', 'ArrowDown'], rtl: ['ArrowUp', 'ArrowDown'] },
 };
 
-export function useRadioGroup<TValue = string>(props: RadioGroupProps<TValue>) {
+export function useRadioGroup<TValue = string>(props: Reactivify<RadioGroupProps<TValue>>) {
   const groupId = uniqId();
   const getOrientationArrows = () =>
     ORIENTATION_ARROWS[toValue(props.orientation) ?? 'vertical'][toValue(props.dir) || 'ltr'];

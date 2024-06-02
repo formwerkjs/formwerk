@@ -1,4 +1,4 @@
-import { MaybeRefOrGetter, Ref, computed, shallowRef, toValue } from 'vue';
+import { Ref, computed, shallowRef, toValue } from 'vue';
 import { createDescribedByProps, propsToValues, uniqId, withRefCapture } from '../utils/common';
 import {
   AriaDescribableProps,
@@ -7,6 +7,7 @@ import {
   InputEvents,
   AriaValidatableProps,
   Numberish,
+  Reactivify,
 } from '../types/common';
 import { useSyncModel } from '../composables/useModelSync';
 import { useInputValidity } from '../composables/useInputValidity';
@@ -29,25 +30,28 @@ export interface TextInputDOMProps
 }
 
 export interface TextFieldProps {
-  label: MaybeRefOrGetter<string>;
-  modelValue?: MaybeRefOrGetter<string>;
-  description?: MaybeRefOrGetter<string>;
+  label: string;
+  modelValue?: string;
+  description?: string;
 
   // TODO: Vue cannot resolve these types if they are mapped from up there
-  name?: MaybeRefOrGetter<string>;
-  value?: MaybeRefOrGetter<string>;
-  type?: MaybeRefOrGetter<TextInputDOMType>;
-  maxLength?: MaybeRefOrGetter<Numberish>;
-  minLength?: MaybeRefOrGetter<Numberish>;
-  pattern?: MaybeRefOrGetter<string | undefined>;
-  placeholder?: MaybeRefOrGetter<string | undefined>;
+  name?: string;
+  value?: string;
+  type?: TextInputDOMType;
+  maxLength?: Numberish;
+  minLength?: Numberish;
+  pattern?: string | undefined;
+  placeholder?: string | undefined;
 
-  required?: MaybeRefOrGetter<boolean>;
-  readonly?: MaybeRefOrGetter<boolean>;
-  disabled?: MaybeRefOrGetter<boolean>;
+  required?: boolean;
+  readonly?: boolean;
+  disabled?: boolean;
 }
 
-export function useTextField(props: TextFieldProps, elementRef?: Ref<HTMLInputElement | HTMLTextAreaElement>) {
+export function useTextField(
+  props: Reactivify<TextFieldProps>,
+  elementRef?: Ref<HTMLInputElement | HTMLTextAreaElement>,
+) {
   const inputId = uniqId();
   const inputRef = elementRef || shallowRef<HTMLInputElement>();
   const { fieldValue } = useFieldValue<string>(toValue(props.modelValue));

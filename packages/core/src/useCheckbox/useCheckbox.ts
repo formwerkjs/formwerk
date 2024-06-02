@@ -1,18 +1,19 @@
-import { MaybeRefOrGetter, Ref, computed, inject, ref, toValue } from 'vue';
+import { Ref, computed, inject, ref, toValue } from 'vue';
 import { uniqId, withRefCapture } from '../utils/common';
-import { AriaLabelableProps, InputBaseAttributes, RovingTabIndex } from '../types';
+import { AriaLabelableProps, Reactivify, InputBaseAttributes, RovingTabIndex } from '../types';
 import { useLabel } from '../composables/useLabel';
 import { CheckboxGroupContext, CheckboxGroupKey } from './useCheckboxGroup';
 import { useFieldValue } from '../composables/useFieldValue';
 import { useSyncModel } from '../composables/useModelSync';
 
 export interface CheckboxProps<TValue = string> {
-  name?: MaybeRefOrGetter<string>;
-  label?: MaybeRefOrGetter<string>;
-  disabled?: MaybeRefOrGetter<boolean>;
-  trueValue?: MaybeRefOrGetter<TValue>;
-  falseValue?: MaybeRefOrGetter<TValue>;
-  indeterminate?: MaybeRefOrGetter<boolean>;
+  name?: string;
+  label?: string;
+  modelValue?: TValue;
+  disabled?: boolean;
+  trueValue?: TValue;
+  falseValue?: TValue;
+  indeterminate?: boolean;
 }
 
 export interface CheckboxDomInputProps extends AriaLabelableProps, InputBaseAttributes {
@@ -29,7 +30,7 @@ export interface CheckboxDomProps extends AriaLabelableProps {
 }
 
 export function useCheckbox<TValue = string>(
-  props: CheckboxProps<TValue>,
+  props: Reactivify<CheckboxProps<TValue>>,
   elementRef?: Ref<HTMLInputElement | undefined>,
 ) {
   const inputId = uniqId();

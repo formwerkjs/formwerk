@@ -1,3 +1,5 @@
+import { MaybeRefOrGetter } from 'vue';
+
 export type Numberish = number | `${number}`;
 
 export type AriaLabelProps = {
@@ -62,3 +64,7 @@ export type Getter<T> = () => T;
 export type Orientation = 'horizontal' | 'vertical';
 
 export type Direction = 'ltr' | 'rtl';
+
+export type Reactivify<TProps extends object, Exclude extends keyof TProps = never> = {
+  [TProp in keyof TProps]: TProp extends Exclude ? TProps[TProp] : MaybeRefOrGetter<TProps[TProp]>;
+};

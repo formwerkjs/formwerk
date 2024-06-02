@@ -1,10 +1,11 @@
-import { MaybeRefOrGetter, Ref, computed, ref, toValue } from 'vue';
+import { Ref, computed, ref, toValue } from 'vue';
 import {
   AriaDescribableProps,
   AriaLabelableProps,
   AriaValidatableProps,
   InputEvents,
   Numberish,
+  Reactivify,
   TextInputBaseAttributes,
 } from '../types';
 import { createDescribedByProps, propsToValues, uniqId, withRefCapture } from '../utils/common';
@@ -27,26 +28,25 @@ export interface SearchInputDOMProps
 }
 
 export interface SearchFieldProps {
-  label: MaybeRefOrGetter<string>;
-  modelValue?: MaybeRefOrGetter<string>;
-  description?: MaybeRefOrGetter<string>;
+  label: string;
+  modelValue?: string;
+  description?: string;
+  // TODO: Vue cannot resolve these types if they are mapped from up there
+  name?: string;
+  value?: string;
+  maxLength?: Numberish;
+  minLength?: Numberish;
+  pattern?: string | undefined;
+  placeholder?: string | undefined;
+
+  required?: boolean;
+  readonly?: boolean;
+  disabled?: boolean;
 
   onSubmit?: (value: string) => void;
-
-  // TODO: Vue cannot resolve these types if they are mapped from up there
-  name?: MaybeRefOrGetter<string>;
-  value?: MaybeRefOrGetter<string>;
-  maxLength?: MaybeRefOrGetter<Numberish>;
-  minLength?: MaybeRefOrGetter<Numberish>;
-  pattern?: MaybeRefOrGetter<string | undefined>;
-  placeholder?: MaybeRefOrGetter<string | undefined>;
-
-  required?: MaybeRefOrGetter<boolean>;
-  readonly?: MaybeRefOrGetter<boolean>;
-  disabled?: MaybeRefOrGetter<boolean>;
 }
 
-export function useSearchField(props: SearchFieldProps, elementRef?: Ref<HTMLInputElement>) {
+export function useSearchField(props: Reactivify<SearchFieldProps, 'onSubmit'>, elementRef?: Ref<HTMLInputElement>) {
   const inputId = uniqId();
   const inputRef = elementRef || ref<HTMLInputElement>();
 

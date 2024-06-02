@@ -1,12 +1,12 @@
-import { MaybeRefOrGetter, Ref, computed, inject, ref, toValue } from 'vue';
+import { Ref, computed, inject, ref, toValue } from 'vue';
 import { SliderContext, SliderInjectionKey, ThumbContext } from './slider';
 import { withRefCapture } from '../utils/common';
 import { useFieldValue } from '../composables/useFieldValue';
-import { Direction } from '../types';
+import { Direction, Reactivify } from '../types';
 
 export interface SliderThumbProps {
-  label?: MaybeRefOrGetter<string>;
-  modelValue?: MaybeRefOrGetter<number>;
+  label?: string;
+  modelValue?: number;
 }
 
 const mockSlider: () => SliderContext = () => ({
@@ -23,7 +23,7 @@ const mockSlider: () => SliderContext = () => ({
 
 const PAGE_KEY_MULTIPLIER = 10;
 
-export function useSliderThumb(props: SliderThumbProps, elementRef?: Ref<HTMLElement>) {
+export function useSliderThumb(props: Reactivify<SliderThumbProps>, elementRef?: Ref<HTMLElement>) {
   const thumbRef = elementRef || ref<HTMLElement>();
   const isDragging = ref(false);
   const { fieldValue } = useFieldValue(toValue(props.modelValue) ?? 0);

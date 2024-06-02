@@ -1,9 +1,16 @@
-import { InjectionKey, MaybeRefOrGetter, toValue, computed, onBeforeUnmount, reactive, provide } from 'vue';
+import { InjectionKey, toValue, computed, onBeforeUnmount, reactive, provide } from 'vue';
 import { useFieldValue } from '../composables/useFieldValue';
 import { useInputValidity } from '../composables/useInputValidity';
 import { useLabel } from '../composables/useLabel';
 import { useSyncModel } from '../composables/useModelSync';
-import { Orientation, AriaLabelableProps, AriaDescribableProps, AriaValidatableProps, Direction } from '../types';
+import {
+  Orientation,
+  AriaLabelableProps,
+  AriaDescribableProps,
+  AriaValidatableProps,
+  Direction,
+  Reactivify,
+} from '../types';
 import { uniqId, createDescribedByProps } from '../utils/common';
 
 export type CheckboxGroupValue<TCheckbox> = TCheckbox[];
@@ -35,17 +42,17 @@ export interface CheckboxContext {
 export const CheckboxGroupKey: InjectionKey<CheckboxGroupContext<any>> = Symbol('CheckboxGroupKey');
 
 export interface CheckboxGroupProps<TCheckbox = unknown> {
-  orientation?: MaybeRefOrGetter<Orientation>;
-  dir?: MaybeRefOrGetter<'ltr' | 'rtl'>;
-  label: MaybeRefOrGetter<string>;
-  description?: MaybeRefOrGetter<string>;
+  orientation?: Orientation;
+  dir?: 'ltr' | 'rtl';
+  label: string;
+  description?: string;
 
-  name?: MaybeRefOrGetter<string>;
-  modelValue?: MaybeRefOrGetter<CheckboxGroupValue<TCheckbox>>;
+  name?: string;
+  modelValue?: CheckboxGroupValue<TCheckbox>;
 
-  disabled?: MaybeRefOrGetter<boolean>;
-  readonly?: MaybeRefOrGetter<boolean>;
-  required?: MaybeRefOrGetter<boolean>;
+  disabled?: boolean;
+  readonly?: boolean;
+  required?: boolean;
 }
 
 interface CheckboxGroupDomProps extends AriaLabelableProps, AriaDescribableProps, AriaValidatableProps {
@@ -53,7 +60,7 @@ interface CheckboxGroupDomProps extends AriaLabelableProps, AriaDescribableProps
   dir: Direction;
 }
 
-export function useCheckboxGroup<TCheckbox>(props: CheckboxGroupProps<TCheckbox>) {
+export function useCheckboxGroup<TCheckbox>(props: Reactivify<CheckboxGroupProps<TCheckbox>>) {
   const groupId = uniqId();
   const checkboxes: CheckboxContext[] = [];
   const { labelProps, labelledByProps } = useLabel({

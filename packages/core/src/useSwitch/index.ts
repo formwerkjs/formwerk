@@ -1,5 +1,5 @@
-import { MaybeRefOrGetter, Ref, computed, shallowRef, toValue } from 'vue';
-import { AriaDescribableProps, AriaLabelableProps, InputBaseAttributes, InputEvents } from '../types';
+import { Ref, computed, shallowRef, toValue } from 'vue';
+import { AriaDescribableProps, AriaLabelableProps, InputBaseAttributes, InputEvents, Reactivify } from '../types';
 import { uniqId, withRefCapture } from '../utils/common';
 import { useFieldValue } from '../composables/useFieldValue';
 import { useLabel } from '../composables/useLabel';
@@ -13,18 +13,18 @@ export interface SwitchDOMProps extends InputBaseAttributes, AriaLabelableProps,
 }
 
 export type SwitchProps = {
-  label?: MaybeRefOrGetter<string>;
-  name?: MaybeRefOrGetter<string>;
-  modelValue?: MaybeRefOrGetter<boolean>;
+  label?: string;
+  name?: string;
+  modelValue?: boolean;
 
-  readonly?: MaybeRefOrGetter<boolean>;
-  disabled?: MaybeRefOrGetter<boolean>;
+  readonly?: boolean;
+  disabled?: boolean;
 
-  trueValue?: MaybeRefOrGetter<unknown>;
-  falseValue?: MaybeRefOrGetter<unknown>;
+  trueValue?: unknown;
+  falseValue?: unknown;
 };
 
-export function useSwitch(props: SwitchProps, elementRef?: Ref<HTMLInputElement>) {
+export function useSwitch(props: Reactivify<SwitchProps>, elementRef?: Ref<HTMLInputElement>) {
   const id = uniqId();
   const inputRef = elementRef || shallowRef<HTMLInputElement>();
   const { labelProps, labelledByProps } = useLabel({
