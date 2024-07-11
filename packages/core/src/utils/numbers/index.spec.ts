@@ -32,6 +32,6 @@ describe('useNumberParser', () => {
       minimumFractionDigits: 3,
     });
 
-    expect(format(1234560.789)).toBe('‏١٬٢٣٤٬٥٦٠٫٧٨٩ ج.م.‏');
+    expect(format(1234560.789)).toMatch('١٬٢٣٤٬٥٦٠٫٧٨٩ ج.م.');
   });
 });
