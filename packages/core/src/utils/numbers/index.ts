@@ -7,6 +7,11 @@ const SYMBOL_PART_TYPES: Partial<Record<Intl.NumberFormatPartTypes, boolean>> = 
   currency: true,
 };
 
+/**
+ * Zero widths and RTL and LTR markers are produced sometimes with Intl.NumberFormat, we need to remove them to get as clean as a number as possible.
+ */
+const NON_PRINTABLE_RE = /\p{C}/gu;
+
 export function useNumberParser({ locale, ...options }: NumberParserOptions) {
   const formatter = new Intl.NumberFormat(locale, options);
   const parts = formatter.formatToParts(12345.6789);
@@ -36,9 +41,13 @@ export function useNumberParser({ locale, ...options }: NumberParserOptions) {
     return Number(parsed.trim());
   }
 
+  function format(value: number): string {
+    return formatter.format(value).replace(NON_PRINTABLE_RE, '').trim();
+  }
+
   return {
     parse,
-    format: (value: number) => formatter.format(value),
+    format,
     formatToParts: (value: number) => formatter.formatToParts(value),
   };
 }
