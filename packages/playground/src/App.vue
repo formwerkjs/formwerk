@@ -23,6 +23,8 @@
         pattern="[0-9]+"
       />
 
+      <InputNumber v-model="form.amount" name="number" label="amount" :max="10" :min="3" required placeholder="nani" />
+
       <SwitchInput v-model="form.switch">Toggle me</SwitchInput>
       <Switch label="Toggle me" v-model="form.switch" />
 
@@ -130,6 +132,7 @@
 <script lang="ts" setup>
 import { reactive } from 'vue';
 import InputText from './components/InputText.vue';
+import InputNumber from './components/InputNumber.vue';
 import InputTextArea from './components/InputTextArea.vue';
 import InputSearch from './components/InputSearch.vue';
 import SwitchInput from './components/SwitchInput.vue';
@@ -145,6 +148,7 @@ import CheckboxInput from './components/CheckboxInput.vue';
 
 const form = reactive({
   email: '',
+  amount: '',
   area: '',
   switch: false,
   interestingSwitch: false,

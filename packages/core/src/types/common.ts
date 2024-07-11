@@ -25,10 +25,10 @@ export type AriaValidatableProps = {
 };
 
 export type InputEvents = {
-  onInput?: (event: Event) => void;
+  onInput?: (event: InputEvent) => void;
   onChange?: (event: Event) => void;
   onBlur?: (event: Event) => void;
-  onBeforeInput?: (event: Event) => void;
+  onBeforeinput?: (event: InputEvent) => void;
   onInvalid?: (event: Event) => void;
   onKeydown?: (event: KeyboardEvent) => void;
 };

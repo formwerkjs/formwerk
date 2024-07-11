@@ -12,7 +12,10 @@ const SYMBOL_PART_TYPES: Partial<Record<Intl.NumberFormatPartTypes, boolean>> = 
  */
 const NON_PRINTABLE_RE = /\p{C}/gu;
 
-export function useNumberParser({ locale, ...options }: NumberParserOptions) {
+const SPACES_RE = /\s/g;
+
+export function useNumberParser(opts?: NumberParserOptions) {
+  const { locale, ...options } = opts || {};
   const formatter = new Intl.NumberFormat(locale, options);
   const parts = formatter.formatToParts(12345.6789);
 
@@ -37,6 +40,8 @@ export function useNumberParser({ locale, ...options }: NumberParserOptions) {
     if (symbolRE) {
       parsed = parsed.replace(symbolRE, '');
     }
+
+    parsed = parsed.replace(SPACES_RE, '');
 
     return Number(parsed.trim());
   }
