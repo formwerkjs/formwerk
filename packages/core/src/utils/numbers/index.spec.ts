@@ -79,4 +79,14 @@ describe('useNumberParser', () => {
 
     expect(format(123456.789)).toBe('一二三,四五六.七八九');
   });
+
+  test('parsing/formatting is consistent', () => {
+    const { format, parse } = useNumberParser({ locale: 'ar-EG', style: 'currency', currency: 'EGP' });
+
+    const value = 1234567.89;
+    const formatted = format(value);
+    const parsed = parse(formatted);
+
+    expect(parsed).toBe(value);
+  });
 });
