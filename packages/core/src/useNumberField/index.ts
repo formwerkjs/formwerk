@@ -13,6 +13,7 @@ import { useInputValidity } from '../composables/useInputValidity';
 import { useLabel } from '../composables/useLabel';
 import { useFieldValue } from '../composables/useFieldValue';
 import { NumberParserOptions, useNumberParser } from '../utils/numbers';
+import { useSpinButton } from '../useSpinButton';
 
 export interface NumberInputDOMAttributes {
   name?: string;
@@ -83,6 +84,21 @@ export function useNumberField(
     description: props.description,
   });
 
+  const { incrementButtonProps, decrementButtonProps, increment, decrement, spinButtonProps, applyClamp } =
+    useSpinButton({
+      current: fieldValue,
+      currentText: formattedText,
+      step: props.step,
+      min: props.min,
+      max: props.max,
+      readonly: props.readonly,
+      disabled: props.disabled,
+
+      onChange: value => {
+        fieldValue.value = value;
+      },
+    });
+
   const handlers: InputEvents = {
     onBeforeinput: (event: InputEvent) => {
       // No data,like backspace or whatever
@@ -98,7 +114,8 @@ export function useNumberField(
       }
     },
     onChange: (event: Event) => {
-      fieldValue.value = parser.value.parse((event.target as HTMLInputElement).value);
+      fieldValue.value = applyClamp(parser.value.parse((event.target as HTMLInputElement).value));
+
       updateValidity();
     },
     onBlur() {
@@ -112,6 +129,7 @@ export function useNumberField(
       {
         ...propsToValues(props, ['name', 'placeholder', 'required', 'readonly', 'disabled']),
         ...labelledByProps.value,
+        ...spinButtonProps.value,
         ...handlers,
         id: inputId,
         value: formattedText.value,
@@ -135,5 +153,9 @@ export function useNumberField(
     descriptionProps,
     validityDetails,
     isInvalid,
+    incrementButtonProps,
+    decrementButtonProps,
+    increment,
+    decrement,
   };
 }

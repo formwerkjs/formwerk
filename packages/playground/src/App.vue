@@ -23,7 +23,20 @@
         pattern="[0-9]+"
       />
 
-      <InputNumber v-model="form.amount" name="number" label="amount" :max="10" :min="3" required placeholder="nani" />
+      <InputNumber
+        v-model="form.amount"
+        name="number"
+        label="amount"
+        :format-options="{
+          locale: 'en-US',
+          style: 'currency',
+          currency: 'EUR',
+        }"
+        :max="10"
+        :min="3"
+        required
+        placeholder="nani"
+      />
 
       <SwitchInput v-model="form.switch">Toggle me</SwitchInput>
       <Switch label="Toggle me" v-model="form.switch" />
