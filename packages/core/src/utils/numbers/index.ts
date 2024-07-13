@@ -71,12 +71,13 @@ function getParser(locale: string, options: Intl.NumberFormatOptions) {
 
 export function defineNumberParser(locale: string, options: Intl.NumberFormatOptions): NumberParser {
   const formatter = new Intl.NumberFormat(locale, options);
-  const parts = formatter.formatToParts(-12345.6789);
-  const decimal = parts.find(part => part.type === 'decimal')?.value || '.';
-  const group = parts.find(part => part.type === 'group')?.value || ',';
-  const literals = parts.find(part => SYMBOL_PART_TYPES[part.type])?.value;
-  const minusSign = parts.find(part => part.type === 'minusSign')?.value;
-  const plusSign = parts.find(part => part.type === 'plusSign')?.value;
+  const negativeParts = formatter.formatToParts(-12345.6789);
+  const positiveParts = formatter.formatToParts(1);
+  const decimal = negativeParts.find(part => part.type === 'decimal')?.value || '.';
+  const group = negativeParts.find(part => part.type === 'group')?.value || ',';
+  const literals = negativeParts.find(part => SYMBOL_PART_TYPES[part.type])?.value;
+  const minusSign = negativeParts.find(part => part.type === 'minusSign')?.value;
+  const plusSign = positiveParts.find(part => part.type === 'plusSign')?.value;
   const numerals = [...new Intl.NumberFormat(toValue(locale), { useGrouping: false }).format(9876543210)].reverse();
 
   const numeralMap = new Map(numerals.map((d, i) => [d, i]));

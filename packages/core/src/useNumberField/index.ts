@@ -120,8 +120,8 @@ export function useNumberField(
         return;
       }
 
-      const next = parser.parse((event.target as HTMLInputElement).value + event.data);
-      if (Number.isNaN(next)) {
+      const isValid = parser.isValidNumber((event.target as HTMLInputElement).value + event.data);
+      if (!isValid) {
         event.preventDefault();
         event.stopPropagation();
         return;
