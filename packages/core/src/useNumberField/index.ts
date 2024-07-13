@@ -99,6 +99,7 @@ export function useNumberField(
       incrementLabel: props.incrementLabel,
       decrementLabel: props.decrementLabel,
       orientation: 'vertical',
+      preventTabIndex: true,
 
       onChange: value => {
         fieldValue.value = value;
@@ -131,15 +132,15 @@ export function useNumberField(
   };
 
   const inputMode = computed(() => {
-    const opts = toValue(props.formatOptions);
+    const intlOpts = toValue(props.formatOptions);
     const step = Number(toValue(props.step)) || 1;
-    const isFractionStep = step > 0 && step < 1;
+    const hasDecimals = (intlOpts?.maximumFractionDigits ?? 0) > 0 || (step > 0 && step < 1);
 
-    if (opts?.maximumFractionDigits === 0 && !isFractionStep) {
-      return 'numeric';
+    if (hasDecimals) {
+      return 'decimal';
     }
 
-    return 'decimal';
+    return 'numeric';
   });
 
   const inputProps = computed<NumberInputDOMProps>(() => {
@@ -156,6 +157,8 @@ export function useNumberField(
         min: toValue(props.min),
         'aria-describedby': describedBy(),
         'aria-invalid': errorMessage.value ? true : undefined,
+        type: 'text',
+        spellcheck: false,
       },
       inputRef,
       elementRef,

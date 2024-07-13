@@ -17,6 +17,7 @@ This composable provides the behavior, state and accessibility implementation fo
 - Support for `Intl.NumberFormat` units and currencies.
 - Support for the Spinbutton ARIA pattern for increment/decrement buttons.
 - Support for `min`, `max` and `step` attributes.
+- Rejects invalid input characters (non-numbers).
 - Support for `v-model` binding.
 
 ## Usage

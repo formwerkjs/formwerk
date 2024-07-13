@@ -35,7 +35,7 @@
         }"
         :max="10"
         :min="3"
-        :step="0.5"
+        :step="1"
         required
         placeholder="nani"
       />

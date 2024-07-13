@@ -19,6 +19,8 @@ export interface SpinButtonProps {
   current?: number;
   currentText?: string;
 
+  preventTabIndex?: boolean;
+
   onChange?(value: number): void;
 }
 
@@ -197,6 +199,7 @@ export function useSpinButton(props: Reactivify<SpinButtonProps, 'onChange'>) {
       ...incrementHoldProps,
       disabled: isIncrementDisabled.value,
       'aria-label': toValue(props.incrementLabel) || 'Increment',
+      tabindex: toValue(props.preventTabIndex) ? '-1' : undefined,
     };
   });
 
@@ -205,6 +208,7 @@ export function useSpinButton(props: Reactivify<SpinButtonProps, 'onChange'>) {
       ...decrementHoldProps,
       disabled: isDecrementDisabled.value,
       'aria-label': toValue(props.decrementLabel) || 'Decrement',
+      tabindex: toValue(props.preventTabIndex) ? '-1' : undefined,
     };
   });
 

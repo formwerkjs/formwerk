@@ -34,7 +34,7 @@ const { inputProps, labelProps, errorMessage, errorMessageProps, incrementButton
   }
 
   input {
-    @apply text-gray-800 rounded-md border-2 border-transparent py-3 px-4 w-full bg-gray-100 focus:outline-none transition-colors duration-200 focus:border-blue-500;
+    @apply text-gray-800 border-2 border-transparent py-3 px-4 w-full bg-gray-100 focus:outline-none transition-colors duration-200 focus:border-blue-500;
   }
   .error-message {
     @apply absolute left-0 text-sm text-red-500;
@@ -48,7 +48,7 @@ const { inputProps, labelProps, errorMessage, errorMessageProps, incrementButton
   }
 
   button {
-    @apply bg-blue-600 text-white text-lg px-2;
+    @apply bg-blue-600 text-white text-lg px-2 disabled:bg-gray-300;
   }
 }
 </style>
