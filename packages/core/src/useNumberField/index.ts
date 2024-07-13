@@ -130,6 +130,18 @@ export function useNumberField(
     onInvalid,
   };
 
+  const inputMode = computed(() => {
+    const opts = toValue(props.formatOptions);
+    const step = Number(toValue(props.step)) || 1;
+    const isFractionStep = step > 0 && step < 1;
+
+    if (opts?.maximumFractionDigits === 0 && !isFractionStep) {
+      return 'numeric';
+    }
+
+    return 'decimal';
+  });
+
   const inputProps = computed<NumberInputDOMProps>(() => {
     return withRefCapture(
       {
@@ -138,6 +150,7 @@ export function useNumberField(
         ...spinButtonProps.value,
         ...handlers,
         id: inputId,
+        inputmode: inputMode.value,
         value: formattedText.value,
         max: toValue(props.max),
         min: toValue(props.min),

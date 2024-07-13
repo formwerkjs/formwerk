@@ -28,12 +28,14 @@
         name="number"
         label="amount"
         :format-options="{
-          locale: 'en-US',
-          style: 'currency',
-          currency: 'EUR',
+          locale: 'en',
+          signDisplay: 'exceptZero',
+          minimumFractionDigits: 0,
+          maximumFractionDigits: 0,
         }"
         :max="10"
         :min="3"
+        :step="0.5"
         required
         placeholder="nani"
       />
