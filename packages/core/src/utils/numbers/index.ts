@@ -1,6 +1,4 @@
-export interface NumberParserOptions extends Intl.NumberFormatOptions {
-  locale: string;
-}
+import { computed, MaybeRefOrGetter, toValue } from 'vue';
 
 const SYMBOL_PART_TYPES: Partial<Record<Intl.NumberFormatPartTypes, boolean>> = {
   percentSign: true,
@@ -14,31 +12,37 @@ const NON_PRINTABLE_RE = /\p{C}/gu;
 
 const SPACES_RE = /\s/g;
 
-export function useNumberParser(opts?: NumberParserOptions) {
-  const { locale, ...options } = opts || {};
-  const formatter = new Intl.NumberFormat(locale, options);
-  const parts = formatter.formatToParts(12345.6789);
+export function useNumberParser(locale: MaybeRefOrGetter<string>, opts?: MaybeRefOrGetter<Intl.NumberFormatOptions>) {
+  const formatter = computed(() => new Intl.NumberFormat(toValue(locale), toValue(opts)));
 
-  const decimal = parts.find(part => part.type === 'decimal')?.value || '.';
-  const group = parts.find(part => part.type === 'group')?.value || ',';
-  const symbol = parts.find(part => SYMBOL_PART_TYPES[part.type])?.value;
+  const parts = computed(() => formatter.value.formatToParts(12345.6789));
 
-  const groupRE = new RegExp(`[${group}]`, 'g');
-  const decimalRE = new RegExp(`[${decimal}]`);
-  const symbolRE = symbol ? new RegExp(`${symbol}`) : null;
+  const getDecimal = () => parts.value.find(part => part.type === 'decimal')?.value || '.';
+  const getGroup = () => parts.value.find(part => part.type === 'group')?.value || ',';
+  const getUnitSymbol = () => parts.value.find(part => SYMBOL_PART_TYPES[part.type])?.value;
 
-  const numerals = [...new Intl.NumberFormat(locale, { useGrouping: false }).format(9876543210)].reverse();
-  const numeralsIdxMap = new Map(numerals.map((d, i) => [d, i]));
-  const numeralRE = new RegExp(`[${numerals.join('')}]`, 'g');
+  const groupRE = computed(() => new RegExp(`[${getGroup()}]`, 'g'));
+  const decimalRE = computed(() => new RegExp(`[${getDecimal()}]`));
+  const symbolRE = computed(() => {
+    const symbol = getUnitSymbol();
+
+    return symbol ? new RegExp(`${getUnitSymbol()}`) : null;
+  });
+
+  const numerals = computed(() =>
+    [...new Intl.NumberFormat(toValue(locale), { useGrouping: false }).format(9876543210)].reverse(),
+  );
+  const getNumberingMap = () => new Map(numerals.value.map((d, i) => [d, i]));
+  const numeralRE = computed(() => new RegExp(`[${numerals.value.join('')}]`, 'g'));
 
   function resolveNumber(number: string) {
-    return String(numeralsIdxMap.get(number)) || '';
+    return String(getNumberingMap().get(number)) || '';
   }
 
   function parse(value: string): number {
-    let parsed = value.replace(groupRE, '').replace(decimalRE, '.').replace(numeralRE, resolveNumber);
-    if (symbolRE) {
-      parsed = parsed.replace(symbolRE, '');
+    let parsed = value.replace(groupRE.value, '').replace(decimalRE.value, '.').replace(numeralRE.value, resolveNumber);
+    if (symbolRE.value) {
+      parsed = parsed.replace(symbolRE.value, '');
     }
 
     parsed = parsed.replace(SPACES_RE, '');
@@ -47,12 +51,12 @@ export function useNumberParser(opts?: NumberParserOptions) {
   }
 
   function format(value: number): string {
-    return formatter.format(value).replace(NON_PRINTABLE_RE, '').trim();
+    return formatter.value.format(value).replace(NON_PRINTABLE_RE, '').trim();
   }
 
   return {
     parse,
     format,
-    formatToParts: (value: number) => formatter.formatToParts(value),
+    formatToParts: (value: number) => formatter.value.formatToParts(value),
   };
 }

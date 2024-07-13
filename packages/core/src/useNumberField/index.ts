@@ -1,4 +1,4 @@
-import { Ref, computed, shallowRef, toValue } from 'vue';
+import { Ref, computed, nextTick, shallowRef, toValue } from 'vue';
 import { createDescribedByProps, propsToValues, uniqId, withRefCapture } from '../utils/common';
 import {
   AriaDescribableProps,
@@ -12,7 +12,8 @@ import { useSyncModel } from '../composables/useModelSync';
 import { useInputValidity } from '../composables/useInputValidity';
 import { useLabel } from '../composables/useLabel';
 import { useFieldValue } from '../composables/useFieldValue';
-import { NumberParserOptions, useNumberParser } from '../utils/numbers';
+import { useNumberFormatOptions } from '../composables/useLocale';
+import { useNumberParser } from '../utils/numbers';
 import { useSpinButton } from '../useSpinButton';
 
 export interface NumberInputDOMAttributes {
@@ -30,6 +31,7 @@ export interface NumberInputDOMProps
 
 export interface NumberFieldProps {
   label: string;
+  locale?: string;
   modelValue?: number;
   description?: string;
 
@@ -47,7 +49,7 @@ export interface NumberFieldProps {
   readonly?: boolean;
   disabled?: boolean;
 
-  formatOptions?: NumberParserOptions;
+  formatOptions?: Intl.NumberFormatOptions;
 }
 
 export function useNumberField(
@@ -58,14 +60,19 @@ export function useNumberField(
   const inputRef = elementRef || shallowRef<HTMLInputElement>();
   const { fieldValue } = useFieldValue<number>(toValue(props.modelValue));
   const { errorMessage, onInvalid, updateValidity, validityDetails, isInvalid } = useInputValidity(inputRef);
+  const { locale, formatOptions } = useNumberFormatOptions();
 
-  const parser = computed(() => useNumberParser(toValue(props.formatOptions)));
+  const parser = useNumberParser(
+    () => toValue(props.locale) || locale,
+    () => toValue(props.formatOptions) ?? formatOptions,
+  );
+
   const formattedText = computed(() => {
     if (Number.isNaN(fieldValue.value) || fieldValue.value === undefined) {
       return '';
     }
 
-    return parser.value.format(fieldValue.value);
+    return parser.format(fieldValue.value);
   });
 
   useSyncModel({
@@ -113,7 +120,7 @@ export function useNumberField(
         return;
       }
 
-      const next = parser.value.parse((event.target as HTMLInputElement).value + event.data);
+      const next = parser.parse((event.target as HTMLInputElement).value + event.data);
       if (Number.isNaN(next)) {
         event.preventDefault();
         event.stopPropagation();
@@ -121,9 +128,13 @@ export function useNumberField(
       }
     },
     onChange: (event: Event) => {
-      fieldValue.value = applyClamp(parser.value.parse((event.target as HTMLInputElement).value));
-
+      fieldValue.value = applyClamp(parser.parse((event.target as HTMLInputElement).value));
       updateValidity();
+      nextTick(() => {
+        if (inputRef.value && inputRef.value?.value !== formattedText.value) {
+          inputRef.value.value = formattedText.value;
+        }
+      });
     },
     onBlur() {
       updateValidity();
