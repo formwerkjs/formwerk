@@ -53,7 +53,7 @@ interface NumberParser {
   symbols: NumberSymbols;
   parse(value: string): number;
   format(value: number): string;
-  isValidNumber(value: string): boolean;
+  isValidNumberPart(value: string): boolean;
 }
 
 const numberParserCache = new Map<string, NumberParser>();
@@ -124,7 +124,7 @@ export function defineNumberParser(locale: string, options: Intl.NumberFormatOpt
     return formatter.format(value).replace(NON_PRINTABLE_RE, '').trim();
   }
 
-  function isValidNumber(value: string) {
+  function isValidNumberPart(value: string) {
     let sanitized = value;
     if (symbols.group) {
       sanitized = sanitized.replaceAll(symbols.group, '');
@@ -158,7 +158,7 @@ export function defineNumberParser(locale: string, options: Intl.NumberFormatOpt
     symbols,
     parse,
     format,
-    isValidNumber,
+    isValidNumberPart,
   };
 }
 
@@ -172,7 +172,7 @@ export function useNumberParser(locale: MaybeRefOrGetter<string>, opts?: MaybeRe
     // If the value is a valid number, return the default parser as it is good enough to parse it.
     // Or if the locale has a hardcoded numbering system, we quit and return the default one.
     // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Intl/Locale#description
-    if (defaultParser.isValidNumber(value) || defaultLocale.includes('-nu-')) {
+    if (defaultParser.isValidNumberPart(value) || defaultLocale.includes('-nu-')) {
       return defaultParser;
     }
 
@@ -189,7 +189,7 @@ export function useNumberParser(locale: MaybeRefOrGetter<string>, opts?: MaybeRe
         : `${defaultLocale}-u-nu-${numberingSystem}`;
 
       const parser = getParser(tryLocale, defaultOpts);
-      if (parser.isValidNumber(value)) {
+      if (parser.isValidNumberPart(value)) {
         return parser;
       }
     }
@@ -197,12 +197,16 @@ export function useNumberParser(locale: MaybeRefOrGetter<string>, opts?: MaybeRe
     return defaultParser;
   }
 
+  function getNumberingSystem(value: string) {
+    return resolveParser(value).options.numberingSystem;
+  }
+
   function parse(value: string): number {
     return resolveParser(value).parse(value);
   }
 
-  function isValidNumber(value: string) {
-    return resolveParser(value).isValidNumber(value);
+  function isValidNumberPart(value: string) {
+    return resolveParser(value).isValidNumberPart(value);
   }
 
   function format(value: number): string {
@@ -212,6 +216,7 @@ export function useNumberParser(locale: MaybeRefOrGetter<string>, opts?: MaybeRe
   return {
     parse,
     format,
-    isValidNumber,
+    isValidNumberPart,
+    getNumberingSystem,
   };
 }

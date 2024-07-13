@@ -4,10 +4,10 @@ const enNumber = 1234567890.12;
 
 describe('useNumberParser', () => {
   test('parses localized numbers', () => {
-    const { parse, isValidNumber } = useNumberParser('ar-EG');
+    const { parse, isValidNumberPart } = useNumberParser('ar-EG');
 
     expect(parse('١٬٢٣٤٬٥٦٧٬٨٩٠٫١٢')).toBe(enNumber);
-    expect(isValidNumber('١٬٢٣٤٬٥٦٧٬٨٩٠٫١٢')).toBe(true);
+    expect(isValidNumberPart('١٬٢٣٤٬٥٦٧٬٨٩٠٫١٢')).toBe(true);
   });
 
   test('formats localized numbers', () => {
@@ -17,10 +17,10 @@ describe('useNumberParser', () => {
   });
 
   test('parses localized values with negative sign', () => {
-    const { parse, isValidNumber } = useNumberParser('ar-EG');
+    const { parse, isValidNumberPart } = useNumberParser('ar-EG');
 
     expect(parse('-١٬٢٣٤٬٥٦٧٬٨٩٠٫١٢')).toBe(-enNumber);
-    expect(isValidNumber('-١٬٢٣٤٬٥٦٧٬٨٩٠٫١٢')).toBe(true);
+    expect(isValidNumberPart('-١٬٢٣٤٬٥٦٧٬٨٩٠٫١٢')).toBe(true);
   });
 
   test('formats localized values with negative sign', () => {
@@ -31,13 +31,13 @@ describe('useNumberParser', () => {
   });
 
   test('parses localized currency values', () => {
-    const { parse, isValidNumber } = useNumberParser('ar-EG', {
+    const { parse, isValidNumberPart } = useNumberParser('ar-EG', {
       style: 'currency',
       currency: 'EGP',
     });
 
     expect(parse('١٬٢٣٤٬٥٦٧٬٨٩٠٫١٢ ج.م.')).toBe(enNumber);
-    expect(isValidNumber('١٬٢٣٤٬٥٦٧٬٨٩٠٫١٢ ج.م.')).toBe(true);
+    expect(isValidNumberPart('١٬٢٣٤٬٥٦٧٬٨٩٠٫١٢ ج.م.')).toBe(true);
   });
 
   test('formats localized currency values', () => {
@@ -50,13 +50,13 @@ describe('useNumberParser', () => {
   });
 
   test('parses negative localized currency values', () => {
-    const { parse, isValidNumber } = useNumberParser('ar-EG', {
+    const { parse, isValidNumberPart } = useNumberParser('ar-EG', {
       style: 'currency',
       currency: 'EGP',
     });
 
     expect(parse('-١٬٢٣٤٬٥٦٧٬٨٩٠٫١٢ ج.م.')).toBe(-enNumber);
-    expect(isValidNumber('-١٬٢٣٤٬٥٦٧٬٨٩٠٫١٢ ج.م.')).toBe(true);
+    expect(isValidNumberPart('-١٬٢٣٤٬٥٦٧٬٨٩٠٫١٢ ج.م.')).toBe(true);
   });
 
   test('formats negative localized currency values', () => {
@@ -69,10 +69,10 @@ describe('useNumberParser', () => {
   });
 
   test('parses han numbers', () => {
-    const { parse, isValidNumber } = useNumberParser('zh-Hans-CN-u-nu-hanidec');
+    const { parse, isValidNumberPart } = useNumberParser('zh-Hans-CN-u-nu-hanidec');
 
     expect(parse('一二三,四五六.七八九')).toBe(123456.789);
-    expect(isValidNumber('一二三,四五六.七八九')).toBe(true);
+    expect(isValidNumberPart('一二三,四五六.七八九')).toBe(true);
   });
 
   test('formats to numbers', () => {
@@ -92,9 +92,9 @@ describe('useNumberParser', () => {
   });
 
   test('tries different numbering systems for parsing', () => {
-    const { parse, isValidNumber } = useNumberParser('en-US', { style: 'currency', currency: 'USD' });
+    const { parse, isValidNumberPart } = useNumberParser('en-US', { style: 'currency', currency: 'USD' });
 
     expect(parse('$ ١٬٢٣٤٬٥٦٧٬٨٩٠٫١٢')).toBe(enNumber);
-    expect(isValidNumber('$ ١٬٢٣٤٬٥٦٧٬٨٩٠٫١٢')).toBe(true);
+    expect(isValidNumberPart('$ ١٬٢٣٤٬٥٦٧٬٨٩٠٫١٢')).toBe(true);
   });
 });

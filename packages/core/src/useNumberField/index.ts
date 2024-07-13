@@ -120,7 +120,12 @@ export function useNumberField(
         return;
       }
 
-      const isValid = parser.isValidNumber((event.target as HTMLInputElement).value + event.data);
+      const el = event.target as HTMLInputElement;
+      // Kind of predicts the next value of the input by appending the new data
+      const nextValue =
+        el.value.slice(0, el.selectionStart ?? undefined) + event.data + el.value.slice(el.selectionEnd ?? undefined);
+
+      const isValid = parser.isValidNumberPart(nextValue);
       if (!isValid) {
         event.preventDefault();
         event.stopPropagation();
