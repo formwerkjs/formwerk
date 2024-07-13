@@ -2,11 +2,13 @@ import { Ref, computed, inject, ref, toValue } from 'vue';
 import { SliderContext, SliderInjectionKey, ThumbContext } from './slider';
 import { withRefCapture } from '../utils/common';
 import { useFieldValue } from '../composables/useFieldValue';
-import { Direction, Reactivify } from '../types';
+import { Reactivify } from '../types';
+import { useSpinButton } from '../useSpinButton';
 
 export interface SliderThumbProps {
   label?: string;
   modelValue?: number;
+  disabled?: boolean;
 }
 
 const mockSlider: () => SliderContext = () => ({
@@ -20,8 +22,6 @@ const mockSlider: () => SliderContext = () => ({
     getInlineDirection: () => 'ltr',
   }),
 });
-
-const PAGE_KEY_MULTIPLIER = 10;
 
 export function useSliderThumb(props: Reactivify<SliderThumbProps>, elementRef?: Ref<HTMLElement>) {
   const thumbRef = elementRef || ref<HTMLElement>();
@@ -38,20 +38,25 @@ export function useSliderThumb(props: Reactivify<SliderThumbProps>, elementRef?:
     setValue,
   };
 
-  function clampValue(value: number) {
-    const { max, min } = slider.getThumbRange();
-
-    return Math.min(Math.max(value, min), max);
-  }
+  const slider = inject(SliderInjectionKey, mockSlider, true).registerThumb(thumbContext);
+  const { spinButtonProps, applyClamp } = useSpinButton({
+    current: fieldValue,
+    disabled: props.disabled,
+    orientation: 'both',
+    min: () => slider.getThumbRange().min,
+    max: () => slider.getThumbRange().max,
+    step: () => slider.getSliderStep(),
+    direction: () => slider.getInlineDirection(),
+    onChange: next => {
+      fieldValue.value = next;
+    },
+  });
 
   function setValue(value: number) {
-    fieldValue.value = clampValue(value);
+    fieldValue.value = applyClamp(value);
   }
 
-  const slider = inject(SliderInjectionKey, mockSlider, true).registerThumb(thumbContext);
-
   const thumbProps = computed(() => {
-    const range = slider.getThumbRange();
     const ownLabel = toValue(props.label);
 
     return withRefCapture(
@@ -59,10 +64,7 @@ export function useSliderThumb(props: Reactivify<SliderThumbProps>, elementRef?:
         tabindex: '0',
         'aria-label': ownLabel ?? undefined,
         ...(ownLabel ? {} : slider.getSliderLabelProps()),
-        'aria-valuemin': range.min,
-        'aria-valuemax': range.max,
-        'aria-valuenow': fieldValue.value || 0,
-        onKeydown,
+        ...spinButtonProps.value,
         onMousedown,
         style: getPositionStyle(),
       },
@@ -92,67 +94,6 @@ export function useSliderThumb(props: Reactivify<SliderThumbProps>, elementRef?:
       willChange: 'transform',
       transform: `translate3d(${translateX}, ${translateY}, 0)`,
     };
-  }
-
-  function increment(multiple: number = 1) {
-    const nextValue = (fieldValue.value || 0) + slider.getSliderStep() * multiple;
-    setValue(nextValue);
-  }
-
-  function decrement(multiple: number = 1) {
-    const nextValue = (fieldValue.value || 0) - slider.getSliderStep() * multiple;
-    setValue(nextValue);
-  }
-
-  const keyMap: Record<Direction, { incrKeys: string[]; decrKeys: string[] }> = {
-    ltr: { incrKeys: ['ArrowRight', 'ArrowUp'], decrKeys: ['ArrowLeft', 'ArrowDown'] },
-    rtl: { incrKeys: ['ArrowLeft', 'ArrowUp'], decrKeys: ['ArrowRight', 'ArrowDown'] },
-  };
-
-  function onKeydown(e: KeyboardEvent) {
-    const { incrKeys, decrKeys } = keyMap[slider.getInlineDirection()];
-
-    if (decrKeys.includes(e.key)) {
-      e.preventDefault();
-      decrement();
-
-      return;
-    }
-
-    if (incrKeys.includes(e.key)) {
-      e.preventDefault();
-      increment();
-
-      return;
-    }
-
-    if (e.key === 'Home') {
-      e.preventDefault();
-      setValue(slider.getSliderRange().min);
-
-      return;
-    }
-
-    if (e.key === 'End') {
-      e.preventDefault();
-      setValue(slider.getSliderRange().max);
-
-      return;
-    }
-
-    if (e.key === 'PageUp') {
-      e.preventDefault();
-      increment(PAGE_KEY_MULTIPLIER);
-
-      return;
-    }
-
-    if (e.key === 'PageDown') {
-      e.preventDefault();
-      decrement(PAGE_KEY_MULTIPLIER);
-
-      return;
-    }
   }
 
   function onMousedown(e: MouseEvent) {

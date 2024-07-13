@@ -1,11 +1,13 @@
 import { computed, toValue } from 'vue';
-import { Numberish, Reactivify } from '../types';
+import { Direction, Numberish, Orientation2D, Reactivify } from '../types';
 import { toNearestMultipleOf } from '../utils/math';
 
 export interface SpinButtonProps {
   min?: Numberish;
   max?: Numberish;
   step?: Numberish;
+  orientation?: Orientation2D;
+  direction?: Direction;
 
   incrementLabel?: string;
   decrementLabel?: string;
@@ -19,12 +21,48 @@ export interface SpinButtonProps {
   onChange?(value: number): void;
 }
 
-const PAGE_KEY_MULTIPLIER = 10;
+function getDirectionalStepKeys(orientation: Orientation2D, direction: Direction) {
+  const horizontalDirKeys: Record<Direction, { incrKeys: string[]; decrKeys: string[] }> = {
+    ltr: { incrKeys: ['ArrowRight'], decrKeys: ['ArrowLeft'] },
+    rtl: { incrKeys: ['ArrowLeft'], decrKeys: ['ArrowRight'] },
+  };
+
+  const horizontalKeys = horizontalDirKeys[direction];
+  const verticalKeys = { incrKeys: ['ArrowUp'], decrKeys: ['ArrowDown'] };
+  const incrKeys: string[] = [];
+  const decrKeys: string[] = [];
+
+  if (orientation === 'horizontal' || orientation === 'both') {
+    incrKeys.push(...horizontalKeys.incrKeys);
+    decrKeys.push(...horizontalKeys.decrKeys);
+  }
+
+  if (orientation === 'vertical' || orientation === 'both') {
+    incrKeys.push(...verticalKeys.incrKeys);
+    decrKeys.push(...verticalKeys.decrKeys);
+  }
+
+  return { incrKeys, decrKeys };
+}
 
 export function useSpinButton(props: Reactivify<SpinButtonProps, 'onChange'>) {
   const getStep = () => Number(toValue(props.step) || 1);
   const getMin = () => Number(toValue(props.min) ?? undefined);
   const getMax = () => Number(toValue(props.max) ?? undefined);
+
+  /**
+   * Dynamically calculate the multiplier for the page up/down keys.
+   */
+  const getPageMultiplier = () => {
+    const max = getMax();
+    const min = getMin();
+
+    if (Number.isNaN(max) || Number.isNaN(min)) {
+      return 10;
+    }
+
+    return Math.max(Math.floor(Math.abs((max - min) / min)), getStep());
+  };
 
   function onKeydown(e: KeyboardEvent) {
     if (e.ctrlKey || e.metaKey || e.shiftKey || e.altKey || toValue(props.disabled) || toValue(props.readonly)) {
@@ -33,23 +71,28 @@ export function useSpinButton(props: Reactivify<SpinButtonProps, 'onChange'>) {
 
     if (e.key === 'PageUp') {
       e.preventDefault();
-      tryChange(getStep() * PAGE_KEY_MULTIPLIER);
+      pageIncrement();
       return;
     }
 
     if (e.key === 'PageDown') {
       e.preventDefault();
-      tryChange(-getStep() * PAGE_KEY_MULTIPLIER);
+      pageDecrement();
       return;
     }
 
-    if (e.key === 'ArrowUp') {
+    const { incrKeys, decrKeys } = getDirectionalStepKeys(
+      toValue(props.orientation) || 'both',
+      toValue(props.direction) || 'ltr',
+    );
+
+    if (incrKeys.includes(e.key)) {
       e.preventDefault();
       increment();
       return;
     }
 
-    if (e.key === 'ArrowDown') {
+    if (decrKeys.includes(e.key)) {
       e.preventDefault();
       decrement();
       return;
@@ -98,6 +141,14 @@ export function useSpinButton(props: Reactivify<SpinButtonProps, 'onChange'>) {
 
   function decrement() {
     tryChange(-getStep());
+  }
+
+  function pageIncrement() {
+    tryChange(getStep() * getPageMultiplier());
+  }
+
+  function pageDecrement() {
+    tryChange(-getStep() * getPageMultiplier());
   }
 
   function incrementToMax() {
@@ -151,6 +202,10 @@ export function useSpinButton(props: Reactivify<SpinButtonProps, 'onChange'>) {
   return {
     increment,
     decrement,
+    pageDecrement,
+    pageIncrement,
+    incrementToMax,
+    decrementToMin,
     applyClamp,
     incrementButtonProps,
     decrementButtonProps,

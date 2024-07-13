@@ -33,6 +33,9 @@ export interface NumberFieldProps {
   modelValue?: number;
   description?: string;
 
+  incrementLabel?: string;
+  decrementLabel?: string;
+
   name?: string;
   value?: number;
   min?: Numberish;
@@ -93,6 +96,9 @@ export function useNumberField(
       max: props.max,
       readonly: props.readonly,
       disabled: props.disabled,
+      incrementLabel: props.incrementLabel,
+      decrementLabel: props.decrementLabel,
+      orientation: 'vertical',
 
       onChange: value => {
         fieldValue.value = value;
