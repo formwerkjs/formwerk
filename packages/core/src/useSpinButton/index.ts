@@ -1,6 +1,7 @@
 import { computed, toValue } from 'vue';
 import { Direction, Numberish, Orientation2D, Reactivify } from '../types';
 import { toNearestMultipleOf } from '../utils/math';
+import { useButtonHold } from '../composables/useButtonHold';
 
 export interface SpinButtonProps {
   min?: Numberish;
@@ -165,26 +166,44 @@ export function useSpinButton(props: Reactivify<SpinButtonProps, 'onChange'>) {
     }
   }
 
-  const incrementButtonProps = computed(() => {
+  const isIncrementDisabled = computed(() => {
     const max = getMax();
     const current = toValue(props.current);
-    const isDisabled = !Number.isNaN(max) && current !== undefined && max <= current;
 
+    return !Number.isNaN(max) && current !== undefined && max <= current;
+  });
+
+  const isDecrementDisabled = computed(() => {
+    const min = getMin();
+    const current = toValue(props.current);
+
+    return !Number.isNaN(min) && current !== undefined && min >= current;
+  });
+
+  const incrementHoldProps = useButtonHold({
+    onClick: increment,
+    onHoldTick: increment,
+    disabled: isIncrementDisabled,
+  });
+
+  const decrementHoldProps = useButtonHold({
+    onClick: decrement,
+    onHoldTick: decrement,
+    disabled: isDecrementDisabled,
+  });
+
+  const incrementButtonProps = computed(() => {
     return {
-      onClick: increment,
-      disabled: isDisabled,
+      ...incrementHoldProps,
+      disabled: isIncrementDisabled.value,
       'aria-label': toValue(props.incrementLabel) || 'Increment',
     };
   });
 
   const decrementButtonProps = computed(() => {
-    const min = getMin();
-    const current = toValue(props.current);
-    const isDisabled = !Number.isNaN(min) && current !== undefined && min >= current;
-
     return {
-      onClick: decrement,
-      disabled: isDisabled,
+      ...decrementHoldProps,
+      disabled: isDecrementDisabled.value,
       'aria-label': toValue(props.decrementLabel) || 'Decrement',
     };
   });
