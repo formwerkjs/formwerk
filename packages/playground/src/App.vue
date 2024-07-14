@@ -27,17 +27,16 @@
         v-model="form.amount"
         name="number"
         label="amount"
-        :format-options="{
-          locale: 'en',
-          currency: 'USD',
-          currencySign: 'accounting',
-        }"
-        :max="10"
-        :min="3"
+        :max="1000000"
+        locale="ar-EG"
+        :format-options="{}"
+        :min="0"
         :step="1"
         required
         placeholder="nani"
       />
+
+      <button @click="form.amount = 5555">chANGE AMOUNT</button>
 
       <SwitchInput v-model="form.switch">Toggle me</SwitchInput>
       <Switch label="Toggle me" v-model="form.switch" />
@@ -162,7 +161,7 @@ import CheckboxInput from './components/CheckboxInput.vue';
 
 const form = reactive({
   email: '',
-  amount: '',
+  amount: 0,
   area: '',
   switch: false,
   interestingSwitch: false,

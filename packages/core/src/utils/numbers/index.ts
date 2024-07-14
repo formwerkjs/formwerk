@@ -86,6 +86,7 @@ export function defineNumberParser(locale: string, options: Intl.NumberFormatOpt
   const minusSign = parts.find(part => part.type === 'minusSign')?.value;
   const plusSign = positiveParts.find(part => part.type === 'plusSign')?.value;
   const numerals = [...new Intl.NumberFormat(toValue(locale), { useGrouping: false }).format(9876543210)].reverse();
+  const resolvedOptions = formatter.resolvedOptions();
 
   const numeralMap = new Map(numerals.map((d, i) => [d, i]));
   const numeralRE = new RegExp(`[${numerals.join('')}]`, 'g');
@@ -104,8 +105,37 @@ export function defineNumberParser(locale: string, options: Intl.NumberFormatOpt
     },
   };
 
+  /**
+   * Cleans up the value from some quirks around some locales to get as much as a clean number as possible.
+   */
   function sanitize(value: string): string {
     let sanitized = value;
+    if (symbols.literalsRE) {
+      sanitized = sanitized.replace(symbols.literalsRE, '');
+    }
+
+    if (symbols.minusSign) {
+      sanitized = sanitized.replace('-', symbols.minusSign);
+    }
+
+    // Apply some corrections for the arabic numbering system as keyboard layouts may not be consistent.
+    if (resolvedOptions.numberingSystem === 'arab') {
+      if (symbols.group) {
+        // Many Arabic keyboards only has the Arabic comma (1548) which many users mistake it for the group separator (1644), they look identical, so we need to clean it out as well.
+        sanitized = sanitized.replaceAll(String.fromCharCode(1548), symbols.group);
+      }
+
+      if (symbols.decimal) {
+        // Some arabic keyboards use the (44) comma as a decimal separator, we need to clean it out as well and replace it with the (1643)
+        sanitized = sanitized.replace(String.fromCharCode(44), symbols.decimal);
+      }
+    }
+
+    return sanitized.replace(SPACES_RE, '');
+  }
+
+  function parse(value: string): number {
+    let sanitized = sanitize(value);
     if (symbols.group) {
       sanitized = sanitized.replaceAll(symbols.group, '');
     }
@@ -114,17 +144,8 @@ export function defineNumberParser(locale: string, options: Intl.NumberFormatOpt
       sanitized = sanitized.replace(symbols.decimal, '.');
     }
 
-    if (symbols.literalsRE) {
-      sanitized = sanitized.replace(symbols.literalsRE, '');
-    }
+    sanitized = sanitized.replace(symbols.numeralRE, symbols.resolveNumber);
 
-    sanitized = sanitized.replace(symbols.numeralRE, symbols.resolveNumber).replace(SPACES_RE, '');
-
-    return sanitized.trim();
-  }
-
-  function parse(value: string): number {
-    const sanitized = sanitize(value);
     const parsed = Number(sanitized);
     if (Number.isNaN(parsed)) {
       return NaN;
@@ -143,17 +164,14 @@ export function defineNumberParser(locale: string, options: Intl.NumberFormatOpt
   }
 
   function isValidNumberPart(value: string) {
-    let sanitized = value;
+    let sanitized = sanitize(value);
+
     if (symbols.group) {
       sanitized = sanitized.replaceAll(symbols.group, '');
     }
 
     if (symbols.decimal) {
       sanitized = sanitized.replace(symbols.decimal, '');
-    }
-
-    if (symbols.literalsRE) {
-      sanitized = sanitized.replace(symbols.literalsRE, '');
     }
 
     if (symbols.minusSign) {
@@ -164,7 +182,7 @@ export function defineNumberParser(locale: string, options: Intl.NumberFormatOpt
       sanitized = sanitized.replace(symbols.plusSign, '');
     }
 
-    sanitized = sanitized.replace(symbols.numeralRE, '').replace(SPACES_RE, '');
+    sanitized = sanitized.replace(symbols.numeralRE, '');
 
     return sanitized.length === 0;
   }
@@ -172,7 +190,7 @@ export function defineNumberParser(locale: string, options: Intl.NumberFormatOpt
   return {
     formatter,
     locale,
-    options: formatter.resolvedOptions(),
+    options: resolvedOptions,
     symbols,
     parse,
     format,
