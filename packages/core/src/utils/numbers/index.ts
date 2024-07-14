@@ -3,6 +3,7 @@ import { MaybeRefOrGetter, toValue } from 'vue';
 const SYMBOL_PART_TYPES: Partial<Record<Intl.NumberFormatPartTypes, boolean>> = {
   percentSign: true,
   currency: true,
+  literal: true,
 };
 
 /**
@@ -11,11 +12,16 @@ const SYMBOL_PART_TYPES: Partial<Record<Intl.NumberFormatPartTypes, boolean>> = 
 const NUMBERING_SYSTEMS = ['latn', 'arab', 'hanidec'];
 
 /**
+ * Needed for cleaning up the currency accounting sign from the number (e.g: `($ 123)`).
+ */
+const CURRENCY_SIGN_RE = /^.*\(.*\).*$/;
+
+/**
  * Zero widths and RTL and LTR markers are produced sometimes with Intl.NumberFormat, we need to remove them to get as clean as a number as possible.
  */
 const NON_PRINTABLE_RE = /\p{C}/gu;
 
-const SPACES_RE = /\s/g;
+const SPACES_RE = /[\p{White_Space}]/gu;
 
 interface NumberSymbols {
   /**
@@ -26,10 +32,11 @@ interface NumberSymbols {
    * The thousands separator.
    */
   group?: string;
+
   /**
    * Currency symbol or percent sign or any unit.
    */
-  literals?: string;
+  literalsRE?: RegExp;
 
   /**
    * A regular expression to match numerals in the current locale.
@@ -71,22 +78,24 @@ function getParser(locale: string, options: Intl.NumberFormatOptions) {
 
 export function defineNumberParser(locale: string, options: Intl.NumberFormatOptions): NumberParser {
   const formatter = new Intl.NumberFormat(locale, options);
-  const negativeParts = formatter.formatToParts(-12345.6789);
+  const parts = formatter.formatToParts(-12345.6789);
   const positiveParts = formatter.formatToParts(1);
-  const decimal = negativeParts.find(part => part.type === 'decimal')?.value || '.';
-  const group = negativeParts.find(part => part.type === 'group')?.value || ',';
-  const literals = negativeParts.find(part => SYMBOL_PART_TYPES[part.type])?.value;
-  const minusSign = negativeParts.find(part => part.type === 'minusSign')?.value;
+  const decimal = parts.find(part => part.type === 'decimal')?.value || '.';
+  const group = parts.find(part => part.type === 'group')?.value || ',';
+  const literals = new Set(parts.filter(part => SYMBOL_PART_TYPES[part.type]).map(p => p.value));
+  const minusSign = parts.find(part => part.type === 'minusSign')?.value;
   const plusSign = positiveParts.find(part => part.type === 'plusSign')?.value;
   const numerals = [...new Intl.NumberFormat(toValue(locale), { useGrouping: false }).format(9876543210)].reverse();
 
   const numeralMap = new Map(numerals.map((d, i) => [d, i]));
   const numeralRE = new RegExp(`[${numerals.join('')}]`, 'g');
+  const literalsRE =
+    literals.size > 0 ? new RegExp(`${[...literals].map(escapeStringRegexp).join('|')}`, 'g') : undefined;
 
   const symbols: NumberSymbols = {
     decimal,
     group,
-    literals: literals,
+    literalsRE,
     numeralRE,
     minusSign,
     plusSign,
@@ -105,8 +114,8 @@ export function defineNumberParser(locale: string, options: Intl.NumberFormatOpt
       sanitized = sanitized.replace(symbols.decimal, '.');
     }
 
-    if (symbols.literals) {
-      sanitized = sanitized.replace(symbols.literals, '');
+    if (symbols.literalsRE) {
+      sanitized = sanitized.replace(symbols.literalsRE, '');
     }
 
     sanitized = sanitized.replace(symbols.numeralRE, symbols.resolveNumber).replace(SPACES_RE, '');
@@ -115,9 +124,18 @@ export function defineNumberParser(locale: string, options: Intl.NumberFormatOpt
   }
 
   function parse(value: string): number {
-    const parsed = sanitize(value);
+    const sanitized = sanitize(value);
+    const parsed = Number(sanitized);
+    if (Number.isNaN(parsed)) {
+      return NaN;
+    }
 
-    return Number(parsed);
+    // If the currency sign is accounting, we need to negate the number.
+    if (options.currencySign === 'accounting' && CURRENCY_SIGN_RE.test(value)) {
+      return -parsed;
+    }
+
+    return parsed;
   }
 
   function format(value: number): string {
@@ -134,8 +152,8 @@ export function defineNumberParser(locale: string, options: Intl.NumberFormatOpt
       sanitized = sanitized.replace(symbols.decimal, '');
     }
 
-    if (symbols.literals) {
-      sanitized = sanitized.replace(symbols.literals, '');
+    if (symbols.literalsRE) {
+      sanitized = sanitized.replace(symbols.literalsRE, '');
     }
 
     if (symbols.minusSign) {
@@ -219,4 +237,13 @@ export function useNumberParser(locale: MaybeRefOrGetter<string>, opts?: MaybeRe
     isValidNumberPart,
     getNumberingSystem,
   };
+}
+
+/**
+ * https://github.com/sindresorhus/escape-string-regexp
+ */
+function escapeStringRegexp(string: string) {
+  // Escape characters with special meaning either inside or outside character sets.
+  // Use a simple backslash escape when it’s always valid, and a `\xnn` escape when the simpler form would be disallowed by Unicode patterns’ stricter grammar.
+  return string.replace(/[|\\{}()[\]^$+*?.]/g, '\\$&').replace(/-/g, '\\x2d');
 }

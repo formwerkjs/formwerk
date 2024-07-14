@@ -29,9 +29,8 @@
         label="amount"
         :format-options="{
           locale: 'en',
-          signDisplay: 'exceptZero',
-          minimumFractionDigits: 0,
-          maximumFractionDigits: 0,
+          currency: 'USD',
+          currencySign: 'accounting',
         }"
         :max="10"
         :min="3"

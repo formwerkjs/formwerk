@@ -97,4 +97,15 @@ describe('useNumberParser', () => {
     expect(parse('$ ١٬٢٣٤٬٥٦٧٬٨٩٠٫١٢')).toBe(enNumber);
     expect(isValidNumberPart('$ ١٬٢٣٤٬٥٦٧٬٨٩٠٫١٢')).toBe(true);
   });
+
+  test('handles accounting currency sign', () => {
+    const { parse, isValidNumberPart } = useNumberParser('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      currencySign: 'accounting',
+    });
+
+    expect(parse('($1,234,567,890.12)')).toBe(-enNumber);
+    expect(isValidNumberPart('($$1,234,567,890.12)')).toBe(true);
+  });
 });
