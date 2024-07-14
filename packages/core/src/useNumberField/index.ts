@@ -60,11 +60,11 @@ export function useNumberField(
   const inputRef = elementRef || shallowRef<HTMLInputElement>();
   const { fieldValue } = useFieldValue<number>(toValue(props.modelValue));
   const { errorMessage, onInvalid, updateValidity, validityDetails, isInvalid } = useInputValidity(inputRef);
-  const { locale, formatOptions } = useNumberFormatOptions();
+  const { locale } = useNumberFormatOptions();
 
   const parser = useNumberParser(
     () => toValue(props.locale) || locale,
-    () => toValue(props.formatOptions) ?? formatOptions,
+    () => toValue(props.formatOptions) ?? {},
   );
 
   const formattedText = computed(() => {
