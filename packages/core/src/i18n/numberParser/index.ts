@@ -156,6 +156,10 @@ export function defineNumberParser(locale: string, options: Intl.NumberFormatOpt
       return -parsed;
     }
 
+    if (options.style === 'percent') {
+      return parsed / 100;
+    }
+
     return parsed;
   }
 

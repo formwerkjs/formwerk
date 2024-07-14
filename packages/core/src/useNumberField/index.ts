@@ -13,7 +13,7 @@ import { useInputValidity } from '../composables/useInputValidity';
 import { useLabel } from '../composables/useLabel';
 import { useFieldValue } from '../composables/useFieldValue';
 import { useNumberFormatOptions } from '../composables/useLocale';
-import { useNumberParser } from '../utils/numbers';
+import { useNumberParser } from '../i18n/numberParser';
 import { useSpinButton } from '../useSpinButton';
 
 export interface NumberInputDOMAttributes {

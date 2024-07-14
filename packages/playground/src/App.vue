@@ -29,7 +29,9 @@
         label="amount"
         :max="1000000"
         locale="ar-EG"
-        :format-options="{}"
+        :format-options="{
+          style: 'percent',
+        }"
         :min="0"
         :step="1"
         required
