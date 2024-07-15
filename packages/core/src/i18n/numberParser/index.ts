@@ -1,6 +1,9 @@
 import { MaybeRefOrGetter, toValue } from 'vue';
 
-const SYMBOL_PART_TYPES: Partial<Record<Intl.NumberFormatPartTypes, boolean>> = {
+/**
+ * Stuff that are considered "literals" that's not part of the number itself and should be stripped out when parsing/validating.
+ */
+const LITERAL_PART_TYPES: Partial<Record<Intl.NumberFormatPartTypes, boolean>> = {
   percentSign: true,
   currency: true,
   literal: true,
@@ -82,7 +85,7 @@ export function defineNumberParser(locale: string, options: Intl.NumberFormatOpt
   const positiveParts = formatter.formatToParts(1);
   const decimal = parts.find(part => part.type === 'decimal')?.value || '.';
   const group = parts.find(part => part.type === 'group')?.value || ',';
-  const literals = new Set(parts.filter(part => SYMBOL_PART_TYPES[part.type]).map(p => p.value));
+  const literals = new Set(parts.filter(part => LITERAL_PART_TYPES[part.type]).map(p => p.value));
   const minusSign = parts.find(part => part.type === 'minusSign')?.value;
   const plusSign = positiveParts.find(part => part.type === 'plusSign')?.value;
   const numerals = [...new Intl.NumberFormat(toValue(locale), { useGrouping: false }).format(9876543210)].reverse();
