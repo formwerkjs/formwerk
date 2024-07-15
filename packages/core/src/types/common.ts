@@ -70,3 +70,11 @@ export type Direction = 'ltr' | 'rtl';
 export type Reactivify<TProps extends object, Exclude extends keyof TProps = never> = {
   [TProp in keyof TProps]: TProp extends Exclude ? TProps[TProp] : MaybeRefOrGetter<TProps[TProp]>;
 };
+
+export type NormalizedProps<TProps extends object, Exclude extends keyof TProps = never> = {
+  [TProp in keyof TProps]: TProp extends Exclude
+    ? TProps[TProp]
+    : TProps[TProp] extends MaybeRefOrGetter<infer TValue>
+      ? Getter<TValue>
+      : Getter<TProps[TProp]>;
+};

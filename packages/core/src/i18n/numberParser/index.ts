@@ -205,7 +205,10 @@ export function defineNumberParser(locale: string, options: Intl.NumberFormatOpt
   };
 }
 
-export function useNumberParser(locale: MaybeRefOrGetter<string>, opts?: MaybeRefOrGetter<Intl.NumberFormatOptions>) {
+export function useNumberParser(
+  locale: MaybeRefOrGetter<string>,
+  opts?: MaybeRefOrGetter<Intl.NumberFormatOptions | undefined>,
+) {
   function resolveParser(value: string) {
     const defaultLocale = toValue(locale);
     const defaultOpts = toValue(opts) || {};

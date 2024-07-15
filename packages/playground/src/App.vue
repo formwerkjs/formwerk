@@ -26,19 +26,17 @@
       <InputNumber
         v-model="form.amount"
         name="number"
-        label="amount"
-        :max="1000000"
+        :label="`amount ${form.amount}`"
+        :max="max"
         locale="ar-EG"
-        :format-options="{
-          style: 'percent',
-        }"
+        :format-options="{ style: 'currency', currency: 'EGP' }"
         :min="0"
         :step="1"
         required
         placeholder="nani"
       />
 
-      <button @click="form.amount = 5555">chANGE AMOUNT</button>
+      <button type="button" @click="max += 5">Max ({{ max }})</button>
 
       <SwitchInput v-model="form.switch">Toggle me</SwitchInput>
       <Switch label="Toggle me" v-model="form.switch" />
@@ -145,7 +143,7 @@
 </template>
 
 <script lang="ts" setup>
-import { reactive } from 'vue';
+import { reactive, ref } from 'vue';
 import InputText from './components/InputText.vue';
 import InputNumber from './components/InputNumber.vue';
 import InputTextArea from './components/InputTextArea.vue';
@@ -183,6 +181,8 @@ const form = reactive({
   checkboxGroup2: undefined,
   checkboxSolo2: undefined,
 });
+
+const max = ref(10);
 
 function onSearchSubmit(value: string) {
   console.log(value);

@@ -1,5 +1,5 @@
 import { MaybeRefOrGetter, Ref, toValue } from 'vue';
-import { AriaDescriptionProps } from '../types';
+import { AriaDescriptionProps, NormalizedProps } from '../types';
 
 export function uniqId() {
   return crypto.randomUUID();
@@ -49,24 +49,48 @@ export function createRefCapture<TEl extends HTMLElement>(elRef: Ref<TEl | undef
   };
 }
 
-export function propsToValues<TProps extends Record<string, MaybeRefOrGetter<any>>>(
-  props: TProps,
-  keys: (keyof TProps)[],
-) {
+function arrayToKeys<T extends string | number | symbol>(keys: T[]): Record<T, true> {
   const keyDict = keys.reduce(
     (acc, key) => {
       acc[key] = true;
 
       return acc;
     },
-    {} as Record<keyof TProps, boolean>,
+    {} as Record<T, true>,
   );
+
+  return keyDict;
+}
+
+export function propsToValues<TProps extends Record<string, MaybeRefOrGetter<any>>>(
+  props: TProps,
+  keys: (keyof TProps)[],
+) {
+  const keyDict = arrayToKeys(keys);
 
   return Object.fromEntries(
     Object.entries(props)
       .filter(([key]) => keyDict[key])
       .map(([key, value]) => [key, toValue(value)]),
   );
+}
+
+export function normalizeProps<TProps extends Record<string, unknown>, Exclude extends keyof TProps = never>(
+  props: TProps,
+  exclude?: Exclude[],
+): NormalizedProps<TProps, Exclude> {
+  const excludeDict = exclude ? arrayToKeys(exclude) : ({} as Record<string, true>);
+
+  return Object.fromEntries(
+    Object.keys(props).map(key => {
+      // Existing getters are kept as is
+      if (excludeDict[key]) {
+        return [key, () => props[key]];
+      }
+
+      return [key, () => toValue(props[key])];
+    }),
+  ) as NormalizedProps<TProps, Exclude>;
 }
 
 export function getNextCycleArrIdx(idx: number, arr: unknown[]): number {

@@ -1,5 +1,5 @@
 import { Ref, computed, nextTick, shallowRef, toValue } from 'vue';
-import { createDescribedByProps, propsToValues, uniqId, withRefCapture } from '../utils/common';
+import { createDescribedByProps, normalizeProps, propsToValues, uniqId, withRefCapture } from '../utils/common';
 import {
   AriaDescribableProps,
   AriaLabelableProps,
@@ -53,19 +53,17 @@ export interface NumberFieldProps {
 }
 
 export function useNumberField(
-  props: Reactivify<NumberFieldProps>,
+  _props: Reactivify<NumberFieldProps>,
   elementRef?: Ref<HTMLInputElement | HTMLTextAreaElement>,
 ) {
+  const props = normalizeProps(_props);
   const inputId = uniqId();
   const inputRef = elementRef || shallowRef<HTMLInputElement>();
   const { fieldValue } = useFieldValue<number>(toValue(props.modelValue));
   const { errorMessage, onInvalid, updateValidity, validityDetails, isInvalid } = useInputValidity(inputRef);
   const { locale } = useNumberFormatOptions();
 
-  const parser = useNumberParser(
-    () => toValue(props.locale) || locale,
-    () => toValue(props.formatOptions) ?? {},
-  );
+  const parser = useNumberParser(() => toValue(props.locale) || locale, props.formatOptions);
 
   const formattedText = computed(() => {
     if (Number.isNaN(fieldValue.value) || fieldValue.value === undefined) {
