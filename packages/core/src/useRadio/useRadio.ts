@@ -1,5 +1,5 @@
 import { Ref, computed, inject, nextTick, ref, toValue } from 'vue';
-import { uniqId, withRefCapture } from '../utils/common';
+import { normalizeProps, uniqId, withRefCapture } from '../utils/common';
 import { AriaLabelableProps, InputBaseAttributes, Reactivify, RovingTabIndex } from '../types';
 import { useLabel } from '../composables/useLabel';
 import { RadioGroupContext, RadioGroupKey } from './useRadioGroup';
@@ -24,13 +24,14 @@ export interface RadioDomProps extends AriaLabelableProps {
 }
 
 export function useRadio<TValue = string>(
-  props: Reactivify<RadioProps<TValue>>,
+  _props: Reactivify<RadioProps<TValue>>,
   elementRef?: Ref<HTMLInputElement | undefined>,
 ) {
+  const props = normalizeProps(_props);
   const inputId = uniqId();
   const group: RadioGroupContext<TValue> | null = inject(RadioGroupKey, null);
   const inputRef = elementRef || ref<HTMLInputElement>();
-  const checked = computed(() => group?.modelValue === props.value);
+  const checked = computed(() => group?.modelValue === toValue(props.value));
   const { labelProps, labelledByProps } = useLabel({
     for: inputId,
     label: props.label,
@@ -44,7 +45,7 @@ export function useRadio<TValue = string>(
           return;
         }
 
-        group?.setValue(toValue(props.value));
+        group?.setValue(toValue(props.value) as TValue);
       },
       onKeydown(e: KeyboardEvent) {
         if (toValue(props.disabled)) {
@@ -53,7 +54,7 @@ export function useRadio<TValue = string>(
 
         if (e.code === 'Space') {
           e.preventDefault();
-          group?.setValue(toValue(props.value));
+          group?.setValue(toValue(props.value) as TValue);
         }
       },
     };
@@ -96,7 +97,7 @@ export function useRadio<TValue = string>(
     isChecked: () => checked.value,
     isDisabled,
     setChecked: () => {
-      group?.setValue(toValue(props.value));
+      group?.setValue(toValue(props.value) as TValue);
       focus();
       nextTick(() => {
         group?.setValidity(inputRef.value?.validationMessage ?? '');

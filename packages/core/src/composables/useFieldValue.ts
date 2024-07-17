@@ -1,7 +1,7 @@
-import { Ref, ref } from 'vue';
+import { MaybeRefOrGetter, Ref, ref, toValue } from 'vue';
 
-export function useFieldValue<TValue = unknown>(initial?: TValue) {
-  const fieldValue = ref(initial || undefined) as Ref<TValue | undefined>;
+export function useFieldValue<TValue = unknown>(initial?: MaybeRefOrGetter<TValue>) {
+  const fieldValue = ref(toValue(initial ?? undefined)) as Ref<TValue | undefined>;
 
   return {
     fieldValue,

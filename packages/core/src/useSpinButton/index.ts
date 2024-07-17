@@ -2,6 +2,7 @@ import { computed, toValue } from 'vue';
 import { Direction, Numberish, Orientation2D, Reactivify } from '../types';
 import { toNearestMultipleOf } from '../utils/math';
 import { useButtonHold } from '../composables/useButtonHold';
+import { normalizeProps } from '../utils/common';
 
 export interface SpinButtonProps {
   min?: Numberish;
@@ -48,7 +49,8 @@ function getDirectionalStepKeys(orientation: Orientation2D, direction: Direction
   return { incrKeys, decrKeys };
 }
 
-export function useSpinButton(props: Reactivify<SpinButtonProps, 'onChange'>) {
+export function useSpinButton(_props: Reactivify<SpinButtonProps, 'onChange'>) {
+  const props = normalizeProps(_props, ['onChange']);
   const getStep = () => Number(toValue(props.step) || 1);
   const getMin = () => Number(toValue(props.min) ?? undefined);
   const getMax = () => Number(toValue(props.max) ?? undefined);

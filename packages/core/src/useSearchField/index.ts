@@ -8,7 +8,7 @@ import {
   Reactivify,
   TextInputBaseAttributes,
 } from '../types';
-import { createDescribedByProps, propsToValues, uniqId, withRefCapture } from '../utils/common';
+import { createDescribedByProps, normalizeProps, propsToValues, uniqId, withRefCapture } from '../utils/common';
 import { useFieldValue } from '../composables/useFieldValue';
 import { useInputValidity } from '../composables/useInputValidity';
 import { useSyncModel } from '../composables/useModelSync';
@@ -46,11 +46,12 @@ export interface SearchFieldProps {
   onSubmit?: (value: string) => void;
 }
 
-export function useSearchField(props: Reactivify<SearchFieldProps, 'onSubmit'>, elementRef?: Ref<HTMLInputElement>) {
+export function useSearchField(_props: Reactivify<SearchFieldProps, 'onSubmit'>, elementRef?: Ref<HTMLInputElement>) {
+  const props = normalizeProps(_props, ['onSubmit']);
   const inputId = uniqId();
   const inputRef = elementRef || ref<HTMLInputElement>();
 
-  const { fieldValue } = useFieldValue<string>(toValue(props.modelValue));
+  const { fieldValue } = useFieldValue<string | undefined>(props.modelValue);
   const { errorMessage, onInvalid, updateValidity, validityDetails, isInvalid } = useInputValidity(inputRef);
 
   useSyncModel({

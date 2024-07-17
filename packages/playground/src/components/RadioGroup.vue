@@ -9,15 +9,10 @@ const { radioGroupProps, labelProps, descriptionProps, errorMessageProps, errorM
 <template>
   <div
     v-bind="radioGroupProps"
-    class="flex border border-gray-200 rounded-md p-2"
-    :class="{ 'flex-col': orientation !== 'horizontal' }"
+    class="flex border border-gray-200 rounded-md p-2 gap-1"
+    :class="{ 'flex-col': orientation === 'vertical' }"
   >
-    <span
-      v-bind="labelProps"
-      class="font-medium"
-      :class="{ 'mr-4': orientation === 'horizontal', 'mb-4': orientation !== 'horizontal' }"
-      >{{ label }}</span
-    >
+    <span v-bind="labelProps" class="font-medium">{{ label }}</span>
 
     <slot />
 

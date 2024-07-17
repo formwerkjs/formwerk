@@ -11,7 +11,7 @@ import {
   Direction,
   Reactivify,
 } from '../types';
-import { uniqId, createDescribedByProps, getNextCycleArrIdx } from '../utils/common';
+import { uniqId, createDescribedByProps, getNextCycleArrIdx, normalizeProps, isEmpty } from '../utils/common';
 
 export interface RadioGroupContext<TValue> {
   name: string;
@@ -54,15 +54,26 @@ interface RadioGroupDomProps extends AriaLabelableProps, AriaDescribableProps, A
   onKeydown(e: KeyboardEvent): void;
 }
 
-const ORIENTATION_ARROWS: Record<Orientation, Record<Direction, string[]>> = {
-  horizontal: { ltr: ['ArrowLeft', 'ArrowRight'], rtl: ['ArrowRight', 'ArrowLeft'] },
-  vertical: { ltr: ['ArrowUp', 'ArrowDown'], rtl: ['ArrowUp', 'ArrowDown'] },
-};
+function getOrientationArrows(dir: Direction | undefined) {
+  const nextKeys = ['ArrowDown'];
+  const prevKeys = ['ArrowUp'];
 
-export function useRadioGroup<TValue = string>(props: Reactivify<RadioGroupProps<TValue>>) {
+  if (dir === 'rtl') {
+    nextKeys.push('ArrowLeft');
+    prevKeys.push('ArrowRight');
+
+    return { prev: prevKeys, next: nextKeys };
+  }
+
+  nextKeys.push('ArrowRight');
+  prevKeys.push('ArrowLeft');
+
+  return { prev: prevKeys, next: nextKeys };
+}
+
+export function useRadioGroup<TValue = string>(_props: Reactivify<RadioGroupProps<TValue>>) {
+  const props = normalizeProps(_props);
   const groupId = uniqId();
-  const getOrientationArrows = () =>
-    ORIENTATION_ARROWS[toValue(props.orientation) ?? 'vertical'][toValue(props.dir) || 'ltr'];
 
   const radios: RadioItemContext[] = [];
   const { labelProps, labelledByProps } = useLabel({
@@ -70,7 +81,7 @@ export function useRadioGroup<TValue = string>(props: Reactivify<RadioGroupProps
     label: props.label,
   });
 
-  const { fieldValue } = useFieldValue(toValue(props.modelValue));
+  const { fieldValue } = useFieldValue<TValue>(props.modelValue as TValue);
   useSyncModel({
     model: fieldValue,
     onModelPropUpdated: value => {
@@ -117,15 +128,15 @@ export function useRadioGroup<TValue = string>(props: Reactivify<RadioGroupProps
       'aria-describedby': describedBy(),
       'aria-invalid': errorMessage.value ? true : undefined,
       onKeydown(e: KeyboardEvent) {
-        const [prev, next] = getOrientationArrows();
+        const { next, prev } = getOrientationArrows(toValue(props.dir));
 
-        if (e.key === next) {
+        if (next.includes(e.key)) {
           e.preventDefault();
           handleArrowNext();
           return;
         }
 
-        if (e.key === prev) {
+        if (prev.includes(e.key)) {
           e.preventDefault();
           handleArrowPrevious();
           return;
@@ -158,7 +169,7 @@ export function useRadioGroup<TValue = string>(props: Reactivify<RadioGroupProps
 
     return {
       canReceiveFocus() {
-        return radios[0] === radio && fieldValue.value === undefined;
+        return radios[0] === radio && isEmpty(fieldValue.value);
       },
     };
   }

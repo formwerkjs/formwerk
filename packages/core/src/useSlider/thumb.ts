@@ -1,6 +1,6 @@
 import { Ref, computed, inject, ref, toValue } from 'vue';
 import { SliderContext, SliderInjectionKey, ThumbContext } from './slider';
-import { withRefCapture } from '../utils/common';
+import { normalizeProps, withRefCapture } from '../utils/common';
 import { useFieldValue } from '../composables/useFieldValue';
 import { Reactivify } from '../types';
 import { useSpinButton } from '../useSpinButton';
@@ -23,7 +23,8 @@ const mockSlider: () => SliderContext = () => ({
   }),
 });
 
-export function useSliderThumb(props: Reactivify<SliderThumbProps>, elementRef?: Ref<HTMLElement>) {
+export function useSliderThumb(_props: Reactivify<SliderThumbProps>, elementRef?: Ref<HTMLElement>) {
+  const props = normalizeProps(_props);
   const thumbRef = elementRef || ref<HTMLElement>();
   const isDragging = ref(false);
   const { fieldValue } = useFieldValue(toValue(props.modelValue) ?? 0);

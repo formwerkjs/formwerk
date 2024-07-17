@@ -1,5 +1,5 @@
 import { Ref, computed, shallowRef, toValue } from 'vue';
-import { createDescribedByProps, propsToValues, uniqId, withRefCapture } from '../utils/common';
+import { createDescribedByProps, normalizeProps, propsToValues, uniqId, withRefCapture } from '../utils/common';
 import {
   AriaDescribableProps,
   AriaLabelableProps,
@@ -49,12 +49,13 @@ export interface TextFieldProps {
 }
 
 export function useTextField(
-  props: Reactivify<TextFieldProps>,
+  _props: Reactivify<TextFieldProps>,
   elementRef?: Ref<HTMLInputElement | HTMLTextAreaElement>,
 ) {
+  const props = normalizeProps(_props);
   const inputId = uniqId();
   const inputRef = elementRef || shallowRef<HTMLInputElement>();
-  const { fieldValue } = useFieldValue<string>(toValue(props.modelValue));
+  const { fieldValue } = useFieldValue<string | undefined>(props.modelValue);
   const { errorMessage, onInvalid, updateValidity, validityDetails, isInvalid } = useInputValidity(inputRef);
 
   useSyncModel({

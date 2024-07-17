@@ -1,6 +1,6 @@
 import { Ref, computed, shallowRef, toValue } from 'vue';
 import { AriaDescribableProps, AriaLabelableProps, InputBaseAttributes, InputEvents, Reactivify } from '../types';
-import { uniqId, withRefCapture } from '../utils/common';
+import { normalizeProps, uniqId, withRefCapture } from '../utils/common';
 import { useFieldValue } from '../composables/useFieldValue';
 import { useLabel } from '../composables/useLabel';
 import { useSyncModel } from '../composables/useModelSync';
@@ -24,7 +24,8 @@ export type SwitchProps = {
   falseValue?: unknown;
 };
 
-export function useSwitch(props: Reactivify<SwitchProps>, elementRef?: Ref<HTMLInputElement>) {
+export function useSwitch(_props: Reactivify<SwitchProps>, elementRef?: Ref<HTMLInputElement>) {
+  const props = normalizeProps(_props);
   const id = uniqId();
   const inputRef = elementRef || shallowRef<HTMLInputElement>();
   const { labelProps, labelledByProps } = useLabel({
@@ -33,7 +34,7 @@ export function useSwitch(props: Reactivify<SwitchProps>, elementRef?: Ref<HTMLI
     targetRef: inputRef,
   });
 
-  const { fieldValue } = useFieldValue<unknown>(toValue(props.modelValue) ?? toValue(props.falseValue) ?? false);
+  const { fieldValue } = useFieldValue<unknown>(props.modelValue ?? props.falseValue ?? false);
 
   /**
    * Normalizes in the incoming value to be either one of the given toggled values or a boolean.

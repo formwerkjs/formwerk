@@ -44,31 +44,19 @@
       <SwitchInput v-model="form.interestingSwitch" :true-value="false" :false-value="true">Toggle me</SwitchInput>
       <Switch label="Toggle me" v-model="form.interestingSwitch" :true-value="false" :false-value="true" />
 
-      <RadioGroup v-model="form.radio" name="radio" label="Radio Vertical (inputs)">
+      <RadioGroup v-model="form.radio" name="radio" label="Radio  (inputs)" orientation="vertical">
         <InputRadioItem label="Radio 1" value="1" />
         <InputRadioItem label="Radio 2" value="2" />
         <InputRadioItem label="Radio 3" value="3" />
       </RadioGroup>
 
-      <RadioGroup
-        v-model="form.radio2"
-        name="radio2"
-        label="Radio Horizontal (inputs)"
-        orientation="horizontal"
-        required
-      >
+      <RadioGroup v-model="form.radio2" name="radio2" label="Radio Horizontal (inputs)" required>
         <InputRadioItem label="Radio 1" value="1" />
         <InputRadioItem label="Radio 2" value="2" />
         <InputRadioItem label="Radio 3" value="3" />
       </RadioGroup>
 
-      <RadioGroup
-        v-model="form.radio2rtl"
-        name="radio2rtl"
-        label="Radio Horizontal (inputs, RTL)"
-        orientation="horizontal"
-        dir="rtl"
-      >
+      <RadioGroup v-model="form.radio2rtl" name="radio2rtl" label="Radio Horizontal (inputs, RTL)" dir="rtl">
         <InputRadioItem label="Radio 1" value="1" />
         <InputRadioItem label="Radio 2" value="2" />
         <InputRadioItem label="Radio 3" disabled value="3" />

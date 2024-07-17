@@ -11,7 +11,7 @@ import {
   Direction,
   Reactivify,
 } from '../types';
-import { uniqId, createDescribedByProps } from '../utils/common';
+import { uniqId, createDescribedByProps, normalizeProps } from '../utils/common';
 
 export type CheckboxGroupValue<TCheckbox> = TCheckbox[];
 
@@ -60,7 +60,8 @@ interface CheckboxGroupDomProps extends AriaLabelableProps, AriaDescribableProps
   dir: Direction;
 }
 
-export function useCheckboxGroup<TCheckbox>(props: Reactivify<CheckboxGroupProps<TCheckbox>>) {
+export function useCheckboxGroup<TCheckbox>(_props: Reactivify<CheckboxGroupProps<TCheckbox>>) {
+  const props = normalizeProps(_props);
   const groupId = uniqId();
   const checkboxes: CheckboxContext[] = [];
   const { labelProps, labelledByProps } = useLabel({

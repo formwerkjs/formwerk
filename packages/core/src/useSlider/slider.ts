@@ -1,7 +1,7 @@
 import { InjectionKey, computed, onBeforeUnmount, provide, ref, toValue } from 'vue';
 import { useLabel } from '../composables/useLabel';
 import { AriaLabelableProps, Orientation, Reactivify } from '../types';
-import { uniqId, withRefCapture } from '../utils/common';
+import { normalizeProps, uniqId, withRefCapture } from '../utils/common';
 import { toNearestMultipleOf } from '../utils/math';
 import { useSyncModel } from '../composables/useModelSync';
 
@@ -73,7 +73,8 @@ export interface SliderContext {
 
 export const SliderInjectionKey: InjectionKey<SliderContext> = Symbol('Slider');
 
-export function useSlider(props: Reactivify<SliderProps>) {
+export function useSlider(_props: Reactivify<SliderProps>) {
+  const props = normalizeProps(_props);
   const inputId = uniqId();
   const trackRef = ref<HTMLElement>();
   const thumbs = ref<ThumbContext[]>([]);

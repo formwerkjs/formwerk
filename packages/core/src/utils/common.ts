@@ -84,11 +84,15 @@ export function normalizeProps<TProps extends Record<string, unknown>, Exclude e
   return Object.fromEntries(
     Object.keys(props).map(key => {
       // Existing getters are kept as is
-      if (excludeDict[key]) {
-        return [key, () => props[key]];
+      if (!excludeDict[key]) {
+        return [key, () => toValue(props[key])];
       }
 
-      return [key, () => toValue(props[key])];
+      if (isCallable(props[key])) {
+        return [key, (...args: any[]) => (props[key] as any)(...args)];
+      }
+
+      return [key, () => props[key]];
     }),
   ) as NormalizedProps<TProps, Exclude>;
 }
@@ -112,4 +116,16 @@ export function withRefCapture<TProps>(
   }
 
   return props;
+}
+
+function isCallable(fn: unknown): fn is (...args: any[]) => any {
+  return typeof fn === 'function';
+}
+
+export function isNullOrUndefined(value: unknown): value is null | undefined {
+  return value === null || value === undefined;
+}
+
+export function isEmpty(value: unknown): value is null | undefined | '' {
+  return isNullOrUndefined(value) || value === '';
 }
