@@ -1,12 +1,12 @@
 import { shallowRef } from 'vue';
-import { getLocale } from './i18n/useLocale/getLocale';
+import { getSiteLocale } from './i18n/useLocale/getSiteLocale';
 
 interface Config {
   locale: string;
 }
 
 const currentConfig = shallowRef<Config>({
-  locale: getLocale(),
+  locale: getSiteLocale(),
 });
 
 export function configure(config: Partial<Config>) {

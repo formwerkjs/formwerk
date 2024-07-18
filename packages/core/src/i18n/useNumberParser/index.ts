@@ -1,5 +1,5 @@
 import { MaybeRefOrGetter, toValue } from 'vue';
-import { getLocale } from '../useLocale/getLocale';
+import { getUserLocale } from '../useLocale';
 
 /**
  * Stuff that are considered "literals" that's not part of the number itself and should be stripped out when parsing/validating.
@@ -210,7 +210,7 @@ export function useNumberParser(
   locale: MaybeRefOrGetter<string | undefined>,
   opts?: MaybeRefOrGetter<Intl.NumberFormatOptions | undefined>,
 ) {
-  const resolvedLocale = getLocale();
+  const resolvedLocale = getUserLocale();
   // Keeps references to the last resolved parser to avoid re-resolving it.
   // Also has the benefit to format the value with the same parser that parsed before.
   // So it will keep the same numbering system that the user prefers.

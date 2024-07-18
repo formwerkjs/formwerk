@@ -129,3 +129,5 @@ export function isNullOrUndefined(value: unknown): value is null | undefined {
 export function isEmpty(value: unknown): value is null | undefined | '' {
   return isNullOrUndefined(value) || value === '';
 }
+
+export const isSSR = typeof window === 'undefined';
