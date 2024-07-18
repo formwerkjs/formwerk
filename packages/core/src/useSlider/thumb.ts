@@ -4,6 +4,7 @@ import { normalizeProps, withRefCapture } from '../utils/common';
 import { useFieldValue } from '../reactivity/useFieldValue';
 import { Reactivify } from '../types';
 import { useSpinButton } from '../useSpinButton';
+import { useLocale } from '../i18n/useLocale';
 
 export interface SliderThumbProps {
   label?: string;
@@ -11,23 +12,12 @@ export interface SliderThumbProps {
   disabled?: boolean;
 }
 
-const mockSlider: () => SliderContext = () => ({
-  registerThumb: () => ({
-    getThumbRange: () => ({ min: 0, max: 100 }),
-    getSliderRange: () => ({ min: 0, max: 100 }),
-    getSliderStep: () => 1,
-    getSliderLabelProps: () => ({}),
-    getValueForPagePosition: () => 0,
-    getOrientation: () => 'horizontal',
-    getInlineDirection: () => 'ltr',
-  }),
-});
-
 export function useSliderThumb(_props: Reactivify<SliderThumbProps>, elementRef?: Ref<HTMLElement>) {
   const props = normalizeProps(_props);
   const thumbRef = elementRef || ref<HTMLElement>();
   const isDragging = ref(false);
   const { fieldValue } = useFieldValue(toValue(props.modelValue) ?? 0);
+  const { direction } = useLocale();
 
   const thumbContext: ThumbContext = {
     focus() {
@@ -39,6 +29,18 @@ export function useSliderThumb(_props: Reactivify<SliderThumbProps>, elementRef?
     setValue,
   };
 
+  const mockSlider: () => SliderContext = () => ({
+    registerThumb: () => ({
+      getThumbRange: () => ({ min: 0, max: 100 }),
+      getSliderRange: () => ({ min: 0, max: 100 }),
+      getSliderStep: () => 1,
+      getSliderLabelProps: () => ({}),
+      getValueForPagePosition: () => 0,
+      getOrientation: () => 'horizontal',
+      getInlineDirection: () => direction.value,
+    }),
+  });
+
   const slider = inject(SliderInjectionKey, mockSlider, true).registerThumb(thumbContext);
   const { spinButtonProps, applyClamp } = useSpinButton({
     current: fieldValue,
@@ -47,7 +49,7 @@ export function useSliderThumb(_props: Reactivify<SliderThumbProps>, elementRef?
     min: () => slider.getThumbRange().min,
     max: () => slider.getThumbRange().max,
     step: () => slider.getSliderStep(),
-    direction: () => slider.getInlineDirection(),
+    dir: () => slider.getInlineDirection(),
     onChange: next => {
       fieldValue.value = next;
     },

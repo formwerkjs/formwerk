@@ -12,6 +12,7 @@ import {
   Reactivify,
 } from '../types';
 import { uniqId, createDescribedByProps, normalizeProps } from '../utils/common';
+import { useLocale } from '../i18n/useLocale';
 
 export type CheckboxGroupValue<TCheckbox> = TCheckbox[];
 
@@ -43,7 +44,7 @@ export const CheckboxGroupKey: InjectionKey<CheckboxGroupContext<any>> = Symbol(
 
 export interface CheckboxGroupProps<TCheckbox = unknown> {
   orientation?: Orientation;
-  dir?: 'ltr' | 'rtl';
+  dir?: Direction;
   label: string;
   description?: string;
 
@@ -63,6 +64,7 @@ interface CheckboxGroupDomProps extends AriaLabelableProps, AriaDescribableProps
 export function useCheckboxGroup<TCheckbox>(_props: Reactivify<CheckboxGroupProps<TCheckbox>>) {
   const props = normalizeProps(_props);
   const groupId = uniqId();
+  const { direction } = useLocale();
   const checkboxes: CheckboxContext[] = [];
   const { labelProps, labelledByProps } = useLabel({
     for: groupId,
@@ -87,7 +89,7 @@ export function useCheckboxGroup<TCheckbox>(_props: Reactivify<CheckboxGroupProp
   const checkboxGroupProps = computed<CheckboxGroupDomProps>(() => {
     return {
       ...labelledByProps.value,
-      dir: toValue(props.dir) ?? 'ltr',
+      dir: toValue(props.dir) ?? direction.value,
       role: 'group',
       'aria-describedby': describedBy(),
       'aria-invalid': errorMessage.value ? true : undefined,

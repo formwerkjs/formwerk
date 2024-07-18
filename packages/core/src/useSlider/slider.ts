@@ -1,15 +1,16 @@
 import { InjectionKey, computed, onBeforeUnmount, provide, ref, toValue } from 'vue';
 import { useLabel } from '../a11y/useLabel';
-import { AriaLabelableProps, Orientation, Reactivify } from '../types';
+import { AriaLabelableProps, Direction, Orientation, Reactivify } from '../types';
 import { normalizeProps, uniqId, withRefCapture } from '../utils/common';
 import { toNearestMultipleOf } from '../utils/math';
 import { useSyncModel } from '../reactivity/useModelSync';
+import { useLocale } from '../i18n/useLocale';
 
 export interface SliderProps {
   label?: string;
 
   orientation?: Orientation;
-  dir?: 'ltr' | 'rtl';
+  dir?: Direction;
   modelValue?: number | number[];
   min?: number;
   max?: number;
@@ -64,7 +65,7 @@ export interface SliderRegistration {
   /**
    * Gets the inline direction of the slider.
    */
-  getInlineDirection(): 'ltr' | 'rtl';
+  getInlineDirection(): Direction;
 }
 
 export interface SliderContext {
@@ -78,6 +79,7 @@ export function useSlider(_props: Reactivify<SliderProps>) {
   const inputId = uniqId();
   const trackRef = ref<HTMLElement>();
   const thumbs = ref<ThumbContext[]>([]);
+  const { direction } = useLocale();
   const sliderValue = computed(() => {
     if (thumbs.value.length <= 1) {
       return thumbs.value[0]?.getCurrentValue() || 0;
@@ -200,7 +202,7 @@ export function useSlider(_props: Reactivify<SliderProps>) {
       },
       getValueForPagePosition,
       getOrientation: () => toValue(props.orientation) || 'horizontal',
-      getInlineDirection: () => toValue(props.dir) || 'ltr',
+      getInlineDirection: () => toValue(props.dir) || direction.value,
     };
 
     onBeforeUnmount(() => unregisterThumb(ctx));

@@ -12,6 +12,7 @@ import {
   Reactivify,
 } from '../types';
 import { uniqId, createDescribedByProps, getNextCycleArrIdx, normalizeProps, isEmpty } from '../utils/common';
+import { useLocale } from '../i18n/useLocale';
 
 export interface RadioGroupContext<TValue> {
   name: string;
@@ -36,7 +37,7 @@ export const RadioGroupKey: InjectionKey<RadioGroupContext<any>> = Symbol('Radio
 
 export interface RadioGroupProps<TValue = string> {
   orientation?: Orientation;
-  dir?: 'ltr' | 'rtl';
+  dir?: Direction;
   label: string;
   description?: string;
 
@@ -74,6 +75,7 @@ function getOrientationArrows(dir: Direction | undefined) {
 export function useRadioGroup<TValue = string>(_props: Reactivify<RadioGroupProps<TValue>>) {
   const props = normalizeProps(_props);
   const groupId = uniqId();
+  const { direction } = useLocale();
 
   const radios: RadioItemContext[] = [];
   const { labelProps, labelledByProps } = useLabel({
@@ -123,7 +125,7 @@ export function useRadioGroup<TValue = string>(_props: Reactivify<RadioGroupProp
   const radioGroupProps = computed<RadioGroupDomProps>(() => {
     return {
       ...labelledByProps.value,
-      dir: toValue(props.dir) ?? 'ltr',
+      dir: toValue(props.dir) ?? direction.value,
       role: 'radiogroup',
       'aria-describedby': describedBy(),
       'aria-invalid': errorMessage.value ? true : undefined,

@@ -147,10 +147,6 @@ import CheckboxItem from './components/CheckboxItem.vue';
 import CheckboxInput from './components/CheckboxInput.vue';
 import { configure } from '@formwerk/core';
 
-configure({
-  locale: 'ar-EG',
-});
-
 const form = reactive({
   email: '',
   amount: 0,

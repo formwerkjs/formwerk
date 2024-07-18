@@ -1,5 +1,5 @@
 import { MaybeRefOrGetter, toValue } from 'vue';
-import { getLocale } from '../getLocale';
+import { getLocale } from '../useLocale/getLocale';
 
 /**
  * Stuff that are considered "literals" that's not part of the number itself and should be stripped out when parsing/validating.

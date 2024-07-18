@@ -118,7 +118,7 @@ export function withRefCapture<TProps>(
   return props;
 }
 
-function isCallable(fn: unknown): fn is (...args: any[]) => any {
+export function isCallable(fn: unknown): fn is (...args: any[]) => any {
   return typeof fn === 'function';
 }
 

@@ -3,13 +3,14 @@ import { Direction, Numberish, Orientation2D, Reactivify } from '../types';
 import { toNearestMultipleOf } from '../utils/math';
 import { useButtonHold } from '../helpers/useButtonHold';
 import { normalizeProps } from '../utils/common';
+import { useLocale } from '../i18n/useLocale';
 
 export interface SpinButtonProps {
   min?: Numberish;
   max?: Numberish;
   step?: Numberish;
   orientation?: Orientation2D;
-  direction?: Direction;
+  dir?: Direction;
 
   incrementLabel?: string;
   decrementLabel?: string;
@@ -51,6 +52,7 @@ function getDirectionalStepKeys(orientation: Orientation2D, direction: Direction
 
 export function useSpinButton(_props: Reactivify<SpinButtonProps, 'onChange'>) {
   const props = normalizeProps(_props, ['onChange']);
+  const { direction } = useLocale();
   const getStep = () => Number(toValue(props.step) || 1);
   const getMin = () => Number(toValue(props.min) ?? undefined);
   const getMax = () => Number(toValue(props.max) ?? undefined);
@@ -88,7 +90,7 @@ export function useSpinButton(_props: Reactivify<SpinButtonProps, 'onChange'>) {
 
     const { incrKeys, decrKeys } = getDirectionalStepKeys(
       toValue(props.orientation) || 'both',
-      toValue(props.direction) || 'ltr',
+      toValue(props.dir) || direction.value,
     );
 
     if (incrKeys.includes(e.key)) {
