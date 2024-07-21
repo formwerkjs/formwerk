@@ -9,10 +9,9 @@ import {
   Numberish,
   Reactivify,
 } from '../types/common';
-import { useSyncModel } from '../reactivity/useModelSync';
 import { useInputValidity } from '../validation/useInputValidity';
 import { useLabel } from '../a11y/useLabel';
-import { useFieldValue } from '../reactivity/useFieldValue';
+import { useFormField } from '../form/useFormField';
 
 export type TextInputDOMType = 'text' | 'password' | 'email' | 'number' | 'tel' | 'url';
 
@@ -55,14 +54,10 @@ export function useTextField(
   const props = normalizeProps(_props);
   const inputId = uniqId();
   const inputRef = elementRef || shallowRef<HTMLInputElement>();
-  const { fieldValue } = useFieldValue<string | undefined>(props.modelValue);
   const { errorMessage, validityDetails, isInvalid } = useInputValidity(inputRef);
-
-  useSyncModel({
-    model: fieldValue,
-    onModelPropUpdated: value => {
-      fieldValue.value = value;
-    },
+  const { fieldValue, setValue } = useFormField<string | undefined>({
+    path: props.name,
+    initialValue: toValue(props.modelValue),
   });
 
   const { labelProps, labelledByProps } = useLabel({
@@ -79,10 +74,10 @@ export function useTextField(
 
   const handlers: InputEvents = {
     onInput: (event: Event) => {
-      fieldValue.value = (event.target as HTMLInputElement).value;
+      setValue((event.target as HTMLInputElement).value);
     },
     onChange: (event: Event) => {
-      fieldValue.value = (event.target as HTMLInputElement).value;
+      setValue((event.target as HTMLInputElement).value);
     },
   };
 

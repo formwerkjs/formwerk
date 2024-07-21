@@ -1,9 +1,8 @@
 import { Ref, computed, shallowRef, toValue } from 'vue';
 import { AriaDescribableProps, AriaLabelableProps, InputBaseAttributes, InputEvents, Reactivify } from '../types';
 import { normalizeProps, uniqId, withRefCapture } from '../utils/common';
-import { useFieldValue } from '../reactivity/useFieldValue';
 import { useLabel } from '../a11y/useLabel';
-import { useSyncModel } from '../reactivity/useModelSync';
+import { useFormField } from '../form/useFormField';
 
 export interface SwitchDOMProps extends InputBaseAttributes, AriaLabelableProps, AriaDescribableProps, InputEvents {
   id: string;
@@ -34,14 +33,17 @@ export function useSwitch(_props: Reactivify<SwitchProps>, elementRef?: Ref<HTML
     targetRef: inputRef,
   });
 
-  const { fieldValue } = useFieldValue<unknown>(props.modelValue ?? props.falseValue ?? false);
+  const { fieldValue, setValue } = useFormField<unknown>({
+    path: props.name,
+    initialValue: toValue(props.modelValue) ?? toValue(props.falseValue) ?? false,
+  });
 
   /**
    * Normalizes in the incoming value to be either one of the given toggled values or a boolean.
    */
   function normalizeValue(nextValue: unknown) {
     if (typeof nextValue === 'boolean') {
-      return nextValue ? toValue(props.trueValue) ?? true : toValue(props.falseValue) ?? false;
+      return nextValue ? (toValue(props.trueValue) ?? true) : (toValue(props.falseValue) ?? false);
     }
 
     const trueValue = toValue(props.trueValue);
@@ -58,15 +60,8 @@ export function useSwitch(_props: Reactivify<SwitchProps>, elementRef?: Ref<HTML
     return !!nextValue;
   }
 
-  useSyncModel({
-    model: fieldValue,
-    onModelPropUpdated: value => {
-      fieldValue.value = normalizeValue(value);
-    },
-  });
-
   function setValueFromEvent(e: Event) {
-    fieldValue.value = normalizeValue((e.target as HTMLInputElement).checked);
+    setValue(normalizeValue((e.target as HTMLInputElement).checked));
   }
 
   const handlers: InputEvents = {
@@ -89,7 +84,7 @@ export function useSwitch(_props: Reactivify<SwitchProps>, elementRef?: Ref<HTML
       return fieldValue.value === (toValue(props.trueValue) ?? true);
     },
     set(value: boolean) {
-      fieldValue.value = normalizeValue(value);
+      setValue(normalizeValue(value));
     },
   });
 

@@ -1,7 +1,6 @@
 import { Ref, computed, inject, ref, toValue } from 'vue';
 import { SliderContext, SliderInjectionKey, ThumbContext } from './slider';
 import { normalizeProps, withRefCapture } from '../utils/common';
-import { useFieldValue } from '../reactivity/useFieldValue';
 import { Reactivify } from '../types';
 import { useSpinButton } from '../useSpinButton';
 import { useLocale } from '../i18n/useLocale';
@@ -16,17 +15,12 @@ export function useSliderThumb(_props: Reactivify<SliderThumbProps>, elementRef?
   const props = normalizeProps(_props);
   const thumbRef = elementRef || ref<HTMLElement>();
   const isDragging = ref(false);
-  const { fieldValue } = useFieldValue(toValue(props.modelValue) ?? 0);
   const { direction } = useLocale();
 
   const thumbContext: ThumbContext = {
     focus() {
       thumbRef.value?.focus();
     },
-    getCurrentValue() {
-      return fieldValue.value || 0;
-    },
-    setValue,
   };
 
   const mockSlider: () => SliderContext = () => ({
@@ -38,12 +32,18 @@ export function useSliderThumb(_props: Reactivify<SliderThumbProps>, elementRef?
       getValueForPagePosition: () => 0,
       getOrientation: () => 'horizontal',
       getInlineDirection: () => direction.value,
+      getIndex: () => 0,
+      getThumbValue: () => 0,
+      // NOOP
+      setThumbValue: () => {},
     }),
   });
 
   const slider = inject(SliderInjectionKey, mockSlider, true).registerThumb(thumbContext);
+  const thumbValue = computed(() => slider.getThumbValue());
+
   const { spinButtonProps, applyClamp } = useSpinButton({
-    current: fieldValue,
+    current: thumbValue,
     disabled: props.disabled,
     orientation: 'both',
     min: () => slider.getThumbRange().min,
@@ -51,12 +51,12 @@ export function useSliderThumb(_props: Reactivify<SliderThumbProps>, elementRef?
     step: () => slider.getSliderStep(),
     dir: () => slider.getInlineDirection(),
     onChange: next => {
-      fieldValue.value = next;
+      slider.setThumbValue(next);
     },
   });
 
   function setValue(value: number) {
-    fieldValue.value = applyClamp(value);
+    slider.setThumbValue(applyClamp(value));
   }
 
   const thumbProps = computed(() => {
@@ -76,7 +76,7 @@ export function useSliderThumb(_props: Reactivify<SliderThumbProps>, elementRef?
   });
 
   function getPositionStyle() {
-    const value = fieldValue.value || 0;
+    const value = slider.getThumbValue();
     const { min, max } = slider.getSliderRange();
     const dir = slider.getInlineDirection();
     let percent = ((value - min) / (max - min)) * 100;
@@ -127,7 +127,7 @@ export function useSliderThumb(_props: Reactivify<SliderThumbProps>, elementRef?
 
   return {
     thumbProps,
-    currentValue: fieldValue,
+    currentValue: thumbValue,
     isDragging,
   };
 }

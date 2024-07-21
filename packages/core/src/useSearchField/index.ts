@@ -9,10 +9,9 @@ import {
   TextInputBaseAttributes,
 } from '../types';
 import { createDescribedByProps, normalizeProps, propsToValues, uniqId, withRefCapture } from '../utils/common';
-import { useFieldValue } from '../reactivity/useFieldValue';
 import { useInputValidity } from '../validation/useInputValidity';
-import { useSyncModel } from '../reactivity/useModelSync';
 import { useLabel } from '../a11y/useLabel';
+import { useFormField } from '../form/useFormField';
 
 export interface SearchInputDOMAttributes extends TextInputBaseAttributes {
   type?: 'search';
@@ -51,15 +50,12 @@ export function useSearchField(_props: Reactivify<SearchFieldProps, 'onSubmit'>,
   const inputId = uniqId();
   const inputRef = elementRef || ref<HTMLInputElement>();
 
-  const { fieldValue } = useFieldValue<string | undefined>(props.modelValue);
-  const { errorMessage, updateValidity, validityDetails, isInvalid } = useInputValidity(inputRef);
-
-  useSyncModel({
-    model: fieldValue,
-    onModelPropUpdated: value => {
-      fieldValue.value = value;
-    },
+  const { fieldValue, setValue } = useFormField<string | undefined>({
+    path: props.name,
+    initialValue: toValue(props.modelValue),
   });
+
+  const { errorMessage, updateValidity, validityDetails, isInvalid } = useInputValidity(inputRef);
 
   const { labelProps, labelledByProps } = useLabel({
     for: inputId,
@@ -78,22 +74,22 @@ export function useSearchField(_props: Reactivify<SearchFieldProps, 'onSubmit'>,
     type: 'button' as const,
     ariaLabel: 'Clear search',
     onClick() {
-      fieldValue.value = '';
+      setValue('');
       updateValidity();
     },
   };
 
   const handlers: InputEvents = {
     onInput: (event: Event) => {
-      fieldValue.value = (event.target as HTMLInputElement).value;
+      setValue((event.target as HTMLInputElement).value);
     },
     onChange: (event: Event) => {
-      fieldValue.value = (event.target as HTMLInputElement).value;
+      setValue((event.target as HTMLInputElement).value);
     },
     onKeydown(e: KeyboardEvent) {
       if (e.key === 'Escape') {
         e.preventDefault();
-        fieldValue.value = '';
+        setValue('');
         updateValidity();
       }
 

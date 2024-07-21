@@ -1,8 +1,6 @@
 import { InjectionKey, toValue, computed, onBeforeUnmount, reactive, provide } from 'vue';
-import { useFieldValue } from '../reactivity/useFieldValue';
 import { useInputValidity } from '../validation/useInputValidity';
 import { useLabel } from '../a11y/useLabel';
-import { useSyncModel } from '../reactivity/useModelSync';
 import {
   Orientation,
   AriaLabelableProps,
@@ -13,6 +11,7 @@ import {
 } from '../types';
 import { uniqId, createDescribedByProps, getNextCycleArrIdx, normalizeProps, isEmpty } from '../utils/common';
 import { useLocale } from '../i18n/useLocale';
+import { useFormField } from '../form/useFormField';
 
 export interface RadioGroupContext<TValue> {
   name: string;
@@ -83,12 +82,9 @@ export function useRadioGroup<TValue = string>(_props: Reactivify<RadioGroupProp
     label: props.label,
   });
 
-  const { fieldValue } = useFieldValue<TValue>(props.modelValue as TValue);
-  useSyncModel({
-    model: fieldValue,
-    onModelPropUpdated: value => {
-      fieldValue.value = value;
-    },
+  const { fieldValue, setValue } = useFormField<TValue>({
+    path: props.name,
+    initialValue: toValue(props.modelValue) as TValue,
   });
 
   const { setValidity, errorMessage } = useInputValidity();
@@ -146,10 +142,6 @@ export function useRadioGroup<TValue = string>(_props: Reactivify<RadioGroupProp
       },
     };
   });
-
-  function setValue(value: TValue) {
-    fieldValue.value = value;
-  }
 
   function registerRadio(radio: RadioItemContext) {
     radios.push(radio);

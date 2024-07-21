@@ -1,8 +1,6 @@
 import { InjectionKey, toValue, computed, onBeforeUnmount, reactive, provide } from 'vue';
-import { useFieldValue } from '../reactivity/useFieldValue';
 import { useInputValidity } from '../validation/useInputValidity';
 import { useLabel } from '../a11y/useLabel';
-import { useSyncModel } from '../reactivity/useModelSync';
 import {
   Orientation,
   AriaLabelableProps,
@@ -13,6 +11,7 @@ import {
 } from '../types';
 import { uniqId, createDescribedByProps, normalizeProps } from '../utils/common';
 import { useLocale } from '../i18n/useLocale';
+import { useFormField } from '../form/useFormField';
 
 export type CheckboxGroupValue<TCheckbox> = TCheckbox[];
 
@@ -71,12 +70,9 @@ export function useCheckboxGroup<TCheckbox>(_props: Reactivify<CheckboxGroupProp
     label: props.label,
   });
 
-  const { fieldValue } = useFieldValue(toValue(props.modelValue));
-  useSyncModel({
-    model: fieldValue,
-    onModelPropUpdated: value => {
-      fieldValue.value = value;
-    },
+  const { fieldValue, setValue } = useFormField({
+    path: props.name,
+    initialValue: toValue(props.modelValue),
   });
 
   const { setValidity, errorMessage } = useInputValidity();
@@ -95,10 +91,6 @@ export function useCheckboxGroup<TCheckbox>(_props: Reactivify<CheckboxGroupProp
       'aria-invalid': errorMessage.value ? true : undefined,
     };
   });
-
-  function setValue(value: CheckboxGroupValue<TCheckbox>) {
-    fieldValue.value = value;
-  }
 
   function registerCheckbox(checkbox: CheckboxContext) {
     checkboxes.push(checkbox);

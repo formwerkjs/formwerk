@@ -3,8 +3,7 @@ import { normalizeProps, uniqId, withRefCapture } from '../utils/common';
 import { AriaLabelableProps, Reactivify, InputBaseAttributes, RovingTabIndex } from '../types';
 import { useLabel } from '../a11y/useLabel';
 import { CheckboxGroupContext, CheckboxGroupKey } from './useCheckboxGroup';
-import { useFieldValue } from '../reactivity/useFieldValue';
-import { useSyncModel } from '../reactivity/useModelSync';
+import { useFormField } from '../form/useFormField';
 
 export interface CheckboxProps<TValue = string> {
   name?: string;
@@ -49,16 +48,7 @@ export function useCheckbox<TValue = string>(
           group.toggleValue(getTrueValue());
         },
       })
-    : useFieldValue<TValue>(getFalseValue()).fieldValue;
-
-  if (!group) {
-    useSyncModel({
-      model: fieldValue,
-      onModelPropUpdated(value) {
-        fieldValue.value = value;
-      },
-    });
-  }
+    : useFormField<TValue>({ path: props.name, initialValue: getFalseValue() }).fieldValue;
 
   const checked = computed({
     get() {

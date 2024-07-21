@@ -135,3 +135,10 @@ export const isSSR = typeof window === 'undefined';
 export function normalizeArrayable<T>(value: Arrayable<T>): T[] {
   return Array.isArray(value) ? value : [value];
 }
+
+export const isObject = (obj: unknown): obj is Record<string, unknown> =>
+  obj !== null && !!obj && typeof obj === 'object' && !Array.isArray(obj);
+
+export function isIndex(value: unknown): value is number {
+  return Number(value) >= 0;
+}

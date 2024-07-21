@@ -16,13 +16,12 @@ import {
   Numberish,
   Reactivify,
 } from '../types/common';
-import { useSyncModel } from '../reactivity/useModelSync';
 import { useInputValidity } from '../validation/useInputValidity';
 import { useLabel } from '../a11y/useLabel';
-import { useFieldValue } from '../reactivity/useFieldValue';
 import { useNumberParser } from '../i18n/useNumberParser';
 import { useSpinButton } from '../useSpinButton';
 import { useLocale } from '../i18n/useLocale';
+import { useFormField } from '../form/useFormField';
 
 export interface NumberInputDOMAttributes {
   name?: string;
@@ -67,10 +66,13 @@ export function useNumberField(
   const props = normalizeProps(_props);
   const inputId = uniqId();
   const inputRef = elementRef || shallowRef<HTMLInputElement>();
-  const { fieldValue } = useFieldValue<number>(toValue(props.modelValue));
   const { errorMessage, validityDetails, isInvalid } = useInputValidity(inputRef);
   const { locale } = useLocale();
   const parser = useNumberParser(() => toValue(props.locale) ?? locale.value, props.formatOptions);
+  const { fieldValue, setValue } = useFormField<number>({
+    path: props.name,
+    initialValue: toValue(props.modelValue),
+  });
 
   const formattedText = computed<string>(() => {
     if (Number.isNaN(fieldValue.value) || isEmpty(fieldValue.value)) {
@@ -78,13 +80,6 @@ export function useNumberField(
     }
 
     return parser.format(fieldValue.value);
-  });
-
-  useSyncModel({
-    model: fieldValue,
-    onModelPropUpdated: value => {
-      fieldValue.value = value;
-    },
   });
 
   const { labelProps, labelledByProps } = useLabel({
@@ -114,7 +109,7 @@ export function useNumberField(
       preventTabIndex: true,
 
       onChange: value => {
-        fieldValue.value = value;
+        setValue(value);
       },
     });
 
@@ -138,7 +133,7 @@ export function useNumberField(
       }
     },
     onChange: (event: Event) => {
-      fieldValue.value = applyClamp(parser.parse((event.target as HTMLInputElement).value));
+      setValue(applyClamp(parser.parse((event.target as HTMLInputElement).value)));
       nextTick(() => {
         if (inputRef.value && inputRef.value?.value !== formattedText.value) {
           inputRef.value.value = formattedText.value;
