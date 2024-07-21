@@ -122,7 +122,7 @@
     </div>
 
     <div class="w-1/2 bg-gray-200 rounded-lg p-4">
-      <pre>{{ form }}</pre>
+      <pre>{{ values }}</pre>
     </div>
   </form>
 
@@ -145,7 +145,11 @@ import MultiSlider from './components/MultiSlider.vue';
 import CheckboxGroup from './components/CheckboxGroup.vue';
 import CheckboxItem from './components/CheckboxItem.vue';
 import CheckboxInput from './components/CheckboxInput.vue';
-import { configure } from '@formwerk/core';
+import { useForm } from '@formwerk/core';
+
+const {
+  context: { values },
+} = useForm();
 
 const form = reactive({
   email: '',

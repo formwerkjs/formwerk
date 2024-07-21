@@ -45,7 +45,7 @@ function useFieldValue<TValue = unknown>(
   initialValue?: TValue,
 ) {
   const { fieldValue, setValue } = form
-    ? createFormValueRef<TValue>(getPath, form)
+    ? createFormValueRef<TValue>(getPath, form, initialValue)
     : createValueRef<TValue>(initialValue);
 
   // TODO: Set initial value in form if present
@@ -87,18 +87,22 @@ function createFormTouchedRef(getPath: Getter<string | undefined>, form: FormCon
   };
 }
 
-function createFormValueRef<TValue = unknown>(getPath: Getter<string | undefined>, form: FormContext) {
+function createFormValueRef<TValue = unknown>(
+  getPath: Getter<string | undefined>,
+  form: FormContext,
+  initialValue?: TValue | undefined,
+) {
+  const pathlessValue = ref(toValue(initialValue ?? undefined)) as Ref<TValue | undefined>;
+
   const fieldValue = computed(() => {
     const path = getPath();
 
-    return path ? form.getFieldValue(path) : undefined;
+    return path ? form.getFieldValue(path) : pathlessValue.value;
   }) as Ref<TValue | undefined>;
 
   function setValue(value: TValue | undefined) {
     const path = getPath();
-    if (path) {
-      form.setFieldValue(path, value);
-    }
+    path ? form.setFieldValue(path, value) : (pathlessValue.value = value);
   }
 
   return {

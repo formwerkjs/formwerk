@@ -8,3 +8,4 @@ export * from './useNumberField';
 export * from './useSpinButton';
 export * from './types/index';
 export * from './config';
+export * from './form';
