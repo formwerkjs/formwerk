@@ -96,7 +96,7 @@ export function useSlider(_props: Reactivify<SliderProps>) {
   const { direction } = useLocale();
   const { fieldValue, setValue } = useFormField<Arrayable<number>>({
     path: props.name,
-    initialValue: toValue(props.modelValue) || 0,
+    initialValue: toValue(props.modelValue),
   });
 
   const { labelProps, labelledByProps } = useLabel({
