@@ -1,4 +1,5 @@
 import { MaybeRefOrGetter, Ref, toValue } from 'vue';
+import { klona } from 'klona/full';
 import { AriaDescriptionProps, Arrayable, NormalizedProps } from '../types';
 
 export function uniqId() {
@@ -141,4 +142,17 @@ export const isObject = (obj: unknown): obj is Record<string, unknown> =>
 
 export function isIndex(value: unknown): value is number {
   return Number(value) >= 0;
+}
+
+/**
+ * Clones a value deeply. I wish we could use `structuredClone` but it's not supported because of the deep Proxy usage by Vue.
+ * I added some shortcuts here to avoid cloning some known types we don't plan to support.
+ * https://github.com/lukeed/klona/tree/master/src
+ */
+export function cloneDeep<T>(value: T): T {
+  if (value instanceof File || value instanceof RegExp || value instanceof Blob) {
+    return value;
+  }
+
+  return klona(value);
 }
