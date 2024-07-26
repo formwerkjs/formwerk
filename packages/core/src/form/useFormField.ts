@@ -2,6 +2,7 @@ import { computed, inject, MaybeRefOrGetter, readonly, ref, Ref, toValue } from 
 import { FormContext, FormKey } from './useForm';
 import { Getter } from '../types';
 import { useSyncModel } from '../reactivity/useModelSync';
+import { cloneDeep } from '../utils/common';
 
 interface FormFieldOptions<TValue = unknown> {
   path: MaybeRefOrGetter<string | undefined> | undefined;
@@ -13,7 +14,6 @@ interface FormFieldOptions<TValue = unknown> {
 export function useFormField<TValue = unknown>(opts?: Partial<FormFieldOptions<TValue>>) {
   const form = inject(FormKey, null);
   const getPath = () => toValue(opts?.path);
-  // TODO: Must set the initial value in  the form if it wasn't already set.
   const { fieldValue, setValue } = useFieldValue(getPath, form, opts?.initialValue);
   const { touched, setTouched } = form ? createFormTouchedRef(getPath, form) : createTouchedRef(false);
 
@@ -23,6 +23,10 @@ export function useFormField<TValue = unknown>(opts?: Partial<FormFieldOptions<T
       modelName: opts?.modelName ?? 'modelValue',
       onModelPropUpdated: setValue,
     });
+  }
+
+  if (form) {
+    initFormPathIfNecessary(form, getPath, opts?.initialValue);
   }
 
   // TODO: How to react to a field path change?
@@ -47,8 +51,6 @@ function useFieldValue<TValue = unknown>(
   const { fieldValue, setValue } = form
     ? createFormValueRef<TValue>(getPath, form, initialValue)
     : createValueRef<TValue>(initialValue);
-
-  // TODO: Set initial value in form if present
 
   return {
     setValue,
@@ -102,7 +104,10 @@ function createFormValueRef<TValue = unknown>(
 
   function setValue(value: TValue | undefined) {
     const path = getPath();
-    path ? form.setFieldValue(path, value) : (pathlessValue.value = value);
+    pathlessValue.value = value;
+    if (path) {
+      form.setFieldValue(path, value);
+    }
   }
 
   return {
@@ -117,7 +122,21 @@ function createValueRef<TValue = unknown>(initialValue?: TValue) {
   return {
     fieldValue,
     setValue(value: TValue | undefined) {
-      fieldValue.value = value;
+      fieldValue.value = cloneDeep(value);
     },
   };
+}
+
+/**
+ * Sets the initial value of the form if not already set and if an initial value is provided.
+ */
+function initFormPathIfNecessary(form: FormContext, getPath: Getter<string | undefined>, initialValue: unknown) {
+  const path = getPath();
+  if (!path) {
+    return;
+  }
+
+  if (!form.isFieldSet(path) && initialValue !== undefined) {
+    form.setFieldValue(path, initialValue);
+  }
 }
