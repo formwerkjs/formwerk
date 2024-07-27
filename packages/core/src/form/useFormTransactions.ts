@@ -2,19 +2,25 @@ import { InjectionKey, nextTick, provide } from 'vue';
 import { FormObject, Path, PathValue } from '../types';
 import { FormContext } from './formContext';
 
+const transactionCode = {
+  SET_PATH: 2,
+  UNSET_PATH: 1,
+  DESTROY_PATH: 0,
+} as const;
+
 interface SetFieldValueTransaction<TForm extends FormObject> {
-  kind: 'sp';
+  kind: 2;
   path: Path<TForm>;
   value: PathValue<TForm, Path<TForm>>;
 }
 
 interface UnsetFieldValueTransaction<TForm extends FormObject> {
-  kind: 'up';
+  kind: 1;
   path: Path<TForm>;
 }
 
 interface DestroyFieldValueTransaction<TForm extends FormObject> {
-  kind: 'dp';
+  kind: 0;
   path: Path<TForm>;
 }
 
@@ -27,6 +33,7 @@ export interface FormTransactionManager<TForm extends FormObject> {
   transaction(
     tr: (
       formCtx: Pick<FormContext<TForm>, 'getValues' | 'getFieldValue' | 'isFieldSet' | 'isFieldTouched'>,
+      codes: typeof transactionCode,
     ) => FormTransaction<TForm> | null,
   ): void;
 }
@@ -40,8 +47,10 @@ export function useFormTransactions<TForm extends FormObject>(form: FormContext<
 
   let tick: Promise<void>;
 
-  function transaction(tr: (formCtx: FormContext<TForm>) => FormTransaction<TForm> | null) {
-    const commit = tr(form);
+  function transaction(
+    tr: (formCtx: FormContext<TForm>, codes: typeof transactionCode) => FormTransaction<TForm> | null,
+  ) {
+    const commit = tr(form, transactionCode);
     if (commit) {
       transactions.add(commit);
     }
@@ -63,18 +72,20 @@ export function useFormTransactions<TForm extends FormObject>(form: FormContext<
      */
     const trs = cleanTransactions(transactions);
 
+    // TODO: Still need to figure a good way to clean up form values from remvoed paths
+    // BASICALL when should we do "unset" vs "destroy"?
     for (const tr of trs) {
-      if (tr.kind === 'sp') {
+      if (tr.kind === transactionCode.SET_PATH) {
         form.setFieldValue(tr.path, tr.value);
         continue;
       }
 
-      if (tr.kind === 'dp') {
+      if (tr.kind === transactionCode.DESTROY_PATH) {
         form.destroyPath(tr.path);
         continue;
       }
 
-      if (tr.kind === 'up') {
+      if (tr.kind === transactionCode.UNSET_PATH) {
         form.unsetPath(tr.path);
       }
     }
@@ -94,9 +105,9 @@ function cleanTransactions<TForm extends FormObject>(
 ): FormTransaction<TForm>[] {
   const trs = Array.from(transactions)
     .filter((tr, idx, otherTrs) => {
-      if (tr.kind === 'up') {
+      if (tr.kind === transactionCode.UNSET_PATH) {
         return !otherTrs.some(otherTr => {
-          if (otherTr.kind === 'sp') {
+          if (otherTr.kind === transactionCode.SET_PATH) {
             return otherTr.path === tr.path;
           }
 
@@ -107,23 +118,7 @@ function cleanTransactions<TForm extends FormObject>(
       return true;
     })
     .sort((a, b) => {
-      if (a.kind === 'dp' && b.kind === 'sp') {
-        return 1;
-      }
-
-      if (a.kind === 'dp' && b.kind === 'up') {
-        return 1;
-      }
-
-      if (a.kind === 'sp' && b.kind === 'dp') {
-        return -1;
-      }
-
-      if (a.kind === 'sp' && b.kind === 'up') {
-        return 1;
-      }
-
-      return 0;
+      return a.kind - b.kind;
     });
 
   return trs;

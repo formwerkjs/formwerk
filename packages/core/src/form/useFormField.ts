@@ -51,9 +51,9 @@ export function useFormField<TValue = unknown>(opts?: Partial<FormFieldOptions<T
       return null;
     }
 
-    form.transaction(() => {
+    form.transaction((_, { DESTROY_PATH }) => {
       return {
-        kind: 'dp',
+        kind: DESTROY_PATH,
         path: path,
       };
     });
@@ -61,18 +61,18 @@ export function useFormField<TValue = unknown>(opts?: Partial<FormFieldOptions<T
 
   watch(getPath, (newPath, oldPath) => {
     if (oldPath) {
-      form.transaction(() => {
+      form.transaction((_, { UNSET_PATH }) => {
         return {
-          kind: 'up',
+          kind: UNSET_PATH,
           path: oldPath,
         };
       });
     }
 
     if (newPath) {
-      form.transaction(tf => {
+      form.transaction((tf, { SET_PATH }) => {
         return {
-          kind: 'sp',
+          kind: SET_PATH,
           path: newPath,
           value: cloneDeep(oldPath ? tf.getFieldValue(oldPath) : pathlessValue.value),
         };
