@@ -177,8 +177,8 @@ function initFormPathIfNecessary(
   // If form does have a path set and the value is different from the initial value, set it.
   if (form.isFieldSet(path) && !isEqual(form.getFieldValue(path), initialValue)) {
     nextTick(() => {
-      form.transaction((_, { SET_PATH }) => ({
-        kind: SET_PATH,
+      form.transaction((_, { INIT_PATH }) => ({
+        kind: INIT_PATH,
         path,
         value: initialValue,
       }));
@@ -189,8 +189,8 @@ function initFormPathIfNecessary(
   // If the path is not set, set it.
   if (!form.isFieldSet(path)) {
     nextTick(() => {
-      form.transaction((_, { SET_PATH }) => ({
-        kind: SET_PATH,
+      form.transaction((_, { INIT_PATH }) => ({
+        kind: INIT_PATH,
         path,
         value: initialValue,
       }));
