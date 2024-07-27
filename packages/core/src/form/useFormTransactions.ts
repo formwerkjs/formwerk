@@ -98,8 +98,8 @@ function cleanTransactions<TForm extends FormObject>(
   const trs = Array.from(transactions)
 
     .filter((t, _, ops) => {
-      // Remove unset operations that have a corresponding set operation.
-      if (t.kind === transactionCode.UNSET_PATH) {
+      // Remove unset/destroy operations that have a corresponding set operation.
+      if (t.kind === transactionCode.UNSET_PATH || t.kind === transactionCode.DESTROY_PATH) {
         return !ops.some(op => op.kind === transactionCode.SET_PATH && op.path === t.path);
       }
 
