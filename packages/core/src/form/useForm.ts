@@ -1,11 +1,11 @@
-import { InjectionKey, provide, reactive, readonly, toRaw } from 'vue';
+import { InjectionKey, provide, reactive, readonly, toRaw, toValue } from 'vue';
 import { getFromPath, isPathSet, setInPath } from '../utils/path';
-import { cloneDeep, merge, uniqId } from '../utils/common';
-import { FormObject, Path, PathValue } from '../types';
+import { cloneDeep, merge, uniqId, isPromise } from '../utils/common';
+import { FormObject, MaybeAsync, MaybeGetter, Path, PathValue } from '../types';
 
 export interface FormOptions<TForm extends FormObject = FormObject> {
   id: string;
-  initialValues: TForm;
+  initialValues: MaybeGetter<MaybeAsync<TForm>>;
 }
 
 export interface SetValueOptions {
@@ -25,8 +25,21 @@ export interface FormContext<TForm extends FormObject = FormObject> {
 export const FormKey: InjectionKey<FormContext<any>> = Symbol('Formwerk FormKey');
 
 export function useForm<TForm extends FormObject>(opts?: Partial<FormOptions<TForm>>) {
-  const values = reactive(cloneDeep(opts?.initialValues ?? {})) as TForm;
+  const values = reactive(initializeValues()) as TForm;
   const touched = reactive({});
+
+  function initializeValues(): TForm {
+    const initialValues = toValue(opts?.initialValues);
+    if (!isPromise(initialValues)) {
+      return cloneDeep(initialValues || {}) as TForm;
+    }
+
+    initialValues.then(value => {
+      setValues(value, { mode: 'merge' });
+    });
+
+    return {} as TForm;
+  }
 
   function setFieldValue<TPath extends Path<TForm>>(path: TPath, value: PathValue<TForm, TPath> | undefined) {
     setInPath(values, path, cloneDeep(value));
