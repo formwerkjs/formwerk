@@ -1,9 +1,8 @@
-import { computed, inject, MaybeRefOrGetter, onBeforeUnmount, readonly, ref, Ref, toValue, watch } from 'vue';
-import { FormKey } from './useForm';
+import { computed, inject, MaybeRefOrGetter, nextTick, onBeforeUnmount, readonly, ref, Ref, toValue, watch } from 'vue';
+import { FormContextWithTransactions, FormKey } from './useForm';
 import { Getter } from '../types';
 import { useSyncModel } from '../reactivity/useModelSync';
 import { cloneDeep, isEqual } from '../utils/common';
-import { FormContext } from './formContext';
 
 interface FormFieldOptions<TValue = unknown> {
   path: MaybeRefOrGetter<string | undefined> | undefined;
@@ -85,7 +84,7 @@ export function useFormField<TValue = unknown>(opts?: Partial<FormFieldOptions<T
 
 function useFieldValue<TValue = unknown>(
   getPath: Getter<string | undefined>,
-  form?: FormContext | null,
+  form?: FormContextWithTransactions | null,
   initialValue?: TValue,
 ) {
   return form ? createFormValueRef<TValue>(getPath, form, initialValue) : createValueRef<TValue>(initialValue);
@@ -102,7 +101,7 @@ function createTouchedRef(initialTouched?: boolean) {
   };
 }
 
-function createFormTouchedRef(getPath: Getter<string | undefined>, form: FormContext) {
+function createFormTouchedRef(getPath: Getter<string | undefined>, form: FormContextWithTransactions) {
   const touched = computed(() => {
     const path = getPath();
 
@@ -124,7 +123,7 @@ function createFormTouchedRef(getPath: Getter<string | undefined>, form: FormCon
 
 function createFormValueRef<TValue = unknown>(
   getPath: Getter<string | undefined>,
-  form: FormContext,
+  form: FormContextWithTransactions,
   initialValue?: TValue | undefined,
 ) {
   const pathlessValue = ref(toValue(initialValue ?? undefined)) as Ref<TValue | undefined>;
@@ -165,21 +164,38 @@ function createValueRef<TValue = unknown>(initialValue?: TValue) {
 /**
  * Sets the initial value of the form if not already set and if an initial value is provided.
  */
-function initFormPathIfNecessary(form: FormContext, getPath: Getter<string | undefined>, initialValue: unknown) {
+function initFormPathIfNecessary(
+  form: FormContextWithTransactions,
+  getPath: Getter<string | undefined>,
+  initialValue: unknown,
+) {
   const path = getPath();
-  if (!path || initialValue === undefined) {
+  if (!path) {
     return;
   }
 
   // If form does have a path set and the value is different from the initial value, set it.
   if (form.isFieldSet(path) && !isEqual(form.getFieldValue(path), initialValue)) {
-    form.setFieldValue(path, initialValue);
+    nextTick(() => {
+      form.transaction((_, { SET_PATH }) => ({
+        kind: SET_PATH,
+        path,
+        value: initialValue,
+      }));
+    });
     return;
   }
 
   // If the path is not set, set it.
   if (!form.isFieldSet(path)) {
-    form.setFieldValue(path, initialValue);
+    nextTick(() => {
+      form.transaction((_, { SET_PATH }) => ({
+        kind: SET_PATH,
+        path,
+        value: initialValue,
+      }));
+    });
+
     return;
   }
 }

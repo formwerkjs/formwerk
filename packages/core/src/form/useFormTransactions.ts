@@ -1,4 +1,4 @@
-import { InjectionKey, nextTick, provide } from 'vue';
+import { nextTick } from 'vue';
 import { FormObject, Path, PathValue } from '../types';
 import { FormContext } from './formContext';
 
@@ -38,10 +38,6 @@ export interface FormTransactionManager<TForm extends FormObject> {
   ): void;
 }
 
-export const FormTransactionManagerKey: InjectionKey<FormTransactionManager<FormObject>> = Symbol(
-  'Formwerk FormTransactionManagerKey',
-);
-
 export function useFormTransactions<TForm extends FormObject>(form: FormContext<TForm>) {
   const transactions = new Set<FormTransaction<TForm>>([]);
 
@@ -72,8 +68,6 @@ export function useFormTransactions<TForm extends FormObject>(form: FormContext<
      */
     const trs = cleanTransactions(transactions);
 
-    // TODO: Still need to figure a good way to clean up form values from remvoed paths
-    // BASICALL when should we do "unset" vs "destroy"?
     for (const tr of trs) {
       if (tr.kind === transactionCode.SET_PATH) {
         form.setFieldValue(tr.path, tr.value);
@@ -95,8 +89,6 @@ export function useFormTransactions<TForm extends FormObject>(form: FormContext<
 
   const ctx: FormTransactionManager<TForm> = { transaction };
 
-  provide(FormTransactionManagerKey, ctx as FormTransactionManager<FormObject>);
-
   return ctx;
 }
 
@@ -104,18 +96,24 @@ function cleanTransactions<TForm extends FormObject>(
   transactions: Set<FormTransaction<TForm>>,
 ): FormTransaction<TForm>[] {
   const trs = Array.from(transactions)
-    .filter((tr, idx, otherTrs) => {
-      if (tr.kind === transactionCode.UNSET_PATH) {
-        return !otherTrs.some(otherTr => {
-          if (otherTr.kind === transactionCode.SET_PATH) {
-            return otherTr.path === tr.path;
-          }
 
-          return false;
-        });
+    .filter((t, _, ops) => {
+      // Remove unset operations that have a corresponding set operation.
+      if (t.kind === transactionCode.UNSET_PATH) {
+        return !ops.some(op => op.kind === transactionCode.SET_PATH && op.path === t.path);
       }
 
       return true;
+    })
+    .map(t => {
+      if (t.kind === transactionCode.UNSET_PATH) {
+        return {
+          kind: transactionCode.DESTROY_PATH,
+          path: t.path,
+        };
+      }
+
+      return t;
     })
     .sort((a, b) => {
       return a.kind - b.kind;
