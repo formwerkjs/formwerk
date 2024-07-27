@@ -1,5 +1,5 @@
 import { InjectionKey, provide, reactive, readonly, toRaw, toValue } from 'vue';
-import { getFromPath, isPathSet, setInPath } from '../utils/path';
+import { escapePath, getFromPath, isPathSet, setInPath } from '../utils/path';
 import { cloneDeep, merge, uniqId, isPromise } from '../utils/common';
 import { FormObject, MaybeAsync, MaybeGetter, Path, PathValue } from '../types';
 
@@ -73,8 +73,9 @@ export function useForm<TForm extends FormObject>(opts?: Partial<FormOptions<TFo
       delete values[key];
     });
 
+    // We escape paths automatically
     Object.keys(newValues).forEach(key => {
-      setFieldValue(key as any, newValues[key]);
+      setFieldValue(escapePath(key) as any, newValues[key]);
     });
   }
 
@@ -96,6 +97,7 @@ export function useForm<TForm extends FormObject>(opts?: Partial<FormOptions<TFo
     setFieldValue,
     getFieldValue,
     isFieldTouched,
+    setFieldTouched,
     setValues,
   };
 }

@@ -18,12 +18,12 @@ export function isEmptyContainer(value: unknown): boolean {
 /**
  * Checks if the path opted out of nested fields using `[fieldName]` syntax
  */
-export function isNotNestedPath(path: string) {
+export function isEscapedPath(path: string) {
   return /^\[.+\]$/i.test(path);
 }
 
 export function cleanupNonNestedPath(path: string) {
-  if (isNotNestedPath(path)) {
+  if (isEscapedPath(path)) {
     return path.replace(/\[|\]/gi, '');
   }
 
@@ -50,7 +50,7 @@ export function getFromPath<TValue = unknown, TFallback = TValue>(
     return fallback;
   }
 
-  if (isNotNestedPath(path)) {
+  if (isEscapedPath(path)) {
     return object[cleanupNonNestedPath(path)] as TValue | undefined;
   }
 
@@ -72,7 +72,7 @@ export function getFromPath<TValue = unknown, TFallback = TValue>(
  * Sets a nested property value in a path, creates the path properties if it doesn't exist
  */
 export function setInPath(object: NestedRecord, path: string, value: unknown): void {
-  if (isNotNestedPath(path)) {
+  if (isEscapedPath(path)) {
     object[cleanupNonNestedPath(path)] = value;
     return;
   }
@@ -111,7 +111,7 @@ function unset(object: Record<string, unknown> | unknown[], key: string | number
  * Removes a nested property from object
  */
 export function unsetPath(object: NestedRecord, path: string): void {
-  if (isNotNestedPath(path)) {
+  if (isEscapedPath(path)) {
     delete object[cleanupNonNestedPath(path)];
     return;
   }
@@ -154,5 +154,9 @@ export function unsetPath(object: NestedRecord, path: string): void {
 const ABSENT_VALUE = Symbol('ABSENT_VALUE');
 
 export function isPathSet(object: NestedRecord, path: string): boolean {
-  return getFromPath(object, path, ABSENT_VALUE) === ABSENT_VALUE;
+  return getFromPath(object, path, ABSENT_VALUE) !== ABSENT_VALUE;
+}
+
+export function escapePath(path: string) {
+  return isEscapedPath(path) ? path : `[${path}]`;
 }
