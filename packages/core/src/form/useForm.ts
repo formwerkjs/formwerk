@@ -1,51 +1,73 @@
-import { InjectionKey, provide, reactive } from 'vue';
+import { InjectionKey, provide, reactive, readonly, toRaw } from 'vue';
 import { getFromPath, isPathSet, setInPath } from '../utils/path';
-import { cloneDeep, uniqId } from '../utils/common';
+import { cloneDeep, merge, uniqId } from '../utils/common';
+import { FormObject, Path, PathValue } from '../types';
 
-export interface FormOptions {
+export interface FormOptions<TForm extends FormObject = FormObject> {
   id: string;
-  initialValues: Record<string, any>;
+  initialValues: TForm;
 }
 
-export interface FormContext {
-  id: string;
-  getFieldValue: (path: string) => any;
-  setFieldValue: (path: string, value: any) => void;
-  setFieldTouched: (path: string, value: boolean) => void;
-  isFieldTouched: (path: string) => boolean;
-  isFieldSet: (path: string) => boolean;
-  getValues: () => Record<string, any>;
+export interface SetValueOptions {
+  mode: 'merge' | 'replace';
 }
 
-export const FormKey: InjectionKey<FormContext> = Symbol('Formwerk FormKey');
+export interface FormContext<TForm extends FormObject = FormObject> {
+  id: string;
+  getFieldValue<TPath extends Path<TForm>>(path: TPath): PathValue<TForm, TPath>;
+  setFieldValue<TPath extends Path<TForm>>(path: TPath, value: PathValue<TForm, TPath> | undefined): void;
+  setFieldTouched<TPath extends Path<TForm>>(path: TPath, value: boolean): void;
+  isFieldTouched<TPath extends Path<TForm>>(path: TPath): boolean;
+  isFieldSet<TPath extends Path<TForm>>(path: TPath): boolean;
+  getValues: () => TForm;
+}
 
-export function useForm(opts?: Partial<FormOptions>) {
-  const values = reactive(cloneDeep(opts?.initialValues ?? {}));
+export const FormKey: InjectionKey<FormContext<any>> = Symbol('Formwerk FormKey');
+
+export function useForm<TForm extends FormObject>(opts?: Partial<FormOptions<TForm>>) {
+  const values = reactive(cloneDeep(opts?.initialValues ?? {})) as TForm;
   const touched = reactive({});
 
-  function setFieldValue(path: string, value: any) {
+  function setFieldValue<TPath extends Path<TForm>>(path: TPath, value: PathValue<TForm, TPath> | undefined) {
     setInPath(values, path, cloneDeep(value));
   }
 
-  function setFieldTouched(path: string, value: boolean) {
+  function setFieldTouched<TPath extends Path<TForm>>(path: TPath, value: boolean) {
     setInPath(touched, path, value);
   }
 
-  function getFieldValue(path: string) {
-    return getFromPath(values, path);
+  function getFieldValue<TPath extends Path<TForm>>(path: TPath) {
+    return getFromPath(values, path) as PathValue<TForm, TPath>;
   }
 
-  function isFieldTouched(path: string) {
+  function isFieldTouched<TPath extends Path<TForm>>(path: TPath) {
     return !!getFromPath(touched, path);
   }
 
-  function isFieldSet(path: string) {
+  function isFieldSet<TPath extends Path<TForm>>(path: TPath) {
     return isPathSet(values, path);
   }
 
-  const ctx: FormContext = {
+  function setValues(newValues: Partial<TForm>, opts?: SetValueOptions) {
+    if (opts?.mode === 'merge') {
+      merge(values, newValues);
+
+      return;
+    }
+
+    // Delete all keys, then set new values
+    Object.keys(values).forEach(key => {
+      delete values[key];
+    });
+
+    Object.keys(newValues).forEach(key => {
+      setFieldValue(key as any, newValues[key]);
+    });
+  }
+
+  const ctx: FormContext<TForm> = {
     id: opts?.id ?? uniqId(),
-    getValues: () => values,
+    getValues: () => toRaw(values) as TForm,
     setFieldValue,
     setFieldTouched,
     getFieldValue,
@@ -56,10 +78,11 @@ export function useForm(opts?: Partial<FormOptions>) {
   provide(FormKey, ctx);
 
   return {
-    values,
+    values: readonly(values),
     context: ctx,
     setFieldValue,
     getFieldValue,
     isFieldTouched,
+    setValues,
   };
 }

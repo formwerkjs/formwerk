@@ -80,3 +80,5 @@ export type NormalizedProps<TProps extends object, Exclude extends keyof TProps 
 };
 
 export type Arrayable<T> = T | T[];
+
+export type FormObject = Record<string, any>;
