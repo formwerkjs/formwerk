@@ -20,7 +20,8 @@
     "allowSyntheticDefaultImports": true,
     "resolveJsonModule": true,
     "paths": {
-      "@core/*": ["packages/core/src/*"]
+      "@core/*": ["packages/core/src/*"],
+      "@test-utils/*": ["packages/test-utils/src/*"]
     },
     "types": ["vitest/globals"],
     "typeRoots": ["node_modules/@types", "node_modules"]
