@@ -38,17 +38,9 @@ export function useCheckbox<TValue = string>(
   const getFalseValue = () => (toValue(props.falseValue) as TValue) ?? (false as TValue);
   const group: CheckboxGroupContext<TValue> | null = inject(CheckboxGroupKey, null);
   const inputRef = elementRef || ref<HTMLInputElement>();
-  const fieldValue = group
-    ? computed({
-        get() {
-          return group.modelValue as TValue;
-        },
-        set() {
-          // TODO: WARN HERE SINCE CHECKBOX IS GROUPED, SO NO POINT IN TRYING TO CHANGE ITS FIELD VALUE
-          group.toggleValue(getTrueValue());
-        },
-      })
-    : useFormField<TValue>({ path: props.name, initialValue: getFalseValue() }).fieldValue;
+  const { fieldValue, setValue } = group
+    ? createGroupField(group, getTrueValue)
+    : useFormField<TValue>({ path: props.name, initialValue: toValue(props.modelValue) as TValue });
 
   const checked = computed({
     get() {
@@ -183,7 +175,7 @@ export function useCheckbox<TValue = string>(
     }
 
     const shouldTrue = force ?? !checked.value;
-    fieldValue.value = shouldTrue ? getTrueValue() : getFalseValue();
+    setValue(shouldTrue ? getTrueValue() : getFalseValue());
   }
 
   return {
@@ -196,5 +188,17 @@ export function useCheckbox<TValue = string>(
     setChecked,
     toggleValue,
     focus,
+  };
+}
+
+function createGroupField<TValue = unknown>(group: CheckboxGroupContext<TValue>, getTrueValue: () => TValue) {
+  const fieldValue = computed(() => group.modelValue as TValue);
+  function setValue() {
+    group.toggleValue(getTrueValue());
+  }
+
+  return {
+    fieldValue: fieldValue as Ref<TValue | undefined>,
+    setValue,
   };
 }
