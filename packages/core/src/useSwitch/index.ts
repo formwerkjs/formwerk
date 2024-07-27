@@ -1,6 +1,6 @@
 import { Ref, computed, shallowRef, toValue } from 'vue';
 import { AriaDescribableProps, AriaLabelableProps, InputBaseAttributes, InputEvents, Reactivify } from '../types';
-import { normalizeProps, uniqId, withRefCapture } from '../utils/common';
+import { isEqual, normalizeProps, uniqId, withRefCapture } from '../utils/common';
 import { useLabel } from '../a11y/useLabel';
 import { useFormField } from '../form/useFormField';
 
@@ -47,12 +47,12 @@ export function useSwitch(_props: Reactivify<SwitchProps>, elementRef?: Ref<HTML
     }
 
     const trueValue = toValue(props.trueValue);
-    if (nextValue === trueValue) {
+    if (isEqual(nextValue, trueValue)) {
       return trueValue;
     }
 
     const falseValue = toValue(props.falseValue);
-    if (nextValue === falseValue) {
+    if (isEqual(nextValue, falseValue)) {
       return falseValue;
     }
 
@@ -81,7 +81,7 @@ export function useSwitch(_props: Reactivify<SwitchProps>, elementRef?: Ref<HTML
 
   const isPressed = computed({
     get() {
-      return fieldValue.value === (toValue(props.trueValue) ?? true);
+      return isEqual(fieldValue.value, toValue(props.trueValue) ?? true);
     },
     set(value: boolean) {
       setValue(normalizeValue(value));

@@ -1,5 +1,5 @@
 import { Ref, computed, inject, nextTick, ref, toValue } from 'vue';
-import { normalizeProps, uniqId, withRefCapture } from '../utils/common';
+import { isEqual, normalizeProps, uniqId, withRefCapture } from '../utils/common';
 import { AriaLabelableProps, Reactivify, InputBaseAttributes, RovingTabIndex } from '../types';
 import { useLabel } from '../a11y/useLabel';
 import { CheckboxGroupContext, CheckboxGroupKey } from './useCheckboxGroup';
@@ -56,8 +56,7 @@ export function useCheckbox<TValue = string>(
         return group.hasValue(getTrueValue());
       }
 
-      // TODO: BETTER EQUALITY CHECK
-      return fieldValue.value === getTrueValue();
+      return isEqual(fieldValue.value, getTrueValue());
     },
     set(value: boolean) {
       setChecked(value);

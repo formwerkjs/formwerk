@@ -2,7 +2,7 @@ import { computed, inject, MaybeRefOrGetter, readonly, ref, Ref, toValue } from 
 import { FormContext, FormKey } from './useForm';
 import { Getter } from '../types';
 import { useSyncModel } from '../reactivity/useModelSync';
-import { cloneDeep } from '../utils/common';
+import { cloneDeep, isEqual } from '../utils/common';
 
 interface FormFieldOptions<TValue = unknown> {
   path: MaybeRefOrGetter<string | undefined> | undefined;
@@ -137,7 +137,7 @@ function initFormPathIfNecessary(form: FormContext, getPath: Getter<string | und
   }
 
   // If form does have a path set and the value is different from the initial value, set it.
-  if (form.isFieldSet(path) && form.getFieldValue(path) !== initialValue) {
+  if (form.isFieldSet(path) && !isEqual(form.getFieldValue(path), initialValue)) {
     form.setFieldValue(path, initialValue);
     return;
   }

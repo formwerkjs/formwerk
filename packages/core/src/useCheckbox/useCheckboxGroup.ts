@@ -9,7 +9,7 @@ import {
   Direction,
   Reactivify,
 } from '../types';
-import { uniqId, createDescribedByProps, normalizeProps } from '../utils/common';
+import { uniqId, createDescribedByProps, normalizeProps, isEqual } from '../utils/common';
 import { useLocale } from '../i18n/useLocale';
 import { useFormField } from '../form/useFormField';
 
@@ -112,8 +112,7 @@ export function useCheckboxGroup<TCheckbox>(_props: Reactivify<CheckboxGroupProp
 
   function toggleValue(value: TCheckbox, force?: boolean) {
     const nextValue = [...(fieldValue.value ?? [])];
-    // TODO: Better equality checks
-    const idx = nextValue.indexOf(value);
+    const idx = nextValue.findIndex(v => isEqual(v, value));
     const shouldAdd = force ?? idx === -1;
 
     if (shouldAdd) {
@@ -126,8 +125,7 @@ export function useCheckboxGroup<TCheckbox>(_props: Reactivify<CheckboxGroupProp
   }
 
   function hasValue(value: TCheckbox) {
-    // TODO: Better equality checks
-    return (fieldValue.value ?? []).includes(value);
+    return (fieldValue.value ?? []).some(v => isEqual(v, value));
   }
 
   const groupState = computed<CheckboxGroupState>(() => {

@@ -1,5 +1,5 @@
 import { Ref, computed, inject, nextTick, ref, toValue } from 'vue';
-import { normalizeProps, uniqId, withRefCapture } from '../utils/common';
+import { isEqual, normalizeProps, uniqId, withRefCapture } from '../utils/common';
 import { AriaLabelableProps, InputBaseAttributes, Reactivify, RovingTabIndex } from '../types';
 import { useLabel } from '../a11y/useLabel';
 import { RadioGroupContext, RadioGroupKey } from './useRadioGroup';
@@ -31,7 +31,7 @@ export function useRadio<TValue = string>(
   const inputId = uniqId();
   const group: RadioGroupContext<TValue> | null = inject(RadioGroupKey, null);
   const inputRef = elementRef || ref<HTMLInputElement>();
-  const checked = computed(() => group?.modelValue === toValue(props.value));
+  const checked = computed(() => isEqual(group?.modelValue, toValue(props.value)));
   const { labelProps, labelledByProps } = useLabel({
     for: inputId,
     label: props.label,
