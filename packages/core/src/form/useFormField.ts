@@ -132,11 +132,19 @@ function createValueRef<TValue = unknown>(initialValue?: TValue) {
  */
 function initFormPathIfNecessary(form: FormContext, getPath: Getter<string | undefined>, initialValue: unknown) {
   const path = getPath();
-  if (!path) {
+  if (!path || initialValue === undefined) {
     return;
   }
 
-  if (!form.isFieldSet(path) && initialValue !== undefined) {
+  // If form does have a path set and the value is different from the initial value, set it.
+  if (form.isFieldSet(path) && form.getFieldValue(path) !== initialValue) {
     form.setFieldValue(path, initialValue);
+    return;
+  }
+
+  // If the path is not set, set it.
+  if (!form.isFieldSet(path)) {
+    form.setFieldValue(path, initialValue);
+    return;
   }
 }
