@@ -2,7 +2,7 @@ import { InjectionKey, provide, reactive, readonly, toValue } from 'vue';
 import { escapePath } from '../utils/path';
 import { cloneDeep, merge, uniqId, isPromise } from '../utils/common';
 import { FormObject, MaybeAsync, MaybeGetter } from '../types';
-import { createFormContext, FormContext } from './context';
+import { createFormContext, FormContext } from './formContext';
 import { FormTransactionManager, useFormTransactions } from './useFormTransactions';
 
 export interface FormOptions<TForm extends FormObject = FormObject> {
@@ -14,7 +14,7 @@ export interface SetValueOptions {
   mode: 'merge' | 'replace';
 }
 
-interface FormContextWithTransactions<TForm extends FormObject>
+export interface FormContextWithTransactions<TForm extends FormObject = FormObject>
   extends FormContext<TForm>,
     FormTransactionManager<TForm> {}
 

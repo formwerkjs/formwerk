@@ -96,7 +96,7 @@ export function setInPath(object: NestedRecord, path: string, value: unknown): v
   }
 }
 
-function unset(object: Record<string, unknown> | unknown[], key: string | number) {
+function del(object: Record<string, unknown> | unknown[], key: string | number) {
   if (Array.isArray(object) && isIndex(key)) {
     object.splice(Number(key), 1);
     return;
@@ -107,21 +107,34 @@ function unset(object: Record<string, unknown> | unknown[], key: string | number
   }
 }
 
+function unset(object: Record<string, unknown> | unknown[], key: string | number) {
+  if (Array.isArray(object) && isIndex(key)) {
+    object[key] = undefined;
+    return;
+  }
+
+  if (isObject(object)) {
+    object[key] = undefined;
+  }
+}
+
 /**
  * Removes a nested property from object
  */
-export function unsetPath(object: NestedRecord, path: string): void {
+export function unsetPath(object: NestedRecord, path: string, destroy?: boolean): void {
   if (isEscapedPath(path)) {
     delete object[cleanupNonNestedPath(path)];
     return;
   }
+
+  const mut = destroy ? del : unset;
 
   const keys = path.split(/\.|\[(\d+)\]/).filter(Boolean);
   let acc: Record<string, unknown> = object;
   for (let i = 0; i < keys.length; i++) {
     // Last key, unset it
     if (i === keys.length - 1) {
-      unset(acc, keys[i]);
+      mut(acc, keys[i]);
       break;
     }
 
@@ -143,11 +156,11 @@ export function unsetPath(object: NestedRecord, path: string): void {
     }
 
     if (i === 0) {
-      unset(object, keys[0]);
+      mut(object, keys[0]);
       continue;
     }
 
-    unset(pathValues[i - 1] as Record<string, unknown>, keys[i - 1]);
+    mut(pathValues[i - 1] as Record<string, unknown>, keys[i - 1]);
   }
 }
 

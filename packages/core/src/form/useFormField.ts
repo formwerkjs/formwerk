@@ -1,8 +1,9 @@
 import { computed, inject, MaybeRefOrGetter, onBeforeUnmount, readonly, ref, Ref, toValue, watch } from 'vue';
-import { FormContext, FormKey } from './useForm';
+import { FormKey } from './useForm';
 import { Getter } from '../types';
 import { useSyncModel } from '../reactivity/useModelSync';
 import { cloneDeep, isEqual } from '../utils/common';
+import { FormContext } from './formContext';
 
 interface FormFieldOptions<TValue = unknown> {
   path: MaybeRefOrGetter<string | undefined> | undefined;
@@ -52,29 +53,31 @@ export function useFormField<TValue = unknown>(opts?: Partial<FormFieldOptions<T
 
     form.transaction(() => {
       return {
-        kind: 'unsetPath',
+        kind: 'dp',
         path: path,
       };
     });
   });
 
   watch(getPath, (newPath, oldPath) => {
-    form.transaction(tf => {
-      if (!newPath) {
-        return oldPath
-          ? {
-              kind: 'unsetPath',
-              path: oldPath,
-            }
-          : null;
-      }
+    if (oldPath) {
+      form.transaction(() => {
+        return {
+          kind: 'up',
+          path: oldPath,
+        };
+      });
+    }
 
-      return {
-        kind: 'setPath',
-        path: newPath,
-        value: oldPath ? tf.getFieldValue(oldPath) : pathlessValue.value,
-      };
-    });
+    if (newPath) {
+      form.transaction(tf => {
+        return {
+          kind: 'sp',
+          path: newPath,
+          value: cloneDeep(oldPath ? tf.getFieldValue(oldPath) : pathlessValue.value),
+        };
+      });
+    }
   });
 
   return field;

@@ -114,13 +114,14 @@
       </div> -->
 
       <div v-for="(field, idx) in fields" :key="field.id" class="flex items-center">
-        <InputText v-if="field.type === 'text'" :name="`field[${idx}]`" :label="`Field ${idx}`" />
+        <InputText :name="`field[${idx}]`" :label="`Field ${idx}`" />
 
         <button type="button" class="bg-red-500 rounded text-white p-2" @click="fields.splice(idx, 1)">X</button>
       </div>
 
       <button class="bg-zinc-700 text-white rounded p-1" type="button" @click="add">+ Add Field</button>
       <button class="bg-zinc-700 text-white rounded p-1" type="button" @click="swap">Swap</button>
+      <button class="bg-zinc-700 text-white rounded p-1" type="button" @click="reverse">Reverse</button>
 
       <!-- <InputSearch name="search" label="Search" :min-length="10" @submit="onSearchSubmit" /> -->
     </form>
@@ -132,7 +133,7 @@
 </template>
 
 <script lang="ts" setup>
-import { reactive, ref } from 'vue';
+import { reactive, ref, watch } from 'vue';
 import InputText from './components/InputText.vue';
 import InputNumber from './components/InputNumber.vue';
 import InputTextArea from './components/InputTextArea.vue';
@@ -153,15 +154,19 @@ const { values, context } = useForm({
   // initialValues: getInitials,
 });
 
-const fields = ref([{ type: 'text', id: crypto.randomUUID() }]);
+const fields = ref([{ type: 'text', id: Date.now() }]);
 
 function add() {
-  fields.value.push({ type: 'text', id: crypto.randomUUID() });
+  fields.value.unshift({ type: 'text', id: Date.now() });
 }
 
 function swap() {
-  const [f1, f2] = fields.value;
-  fields.value = [f2, f1];
+  const [f1, f2, f3] = fields.value;
+  fields.value = [f2, f1, f3];
+}
+
+function reverse() {
+  fields.value = [...fields.value].reverse();
 }
 
 async function getInitials() {
