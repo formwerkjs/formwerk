@@ -1,7 +1,9 @@
-import { InjectionKey, provide, reactive, readonly, toRaw, toValue } from 'vue';
-import { escapePath, getFromPath, isPathSet, setInPath } from '../utils/path';
+import { InjectionKey, provide, reactive, readonly, toValue } from 'vue';
+import { escapePath } from '../utils/path';
 import { cloneDeep, merge, uniqId, isPromise } from '../utils/common';
-import { FormObject, MaybeAsync, MaybeGetter, Path, PathValue } from '../types';
+import { FormObject, MaybeAsync, MaybeGetter } from '../types';
+import { createFormContext, FormContext } from './context';
+import { FormTransactionManager, useFormTransactions } from './useFormTransactions';
 
 export interface FormOptions<TForm extends FormObject = FormObject> {
   id: string;
@@ -12,17 +14,11 @@ export interface SetValueOptions {
   mode: 'merge' | 'replace';
 }
 
-export interface FormContext<TForm extends FormObject = FormObject> {
-  id: string;
-  getFieldValue<TPath extends Path<TForm>>(path: TPath): PathValue<TForm, TPath>;
-  setFieldValue<TPath extends Path<TForm>>(path: TPath, value: PathValue<TForm, TPath> | undefined): void;
-  setFieldTouched<TPath extends Path<TForm>>(path: TPath, value: boolean): void;
-  isFieldTouched<TPath extends Path<TForm>>(path: TPath): boolean;
-  isFieldSet<TPath extends Path<TForm>>(path: TPath): boolean;
-  getValues: () => TForm;
-}
+interface FormContextWithTransactions<TForm extends FormObject>
+  extends FormContext<TForm>,
+    FormTransactionManager<TForm> {}
 
-export const FormKey: InjectionKey<FormContext<any>> = Symbol('Formwerk FormKey');
+export const FormKey: InjectionKey<FormContextWithTransactions<any>> = Symbol('Formwerk FormKey');
 
 export function useForm<TForm extends FormObject>(opts?: Partial<FormOptions<TForm>>) {
   const values = reactive(initializeValues()) as TForm;
@@ -41,25 +37,7 @@ export function useForm<TForm extends FormObject>(opts?: Partial<FormOptions<TFo
     return {} as TForm;
   }
 
-  function setFieldValue<TPath extends Path<TForm>>(path: TPath, value: PathValue<TForm, TPath> | undefined) {
-    setInPath(values, path, cloneDeep(value));
-  }
-
-  function setFieldTouched<TPath extends Path<TForm>>(path: TPath, value: boolean) {
-    setInPath(touched, path, value);
-  }
-
-  function getFieldValue<TPath extends Path<TForm>>(path: TPath) {
-    return getFromPath(values, path) as PathValue<TForm, TPath>;
-  }
-
-  function isFieldTouched<TPath extends Path<TForm>>(path: TPath) {
-    return !!getFromPath(touched, path);
-  }
-
-  function isFieldSet<TPath extends Path<TForm>>(path: TPath) {
-    return isPathSet(values, path);
-  }
+  const ctx = createFormContext(opts?.id || uniqId(), values, touched);
 
   function setValues(newValues: Partial<TForm>, opts?: SetValueOptions) {
     if (opts?.mode === 'merge') {
@@ -75,29 +53,23 @@ export function useForm<TForm extends FormObject>(opts?: Partial<FormOptions<TFo
 
     // We escape paths automatically
     Object.keys(newValues).forEach(key => {
-      setFieldValue(escapePath(key) as any, newValues[key]);
+      ctx.setFieldValue(escapePath(key) as any, newValues[key]);
     });
   }
 
-  const ctx: FormContext<TForm> = {
-    id: opts?.id ?? uniqId(),
-    getValues: () => toRaw(values) as TForm,
-    setFieldValue,
-    setFieldTouched,
-    getFieldValue,
-    isFieldTouched,
-    isFieldSet,
-  };
-
-  provide(FormKey, ctx);
+  const transactionsManager = useFormTransactions(ctx);
+  provide(FormKey, {
+    ...ctx,
+    ...transactionsManager,
+  });
 
   return {
     values: readonly(values),
     context: ctx,
-    setFieldValue,
-    getFieldValue,
-    isFieldTouched,
-    setFieldTouched,
+    setFieldValue: ctx.setFieldValue,
+    getFieldValue: ctx.getFieldValue,
+    isFieldTouched: ctx.isFieldTouched,
+    setFieldTouched: ctx.setFieldTouched,
     setValues,
   };
 }

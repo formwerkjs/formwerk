@@ -1,4 +1,4 @@
-import { computed, inject, MaybeRefOrGetter, readonly, ref, Ref, toValue } from 'vue';
+import { computed, inject, MaybeRefOrGetter, onBeforeUnmount, readonly, ref, Ref, toValue, watch } from 'vue';
 import { FormContext, FormKey } from './useForm';
 import { Getter } from '../types';
 import { useSyncModel } from '../reactivity/useModelSync';
@@ -14,7 +14,7 @@ interface FormFieldOptions<TValue = unknown> {
 export function useFormField<TValue = unknown>(opts?: Partial<FormFieldOptions<TValue>>) {
   const form = inject(FormKey, null);
   const getPath = () => toValue(opts?.path);
-  const { fieldValue, setValue } = useFieldValue(getPath, form, opts?.initialValue);
+  const { fieldValue, pathlessValue, setValue } = useFieldValue(getPath, form, opts?.initialValue);
   const { touched, setTouched } = form ? createFormTouchedRef(getPath, form) : createTouchedRef(false);
 
   if (opts?.syncModel ?? true) {
@@ -25,8 +25,15 @@ export function useFormField<TValue = unknown>(opts?: Partial<FormFieldOptions<T
     });
   }
 
-  if (form) {
-    initFormPathIfNecessary(form, getPath, opts?.initialValue);
+  const field = {
+    fieldValue: readonly(fieldValue) as Ref<TValue | undefined>,
+    touched,
+    setValue,
+    setTouched,
+  };
+
+  if (!form) {
+    return field;
   }
 
   // TODO: How to react to a field path change?
@@ -35,12 +42,42 @@ export function useFormField<TValue = unknown>(opts?: Partial<FormFieldOptions<T
   // This means a path could be controlled by a field or taken over by another field. We need to handle this case.
   // This is what made vee-validate so complex, it had to handle all these cases. I need to figure a way to make this simpler. Something that just "works" without much thought.
 
-  return {
-    fieldValue: readonly(fieldValue) as Ref<TValue | undefined>,
-    touched,
-    setValue,
-    setTouched,
-  };
+  initFormPathIfNecessary(form, getPath, opts?.initialValue);
+
+  onBeforeUnmount(() => {
+    const path = getPath();
+    if (!path) {
+      return null;
+    }
+
+    form.transaction(() => {
+      return {
+        kind: 'unsetPath',
+        path: path,
+      };
+    });
+  });
+
+  watch(getPath, (newPath, oldPath) => {
+    form.transaction(tf => {
+      if (!newPath) {
+        return oldPath
+          ? {
+              kind: 'unsetPath',
+              path: oldPath,
+            }
+          : null;
+      }
+
+      return {
+        kind: 'setPath',
+        path: newPath,
+        value: oldPath ? tf.getFieldValue(oldPath) : pathlessValue.value,
+      };
+    });
+  });
+
+  return field;
 }
 
 function useFieldValue<TValue = unknown>(
@@ -48,14 +85,7 @@ function useFieldValue<TValue = unknown>(
   form?: FormContext | null,
   initialValue?: TValue,
 ) {
-  const { fieldValue, setValue } = form
-    ? createFormValueRef<TValue>(getPath, form, initialValue)
-    : createValueRef<TValue>(initialValue);
-
-  return {
-    setValue,
-    fieldValue,
-  };
+  return form ? createFormValueRef<TValue>(getPath, form, initialValue) : createValueRef<TValue>(initialValue);
 }
 
 function createTouchedRef(initialTouched?: boolean) {
@@ -112,6 +142,7 @@ function createFormValueRef<TValue = unknown>(
 
   return {
     fieldValue,
+    pathlessValue,
     setValue,
   };
 }
@@ -121,6 +152,7 @@ function createValueRef<TValue = unknown>(initialValue?: TValue) {
 
   return {
     fieldValue,
+    pathlessValue: fieldValue,
     setValue(value: TValue | undefined) {
       fieldValue.value = cloneDeep(value);
     },
