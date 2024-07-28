@@ -1,17 +1,13 @@
 import { InjectionKey, provide, reactive, readonly, Ref, shallowRef, toValue } from 'vue';
-import { escapePath } from '../utils/path';
-import { cloneDeep, merge, uniqId, isPromise } from '../utils/common';
+import { cloneDeep, uniqId, isPromise } from '../utils/common';
 import { FormObject, MaybeAsync, MaybeGetter } from '../types';
 import { createFormContext, FormContext } from './formContext';
 import { FormTransactionManager, useFormTransactions } from './useFormTransactions';
+import { useFormActions } from './useFormActions';
 
 export interface FormOptions<TForm extends FormObject = FormObject> {
   id: string;
   initialValues: MaybeGetter<MaybeAsync<TForm>>;
-}
-
-export interface SetValueOptions {
-  mode: 'merge' | 'replace';
 }
 
 export interface FormContextWithTransactions<TForm extends FormObject = FormObject>
@@ -23,7 +19,7 @@ export const FormKey: InjectionKey<FormContextWithTransactions<any>> = Symbol('F
 export function useForm<TForm extends FormObject = FormObject>(opts?: Partial<FormOptions<TForm>>) {
   const { initials, originals } = useInitializeValues<TForm>({
     initialValues: opts?.initialValues,
-    onAsyncInit: v => setValues(v, { mode: 'merge' }),
+    onAsyncInit,
   });
 
   const values = reactive(cloneDeep(originals.value)) as TForm;
@@ -37,25 +33,13 @@ export function useForm<TForm extends FormObject = FormObject>(opts?: Partial<Fo
     touched,
   });
 
-  function setValues(newValues: Partial<TForm>, opts?: SetValueOptions) {
-    if (opts?.mode === 'merge') {
-      merge(values, newValues);
-
-      return;
-    }
-
-    // Delete all keys, then set new values
-    Object.keys(values).forEach(key => {
-      delete values[key];
-    });
-
-    // We escape paths automatically
-    Object.keys(newValues).forEach(key => {
-      ctx.setFieldValue(escapePath(key) as any, newValues[key]);
-    });
+  function onAsyncInit(v: TForm) {
+    ctx.setValues(v, { mode: 'merge' });
   }
 
   const transactionsManager = useFormTransactions(ctx);
+  const actions = useFormActions(ctx);
+
   provide(FormKey, {
     ...ctx,
     ...transactionsManager,
@@ -68,7 +52,8 @@ export function useForm<TForm extends FormObject = FormObject>(opts?: Partial<Fo
     getFieldValue: ctx.getFieldValue,
     isFieldTouched: ctx.isFieldTouched,
     setFieldTouched: ctx.setFieldTouched,
-    setValues,
+    setValues: ctx.setValues,
+    ...actions,
   };
 }
 
