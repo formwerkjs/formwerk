@@ -27,7 +27,9 @@ export function useFormField<TValue = unknown>(opts?: Partial<FormFieldOptions<T
   const form = inject(FormKey, null);
   const getPath = () => toValue(opts?.path);
   const { fieldValue, pathlessValue, setValue } = useFieldValue(getPath, form, opts?.initialValue);
-  const { touched, pathlessTouched, setTouched } = form ? createFormTouchedRef(getPath, form) : createTouchedRef(false);
+  const { isTouched, pathlessTouched, setTouched } = form
+    ? createFormTouchedRef(getPath, form)
+    : createTouchedRef(false);
 
   if (opts?.syncModel ?? true) {
     useSyncModel({
@@ -39,7 +41,7 @@ export function useFormField<TValue = unknown>(opts?: Partial<FormFieldOptions<T
 
   const field = {
     fieldValue: readonly(fieldValue) as Ref<TValue | undefined>,
-    touched,
+    isTouched: readonly(isTouched) as Ref<boolean>,
     setValue,
     setTouched,
   };
@@ -102,20 +104,20 @@ function useFieldValue<TValue = unknown>(
 }
 
 function createTouchedRef(initialTouched?: boolean) {
-  const touched = shallowRef(initialTouched ?? false);
+  const isTouched = shallowRef(initialTouched ?? false);
 
   return {
-    touched,
-    pathlessTouched: touched,
+    isTouched,
+    pathlessTouched: isTouched,
     setTouched(value: boolean) {
-      touched.value = value;
+      isTouched.value = value;
     },
   };
 }
 
 function createFormTouchedRef(getPath: Getter<string | undefined>, form: FormContextWithTransactions) {
   const pathlessTouched = shallowRef(false);
-  const touched = computed(() => {
+  const isTouched = computed(() => {
     const path = getPath();
 
     return path ? form.isFieldTouched(path) : false;
@@ -130,7 +132,7 @@ function createFormTouchedRef(getPath: Getter<string | undefined>, form: FormCon
   }
 
   return {
-    touched,
+    isTouched,
     pathlessTouched,
     setTouched,
   };
