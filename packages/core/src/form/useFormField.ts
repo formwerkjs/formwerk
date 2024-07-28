@@ -48,12 +48,6 @@ export function useFormField<TValue = unknown>(opts?: Partial<FormFieldOptions<T
     return field;
   }
 
-  // TODO: How to react to a field path change?
-  // We need to update the form with the new path and value, this is easy, just call `setFieldValue` with the existing value.
-  // But what about the previous path left behind? We need to remove it from the form. This is a bit tricky, because it could've been swapped with another field.
-  // This means a path could be controlled by a field or taken over by another field. We need to handle this case.
-  // This is what made vee-validate so complex, it had to handle all these cases. I need to figure a way to make this simpler. Something that just "works" without much thought.
-
   initFormPathIfNecessary(form, getPath, opts?.initialValue, opts?.initialTouched ?? false);
 
   form.onSubmitted(() => {
