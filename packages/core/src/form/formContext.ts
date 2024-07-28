@@ -14,6 +14,7 @@ export interface FormContext<TForm extends FormObject = FormObject> {
   isFieldSet<TPath extends Path<TForm>>(path: TPath): boolean;
   getFieldInitialValue<TPath extends Path<TForm>>(path: TPath): PathValue<TForm, TPath>;
   unsetInitialValue<TPath extends Path<TForm>>(path: TPath): void;
+  setInitialValues: (newValues: Partial<TForm>, opts?: SetValueOptions) => void;
   getValues: () => TForm;
   setValues: (newValues: Partial<TForm>, opts?: SetValueOptions) => void;
   revertValues: () => void;
@@ -74,6 +75,19 @@ export function createFormContext<TForm extends FormObject = FormObject>({
     unsetInObject(initials.value, path);
   }
 
+  function setInitialValues(newValues: Partial<TForm>, opts?: SetValueOptions) {
+    if (opts?.mode === 'merge') {
+      initials.value = merge(cloneDeep(initials.value), cloneDeep(newValues));
+      originals.value = cloneDeep(initials.value);
+
+      return;
+    }
+
+    // TODO: maybe initials and originals should be Partials.
+    initials.value = cloneDeep(newValues) as TForm;
+    originals.value = cloneDeep(newValues) as TForm;
+  }
+
   /**
    * Set values on the form.
    * TODO: Maybe have two different signatures for this method? A partial for merge mode and a full for replace mode?
@@ -114,5 +128,6 @@ export function createFormContext<TForm extends FormObject = FormObject>({
     unsetInitialValue,
     setValues,
     revertValues,
+    setInitialValues,
   };
 }

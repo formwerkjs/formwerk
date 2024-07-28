@@ -1,6 +1,6 @@
 import { FormObject, MaybeAsync } from '../types';
 import { cloneDeep } from '../utils/common';
-import { FormContext } from './formContext';
+import { FormContext, SetValueOptions } from './formContext';
 
 export function useFormActions<TForm extends FormObject = FormObject>(form: FormContext<TForm>) {
   function handleSubmit<TReturns>(cb: (values: TForm) => MaybeAsync<TReturns>) {
@@ -14,7 +14,11 @@ export function useFormActions<TForm extends FormObject = FormObject>(form: Form
     };
   }
 
-  function reset() {
+  function reset(newValues?: Partial<TForm>, opts?: SetValueOptions) {
+    if (newValues) {
+      form.setInitialValues(newValues, opts);
+    }
+
     form.revertValues();
   }
 

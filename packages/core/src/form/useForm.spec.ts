@@ -115,3 +115,41 @@ describe('form touched', () => {
     expect(isFieldTouched('foo.bar')).toBe(true);
   });
 });
+
+describe('form actions', () => {
+  test('can reset form values to their original values', async () => {
+    const { values, reset, setFieldValue } = await renderSetup(() => {
+      return useForm({ initialValues: { foo: 'bar' } });
+    });
+
+    setFieldValue('foo', '');
+    expect(values).toEqual({ foo: '' });
+    reset();
+    expect(values).toEqual({ foo: 'bar' });
+  });
+
+  test('can reset form values to a new set of values', async () => {
+    const { values, reset, setFieldValue } = await renderSetup(() => {
+      return useForm({ initialValues: { foo: 'bar' } });
+    });
+
+    reset({ foo: 'baz' });
+    expect(values).toEqual({ foo: 'baz' });
+    setFieldValue('foo', '');
+    reset();
+    expect(values).toEqual({ foo: 'baz' });
+  });
+
+  test('can handle form submit', async () => {
+    const { handleSubmit } = await renderSetup(() => {
+      return useForm({ initialValues: { foo: 'bar' } });
+    });
+
+    const cb = vi.fn();
+    const onSubmit = handleSubmit(cb);
+
+    await onSubmit(new Event('submit'));
+
+    expect(cb).toHaveBeenCalledWith({ foo: 'bar' });
+  });
+});
