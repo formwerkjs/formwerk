@@ -1,36 +1,42 @@
-import { InjectionKey, provide, reactive, readonly, Ref, shallowRef, toValue } from 'vue';
-import { cloneDeep, useUniqId, isPromise } from '../utils/common';
-import { FormObject, MaybeAsync, MaybeGetter } from '../types';
+import { InjectionKey, provide, reactive, readonly } from 'vue';
+import { cloneDeep, useUniqId } from '../utils/common';
+import { FormObject, MaybeAsync, MaybeGetter, TouchedSchema } from '../types';
 import { createFormContext, FormContext } from './formContext';
 import { FormTransactionManager, useFormTransactions } from './useFormTransactions';
 import { useFormActions } from './useFormActions';
+import { useFormSnapshots } from './formSnapshot';
 
 export interface FormOptions<TForm extends FormObject = FormObject> {
   id: string;
   initialValues: MaybeGetter<MaybeAsync<TForm>>;
+  initialTouched: TouchedSchema<TForm>;
 }
 
 export interface FormContextWithTransactions<TForm extends FormObject = FormObject>
   extends FormContext<TForm>,
-    FormTransactionManager<TForm> {}
+    FormTransactionManager<TForm> {
+  onSubmitted(cb: () => void): void;
+}
 
 export const FormKey: InjectionKey<FormContextWithTransactions<any>> = Symbol('Formwerk FormKey');
 
 export function useForm<TForm extends FormObject = FormObject>(opts?: Partial<FormOptions<TForm>>) {
-  const { initials, originals } = useInitializeValues<TForm>({
-    initialValues: opts?.initialValues,
+  const touchedSnapshot = useFormSnapshots(opts?.initialTouched);
+  const valuesSnapshot = useFormSnapshots<TForm>(opts?.initialValues, {
     onAsyncInit,
   });
 
-  const values = reactive(cloneDeep(originals.value)) as TForm;
-  const touched = reactive({});
+  const values = reactive(cloneDeep(valuesSnapshot.originals.value)) as TForm;
+  const touched = reactive(cloneDeep(touchedSnapshot.originals.value)) as TouchedSchema<TForm>;
 
   const ctx = createFormContext({
     id: opts?.id || useUniqId('form'),
     values,
-    initials,
-    originals,
     touched,
+    snapshots: {
+      values: valuesSnapshot,
+      touched: touchedSnapshot,
+    },
   });
 
   function onAsyncInit(v: TForm) {
@@ -38,12 +44,13 @@ export function useForm<TForm extends FormObject = FormObject>(opts?: Partial<Fo
   }
 
   const transactionsManager = useFormTransactions(ctx);
-  const actions = useFormActions(ctx);
+  const { actions, onSubmitted } = useFormActions(ctx);
 
   provide(FormKey, {
     ...ctx,
     ...transactionsManager,
-  });
+    onSubmitted,
+  } as FormContextWithTransactions<TForm>);
 
   return {
     values: readonly(values),
@@ -54,33 +61,5 @@ export function useForm<TForm extends FormObject = FormObject>(opts?: Partial<Fo
     setFieldTouched: ctx.setFieldTouched,
     setValues: ctx.setValues,
     ...actions,
-  };
-}
-
-interface FormInitializerOptions<TForm extends FormObject = FormObject> {
-  initialValues: MaybeGetter<MaybeAsync<TForm>>;
-  onAsyncInit?: (values: TForm) => void;
-}
-
-function useInitializeValues<TForm extends FormObject = FormObject>(opts?: Partial<FormInitializerOptions<TForm>>) {
-  // We need two copies of the initial values
-  const initials = shallowRef<TForm>({} as TForm) as Ref<TForm>;
-  const originals = shallowRef<TForm>({} as TForm) as Ref<TForm>;
-
-  const initialValuesUnref = toValue(opts?.initialValues);
-  if (isPromise(initialValuesUnref)) {
-    initialValuesUnref.then(inits => {
-      initials.value = cloneDeep(inits || {}) as TForm;
-      originals.value = cloneDeep(inits || {}) as TForm;
-      opts?.onAsyncInit?.(cloneDeep(inits));
-    });
-  } else {
-    initials.value = cloneDeep(initialValuesUnref || {}) as TForm;
-    originals.value = cloneDeep(initialValuesUnref || {}) as TForm;
-  }
-
-  return {
-    initials,
-    originals,
   };
 }

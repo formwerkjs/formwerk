@@ -1,5 +1,6 @@
 import { renderSetup } from '@test-utils/index';
 import { useForm } from './useForm';
+import { useFormField } from './useFormField';
 
 describe('form values', () => {
   test('it initializes form values', async () => {
@@ -114,30 +115,44 @@ describe('form touched', () => {
     setFieldTouched('foo.bar', true);
     expect(isFieldTouched('foo.bar')).toBe(true);
   });
+
+  test('can set initial touched state', async () => {
+    const { isFieldTouched } = await renderSetup(() => {
+      return useForm({ initialValues: { foo: 'bar' }, initialTouched: { foo: true } });
+    });
+
+    expect(isFieldTouched('foo')).toBe(true);
+  });
 });
 
 describe('form actions', () => {
-  test('can reset form values to their original values', async () => {
-    const { values, reset, setFieldValue } = await renderSetup(() => {
-      return useForm({ initialValues: { foo: 'bar' } });
+  test('can reset form values and touched to their original state', async () => {
+    const { values, reset, setFieldValue, isFieldTouched, setFieldTouched } = await renderSetup(() => {
+      return useForm({ initialValues: { foo: 'bar' }, initialTouched: { foo: true } });
     });
 
     setFieldValue('foo', '');
+    setFieldTouched('foo', false);
     expect(values).toEqual({ foo: '' });
+    expect(isFieldTouched('foo')).toBe(false);
     reset();
     expect(values).toEqual({ foo: 'bar' });
+    expect(isFieldTouched('foo')).toBe(true);
   });
 
-  test('can reset form values to a new set of values', async () => {
-    const { values, reset, setFieldValue } = await renderSetup(() => {
+  test('can reset form values and touched to a new state', async () => {
+    const { values, reset, setFieldValue, isFieldTouched, setFieldTouched } = await renderSetup(() => {
       return useForm({ initialValues: { foo: 'bar' } });
     });
 
-    reset({ foo: 'baz' });
+    reset({ values: { foo: 'baz' }, touched: { foo: true } });
     expect(values).toEqual({ foo: 'baz' });
+    expect(isFieldTouched('foo')).toBe(true);
+    setFieldTouched('foo', false);
     setFieldValue('foo', '');
     reset();
     expect(values).toEqual({ foo: 'baz' });
+    expect(isFieldTouched('foo')).toBe(true);
   });
 
   test('can handle form submit', async () => {
@@ -151,5 +166,26 @@ describe('form actions', () => {
     await onSubmit(new Event('submit'));
 
     expect(cb).toHaveBeenCalledWith({ foo: 'bar' });
+  });
+
+  test('submitting sets touched state to true', async () => {
+    const { form } = await renderSetup(
+      () => {
+        const form = useForm({ initialValues: { field: 'foo' } });
+
+        return { form };
+      },
+      () => {
+        const field = useFormField({ path: 'field' });
+
+        return { field };
+      },
+    );
+
+    expect(form.isFieldTouched('field')).toBe(false);
+    const cb = vi.fn();
+    const onSubmit = form.handleSubmit(cb);
+    await onSubmit(new Event('submit'));
+    expect(form.isFieldTouched('field')).toBe(true);
   });
 });

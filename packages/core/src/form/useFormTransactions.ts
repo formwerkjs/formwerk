@@ -2,18 +2,19 @@ import { nextTick } from 'vue';
 import { FormObject, Path, PathValue } from '../types';
 import { FormContext } from './formContext';
 
-interface SetFieldValueTransaction<TForm extends FormObject> {
+interface SetPathStateTransaction<TForm extends FormObject> {
   kind: 2;
   path: Path<TForm>;
   value: PathValue<TForm, Path<TForm>>;
+  touched: boolean;
 }
 
-interface UnsetFieldValueTransaction<TForm extends FormObject> {
+interface UnsetPathStateTransaction<TForm extends FormObject> {
   kind: 1;
   path: Path<TForm>;
 }
 
-interface DestroyFieldValueTransaction<TForm extends FormObject> {
+interface DestroyPathStateTransaction<TForm extends FormObject> {
   kind: 0;
   path: Path<TForm>;
 }
@@ -22,12 +23,13 @@ interface InitializeFieldTransaction<TForm extends FormObject> {
   kind: 3;
   path: Path<TForm>;
   value: PathValue<TForm, Path<TForm>>;
+  touched: boolean;
 }
 
 export type FormTransaction<TForm extends FormObject> =
-  | SetFieldValueTransaction<TForm>
-  | UnsetFieldValueTransaction<TForm>
-  | DestroyFieldValueTransaction<TForm>
+  | SetPathStateTransaction<TForm>
+  | UnsetPathStateTransaction<TForm>
+  | DestroyPathStateTransaction<TForm>
   | InitializeFieldTransaction<TForm>;
 
 /**
@@ -82,6 +84,7 @@ export function useFormTransactions<TForm extends FormObject>(form: FormContext<
     for (const tr of trs) {
       if (tr.kind === TransactionKind.SET_PATH) {
         form.setFieldValue(tr.path, tr.value);
+        form.setFieldTouched(tr.path, tr.touched);
         continue;
       }
 
@@ -98,6 +101,7 @@ export function useFormTransactions<TForm extends FormObject>(form: FormContext<
       if (tr.kind === TransactionKind.INIT_PATH) {
         const formInit = form.getFieldInitialValue(tr.path);
         form.setFieldValue(tr.path, tr.value ?? formInit);
+        form.setFieldTouched(tr.path, tr.touched);
         form.unsetInitialValue(tr.path);
         continue;
       }
