@@ -23,7 +23,7 @@ export interface RadioGroupContext<TValue> {
   readonly modelValue: TValue | undefined;
   setValidity(message: string): void;
   setValue(value: TValue): void;
-
+  setTouched(touched: boolean): void;
   useRadioRegistration(radio: RadioItemContext): { canReceiveFocus(): boolean };
 }
 
@@ -83,7 +83,7 @@ export function useRadioGroup<TValue = string>(_props: Reactivify<RadioGroupProp
     label: props.label,
   });
 
-  const { fieldValue, setValue } = useFormField<TValue>({
+  const { fieldValue, setValue, isTouched, setTouched } = useFormField<TValue>({
     path: props.name,
     initialValue: toValue(props.modelValue) as TValue,
   });
@@ -132,12 +132,16 @@ export function useRadioGroup<TValue = string>(_props: Reactivify<RadioGroupProp
         if (next.includes(e.key)) {
           e.preventDefault();
           handleArrowNext();
+          setTouched(true);
+
           return;
         }
 
         if (prev.includes(e.key)) {
           e.preventDefault();
           handleArrowPrevious();
+          setTouched(true);
+
           return;
         }
       },
@@ -177,6 +181,7 @@ export function useRadioGroup<TValue = string>(_props: Reactivify<RadioGroupProp
     modelValue: fieldValue,
     setValidity,
     setValue,
+    setTouched,
     useRadioRegistration,
   });
 
@@ -189,5 +194,6 @@ export function useRadioGroup<TValue = string>(_props: Reactivify<RadioGroupProp
     fieldValue,
     radioGroupProps,
     errorMessage,
+    isTouched,
   };
 }

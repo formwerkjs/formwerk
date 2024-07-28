@@ -39,7 +39,7 @@ export function useCheckbox<TValue = string>(
   const getFalseValue = () => (toValue(props.falseValue) as TValue) ?? (false as TValue);
   const group: CheckboxGroupContext<TValue> | null = inject(CheckboxGroupKey, null);
   const inputRef = elementRef || ref<HTMLInputElement>();
-  const { fieldValue, setValue } = group
+  const { fieldValue, setValue, isTouched, setTouched } = group
     ? createGroupField(group, getTrueValue)
     : useFormField<TValue>({ path: props.name, initialValue: toValue(props.modelValue) as TValue });
 
@@ -74,6 +74,7 @@ export function useCheckbox<TValue = string>(
         }
 
         toggleValue();
+        setTouched(true);
       },
       onKeydown(e: KeyboardEvent) {
         if (toValue(props.disabled)) {
@@ -83,7 +84,11 @@ export function useCheckbox<TValue = string>(
         if (e.code === 'Space') {
           e.preventDefault();
           toggleValue();
+          setTouched(true);
         }
+      },
+      onBlur() {
+        setTouched(true);
       },
     };
 
@@ -186,6 +191,7 @@ export function useCheckbox<TValue = string>(
     inputProps,
     checkboxProps,
     isChecked: checked,
+    isTouched,
     setChecked,
     toggleValue,
     focus,
@@ -194,12 +200,19 @@ export function useCheckbox<TValue = string>(
 
 function createGroupField<TValue = unknown>(group: CheckboxGroupContext<TValue>, getTrueValue: () => TValue) {
   const fieldValue = computed(() => group.modelValue as TValue);
+  const isTouched = computed(() => group.isTouched);
   function setValue() {
     group.toggleValue(getTrueValue());
   }
 
+  function setTouched(touched: boolean) {
+    group.setTouched(touched);
+  }
+
   return {
     fieldValue: fieldValue as Ref<TValue | undefined>,
+    isTouched: isTouched as Ref<boolean>,
     setValue,
+    setTouched,
   };
 }

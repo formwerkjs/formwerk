@@ -56,7 +56,7 @@ export function useTextField(
   const inputId = useUniqId(FieldTypePrefixes.TextField);
   const inputRef = elementRef || shallowRef<HTMLInputElement>();
   const { errorMessage, validityDetails, isInvalid } = useInputValidity(inputRef);
-  const { fieldValue, setValue } = useFormField<string | undefined>({
+  const { fieldValue, setValue, isTouched, setTouched } = useFormField<string | undefined>({
     path: props.name,
     initialValue: toValue(props.modelValue),
   });
@@ -74,11 +74,14 @@ export function useTextField(
   });
 
   const handlers: InputEvents = {
-    onInput: (event: Event) => {
-      setValue((event.target as HTMLInputElement).value);
+    onInput(evt) {
+      setValue((evt.target as HTMLInputElement).value);
     },
-    onChange: (event: Event) => {
-      setValue((event.target as HTMLInputElement).value);
+    onChange(evt) {
+      setValue((evt.target as HTMLInputElement).value);
+    },
+    onBlur() {
+      setTouched(true);
     },
   };
 
@@ -111,5 +114,6 @@ export function useTextField(
     descriptionProps,
     validityDetails,
     isInvalid,
+    isTouched,
   };
 }

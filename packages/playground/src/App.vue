@@ -16,7 +16,6 @@
 </template>
 
 <script lang="ts" setup>
-import { ref } from 'vue';
 import InputText from './components/InputText.vue';
 import { useForm } from '@formwerk/core';
 

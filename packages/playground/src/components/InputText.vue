@@ -3,11 +3,11 @@ import { TextFieldProps, useTextField } from '@formwerk/core';
 
 const props = defineProps<TextFieldProps>();
 
-const { inputProps, labelProps, errorMessage, errorMessageProps } = useTextField(props);
+const { inputProps, labelProps, errorMessage, errorMessageProps, isTouched } = useTextField(props);
 </script>
 
 <template>
-  <div class="InputText">
+  <div class="InputText" :class="{ touched: isTouched }">
     <label v-bind="labelProps">{{ label }}</label>
 
     <input v-bind="inputProps" />
@@ -38,6 +38,12 @@ const { inputProps, labelProps, errorMessage, errorMessageProps } = useTextField
   &.has-error {
     input {
       @apply bg-red-100 text-red-600 focus:border-red-500;
+    }
+  }
+
+  &.touched {
+    input {
+      @apply bg-blue-50;
     }
   }
 }

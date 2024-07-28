@@ -26,10 +26,13 @@ export interface CheckboxGroupContext<TCheckbox> {
   groupState: CheckboxGroupState;
 
   readonly modelValue: CheckboxGroupValue<TCheckbox> | undefined;
+  readonly isTouched: boolean;
+
   setValidity(message: string): void;
   setValue(value: CheckboxGroupValue<TCheckbox>): void;
   hasValue(value: TCheckbox): boolean;
   toggleValue(value: TCheckbox, force?: boolean): void;
+  setTouched(touched: boolean): void;
 
   useCheckboxRegistration(checkbox: CheckboxContext): void;
 }
@@ -71,7 +74,7 @@ export function useCheckboxGroup<TCheckbox>(_props: Reactivify<CheckboxGroupProp
     label: props.label,
   });
 
-  const { fieldValue, setValue } = useFormField({
+  const { fieldValue, setValue, isTouched, setTouched } = useFormField({
     path: props.name,
     initialValue: toValue(props.modelValue),
   });
@@ -148,11 +151,13 @@ export function useCheckboxGroup<TCheckbox>(_props: Reactivify<CheckboxGroupProp
     required: computed(() => toValue(props.required) ?? false),
     groupState,
     modelValue: fieldValue,
+    isTouched,
     setValidity,
     setValue,
     useCheckboxRegistration,
     toggleValue,
     hasValue,
+    setTouched,
   });
 
   provide(CheckboxGroupKey, context);
@@ -165,5 +170,6 @@ export function useCheckboxGroup<TCheckbox>(_props: Reactivify<CheckboxGroupProp
     fieldValue,
     checkboxGroupProps,
     errorMessage,
+    isTouched,
   };
 }

@@ -34,7 +34,7 @@ export function useSwitch(_props: Reactivify<SwitchProps>, elementRef?: Ref<HTML
     targetRef: inputRef,
   });
 
-  const { fieldValue, setValue } = useFormField<unknown>({
+  const { fieldValue, setValue, isTouched, setTouched } = useFormField<unknown>({
     path: props.name,
     initialValue: toValue(props.modelValue) ?? toValue(props.falseValue) ?? false,
   });
@@ -63,6 +63,7 @@ export function useSwitch(_props: Reactivify<SwitchProps>, elementRef?: Ref<HTML
 
   function setValueFromEvent(e: Event) {
     setValue(normalizeValue((e.target as HTMLInputElement).checked));
+    setTouched(true);
   }
 
   const handlers: InputEvents = {
@@ -70,6 +71,7 @@ export function useSwitch(_props: Reactivify<SwitchProps>, elementRef?: Ref<HTML
       if (evt.code === 'Space' || evt.key === 'Enter') {
         evt.preventDefault();
         togglePressed();
+        setTouched(true);
       }
     },
     onChange: setValueFromEvent,
@@ -78,6 +80,7 @@ export function useSwitch(_props: Reactivify<SwitchProps>, elementRef?: Ref<HTML
 
   function onClick() {
     togglePressed();
+    setTouched(true);
   }
 
   const isPressed = computed({
@@ -135,5 +138,6 @@ export function useSwitch(_props: Reactivify<SwitchProps>, elementRef?: Ref<HTML
     inputProps,
     switchProps,
     togglePressed,
+    isTouched,
   };
 }

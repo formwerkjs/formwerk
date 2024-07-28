@@ -51,12 +51,11 @@ export function useSearchField(_props: Reactivify<SearchFieldProps, 'onSubmit'>,
   const inputId = useUniqId(FieldTypePrefixes.SearchField);
   const inputRef = elementRef || ref<HTMLInputElement>();
 
-  const { fieldValue, setValue } = useFormField<string | undefined>({
+  const { errorMessage, updateValidity, validityDetails, isInvalid } = useInputValidity(inputRef);
+  const { fieldValue, setValue, isTouched, setTouched } = useFormField<string | undefined>({
     path: props.name,
     initialValue: toValue(props.modelValue),
   });
-
-  const { errorMessage, updateValidity, validityDetails, isInvalid } = useInputValidity(inputRef);
 
   const { labelProps, labelledByProps } = useLabel({
     for: inputId,
@@ -87,15 +86,21 @@ export function useSearchField(_props: Reactivify<SearchFieldProps, 'onSubmit'>,
     onChange: (event: Event) => {
       setValue((event.target as HTMLInputElement).value);
     },
+    onBlur() {
+      setTouched(true);
+    },
     onKeydown(e: KeyboardEvent) {
       if (e.key === 'Escape') {
         e.preventDefault();
         setValue('');
+        setTouched(true);
         updateValidity();
+        return;
       }
 
       if (e.key === 'Enter' && !inputRef.value?.form && props.onSubmit) {
         e.preventDefault();
+        setTouched(true);
         if (!isInvalid.value) {
           props.onSubmit(fieldValue.value || '');
         }
@@ -133,5 +138,6 @@ export function useSearchField(_props: Reactivify<SearchFieldProps, 'onSubmit'>,
     clearBtnProps,
     validityDetails,
     isInvalid,
+    isTouched,
   };
 }

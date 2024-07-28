@@ -47,6 +47,7 @@ export function useRadio<TValue = string>(
         }
 
         group?.setValue(toValue(props.value) as TValue);
+        group?.setTouched(true);
       },
       onKeydown(e: KeyboardEvent) {
         if (toValue(props.disabled)) {
@@ -56,7 +57,11 @@ export function useRadio<TValue = string>(
         if (e.code === 'Space') {
           e.preventDefault();
           group?.setValue(toValue(props.value) as TValue);
+          group?.setTouched(true);
         }
+      },
+      onBlur() {
+        group?.setTouched(true);
       },
     };
 

@@ -36,6 +36,7 @@ export function useSliderThumb(_props: Reactivify<SliderThumbProps>, elementRef?
       getThumbValue: () => 0,
       // NOOP
       setThumbValue: () => {},
+      setTouched: () => {},
     }),
   });
 
@@ -52,6 +53,7 @@ export function useSliderThumb(_props: Reactivify<SliderThumbProps>, elementRef?
     dir: () => slider.getInlineDirection(),
     onChange: next => {
       slider.setThumbValue(next);
+      slider.setTouched(true);
     },
   });
 
@@ -123,6 +125,7 @@ export function useSliderThumb(_props: Reactivify<SliderThumbProps>, elementRef?
     document.removeEventListener('mousemove', onMousemove);
     document.removeEventListener('mouseup', onMouseup);
     isDragging.value = false;
+    slider.setTouched(true);
   }
 
   return {

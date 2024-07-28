@@ -81,6 +81,8 @@ export interface SliderRegistration {
    * Sets the value of the thumb.
    */
   setThumbValue(value: number): void;
+
+  setTouched(value: boolean): void;
 }
 
 export interface SliderContext {
@@ -95,7 +97,7 @@ export function useSlider(_props: Reactivify<SliderProps>) {
   const trackRef = ref<HTMLElement>();
   const thumbs = ref<ThumbContext[]>([]);
   const { direction } = useLocale();
-  const { fieldValue, setValue } = useFormField<Arrayable<number>>({
+  const { fieldValue, setValue, isTouched, setTouched } = useFormField<Arrayable<number>>({
     path: props.name,
     initialValue: toValue(props.modelValue),
   });
@@ -170,6 +172,7 @@ export function useSlider(_props: Reactivify<SliderProps>) {
           );
 
           setThumbValue(closest.idx, targetValue);
+          setTouched(true);
         },
       },
       trackRef,
@@ -244,6 +247,7 @@ export function useSlider(_props: Reactivify<SliderProps>) {
       setThumbValue(value) {
         setThumbValue(getThumbIndex(), value);
       },
+      setTouched,
     };
 
     onBeforeUnmount(() => unregisterThumb(ctx));
@@ -270,5 +274,6 @@ export function useSlider(_props: Reactivify<SliderProps>) {
     outputProps,
     trackProps,
     sliderValue: fieldValue,
+    isTouched,
   };
 }

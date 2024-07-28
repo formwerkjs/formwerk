@@ -70,7 +70,7 @@ export function useNumberField(
   const { errorMessage, validityDetails, isInvalid } = useInputValidity(inputRef);
   const { locale } = useLocale();
   const parser = useNumberParser(() => toValue(props.locale) ?? locale.value, props.formatOptions);
-  const { fieldValue, setValue } = useFormField<number>({
+  const { fieldValue, setValue, setTouched, isTouched } = useFormField<number>({
     path: props.name,
     initialValue: toValue(props.modelValue),
   });
@@ -111,6 +111,7 @@ export function useNumberField(
 
       onChange: value => {
         setValue(value);
+        setTouched(true);
       },
     });
 
@@ -140,6 +141,9 @@ export function useNumberField(
           inputRef.value.value = formattedText.value;
         }
       });
+    },
+    onBlur: () => {
+      setTouched(true);
     },
   };
 
@@ -189,6 +193,7 @@ export function useNumberField(
     isInvalid,
     incrementButtonProps,
     decrementButtonProps,
+    isTouched,
     increment,
     decrement,
   };
