@@ -22,7 +22,7 @@
 
 <script lang="ts" setup>
 import { ref } from 'vue';
-import InputText from './InputText.vue';
+import InputText from '@/components/InputText.vue';
 import { useForm } from '@formwerk/core';
 
 const { values } = useForm({

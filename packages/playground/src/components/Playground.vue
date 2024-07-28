@@ -124,20 +124,20 @@
 
 <script lang="ts" setup>
 import { ref } from 'vue';
-import InputText from './components/InputText.vue';
-import InputNumber from './components/InputNumber.vue';
-import InputTextArea from './components/InputTextArea.vue';
-import InputSearch from './components/InputSearch.vue';
-import SwitchInput from './components/SwitchInput.vue';
-import Switch from './components/Switch.vue';
-import RadioGroup from './components/RadioGroup.vue';
-import InputRadioItem from './components/InputRadioItem.vue';
-import RadioItem from './components/RadioItem.vue';
-import Slider from './components/Slider.vue';
-import MultiSlider from './components/MultiSlider.vue';
-import CheckboxGroup from './components/CheckboxGroup.vue';
-import CheckboxItem from './components/CheckboxItem.vue';
-import CheckboxInput from './components/CheckboxInput.vue';
+import InputText from '@/components/InputText.vue';
+import InputNumber from '@/components/InputNumber.vue';
+import InputTextArea from '@/components/InputTextArea.vue';
+import InputSearch from '@/components/InputSearch.vue';
+import SwitchInput from '@/components/SwitchInput.vue';
+import Switch from '@/components/Switch.vue';
+import RadioGroup from '@/components/RadioGroup.vue';
+import InputRadioItem from '@/components/InputRadioItem.vue';
+import RadioItem from '@/components/RadioItem.vue';
+import Slider from '@/components/Slider.vue';
+import MultiSlider from '@/components/MultiSlider.vue';
+import CheckboxGroup from '@/components/CheckboxGroup.vue';
+import CheckboxItem from '@/components/CheckboxItem.vue';
+import CheckboxInput from '@/components/CheckboxInput.vue';
 import { useForm } from '@formwerk/core';
 
 const { values } = useForm({
