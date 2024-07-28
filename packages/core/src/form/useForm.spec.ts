@@ -188,4 +188,17 @@ describe('form actions', () => {
     await onSubmit(new Event('submit'));
     expect(form.isFieldTouched('field')).toBe(true);
   });
+
+  test('submitting sets the isSubmitting flag', async () => {
+    const { handleSubmit, isSubmitting } = await renderSetup(() => {
+      return useForm({ initialValues: { field: 'foo' } });
+    });
+
+    const cb = vi.fn();
+    const onSubmit = handleSubmit(cb);
+
+    expect(isSubmitting.value).toBe(false);
+    onSubmit(new Event('submit'));
+    expect(isSubmitting.value).toBe(true);
+  });
 });

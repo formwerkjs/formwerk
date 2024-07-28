@@ -1,3 +1,4 @@
+import { shallowRef } from 'vue';
 import { FormObject, MaybeAsync, TouchedSchema } from '../types';
 import { cloneDeep } from '../utils/common';
 import { createEventDispatcher } from '../utils/events';
@@ -9,14 +10,18 @@ export interface ResetState<TForm extends FormObject> {
 }
 
 export function useFormActions<TForm extends FormObject = FormObject>(form: FormContext<TForm>) {
+  const isSubmitting = shallowRef(false);
   const [dispatchSubmit, onSubmitted] = createEventDispatcher<void>('submit');
 
   function handleSubmit<TReturns>(cb: (values: TForm) => MaybeAsync<TReturns>) {
     return async function onSubmit(e: Event) {
       e.preventDefault();
+      isSubmitting.value = true;
       await dispatchSubmit();
       // Clone the values to prevent mutation or reactive leaks
       const result = await cb(cloneDeep(form.getValues()));
+
+      isSubmitting.value = false;
 
       return result;
     };
@@ -41,5 +46,6 @@ export function useFormActions<TForm extends FormObject = FormObject>(form: Form
       reset,
     },
     onSubmitted,
+    isSubmitting,
   };
 }

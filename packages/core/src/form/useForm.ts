@@ -44,7 +44,7 @@ export function useForm<TForm extends FormObject = FormObject>(opts?: Partial<Fo
   }
 
   const transactionsManager = useFormTransactions(ctx);
-  const { actions, onSubmitted } = useFormActions(ctx);
+  const { actions, onSubmitted, isSubmitting } = useFormActions(ctx);
 
   provide(FormKey, {
     ...ctx,
@@ -55,6 +55,7 @@ export function useForm<TForm extends FormObject = FormObject>(opts?: Partial<Fo
   return {
     values: readonly(values),
     context: ctx,
+    isSubmitting,
     setFieldValue: ctx.setFieldValue,
     getFieldValue: ctx.getFieldValue,
     isFieldTouched: ctx.isFieldTouched,
