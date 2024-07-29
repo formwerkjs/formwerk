@@ -8,9 +8,9 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@formwerk/core": "^0.0.1",
+    "@formwerk/core": "workspace:*",
     "tailwindcss": "^3.4.7",
-    "vue": "^3.4.34"
+    "vue": "^3.5.0-alpha.4"
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^5.1.1",
