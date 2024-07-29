@@ -1,8 +1,8 @@
 import { ComponentInternalInstance, nextTick, onBeforeUnmount } from 'vue';
-import { isSSR, uniqId } from './common';
+import { isSSR, useUniqId } from './common';
 
 export function createEventDispatcher<TPayload>(eventName?: string) {
-  const evtName = `formwerk:${eventName ? eventName + '-' : ''}${uniqId()}`;
+  const evtName = `formwerk:${useUniqId(eventName)}`;
   const controller = new AbortController();
   function dispatch(payload: TPayload) {
     if (isSSR) {
