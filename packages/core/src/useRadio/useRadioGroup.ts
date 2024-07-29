@@ -12,6 +12,7 @@ import {
 import { useUniqId, createDescribedByProps, getNextCycleArrIdx, normalizeProps, isEmpty } from '../utils/common';
 import { useLocale } from '../i18n/useLocale';
 import { useFormField } from '../form/useFormField';
+import { FieldTypePrefixes } from '../constants';
 
 export interface RadioGroupContext<TValue> {
   name: string;
@@ -73,7 +74,7 @@ function getOrientationArrows(dir: Direction | undefined) {
 
 export function useRadioGroup<TValue = string>(_props: Reactivify<RadioGroupProps<TValue>>) {
   const props = normalizeProps(_props);
-  const groupId = useUniqId('rbg');
+  const groupId = useUniqId(FieldTypePrefixes.RadioButtonGroup);
   const { direction } = useLocale();
 
   const radios: RadioItemContext[] = [];

@@ -5,6 +5,7 @@ import { isNullOrUndefined, normalizeProps, useUniqId, withRefCapture } from '..
 import { toNearestMultipleOf } from '../utils/math';
 import { useLocale } from '../i18n/useLocale';
 import { useFormField } from '../form/useFormField';
+import { FieldTypePrefixes } from '../constants';
 
 export interface SliderProps {
   label?: string;
@@ -90,7 +91,7 @@ export const SliderInjectionKey: InjectionKey<SliderContext> = Symbol('Slider');
 
 export function useSlider(_props: Reactivify<SliderProps>) {
   const props = normalizeProps(_props);
-  const inputId = useUniqId('sl');
+  const inputId = useUniqId(FieldTypePrefixes.Slider);
   const trackRef = ref<HTMLElement>();
   const thumbs = ref<ThumbContext[]>([]);
   const { direction } = useLocale();

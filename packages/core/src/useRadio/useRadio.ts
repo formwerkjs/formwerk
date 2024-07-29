@@ -3,6 +3,7 @@ import { isEqual, normalizeProps, useUniqId, withRefCapture } from '../utils/com
 import { AriaLabelableProps, InputBaseAttributes, Reactivify, RovingTabIndex } from '../types';
 import { useLabel } from '../a11y/useLabel';
 import { RadioGroupContext, RadioGroupKey } from './useRadioGroup';
+import { FieldTypePrefixes } from '../constants';
 
 export interface RadioProps<TValue = string> {
   value: TValue;
@@ -28,7 +29,7 @@ export function useRadio<TValue = string>(
   elementRef?: Ref<HTMLInputElement | undefined>,
 ) {
   const props = normalizeProps(_props);
-  const inputId = useUniqId('rb');
+  const inputId = useUniqId(FieldTypePrefixes.RadioButton);
   const group: RadioGroupContext<TValue> | null = inject(RadioGroupKey, null);
   const inputRef = elementRef || ref<HTMLInputElement>();
   const checked = computed(() => isEqual(group?.modelValue, toValue(props.value)));

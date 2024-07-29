@@ -22,6 +22,7 @@ import { useNumberParser } from '../i18n/useNumberParser';
 import { useSpinButton } from '../useSpinButton';
 import { useLocale } from '../i18n/useLocale';
 import { useFormField } from '../form/useFormField';
+import { FieldTypePrefixes } from '../constants';
 
 export interface NumberInputDOMAttributes {
   name?: string;
@@ -64,7 +65,7 @@ export function useNumberField(
   elementRef?: Ref<HTMLInputElement | HTMLTextAreaElement>,
 ) {
   const props = normalizeProps(_props);
-  const inputId = useUniqId('nf');
+  const inputId = useUniqId(FieldTypePrefixes.NumberField);
   const inputRef = elementRef || shallowRef<HTMLInputElement>();
   const { errorMessage, validityDetails, isInvalid } = useInputValidity(inputRef);
   const { locale } = useLocale();

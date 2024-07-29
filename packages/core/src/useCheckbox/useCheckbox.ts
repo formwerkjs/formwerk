@@ -4,6 +4,7 @@ import { AriaLabelableProps, Reactivify, InputBaseAttributes, RovingTabIndex } f
 import { useLabel } from '../a11y/useLabel';
 import { CheckboxGroupContext, CheckboxGroupKey } from './useCheckboxGroup';
 import { useFormField } from '../form/useFormField';
+import { FieldTypePrefixes } from '../constants';
 
 export interface CheckboxProps<TValue = string> {
   name?: string;
@@ -33,7 +34,7 @@ export function useCheckbox<TValue = string>(
   elementRef?: Ref<HTMLInputElement | undefined>,
 ) {
   const props = normalizeProps(_props);
-  const inputId = useUniqId('cb');
+  const inputId = useUniqId(FieldTypePrefixes.Checkbox);
   const getTrueValue = () => (toValue(props.trueValue) as TValue) ?? (true as TValue);
   const getFalseValue = () => (toValue(props.falseValue) as TValue) ?? (false as TValue);
   const group: CheckboxGroupContext<TValue> | null = inject(CheckboxGroupKey, null);
