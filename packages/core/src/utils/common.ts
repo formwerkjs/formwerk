@@ -1,9 +1,9 @@
-import { MaybeRefOrGetter, Ref, toValue } from 'vue';
+import { MaybeRefOrGetter, Ref, toValue, useId } from 'vue';
 import { klona } from 'klona/full';
 import { AriaDescriptionProps, Arrayable, NormalizedProps } from '../types';
 
-export function uniqId() {
-  return crypto.randomUUID();
+export function useUniqId(prefix?: string) {
+  return prefix ? `${prefix}-${useId()}` : useId() || '';
 }
 
 export function createDescriptionProps(inputId: string): AriaDescriptionProps {

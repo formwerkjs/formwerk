@@ -1,5 +1,5 @@
 import { Ref, computed, inject, nextTick, ref, toValue } from 'vue';
-import { isEqual, normalizeProps, uniqId, withRefCapture } from '../utils/common';
+import { isEqual, normalizeProps, useUniqId, withRefCapture } from '../utils/common';
 import { AriaLabelableProps, Reactivify, InputBaseAttributes, RovingTabIndex } from '../types';
 import { useLabel } from '../a11y/useLabel';
 import { CheckboxGroupContext, CheckboxGroupKey } from './useCheckboxGroup';
@@ -33,7 +33,7 @@ export function useCheckbox<TValue = string>(
   elementRef?: Ref<HTMLInputElement | undefined>,
 ) {
   const props = normalizeProps(_props);
-  const inputId = uniqId();
+  const inputId = useUniqId('cb');
   const getTrueValue = () => (toValue(props.trueValue) as TValue) ?? (true as TValue);
   const getFalseValue = () => (toValue(props.falseValue) as TValue) ?? (false as TValue);
   const group: CheckboxGroupContext<TValue> | null = inject(CheckboxGroupKey, null);

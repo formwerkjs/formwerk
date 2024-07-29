@@ -1,7 +1,7 @@
 import { InjectionKey, computed, onBeforeUnmount, provide, ref, toValue } from 'vue';
 import { useLabel } from '../a11y/useLabel';
 import { AriaLabelableProps, Arrayable, Direction, Orientation, Reactivify } from '../types';
-import { isNullOrUndefined, normalizeProps, uniqId, withRefCapture } from '../utils/common';
+import { isNullOrUndefined, normalizeProps, useUniqId, withRefCapture } from '../utils/common';
 import { toNearestMultipleOf } from '../utils/math';
 import { useLocale } from '../i18n/useLocale';
 import { useFormField } from '../form/useFormField';
@@ -90,7 +90,7 @@ export const SliderInjectionKey: InjectionKey<SliderContext> = Symbol('Slider');
 
 export function useSlider(_props: Reactivify<SliderProps>) {
   const props = normalizeProps(_props);
-  const inputId = uniqId();
+  const inputId = useUniqId('sl');
   const trackRef = ref<HTMLElement>();
   const thumbs = ref<ThumbContext[]>([]);
   const { direction } = useLocale();

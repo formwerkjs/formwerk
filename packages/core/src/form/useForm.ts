@@ -1,5 +1,5 @@
 import { InjectionKey, provide, reactive, readonly, Ref, shallowRef, toValue } from 'vue';
-import { cloneDeep, uniqId, isPromise } from '../utils/common';
+import { cloneDeep, useUniqId, isPromise } from '../utils/common';
 import { FormObject, MaybeAsync, MaybeGetter } from '../types';
 import { createFormContext, FormContext } from './formContext';
 import { FormTransactionManager, useFormTransactions } from './useFormTransactions';
@@ -26,7 +26,7 @@ export function useForm<TForm extends FormObject = FormObject>(opts?: Partial<Fo
   const touched = reactive({});
 
   const ctx = createFormContext({
-    id: opts?.id || uniqId(),
+    id: opts?.id || useUniqId('form'),
     values,
     initials,
     originals,

@@ -5,7 +5,7 @@ import {
   isNullOrUndefined,
   normalizeProps,
   propsToValues,
-  uniqId,
+  useUniqId,
   withRefCapture,
 } from '../utils/common';
 import {
@@ -64,7 +64,7 @@ export function useNumberField(
   elementRef?: Ref<HTMLInputElement | HTMLTextAreaElement>,
 ) {
   const props = normalizeProps(_props);
-  const inputId = uniqId();
+  const inputId = useUniqId('nf');
   const inputRef = elementRef || shallowRef<HTMLInputElement>();
   const { errorMessage, validityDetails, isInvalid } = useInputValidity(inputRef);
   const { locale } = useLocale();

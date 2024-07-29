@@ -1,6 +1,6 @@
 import { Ref, computed, shallowRef, toValue } from 'vue';
 import { AriaDescribableProps, AriaLabelableProps, InputBaseAttributes, InputEvents, Reactivify } from '../types';
-import { isEqual, normalizeProps, uniqId, withRefCapture } from '../utils/common';
+import { isEqual, normalizeProps, useUniqId, withRefCapture } from '../utils/common';
 import { useLabel } from '../a11y/useLabel';
 import { useFormField } from '../form/useFormField';
 
@@ -25,7 +25,7 @@ export type SwitchProps = {
 
 export function useSwitch(_props: Reactivify<SwitchProps>, elementRef?: Ref<HTMLInputElement>) {
   const props = normalizeProps(_props);
-  const id = uniqId();
+  const id = useUniqId('sw');
   const inputRef = elementRef || shallowRef<HTMLInputElement>();
   const { labelProps, labelledByProps } = useLabel({
     for: id,

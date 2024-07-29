@@ -1,5 +1,5 @@
 import { Ref, computed, shallowRef, toValue } from 'vue';
-import { createDescribedByProps, normalizeProps, propsToValues, uniqId, withRefCapture } from '../utils/common';
+import { createDescribedByProps, normalizeProps, propsToValues, useUniqId, withRefCapture } from '../utils/common';
 import {
   AriaDescribableProps,
   AriaLabelableProps,
@@ -52,7 +52,7 @@ export function useTextField(
   elementRef?: Ref<HTMLInputElement | HTMLTextAreaElement>,
 ) {
   const props = normalizeProps(_props);
-  const inputId = uniqId();
+  const inputId = useUniqId('tf');
   const inputRef = elementRef || shallowRef<HTMLInputElement>();
   const { errorMessage, validityDetails, isInvalid } = useInputValidity(inputRef);
   const { fieldValue, setValue } = useFormField<string | undefined>({

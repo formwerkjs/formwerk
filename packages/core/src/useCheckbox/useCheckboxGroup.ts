@@ -9,7 +9,7 @@ import {
   Direction,
   Reactivify,
 } from '../types';
-import { uniqId, createDescribedByProps, normalizeProps, isEqual } from '../utils/common';
+import { useUniqId, createDescribedByProps, normalizeProps, isEqual } from '../utils/common';
 import { useLocale } from '../i18n/useLocale';
 import { useFormField } from '../form/useFormField';
 
@@ -62,7 +62,7 @@ interface CheckboxGroupDomProps extends AriaLabelableProps, AriaDescribableProps
 
 export function useCheckboxGroup<TCheckbox>(_props: Reactivify<CheckboxGroupProps<TCheckbox>>) {
   const props = normalizeProps(_props);
-  const groupId = uniqId();
+  const groupId = useUniqId('cbg');
   const { direction } = useLocale();
   const checkboxes: CheckboxContext[] = [];
   const { labelProps, labelledByProps } = useLabel({

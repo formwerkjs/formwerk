@@ -8,7 +8,7 @@ import {
   Reactivify,
   TextInputBaseAttributes,
 } from '../types';
-import { createDescribedByProps, normalizeProps, propsToValues, uniqId, withRefCapture } from '../utils/common';
+import { createDescribedByProps, normalizeProps, propsToValues, useUniqId, withRefCapture } from '../utils/common';
 import { useInputValidity } from '../validation/useInputValidity';
 import { useLabel } from '../a11y/useLabel';
 import { useFormField } from '../form/useFormField';
@@ -47,7 +47,7 @@ export interface SearchFieldProps {
 
 export function useSearchField(_props: Reactivify<SearchFieldProps, 'onSubmit'>, elementRef?: Ref<HTMLInputElement>) {
   const props = normalizeProps(_props, ['onSubmit']);
-  const inputId = uniqId();
+  const inputId = useUniqId('sf');
   const inputRef = elementRef || ref<HTMLInputElement>();
 
   const { fieldValue, setValue } = useFormField<string | undefined>({
