@@ -173,3 +173,25 @@ export function isPathSet(object: NestedRecord, path: string): boolean {
 export function escapePath(path: string) {
   return isEscapedPath(path) ? path : `[${path}]`;
 }
+
+export function findLeaf(
+  object: NestedRecord,
+  predicate: (value: unknown) => boolean,
+  acc: string = '',
+): string | undefined {
+  const entries = Object.entries(object);
+  const path = acc ? `${acc}.` : '';
+
+  for (const [key, value] of entries) {
+    if (isObject(value)) {
+      const nested = findLeaf(value as NestedRecord, predicate, path);
+      if (nested) {
+        return `${path}${key}.${nested}`;
+      }
+    }
+
+    if (predicate(value)) {
+      return `${path}${key}`;
+    }
+  }
+}

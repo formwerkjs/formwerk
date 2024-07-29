@@ -1,10 +1,11 @@
-import { InjectionKey, provide, reactive, readonly } from 'vue';
+import { computed, InjectionKey, provide, reactive, readonly } from 'vue';
 import { cloneDeep, useUniqId } from '../utils/common';
 import { FormObject, MaybeAsync, MaybeGetter, TouchedSchema } from '../types';
 import { createFormContext, FormContext } from './formContext';
 import { FormTransactionManager, useFormTransactions } from './useFormTransactions';
 import { useFormActions } from './useFormActions';
 import { useFormSnapshots } from './formSnapshot';
+import { findLeaf } from '../utils/path';
 
 export interface FormOptions<TForm extends FormObject = FormObject> {
   id: string;
@@ -28,6 +29,10 @@ export function useForm<TForm extends FormObject = FormObject>(opts?: Partial<Fo
 
   const values = reactive(cloneDeep(valuesSnapshot.originals.value)) as TForm;
   const touched = reactive(cloneDeep(touchedSnapshot.originals.value)) as TouchedSchema<TForm>;
+
+  const isTouched = computed(() => {
+    return !!findLeaf(touched, l => l === true);
+  });
 
   const ctx = createFormContext({
     id: opts?.id || useUniqId('form'),
@@ -56,6 +61,7 @@ export function useForm<TForm extends FormObject = FormObject>(opts?: Partial<Fo
     values: readonly(values),
     context: ctx,
     isSubmitting,
+    isTouched,
     setFieldValue: ctx.setFieldValue,
     getFieldValue: ctx.getFieldValue,
     isFieldTouched: ctx.isFieldTouched,

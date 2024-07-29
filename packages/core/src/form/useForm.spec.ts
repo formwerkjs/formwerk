@@ -123,6 +123,18 @@ describe('form touched', () => {
 
     expect(isFieldTouched('foo')).toBe(true);
   });
+
+  test('has a form-level computed isTouched state', async () => {
+    const { isTouched, setFieldTouched } = await renderSetup(() => {
+      return useForm({ initialValues: { foo: 'bar' } });
+    });
+
+    expect(isTouched.value).toBe(false);
+    setFieldTouched('foo', true);
+    expect(isTouched.value).toBe(true);
+    setFieldTouched('foo', false);
+    expect(isTouched.value).toBe(false);
+  });
 });
 
 describe('form actions', () => {
