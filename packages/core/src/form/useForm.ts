@@ -1,5 +1,5 @@
 import { computed, InjectionKey, provide, reactive, readonly } from 'vue';
-import { cloneDeep, useUniqId } from '../utils/common';
+import { cloneDeep, isEqual, useUniqId } from '../utils/common';
 import { FormObject, MaybeAsync, MaybeGetter, TouchedSchema } from '../types';
 import { createFormContext, FormContext } from './formContext';
 import { FormTransactionManager, useFormTransactions } from './useFormTransactions';
@@ -34,6 +34,10 @@ export function useForm<TForm extends FormObject = FormObject>(opts?: Partial<Fo
     return !!findLeaf(touched, l => l === true);
   });
 
+  const isDirty = computed(() => {
+    return !isEqual(values, valuesSnapshot.originals.value);
+  });
+
   const ctx = createFormContext({
     id: opts?.id || useUniqId('form'),
     values,
@@ -62,6 +66,7 @@ export function useForm<TForm extends FormObject = FormObject>(opts?: Partial<Fo
     context: ctx,
     isSubmitting,
     isTouched,
+    isDirty,
     setFieldValue: ctx.setFieldValue,
     getFieldValue: ctx.getFieldValue,
     isFieldTouched: ctx.isFieldTouched,

@@ -214,3 +214,17 @@ describe('form actions', () => {
     expect(isSubmitting.value).toBe(true);
   });
 });
+
+describe('form dirty state', () => {
+  test('isDirty is true when the current values are different than the originals', async () => {
+    const { isDirty, setFieldValue, reset } = await renderSetup(() => {
+      return useForm({ initialValues: { foo: 'bar' } });
+    });
+
+    expect(isDirty.value).toBe(false);
+    setFieldValue('foo', 'baz');
+    expect(isDirty.value).toBe(true);
+    reset();
+    expect(isDirty.value).toBe(false);
+  });
+});
