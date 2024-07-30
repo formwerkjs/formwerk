@@ -37,6 +37,7 @@ export function useSwitch(_props: Reactivify<SwitchProps>, elementRef?: Ref<HTML
   const { fieldValue, setValue, isTouched, setTouched } = useFormField<unknown>({
     path: props.name,
     initialValue: toValue(props.modelValue) ?? toValue(props.falseValue) ?? false,
+    disabled: props.disabled,
   });
 
   /**

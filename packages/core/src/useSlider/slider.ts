@@ -16,8 +16,9 @@ export interface SliderProps {
   modelValue?: number | number[];
   min?: number;
   max?: number;
-
   step?: number;
+
+  disabled?: boolean;
 }
 
 export type Coordinate = { x: number; y: number };
@@ -83,6 +84,8 @@ export interface SliderRegistration {
   setThumbValue(value: number): void;
 
   setTouched(value: boolean): void;
+
+  isDisabled(): boolean;
 }
 
 export interface SliderContext {
@@ -96,10 +99,12 @@ export function useSlider(_props: Reactivify<SliderProps>) {
   const inputId = useUniqId(FieldTypePrefixes.Slider);
   const trackRef = ref<HTMLElement>();
   const thumbs = ref<ThumbContext[]>([]);
+  const isDisabled = () => toValue(props.disabled) ?? false;
   const { direction } = useLocale();
   const { fieldValue, setValue, isTouched, setTouched } = useFormField<Arrayable<number>>({
     path: props.name,
     initialValue: toValue(props.modelValue),
+    disabled: props.disabled,
   });
 
   const { labelProps, labelledByProps } = useLabel({
@@ -130,6 +135,10 @@ export function useSlider(_props: Reactivify<SliderProps>) {
   }
 
   function setThumbValue(idx: number, value: number) {
+    if (isDisabled()) {
+      return;
+    }
+
     if (!Array.isArray(fieldValue.value)) {
       setValue(value);
       return;
@@ -147,7 +156,7 @@ export function useSlider(_props: Reactivify<SliderProps>) {
       {
         style: { 'container-type': isVertical ? 'size' : 'inline-size', position: 'relative' },
         onMousedown(e: MouseEvent) {
-          if (!trackRef.value) {
+          if (!trackRef.value || isDisabled()) {
             return;
           }
 
@@ -248,6 +257,7 @@ export function useSlider(_props: Reactivify<SliderProps>) {
         setThumbValue(getThumbIndex(), value);
       },
       setTouched,
+      isDisabled,
     };
 
     onBeforeUnmount(() => unregisterThumb(ctx));

@@ -41,7 +41,11 @@ export function useCheckbox<TValue = string>(
   const inputRef = elementRef || ref<HTMLInputElement>();
   const { fieldValue, setValue, isTouched, setTouched } = group
     ? createGroupField(group, getTrueValue)
-    : useFormField<TValue>({ path: props.name, initialValue: toValue(props.modelValue) as TValue });
+    : useFormField<TValue>({
+        path: props.name,
+        initialValue: toValue(props.modelValue) as TValue,
+        disabled: props.disabled,
+      });
 
   const checked = computed({
     get() {

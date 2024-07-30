@@ -9,3 +9,5 @@ export const FieldTypePrefixes = {
   Slider: 'sl',
   SearchField: 'sf',
 } as const;
+
+export const NOOP = () => {};

@@ -1,5 +1,6 @@
 import { ComponentInternalInstance, nextTick, onBeforeUnmount } from 'vue';
 import { isSSR, useUniqId } from './common';
+import { NOOP } from '../constants';
 
 export function createEventDispatcher<TPayload>(eventName?: string) {
   const evtName = `formwerk:${useUniqId(eventName)}`;
@@ -16,7 +17,7 @@ export function createEventDispatcher<TPayload>(eventName?: string) {
 
   function addListener(handler: (payload: TPayload) => void, vm?: ComponentInternalInstance) {
     if (isSSR) {
-      return () => {};
+      return NOOP;
     }
 
     const handlerWrapper = (e: CustomEvent<TPayload>) => {

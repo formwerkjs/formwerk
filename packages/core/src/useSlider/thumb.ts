@@ -4,6 +4,7 @@ import { normalizeProps, withRefCapture } from '../utils/common';
 import { Reactivify } from '../types';
 import { useSpinButton } from '../useSpinButton';
 import { useLocale } from '../i18n/useLocale';
+import { NOOP } from '../constants';
 
 export interface SliderThumbProps {
   label?: string;
@@ -34,9 +35,9 @@ export function useSliderThumb(_props: Reactivify<SliderThumbProps>, elementRef?
       getInlineDirection: () => direction.value,
       getIndex: () => 0,
       getThumbValue: () => 0,
-      // NOOP
-      setThumbValue: () => {},
-      setTouched: () => {},
+      setThumbValue: NOOP,
+      setTouched: NOOP,
+      isDisabled: () => false,
     }),
   });
 
@@ -45,7 +46,7 @@ export function useSliderThumb(_props: Reactivify<SliderThumbProps>, elementRef?
 
   const { spinButtonProps, applyClamp } = useSpinButton({
     current: thumbValue,
-    disabled: props.disabled,
+    disabled: () => toValue(props.disabled) || slider.isDisabled(),
     orientation: 'both',
     min: () => slider.getThumbRange().min,
     max: () => slider.getThumbRange().max,

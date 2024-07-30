@@ -86,6 +86,7 @@ export function useRadioGroup<TValue = string>(_props: Reactivify<RadioGroupProp
   const { fieldValue, setValue, isTouched, setTouched } = useFormField<TValue>({
     path: props.name,
     initialValue: toValue(props.modelValue) as TValue,
+    disabled: props.disabled,
   });
 
   const { setValidity, errorMessage } = useInputValidity();
@@ -127,6 +128,10 @@ export function useRadioGroup<TValue = string>(_props: Reactivify<RadioGroupProp
       'aria-describedby': describedBy(),
       'aria-invalid': errorMessage.value ? true : undefined,
       onKeydown(e: KeyboardEvent) {
+        if (toValue(props.disabled)) {
+          return;
+        }
+
         const { next, prev } = getOrientationArrows(toValue(props.dir));
 
         if (next.includes(e.key)) {

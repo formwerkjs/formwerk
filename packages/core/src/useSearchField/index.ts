@@ -55,6 +55,7 @@ export function useSearchField(_props: Reactivify<SearchFieldProps, 'onSubmit'>,
   const { fieldValue, setValue, isTouched, setTouched } = useFormField<string | undefined>({
     path: props.name,
     initialValue: toValue(props.modelValue),
+    disabled: props.disabled,
   });
 
   const { labelProps, labelledByProps } = useLabel({

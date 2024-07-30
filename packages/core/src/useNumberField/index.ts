@@ -73,6 +73,7 @@ export function useNumberField(
   const { fieldValue, setValue, setTouched, isTouched } = useFormField<number>({
     path: props.name,
     initialValue: toValue(props.modelValue),
+    disabled: props.disabled,
   });
 
   const formattedText = computed<string>(() => {
