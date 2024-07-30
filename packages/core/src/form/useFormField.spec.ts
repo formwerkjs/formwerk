@@ -77,3 +77,25 @@ test('pathless field do not write to the form', async () => {
 
   expect(form.values).toEqual({});
 });
+
+test('pathless field maintains its own touched state', async () => {
+  const { isTouched, setTouched } = await renderSetup(() => {
+    return useFormField({ initialValue: 'bar' });
+  });
+
+  expect(isTouched.value).toBe(false);
+  setTouched(true);
+  expect(isTouched.value).toBe(true);
+});
+
+test('formless fields maintain their own dirty state', async () => {
+  const { isDirty, setValue } = await renderSetup(() => {
+    return useFormField({ initialValue: 'bar' });
+  });
+
+  expect(isDirty.value).toBe(false);
+  setValue('foo');
+  expect(isDirty.value).toBe(true);
+  setValue('bar');
+  expect(isDirty.value).toBe(false);
+});

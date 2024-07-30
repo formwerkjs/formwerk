@@ -31,6 +31,19 @@ export function useFormField<TValue = unknown>(opts?: Partial<FormFieldOptions<T
     ? createFormTouchedRef(getPath, form)
     : createTouchedRef(false);
 
+  const isDirty = computed(() => {
+    if (!form) {
+      return !isEqual(fieldValue.value, opts?.initialValue);
+    }
+
+    const path = getPath();
+    if (!path) {
+      return !isEqual(pathlessValue.value, opts?.initialValue);
+    }
+
+    return !isEqual(fieldValue.value, form.getFieldOriginalValue(path));
+  });
+
   if (opts?.syncModel ?? true) {
     useSyncModel({
       model: fieldValue,
@@ -42,6 +55,7 @@ export function useFormField<TValue = unknown>(opts?: Partial<FormFieldOptions<T
   const field = {
     fieldValue: readonly(fieldValue) as Ref<TValue | undefined>,
     isTouched: readonly(isTouched) as Ref<boolean>,
+    isDirty,
     setValue,
     setTouched,
   };

@@ -13,6 +13,7 @@ export interface FormContext<TForm extends FormObject = FormObject> {
   isFieldTouched<TPath extends Path<TForm>>(path: TPath): boolean;
   isFieldSet<TPath extends Path<TForm>>(path: TPath): boolean;
   getFieldInitialValue<TPath extends Path<TForm>>(path: TPath): PathValue<TForm, TPath>;
+  getFieldOriginalValue<TPath extends Path<TForm>>(path: TPath): PathValue<TForm, TPath>;
   unsetInitialValue<TPath extends Path<TForm>>(path: TPath): void;
   setInitialValues: (newValues: Partial<TForm>, opts?: SetValueOptions) => void;
   setInitialTouched: (newTouched: Partial<TouchedSchema<TForm>>, opts?: SetValueOptions) => void;
@@ -72,6 +73,10 @@ export function createFormContext<TForm extends FormObject = FormObject>({
 
   function getFieldInitialValue<TPath extends Path<TForm>>(path: TPath) {
     return getFromPath(snapshots.values.initials.value, path) as PathValue<TForm, TPath>;
+  }
+
+  function getFieldOriginalValue<TPath extends Path<TForm>>(path: TPath) {
+    return getFromPath(snapshots.values.originals.value, path) as PathValue<TForm, TPath>;
   }
 
   function unsetInitialValue<TPath extends Path<TForm>>(path: TPath) {
@@ -164,5 +169,6 @@ export function createFormContext<TForm extends FormObject = FormObject>({
     revertTouched,
     setInitialValues,
     setInitialTouched,
+    getFieldOriginalValue,
   };
 }
