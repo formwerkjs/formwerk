@@ -21,6 +21,7 @@ interface FormFieldOptions<TValue = unknown> {
   initialTouched: boolean;
   syncModel: boolean;
   modelName: string;
+  disabled: MaybeRefOrGetter<boolean | undefined>;
 }
 
 export function useFormField<TValue = unknown>(opts?: Partial<FormFieldOptions<TValue>>) {
@@ -64,7 +65,13 @@ export function useFormField<TValue = unknown>(opts?: Partial<FormFieldOptions<T
     return field;
   }
 
-  initFormPathIfNecessary(form, getPath, opts?.initialValue, opts?.initialTouched ?? false);
+  initFormPathIfNecessary(
+    form,
+    getPath,
+    opts?.initialValue,
+    opts?.initialTouched ?? false,
+    toValue(opts?.disabled) ?? false,
+  );
 
   form.onSubmitted(() => {
     setTouched(true);
@@ -101,10 +108,25 @@ export function useFormField<TValue = unknown>(opts?: Partial<FormFieldOptions<T
           path: newPath,
           value: cloneDeep(oldPath ? tf.getFieldValue(oldPath) : pathlessValue.value),
           touched: oldPath ? tf.isFieldTouched(oldPath) : pathlessTouched.value,
+          disabled: toValue(opts?.disabled) ?? false,
         };
       });
     }
   });
+
+  if (opts?.disabled) {
+    watch(
+      () => toValue(opts?.disabled) ?? false,
+      disabled => {
+        const path = getPath();
+        if (!path) {
+          return;
+        }
+
+        form.setFieldDisabled(path, disabled);
+      },
+    );
+  }
 
   return field;
 }
@@ -202,6 +224,7 @@ function initFormPathIfNecessary(
   getPath: Getter<string | undefined>,
   initialValue: unknown,
   initialTouched: boolean,
+  disabled: boolean,
 ) {
   const path = getPath();
   if (!path) {
@@ -209,29 +232,13 @@ function initFormPathIfNecessary(
   }
 
   // If form does have a path set and the value is different from the initial value, set it.
-  if (form.isFieldSet(path) && !isEqual(form.getFieldValue(path), initialValue)) {
-    nextTick(() => {
-      form.transaction((_, { INIT_PATH }) => ({
-        kind: INIT_PATH,
-        path,
-        value: initialValue,
-        touched: initialTouched,
-      }));
-    });
-    return;
-  }
-
-  // If the path is not set, set it.
-  if (!form.isFieldSet(path)) {
-    nextTick(() => {
-      form.transaction((_, { INIT_PATH }) => ({
-        kind: INIT_PATH,
-        path,
-        value: initialValue,
-        touched: initialTouched,
-      }));
-    });
-
-    return;
-  }
+  nextTick(() => {
+    form.transaction((_, { INIT_PATH }) => ({
+      kind: INIT_PATH,
+      path,
+      value: initialValue ?? form.getFieldInitialValue(path),
+      touched: initialTouched,
+      disabled,
+    }));
+  });
 }

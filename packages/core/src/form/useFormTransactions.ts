@@ -7,6 +7,7 @@ interface SetPathStateTransaction<TForm extends FormObject> {
   path: Path<TForm>;
   value: PathValue<TForm, Path<TForm>>;
   touched: boolean;
+  disabled: boolean;
 }
 
 interface UnsetPathStateTransaction<TForm extends FormObject> {
@@ -24,6 +25,7 @@ interface InitializeFieldTransaction<TForm extends FormObject> {
   path: Path<TForm>;
   value: PathValue<TForm, Path<TForm>>;
   touched: boolean;
+  disabled: boolean;
 }
 
 export type FormTransaction<TForm extends FormObject> =
@@ -85,6 +87,7 @@ export function useFormTransactions<TForm extends FormObject>(form: FormContext<
       if (tr.kind === TransactionKind.SET_PATH) {
         form.setFieldValue(tr.path, tr.value);
         form.setFieldTouched(tr.path, tr.touched);
+        form.setFieldDisabled(tr.path, tr.disabled);
         continue;
       }
 
@@ -101,6 +104,7 @@ export function useFormTransactions<TForm extends FormObject>(form: FormContext<
       if (tr.kind === TransactionKind.INIT_PATH) {
         const formInit = form.getFieldInitialValue(tr.path);
         form.setFieldValue(tr.path, tr.value ?? formInit);
+        form.setFieldDisabled(tr.path, tr.disabled);
         form.setFieldTouched(tr.path, tr.touched);
         form.unsetInitialValue(tr.path);
         continue;

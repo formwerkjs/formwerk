@@ -1,15 +1,19 @@
 import { shallowRef } from 'vue';
-import { FormObject, MaybeAsync, TouchedSchema } from '../types';
+import { DisabledSchema, FormObject, MaybeAsync, TouchedSchema } from '../types';
 import { cloneDeep } from '../utils/common';
 import { createEventDispatcher } from '../utils/events';
 import { FormContext, SetValueOptions } from './formContext';
+import { unsetPath } from '../utils/path';
 
 export interface ResetState<TForm extends FormObject> {
   values: Partial<TForm>;
   touched: Partial<TouchedSchema<TForm>>;
 }
 
-export function useFormActions<TForm extends FormObject = FormObject>(form: FormContext<TForm>) {
+export function useFormActions<TForm extends FormObject = FormObject>(
+  form: FormContext<TForm>,
+  disabled: DisabledSchema<TForm>,
+) {
   const isSubmitting = shallowRef(false);
   const [dispatchSubmit, onSubmitted] = createEventDispatcher<void>('submit');
 
@@ -19,7 +23,17 @@ export function useFormActions<TForm extends FormObject = FormObject>(form: Form
       isSubmitting.value = true;
       await dispatchSubmit();
       // Clone the values to prevent mutation or reactive leaks
-      const result = await cb(cloneDeep(form.getValues()));
+      const values = cloneDeep(form.getValues());
+      const disabledPaths = Object.entries(disabled)
+        .filter(([, v]) => !!v)
+        .map(([k]) => k)
+        .sort((a, b) => b.localeCompare(a)) as (keyof DisabledSchema<TForm>)[];
+
+      for (const path of disabledPaths) {
+        unsetPath(values, path, true);
+      }
+
+      const result = await cb(values);
 
       isSubmitting.value = false;
 

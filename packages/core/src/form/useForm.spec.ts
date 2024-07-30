@@ -1,6 +1,7 @@
 import { renderSetup } from '@test-utils/index';
 import { useForm } from './useForm';
 import { useFormField } from './useFormField';
+import { nextTick, ref } from 'vue';
 
 describe('form values', () => {
   test('it initializes form values', async () => {
@@ -137,7 +138,7 @@ describe('form touched', () => {
   });
 });
 
-describe('form actions', () => {
+describe('form reset', () => {
   test('can reset form values and touched to their original state', async () => {
     const { values, reset, setFieldValue, isFieldTouched, setFieldTouched } = await renderSetup(() => {
       return useForm({ initialValues: { foo: 'bar' }, initialTouched: { foo: true } });
@@ -166,7 +167,9 @@ describe('form actions', () => {
     expect(values).toEqual({ foo: 'baz' });
     expect(isFieldTouched('foo')).toBe(true);
   });
+});
 
+describe('form submit', () => {
   test('can handle form submit', async () => {
     const { handleSubmit } = await renderSetup(() => {
       return useForm({ initialValues: { foo: 'bar' } });
@@ -212,6 +215,41 @@ describe('form actions', () => {
     expect(isSubmitting.value).toBe(false);
     onSubmit(new Event('submit'));
     expect(isSubmitting.value).toBe(true);
+  });
+
+  test('disabled fields are not included in the submit values', async () => {
+    const disabled = ref(false);
+    const defaults = () => ({
+      field: 'foo',
+      multiple: ['field 1', 'field 2', 'field 3', { name: 'string' }, 'field 4'],
+    });
+    const { handleSubmit, values } = await renderSetup(
+      () => {
+        return useForm({ initialValues: defaults() });
+      },
+      () => {
+        useFormField({ path: 'field', disabled });
+        useFormField({ path: 'multiple.0' });
+        useFormField({ path: 'multiple.1', disabled });
+        useFormField({ path: 'multiple.2' });
+        useFormField({ path: 'multiple.3.name', disabled });
+        useFormField({ path: 'multiple.4' });
+
+        return {};
+      },
+    );
+
+    const cb = vi.fn();
+    const onSubmit = handleSubmit(cb);
+    expect(values).toEqual(defaults());
+    onSubmit(new Event('submit'));
+    await nextTick();
+    expect(cb).toHaveBeenLastCalledWith(defaults());
+
+    disabled.value = true;
+    onSubmit(new Event('submit'));
+    await nextTick();
+    expect(cb).toHaveBeenLastCalledWith({ multiple: ['field 1', 'field 3', 'field 4'] });
   });
 });
 

@@ -1,4 +1,4 @@
-import { FormObject, Path, PathValue, TouchedSchema } from '../types';
+import { DisabledSchema, FormObject, Path, PathValue, TouchedSchema } from '../types';
 import { cloneDeep, merge } from '../utils/common';
 import { escapePath, getFromPath, isPathSet, setInPath, unsetPath as unsetInObject } from '../utils/path';
 import { FormSnapshot } from './formSnapshot';
@@ -17,6 +17,7 @@ export interface FormContext<TForm extends FormObject = FormObject> {
   unsetInitialValue<TPath extends Path<TForm>>(path: TPath): void;
   setInitialValues: (newValues: Partial<TForm>, opts?: SetValueOptions) => void;
   setInitialTouched: (newTouched: Partial<TouchedSchema<TForm>>, opts?: SetValueOptions) => void;
+  setFieldDisabled<TPath extends Path<TForm>>(path: TPath, value: boolean): void;
   getValues: () => TForm;
   setValues: (newValues: Partial<TForm>, opts?: SetValueOptions) => void;
   revertValues: () => void;
@@ -31,6 +32,7 @@ export interface FormContextCreateOptions<TForm extends FormObject = FormObject>
   id: string;
   values: TForm;
   touched: TouchedSchema<TForm>;
+  disabled: DisabledSchema<TForm>;
   snapshots: {
     values: FormSnapshot<TForm>;
     touched: FormSnapshot<TouchedSchema<TForm>>;
@@ -40,6 +42,7 @@ export interface FormContextCreateOptions<TForm extends FormObject = FormObject>
 export function createFormContext<TForm extends FormObject = FormObject>({
   id,
   values,
+  disabled,
   touched,
   snapshots,
 }: FormContextCreateOptions<TForm>): FormContext<TForm> {
@@ -65,10 +68,14 @@ export function createFormContext<TForm extends FormObject = FormObject>({
 
   function destroyPath<TPath extends Path<TForm>>(path: TPath) {
     unsetInObject(values, path, true);
+    unsetInObject(touched, path, true);
+    unsetInObject(disabled, escapePath(path), true);
   }
 
   function unsetPath<TPath extends Path<TForm>>(path: TPath) {
     unsetInObject(values, path, false);
+    unsetInObject(touched, path, false);
+    unsetInObject(disabled, escapePath(path), false);
   }
 
   function getFieldInitialValue<TPath extends Path<TForm>>(path: TPath) {
@@ -81,6 +88,10 @@ export function createFormContext<TForm extends FormObject = FormObject>({
 
   function unsetInitialValue<TPath extends Path<TForm>>(path: TPath) {
     unsetInObject(snapshots.values.initials.value, path);
+  }
+
+  function setFieldDisabled<TPath extends Path<TForm>>(path: TPath, value: boolean) {
+    setInPath(disabled, escapePath(path), value);
   }
 
   function setInitialValues(newValues: Partial<TForm>, opts?: SetValueOptions) {
@@ -170,5 +181,6 @@ export function createFormContext<TForm extends FormObject = FormObject>({
     setInitialValues,
     setInitialTouched,
     getFieldOriginalValue,
+    setFieldDisabled,
   };
 }

@@ -1,6 +1,6 @@
 import { computed, InjectionKey, provide, reactive, readonly } from 'vue';
 import { cloneDeep, isEqual, useUniqId } from '../utils/common';
-import { FormObject, MaybeAsync, MaybeGetter, TouchedSchema } from '../types';
+import { FormObject, MaybeAsync, MaybeGetter, TouchedSchema, Path } from '../types';
 import { createFormContext, FormContext } from './formContext';
 import { FormTransactionManager, useFormTransactions } from './useFormTransactions';
 import { useFormActions } from './useFormActions';
@@ -29,6 +29,7 @@ export function useForm<TForm extends FormObject = FormObject>(opts?: Partial<Fo
 
   const values = reactive(cloneDeep(valuesSnapshot.originals.value)) as TForm;
   const touched = reactive(cloneDeep(touchedSnapshot.originals.value)) as TouchedSchema<TForm>;
+  const disabled = {} as Partial<Record<Path<TForm>, boolean>>;
 
   const isTouched = computed(() => {
     return !!findLeaf(touched, l => l === true);
@@ -42,6 +43,7 @@ export function useForm<TForm extends FormObject = FormObject>(opts?: Partial<Fo
     id: opts?.id || useUniqId('form'),
     values,
     touched,
+    disabled,
     snapshots: {
       values: valuesSnapshot,
       touched: touchedSnapshot,
@@ -53,7 +55,7 @@ export function useForm<TForm extends FormObject = FormObject>(opts?: Partial<Fo
   }
 
   const transactionsManager = useFormTransactions(ctx);
-  const { actions, onSubmitted, isSubmitting } = useFormActions(ctx);
+  const { actions, onSubmitted, isSubmitting } = useFormActions(ctx, disabled);
 
   provide(FormKey, {
     ...ctx,

@@ -28,8 +28,9 @@ const { inputProps, labelProps, errorMessage, errorMessageProps, isTouched } = u
   }
 
   input {
-    @apply text-gray-800 rounded-md border-2 border-transparent py-3 px-4 w-full bg-gray-100 focus:outline-none transition-colors duration-200 focus:border-blue-500;
+    @apply text-gray-800 rounded-md border-2 border-transparent py-3 px-4 w-full bg-gray-100 focus:outline-none transition-colors duration-200 focus:border-blue-500  disabled:cursor-not-allowed;
   }
+
   .error-message {
     @apply absolute left-0 text-sm text-red-500;
     bottom: calc(-1.5 * 1em);
@@ -44,6 +45,12 @@ const { inputProps, labelProps, errorMessage, errorMessageProps, isTouched } = u
   &.touched {
     input {
       @apply bg-blue-50;
+    }
+  }
+
+  &:has(:disabled) {
+    input {
+      @apply bg-gray-200 cursor-not-allowed;
     }
   }
 }
