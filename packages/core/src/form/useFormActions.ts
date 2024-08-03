@@ -10,14 +10,14 @@ export interface ResetState<TForm extends FormObject> {
   touched: Partial<TouchedSchema<TForm>>;
 }
 
-export function useFormActions<TForm extends FormObject = FormObject>(
+export function useFormActions<TForm extends FormObject = FormObject, TOutput extends FormObject = TForm>(
   form: FormContext<TForm>,
   disabled: DisabledSchema<TForm>,
 ) {
   const isSubmitting = shallowRef(false);
   const [dispatchSubmit, onSubmitted] = createEventDispatcher<void>('submit');
 
-  function handleSubmit<TReturns>(cb: (values: TForm) => MaybeAsync<TReturns>) {
+  function handleSubmit<TReturns>(cb: (values: TOutput) => MaybeAsync<TReturns>) {
     return async function onSubmit(e: Event) {
       e.preventDefault();
       isSubmitting.value = true;
@@ -41,7 +41,7 @@ export function useFormActions<TForm extends FormObject = FormObject>(
         unsetPath(values, path, true);
       }
 
-      const result = await cb(values);
+      const result = await cb(values as unknown as TOutput);
 
       isSubmitting.value = false;
 

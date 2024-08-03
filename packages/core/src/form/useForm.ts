@@ -21,7 +21,9 @@ export interface FormContextWithTransactions<TForm extends FormObject = FormObje
 
 export const FormKey: InjectionKey<FormContextWithTransactions<any>> = Symbol('Formwerk FormKey');
 
-export function useForm<TForm extends FormObject = FormObject>(opts?: Partial<FormOptions<TForm>>) {
+export function useForm<TForm extends FormObject = FormObject, TOutput extends FormObject = TForm>(
+  opts?: Partial<FormOptions<TForm>>,
+) {
   const touchedSnapshot = useFormSnapshots(opts?.initialTouched);
   const valuesSnapshot = useFormSnapshots<TForm>(opts?.initialValues, {
     onAsyncInit,
@@ -61,7 +63,7 @@ export function useForm<TForm extends FormObject = FormObject>(opts?: Partial<Fo
   }
 
   const transactionsManager = useFormTransactions(ctx);
-  const { actions, onSubmitted, isSubmitting } = useFormActions(ctx, disabled);
+  const { actions, onSubmitted, isSubmitting } = useFormActions<TForm, TOutput>(ctx, disabled);
 
   function getError<TPath extends Path<TForm>>(path: TPath): string | undefined {
     return ctx.getFieldErrors(path)[0];
