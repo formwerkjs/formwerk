@@ -13,6 +13,7 @@ import { useInputValidity } from '../validation/useInputValidity';
 import { useLabel } from '../a11y/useLabel';
 import { useFormField } from '../form/useFormField';
 import { FieldTypePrefixes } from '../constants';
+import { useErrorDisplay } from '../form/useErrorDisplay';
 
 export type TextInputDOMType = 'text' | 'password' | 'email' | 'number' | 'tel' | 'url';
 
@@ -62,6 +63,7 @@ export function useTextField(
   });
 
   const { validityDetails } = useInputValidity({ inputRef, field });
+  const { displayError } = useErrorDisplay(field);
   const { fieldValue, setValue, isTouched, setTouched, errorMessage, isValid, errors, setErrors } = field;
   const { labelProps, labelledByProps } = useLabel({
     for: inputId,
@@ -122,5 +124,6 @@ export function useTextField(
     setErrors,
     setValue,
     setTouched,
+    displayError,
   };
 }

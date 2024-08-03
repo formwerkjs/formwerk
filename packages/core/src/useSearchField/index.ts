@@ -13,6 +13,7 @@ import { useInputValidity } from '../validation/useInputValidity';
 import { useLabel } from '../a11y/useLabel';
 import { useFormField } from '../form/useFormField';
 import { FieldTypePrefixes } from '../constants';
+import { useErrorDisplay } from '../form/useErrorDisplay';
 
 export interface SearchInputDOMAttributes extends TextInputBaseAttributes {
   type?: 'search';
@@ -57,6 +58,7 @@ export function useSearchField(_props: Reactivify<SearchFieldProps, 'onSubmit'>,
   });
 
   const { validityDetails, updateValidity } = useInputValidity({ inputRef, field });
+  const { displayError } = useErrorDisplay(field);
   const { fieldValue, setValue, isTouched, setTouched, errorMessage, isValid, errors } = field;
 
   const { labelProps, labelledByProps } = useLabel({
@@ -146,5 +148,6 @@ export function useSearchField(_props: Reactivify<SearchFieldProps, 'onSubmit'>,
     setErrors: field.setErrors,
     setValue: field.setValue,
     setTouched: field.setTouched,
+    displayError,
   };
 }

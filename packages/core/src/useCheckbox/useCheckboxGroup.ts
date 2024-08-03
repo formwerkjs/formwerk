@@ -14,6 +14,7 @@ import { useUniqId, createDescribedByProps, normalizeProps, isEqual } from '../u
 import { useLocale } from '../i18n/useLocale';
 import { useFormField } from '../form/useFormField';
 import { FieldTypePrefixes } from '../constants';
+import { useErrorDisplay } from '../form/useErrorDisplay';
 
 export type CheckboxGroupValue<TCheckbox> = TCheckbox[];
 
@@ -80,6 +81,7 @@ export function useCheckboxGroup<TCheckbox>(_props: Reactivify<CheckboxGroupProp
     initialValue: toValue(props.modelValue),
   });
 
+  const { displayError } = useErrorDisplay(field);
   const { validityDetails } = useInputValidity({ field });
   const { fieldValue, setValue, isTouched, setTouched, errorMessage } = field;
   const { describedBy, descriptionProps, errorMessageProps } = createDescribedByProps({
@@ -180,5 +182,6 @@ export function useCheckboxGroup<TCheckbox>(_props: Reactivify<CheckboxGroupProp
     setValue,
     setTouched,
     setErrors: field.setErrors,
+    displayError,
   };
 }

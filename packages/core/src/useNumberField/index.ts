@@ -23,6 +23,7 @@ import { useSpinButton } from '../useSpinButton';
 import { useLocale } from '../i18n/useLocale';
 import { useFormField } from '../form/useFormField';
 import { FieldTypePrefixes } from '../constants';
+import { useErrorDisplay } from '../form/useErrorDisplay';
 
 export interface NumberInputDOMAttributes {
   name?: string;
@@ -76,6 +77,7 @@ export function useNumberField(
   });
 
   const { validityDetails } = useInputValidity({ inputRef, field });
+  const { displayError } = useErrorDisplay(field);
   const { fieldValue, setValue, setTouched, isTouched, errorMessage } = field;
   const formattedText = computed<string>(() => {
     if (Number.isNaN(fieldValue.value) || isEmpty(fieldValue.value)) {
@@ -203,5 +205,6 @@ export function useNumberField(
     decrement,
     setTouched,
     setErrors: field.setErrors,
+    displayError,
   };
 }

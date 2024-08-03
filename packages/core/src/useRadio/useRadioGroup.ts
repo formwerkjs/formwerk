@@ -14,6 +14,7 @@ import { useUniqId, createDescribedByProps, getNextCycleArrIdx, normalizeProps, 
 import { useLocale } from '../i18n/useLocale';
 import { useFormField } from '../form/useFormField';
 import { FieldTypePrefixes } from '../constants';
+import { useErrorDisplay } from '../form/useErrorDisplay';
 
 export interface RadioGroupContext<TValue> {
   name: string;
@@ -91,7 +92,9 @@ export function useRadioGroup<TValue = string>(_props: Reactivify<RadioGroupProp
   });
 
   const { validityDetails } = useInputValidity({ field });
+  const { displayError } = useErrorDisplay(field);
   const { fieldValue, setValue, isTouched, setTouched, errorMessage, errors } = field;
+
   const { describedBy, descriptionProps, errorMessageProps } = createDescribedByProps({
     inputId: groupId,
     errorMessage,
@@ -208,5 +211,6 @@ export function useRadioGroup<TValue = string>(_props: Reactivify<RadioGroupProp
     setValue,
     setTouched,
     setErrors: field.setErrors,
+    displayError,
   };
 }

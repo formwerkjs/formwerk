@@ -99,3 +99,18 @@ test('formless fields maintain their own dirty state', async () => {
   setValue('bar');
   expect(isDirty.value).toBe(false);
 });
+
+test('formless fields maintain their own error state', async () => {
+  const { setErrors, isValid, errorMessage, errors } = await renderSetup(() => {
+    return useFormField({ initialValue: 'bar' });
+  });
+
+  expect(isValid.value).toBe(true);
+  expect(errorMessage.value).toBe('');
+  expect(errors.value).toEqual([]);
+  setErrors('error');
+
+  expect(isValid.value).toBe(false);
+  expect(errorMessage.value).toBe('error');
+  expect(errors.value).toEqual(['error']);
+});
