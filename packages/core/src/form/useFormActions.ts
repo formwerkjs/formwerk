@@ -28,8 +28,9 @@ export function useFormActions<TForm extends FormObject = FormObject, TOutput ex
       isSubmitting.value = true;
       await dispatchSubmit();
 
-      // Prevent submission if the form has errors
-      if (form.hasErrors()) {
+      const validationMode = form.getValidationMode();
+      // Prevent submission if the form has errors and is using native validation
+      if (validationMode === 'native' && form.hasErrors()) {
         isSubmitting.value = false;
 
         return;
@@ -46,7 +47,7 @@ export function useFormActions<TForm extends FormObject = FormObject, TOutput ex
         unsetPath(values, path, true);
       }
 
-      if (!schema) {
+      if (!schema || validationMode === 'native') {
         const result = await cb(values as unknown as TOutput);
         isSubmitting.value = false;
 
@@ -55,7 +56,6 @@ export function useFormActions<TForm extends FormObject = FormObject, TOutput ex
 
       const { output, errors } = await schema.parse(values);
       form.clearErrors();
-
       if (errors.length) {
         for (const entry of errors) {
           form.setFieldErrors(entry.path as Path<TForm>, entry.errors);

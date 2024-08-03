@@ -1,8 +1,19 @@
 import { Ref } from 'vue';
-import { Arrayable, DisabledSchema, FormObject, Path, PathValue, TouchedSchema, ValiditySchema } from '../types';
+import {
+  Arrayable,
+  DisabledSchema,
+  FormObject,
+  Path,
+  PathValue,
+  TouchedSchema,
+  TypedSchema,
+  ValiditySchema,
+} from '../types';
 import { cloneDeep, merge, normalizeArrayable } from '../utils/common';
 import { escapePath, findLeaf, getFromPath, isPathSet, setInPath, unsetPath as unsetInObject } from '../utils/path';
 import { FormSnapshot } from './formSnapshot';
+
+export type FormValidationMode = 'native' | 'schema';
 
 export interface FormContext<TForm extends FormObject = FormObject> {
   id: string;
@@ -21,6 +32,7 @@ export interface FormContext<TForm extends FormObject = FormObject> {
   setFieldDisabled<TPath extends Path<TForm>>(path: TPath, value: boolean): void;
   getFieldErrors<TPath extends Path<TForm>>(path: TPath): string[];
   setFieldErrors<TPath extends Path<TForm>>(path: TPath, message: Arrayable<string>): void;
+  getValidationMode(): FormValidationMode;
   clearErrors: () => void;
   hasErrors: () => boolean;
   getValues: () => TForm;
@@ -33,26 +45,28 @@ export interface SetValueOptions {
   mode: 'merge' | 'replace';
 }
 
-export interface FormContextCreateOptions<TForm extends FormObject = FormObject> {
+export interface FormContextCreateOptions<TForm extends FormObject = FormObject, TOutput extends FormObject = TForm> {
   id: string;
   values: TForm;
   touched: TouchedSchema<TForm>;
   disabled: DisabledSchema<TForm>;
   errors: Ref<ValiditySchema<TForm>>;
+  schema: TypedSchema<TForm, TOutput> | undefined;
   snapshots: {
     values: FormSnapshot<TForm>;
     touched: FormSnapshot<TouchedSchema<TForm>>;
   };
 }
 
-export function createFormContext<TForm extends FormObject = FormObject>({
+export function createFormContext<TForm extends FormObject = FormObject, TOutput extends FormObject = TForm>({
   id,
   values,
   disabled,
   errors,
+  schema,
   touched,
   snapshots,
-}: FormContextCreateOptions<TForm>): FormContext<TForm> {
+}: FormContextCreateOptions<TForm, TOutput>): FormContext<TForm> {
   function setFieldValue<TPath extends Path<TForm>>(path: TPath, value: PathValue<TForm, TPath> | undefined) {
     setInPath(values, path, cloneDeep(value));
   }
@@ -188,6 +202,10 @@ export function createFormContext<TForm extends FormObject = FormObject>({
     setTouched(cloneDeep(snapshots.touched.originals.value), { mode: 'replace' });
   }
 
+  function getValidationMode(): FormValidationMode {
+    return schema ? 'schema' : 'native';
+  }
+
   return {
     id,
     getValues: () => cloneDeep(values),
@@ -211,5 +229,6 @@ export function createFormContext<TForm extends FormObject = FormObject>({
     getFieldErrors,
     hasErrors,
     clearErrors,
+    getValidationMode,
   };
 }

@@ -49,6 +49,7 @@ export function useForm<TForm extends FormObject = FormObject, TOutput extends F
     values,
     touched,
     disabled,
+    schema: opts?.schema,
     errors,
     snapshots: {
       values: valuesSnapshot,

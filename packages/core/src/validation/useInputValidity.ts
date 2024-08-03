@@ -12,11 +12,14 @@ export function useInputValidity(opts: InputValidityOptions) {
   const { setErrors, errorMessage } = opts.field;
   const validityDetails = shallowRef<ValidityState>();
   const form = inject(FormKey, null);
+  const validationMode = form?.getValidationMode() ?? 'native';
 
   function updateValiditySync() {
     validityDetails.value = opts.inputRef?.value?.validity;
-    // TODO: Only do that if native field/validation is enabled
-    setErrors(opts.inputRef?.value?.validationMessage || []);
+
+    if (validationMode === 'native') {
+      setErrors(opts.inputRef?.value?.validationMessage || []);
+    }
   }
 
   async function updateValidity() {

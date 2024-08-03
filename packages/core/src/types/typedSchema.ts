@@ -10,7 +10,6 @@ export interface TypedSchemaContext {
 }
 
 export interface TypedSchema<TInput = any, TOutput = TInput> {
-  __type: 'VVTypedSchema';
   parse(values: TInput, context?: TypedSchemaContext): Promise<{ output?: TOutput; errors: TypedSchemaError[] }>;
   cast?(values: Partial<TInput>): TInput;
 }
