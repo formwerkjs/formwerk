@@ -1,7 +1,7 @@
 import { FormObject } from './common';
 
 export interface TypedSchemaError {
-  path?: string;
+  path: string;
   errors: string[];
 }
 

@@ -4,6 +4,7 @@ import { useFormField } from './useFormField';
 import { nextTick, Ref, ref } from 'vue';
 import { useInputValidity } from '../validation/useInputValidity';
 import { fireEvent, render, screen } from '@testing-library/vue';
+import { TypedSchema } from '../types';
 
 describe('form values', () => {
   test('it initializes form values', async () => {
@@ -313,7 +314,7 @@ describe('form dirty state', () => {
 });
 
 describe('validation', () => {
-  function createInputComponent(inputRef: Ref<HTMLInputElement | undefined>) {
+  function createInputComponent(inputRef: Ref<HTMLInputElement | undefined>, native = true) {
     return {
       setup: () => {
         const field = useFormField({ path: 'test' });
@@ -322,7 +323,7 @@ describe('validation', () => {
         return { input: inputRef, errorMessage: field.errorMessage };
       },
       template: `
-        <input ref="input" data-testid="input" required />
+        <input ref="input" data-testid="input" ${native ? 'required' : ''} />
         <span data-testid="err">{{ errorMessage }}</span>
       `,
     };
@@ -403,5 +404,71 @@ describe('validation', () => {
     await fireEvent.change(screen.getByTestId('input'), { target: { value: 'test' } });
     await fireEvent.click(screen.getByText('Submit'));
     expect(handler).toHaveBeenCalledOnce();
+  });
+
+  test('prevent submission if typed schema has errors', async () => {
+    const handler = vi.fn();
+    const schema: TypedSchema<object, object> = {
+      async parse() {
+        return {
+          errors: [{ path: 'test', errors: ['error'] }],
+        };
+      },
+    };
+
+    await render({
+      setup() {
+        const { handleSubmit } = useForm({
+          schema,
+        });
+
+        return { onSubmit: handleSubmit(handler) };
+      },
+      template: `
+      <form @submit="onSubmit" novalidate>
+        <button type="submit">Submit</button>
+      </form>
+    `,
+    });
+
+    await nextTick();
+    await fireEvent.click(screen.getByText('Submit'));
+    expect(handler).not.toHaveBeenCalled();
+  });
+
+  test('typed schema sets field errors', async () => {
+    const handler = vi.fn();
+    const input = ref<HTMLInputElement>();
+    const schema: TypedSchema<object, object> = {
+      async parse() {
+        return {
+          errors: [{ path: 'test', errors: ['error'] }],
+        };
+      },
+    };
+
+    await render({
+      components: { Child: createInputComponent(input, false) },
+      setup() {
+        const { handleSubmit, getError } = useForm({
+          schema,
+        });
+
+        return { getError, onSubmit: handleSubmit(handler) };
+      },
+      template: `
+      <form @submit="onSubmit" novalidate>
+        <Child />
+        <span data-testid="form-err">{{ getError('test') }}</span>
+
+        <button type="submit">Submit</button>
+      </form>
+    `,
+    });
+
+    await fireEvent.click(screen.getByText('Submit'));
+    await nextTick();
+    expect(screen.getByTestId('err').textContent).toBe('error');
+    expect(screen.getByTestId('form-err').textContent).toBe('error');
   });
 });

@@ -1,5 +1,5 @@
 import { shallowRef } from 'vue';
-import { DisabledSchema, FormObject, MaybeAsync, TouchedSchema } from '../types';
+import { DisabledSchema, FormObject, MaybeAsync, Path, TouchedSchema, TypedSchema } from '../types';
 import { cloneDeep } from '../utils/common';
 import { createEventDispatcher } from '../utils/events';
 import { FormContext, SetValueOptions } from './formContext';
@@ -10,9 +10,14 @@ export interface ResetState<TForm extends FormObject> {
   touched: Partial<TouchedSchema<TForm>>;
 }
 
+export interface FormActionsOptions<TForm extends FormObject = FormObject, TOutput extends FormObject = TForm> {
+  schema: TypedSchema<TForm, TOutput> | undefined;
+  disabled: DisabledSchema<TForm>;
+}
+
 export function useFormActions<TForm extends FormObject = FormObject, TOutput extends FormObject = TForm>(
   form: FormContext<TForm>,
-  disabled: DisabledSchema<TForm>,
+  { disabled, schema }: FormActionsOptions<TForm, TOutput>,
 ) {
   const isSubmitting = shallowRef(false);
   const [dispatchSubmit, onSubmitted] = createEventDispatcher<void>('submit');
@@ -41,8 +46,27 @@ export function useFormActions<TForm extends FormObject = FormObject, TOutput ex
         unsetPath(values, path, true);
       }
 
-      const result = await cb(values as unknown as TOutput);
+      if (!schema) {
+        const result = await cb(values as unknown as TOutput);
+        isSubmitting.value = false;
 
+        return result;
+      }
+
+      const { output, errors } = await schema.parse(values);
+      form.clearErrors();
+
+      if (errors.length) {
+        for (const entry of errors) {
+          form.setFieldErrors(entry.path as Path<TForm>, entry.errors);
+        }
+
+        isSubmitting.value = false;
+
+        return;
+      }
+
+      const result = await cb(output ?? (values as unknown as TOutput));
       isSubmitting.value = false;
 
       return result;

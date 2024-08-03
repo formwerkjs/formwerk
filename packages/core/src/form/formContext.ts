@@ -1,3 +1,4 @@
+import { Ref } from 'vue';
 import { Arrayable, DisabledSchema, FormObject, Path, PathValue, TouchedSchema, ValiditySchema } from '../types';
 import { cloneDeep, merge, normalizeArrayable } from '../utils/common';
 import { escapePath, findLeaf, getFromPath, isPathSet, setInPath, unsetPath as unsetInObject } from '../utils/path';
@@ -20,6 +21,7 @@ export interface FormContext<TForm extends FormObject = FormObject> {
   setFieldDisabled<TPath extends Path<TForm>>(path: TPath, value: boolean): void;
   getFieldErrors<TPath extends Path<TForm>>(path: TPath): string[];
   setFieldErrors<TPath extends Path<TForm>>(path: TPath, message: Arrayable<string>): void;
+  clearErrors: () => void;
   hasErrors: () => boolean;
   getValues: () => TForm;
   setValues: (newValues: Partial<TForm>, opts?: SetValueOptions) => void;
@@ -36,7 +38,7 @@ export interface FormContextCreateOptions<TForm extends FormObject = FormObject>
   values: TForm;
   touched: TouchedSchema<TForm>;
   disabled: DisabledSchema<TForm>;
-  errors: ValiditySchema<TForm>;
+  errors: Ref<ValiditySchema<TForm>>;
   snapshots: {
     values: FormSnapshot<TForm>;
     touched: FormSnapshot<TouchedSchema<TForm>>;
@@ -75,14 +77,14 @@ export function createFormContext<TForm extends FormObject = FormObject>({
     unsetInObject(values, path, true);
     unsetInObject(touched, path, true);
     unsetInObject(disabled, escapePath(path), true);
-    unsetInObject(errors, escapePath(path), true);
+    unsetInObject(errors.value, escapePath(path), true);
   }
 
   function unsetPath<TPath extends Path<TForm>>(path: TPath) {
     unsetInObject(values, path, false);
     unsetInObject(touched, path, false);
     unsetInObject(disabled, escapePath(path), false);
-    unsetInObject(errors, escapePath(path), false);
+    unsetInObject(errors.value, escapePath(path), false);
   }
 
   function getFieldInitialValue<TPath extends Path<TForm>>(path: TPath) {
@@ -102,7 +104,7 @@ export function createFormContext<TForm extends FormObject = FormObject>({
   }
 
   function hasErrors() {
-    return !!findLeaf(errors, l => Array.isArray(l) && l.length > 0);
+    return !!findLeaf(errors.value, l => Array.isArray(l) && l.length > 0);
   }
 
   function setInitialValues(newValues: Partial<TForm>, opts?: SetValueOptions) {
@@ -140,9 +142,9 @@ export function createFormContext<TForm extends FormObject = FormObject>({
       return;
     }
 
-    // Delete all keys, then set new values
+    // Clear the Object
     Object.keys(values).forEach(key => {
-      delete values[key];
+      delete values[key as keyof typeof values];
     });
 
     // We escape paths automatically
@@ -152,11 +154,11 @@ export function createFormContext<TForm extends FormObject = FormObject>({
   }
 
   function getFieldErrors<TPath extends Path<TForm>>(path: TPath) {
-    return [...(getFromPath<string[]>(errors, escapePath(path), []) || [])];
+    return [...(getFromPath<string[]>(errors.value, escapePath(path), []) || [])];
   }
 
   function setFieldErrors<TPath extends Path<TForm>>(path: TPath, message: Arrayable<string>) {
-    setInPath(errors, escapePath(path), message ? normalizeArrayable(message) : []);
+    setInPath(errors.value, escapePath(path), message ? normalizeArrayable(message) : []);
   }
 
   function setTouched(newTouched: Partial<TouchedSchema<TForm>>, opts?: SetValueOptions) {
@@ -172,6 +174,10 @@ export function createFormContext<TForm extends FormObject = FormObject>({
     });
 
     merge(touched, newTouched);
+  }
+
+  function clearErrors() {
+    errors.value = {} as ValiditySchema<TForm>;
   }
 
   function revertValues() {
@@ -204,5 +210,6 @@ export function createFormContext<TForm extends FormObject = FormObject>({
     setFieldErrors,
     getFieldErrors,
     hasErrors,
+    clearErrors,
   };
 }
