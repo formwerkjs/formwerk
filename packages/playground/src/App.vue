@@ -2,12 +2,7 @@
   <div class="flex gap-4 relative">
     <form class="w-full">
       <div v-for="(field, idx) in fields" :key="field.id" class="flex items-center">
-        <InputText
-          :name="`field[${idx}]`"
-          :label="`Field ${idx}`"
-          required
-          :disabled="values.field?.[idx] === 'hello'"
-        />
+        <InputText :label="`Field ${idx}`" required />
 
         <button type="button" class="bg-red-500 rounded text-white p-2" @click="fields.splice(idx, 1)">X</button>
       </div>

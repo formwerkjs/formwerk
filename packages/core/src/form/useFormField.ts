@@ -41,7 +41,7 @@ export function useFormField<TValue = unknown>(opts?: Partial<FormFieldOptions<T
   const getPath = () => toValue(opts?.path);
   const { fieldValue, pathlessValue, setValue } = useFieldValue(getPath, form, opts?.initialValue);
   const { isTouched, pathlessTouched, setTouched } = useFieldTouched(getPath, form);
-  const { errors, setErrors, isValid, errorMessage } = useFieldValidity(getPath, form);
+  const { errors, setErrors, isValid, errorMessage, pathlessValidity } = useFieldValidity(getPath, form);
 
   const isDirty = computed(() => {
     if (!form) {
@@ -124,7 +124,7 @@ export function useFormField<TValue = unknown>(opts?: Partial<FormFieldOptions<T
           value: cloneDeep(oldPath ? tf.getFieldValue(oldPath) : pathlessValue.value),
           touched: oldPath ? tf.isFieldTouched(oldPath) : pathlessTouched.value,
           disabled: toValue(opts?.disabled) ?? false,
-          errors: oldPath ? [...tf.getFieldErrors(oldPath)] : errors.value,
+          errors: [...(oldPath ? tf.getFieldErrors(oldPath) : pathlessValidity.errors.value)],
         };
       });
     }
@@ -188,7 +188,7 @@ function createFormTouchedRef(getPath: Getter<string | undefined>, form: FormCon
   const isTouched = computed(() => {
     const path = getPath();
 
-    return path ? form.isFieldTouched(path) : false;
+    return path ? form.isFieldTouched(path) : pathlessTouched.value;
   }) as Ref<boolean>;
 
   function setTouched(value: boolean) {
@@ -293,6 +293,7 @@ function createFormValidityRef(getPath: Getter<string | undefined>, form: FormCo
   }
 
   return {
+    pathlessValidity,
     errors,
     setErrors,
   };
@@ -301,10 +302,15 @@ function createFormValidityRef(getPath: Getter<string | undefined>, form: FormCo
 function createLocalValidity() {
   const errors = shallowRef<string[]>([]);
 
-  return {
+  const api = {
     errors,
     setErrors(messages: Arrayable<string>) {
       errors.value = messages ? normalizeArrayable(messages) : [];
     },
+  };
+
+  return {
+    pathlessValidity: api,
+    ...api,
   };
 }
