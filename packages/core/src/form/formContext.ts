@@ -1,6 +1,6 @@
 import { Arrayable, DisabledSchema, FormObject, Path, PathValue, TouchedSchema, ValiditySchema } from '../types';
 import { cloneDeep, merge, normalizeArrayable } from '../utils/common';
-import { escapePath, getFromPath, isPathSet, setInPath, unsetPath as unsetInObject } from '../utils/path';
+import { escapePath, findLeaf, getFromPath, isPathSet, setInPath, unsetPath as unsetInObject } from '../utils/path';
 import { FormSnapshot } from './formSnapshot';
 
 export interface FormContext<TForm extends FormObject = FormObject> {
@@ -20,6 +20,7 @@ export interface FormContext<TForm extends FormObject = FormObject> {
   setFieldDisabled<TPath extends Path<TForm>>(path: TPath, value: boolean): void;
   getFieldErrors<TPath extends Path<TForm>>(path: TPath): string[];
   setFieldErrors<TPath extends Path<TForm>>(path: TPath, message: Arrayable<string>): void;
+  hasErrors: () => boolean;
   getValues: () => TForm;
   setValues: (newValues: Partial<TForm>, opts?: SetValueOptions) => void;
   revertValues: () => void;
@@ -98,6 +99,10 @@ export function createFormContext<TForm extends FormObject = FormObject>({
 
   function setFieldDisabled<TPath extends Path<TForm>>(path: TPath, value: boolean) {
     setInPath(disabled, escapePath(path), value);
+  }
+
+  function hasErrors() {
+    return !!findLeaf(errors, l => Array.isArray(l) && l.length > 0);
   }
 
   function setInitialValues(newValues: Partial<TForm>, opts?: SetValueOptions) {
@@ -198,5 +203,6 @@ export function createFormContext<TForm extends FormObject = FormObject>({
     setFieldDisabled,
     setFieldErrors,
     getFieldErrors,
+    hasErrors,
   };
 }

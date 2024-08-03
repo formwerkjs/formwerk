@@ -22,6 +22,14 @@ export function useFormActions<TForm extends FormObject = FormObject>(
       e.preventDefault();
       isSubmitting.value = true;
       await dispatchSubmit();
+
+      // Prevent submission if the form has errors
+      if (form.hasErrors()) {
+        isSubmitting.value = false;
+
+        return;
+      }
+
       // Clone the values to prevent mutation or reactive leaks
       const values = cloneDeep(form.getValues());
       const disabledPaths = Object.entries(disabled)

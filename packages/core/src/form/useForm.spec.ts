@@ -374,7 +374,34 @@ describe('validation', () => {
 
     expect(screen.getByText('Form is valid')).toBeDefined();
     await fireEvent.blur(screen.getByTestId('input'));
-    await nextTick();
     expect(screen.getByText('Form is invalid')).toBeDefined();
+  });
+
+  test('prevents submission if the form is not valid', async () => {
+    const input = ref<HTMLInputElement>();
+    const handler = vi.fn();
+
+    await render({
+      components: { Child: createInputComponent(input) },
+      setup() {
+        const { handleSubmit } = useForm();
+
+        return { onSubmit: handleSubmit(handler) };
+      },
+      template: `
+      <form @submit="onSubmit" novalidate>
+        <Child />
+
+        <button type="submit">Submit</button>
+      </form>
+    `,
+    });
+
+    await nextTick();
+    await fireEvent.click(screen.getByText('Submit'));
+    expect(handler).not.toHaveBeenCalled();
+    await fireEvent.change(screen.getByTestId('input'), { target: { value: 'test' } });
+    await fireEvent.click(screen.getByText('Submit'));
+    expect(handler).toHaveBeenCalledOnce();
   });
 });

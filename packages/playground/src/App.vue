@@ -1,6 +1,6 @@
 <template>
   <div class="flex gap-4 relative">
-    <form class="w-full" @submit="onSubmit">
+    <form class="w-full" @submit="onSubmit" novalidate>
       <div v-for="(field, idx) in fields" :key="field.id" class="flex items-center">
         <InputText :name="`field.${idx}`" :label="`Field ${idx}`" required />
 

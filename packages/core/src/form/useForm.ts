@@ -32,18 +32,6 @@ export function useForm<TForm extends FormObject = FormObject>(opts?: Partial<Fo
   const disabled = {} as DisabledSchema<TForm>;
   const errors = reactive({}) as ValiditySchema<TForm>;
 
-  const isTouched = computed(() => {
-    return !!findLeaf(touched, l => l === true);
-  });
-
-  const isDirty = computed(() => {
-    return !isEqual(values, valuesSnapshot.originals.value);
-  });
-
-  const isValid = computed(() => {
-    return !findLeaf(errors, l => Array.isArray(l) && l.length > 0);
-  });
-
   const ctx = createFormContext({
     id: opts?.id || useUniqId('form'),
     values,
@@ -54,6 +42,18 @@ export function useForm<TForm extends FormObject = FormObject>(opts?: Partial<Fo
       values: valuesSnapshot,
       touched: touchedSnapshot,
     },
+  });
+
+  const isTouched = computed(() => {
+    return !!findLeaf(touched, l => l === true);
+  });
+
+  const isDirty = computed(() => {
+    return !isEqual(values, valuesSnapshot.originals.value);
+  });
+
+  const isValid = computed(() => {
+    return !ctx.hasErrors();
   });
 
   function onAsyncInit(v: TForm) {
