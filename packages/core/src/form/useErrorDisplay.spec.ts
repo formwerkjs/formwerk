@@ -22,3 +22,18 @@ test('displays field errors only if they are touched', async () => {
   setTouched(true);
   expect(displayError()).toBe('error');
 });
+
+test('controls display of custom messages as well', async () => {
+  const { isValid, displayError, setTouched } = await renderSetup(() => {
+    const field = useFormField({ initialValue: 'bar' });
+    const { displayError } = useErrorDisplay(field);
+
+    return { ...field, displayError };
+  });
+
+  expect(displayError('custom error')).toBe('');
+  expect(isValid.value).toBe(true);
+
+  setTouched(true);
+  expect(displayError('custom error')).toBe('custom error');
+});
