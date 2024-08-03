@@ -124,7 +124,7 @@ export function useFormField<TValue = unknown>(opts?: Partial<FormFieldOptions<T
           value: cloneDeep(oldPath ? tf.getFieldValue(oldPath) : pathlessValue.value),
           touched: oldPath ? tf.isFieldTouched(oldPath) : pathlessTouched.value,
           disabled: toValue(opts?.disabled) ?? false,
-          errors: errors.value,
+          errors: oldPath ? [...tf.getFieldErrors(oldPath)] : errors.value,
         };
       });
     }

@@ -147,7 +147,7 @@ export function createFormContext<TForm extends FormObject = FormObject>({
   }
 
   function getFieldErrors<TPath extends Path<TForm>>(path: TPath) {
-    return getFromPath<string[]>(errors, escapePath(path), []) || [];
+    return [...(getFromPath<string[]>(errors, escapePath(path), []) || [])];
   }
 
   function setFieldErrors<TPath extends Path<TForm>>(path: TPath, message: Arrayable<string>) {

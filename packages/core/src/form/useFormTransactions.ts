@@ -49,7 +49,10 @@ const TransactionKind = {
 export interface FormTransactionManager<TForm extends FormObject> {
   transaction(
     tr: (
-      formCtx: Pick<FormContext<TForm>, 'getValues' | 'getFieldValue' | 'isFieldSet' | 'isFieldTouched'>,
+      formCtx: Pick<
+        FormContext<TForm>,
+        'getValues' | 'getFieldValue' | 'isFieldSet' | 'isFieldTouched' | 'getFieldErrors'
+      >,
       codes: typeof TransactionKind,
     ) => FormTransaction<TForm> | null,
   ): void;

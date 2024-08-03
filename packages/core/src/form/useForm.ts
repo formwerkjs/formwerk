@@ -64,7 +64,7 @@ export function useForm<TForm extends FormObject = FormObject>(opts?: Partial<Fo
   const { actions, onSubmitted, isSubmitting } = useFormActions(ctx, disabled);
 
   function getError<TPath extends Path<TForm>>(path: TPath): string | undefined {
-    return ctx.getFieldErrors(path)?.[0];
+    return ctx.getFieldErrors(path)[0];
   }
 
   provide(FormKey, {
