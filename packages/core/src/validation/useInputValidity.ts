@@ -1,4 +1,4 @@
-import { Ref, inject, nextTick, onMounted, shallowRef } from 'vue';
+import { Ref, inject, nextTick, onMounted, shallowRef, watch } from 'vue';
 import { useEventListener } from '../helpers/useEventListener';
 import { FormField, FormKey } from '../form';
 
@@ -9,7 +9,7 @@ interface InputValidityOptions {
 }
 
 export function useInputValidity(opts: InputValidityOptions) {
-  const { setErrors } = opts.field;
+  const { setErrors, errorMessage } = opts.field;
   const validityDetails = shallowRef<ValidityState>();
   const form = inject(FormKey, null);
 
@@ -27,6 +27,15 @@ export function useInputValidity(opts: InputValidityOptions) {
   useEventListener(opts.inputRef, opts?.events || ['invalid', 'change', 'blur'], updateValidity);
 
   form?.onSubmitted(updateValiditySync);
+
+  if (opts.inputRef) {
+    watch(errorMessage, msg => {
+      const inputMsg = opts.inputRef?.value?.validationMessage;
+      if (inputMsg !== msg) {
+        opts.inputRef?.value?.setCustomValidity(msg || '');
+      }
+    });
+  }
 
   /**
    * Validity is always updated on mount.

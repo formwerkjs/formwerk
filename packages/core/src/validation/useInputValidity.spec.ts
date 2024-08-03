@@ -1,7 +1,7 @@
-import { ref } from 'vue';
+import { nextTick, ref } from 'vue';
 import { useInputValidity } from './useInputValidity';
 import { fireEvent, render, screen } from '@testing-library/vue';
-import { useFormField } from '../form';
+import { FormField, useFormField } from '../form';
 
 test('updates the validity state on blur events', async () => {
   const input = ref<HTMLInputElement>();
@@ -71,4 +71,28 @@ test('updates the validity on specified events', async () => {
   expect(screen.getByTestId('err').textContent).toBe('Constraints not satisfied');
   await fireEvent.input(screen.getByTestId('input'), { target: { value: 'test' } });
   expect(screen.getByTestId('err').textContent).toBe('');
+});
+
+test('updates the input native validity with custom validity errors', async () => {
+  const input = ref<HTMLInputElement>();
+  let field!: FormField<any>;
+  await render({
+    setup: () => {
+      field = useFormField();
+      useInputValidity({ inputRef: input, field, events: ['input'] });
+
+      return { input, errorMessage: field.errorMessage };
+    },
+    template: `
+      <form>
+        <input ref="input" data-testid="input" />
+        <span data-testid="err">{{ errorMessage }}</span>
+      </form>
+    `,
+  });
+
+  field.setErrors('Custom error');
+  await nextTick();
+  expect(screen.getByTestId('err').textContent).toBe('Custom error');
+  expect(input.value?.validationMessage).toBe('Custom error');
 });
