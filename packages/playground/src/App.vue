@@ -1,8 +1,8 @@
 <template>
   <div class="flex gap-4 relative">
-    <form class="w-full">
+    <form class="w-full" @submit="onSubmit">
       <div v-for="(field, idx) in fields" :key="field.id" class="flex items-center">
-        <InputText :label="`Field ${idx}`" required />
+        <InputText :name="`field.${idx}`" :label="`Field ${idx}`" required />
 
         <button type="button" class="bg-red-500 rounded text-white p-2" @click="fields.splice(idx, 1)">X</button>
       </div>
@@ -11,7 +11,10 @@
       <button class="bg-zinc-700 text-white rounded p-1" type="button" @click="swap">Swap</button>
       <button class="bg-zinc-700 text-white rounded p-1" type="button" @click="reverse">Reverse</button>
 
+      {{ isValid }}
       <!-- <InputSearch name="search" label="Search" :min-length="10" @submit="onSearchSubmit" /> -->
+
+      <button type="submit" class="bg-blue-700 text-white rounded p-1">Submit</button>
     </form>
 
     <div class="w-1/3 relative">
@@ -25,7 +28,7 @@ import { ref } from 'vue';
 import InputText from '@/components/InputText.vue';
 import { useForm } from '@formwerk/core';
 
-const { values } = useForm({
+const { values, isValid, handleSubmit } = useForm({
   // initialValues: getInitials,
 });
 
@@ -43,4 +46,8 @@ function swap() {
 function reverse() {
   fields.value = [...fields.value].reverse();
 }
+
+const onSubmit = handleSubmit(values => {
+  console.log(values);
+});
 </script>
