@@ -8,6 +8,7 @@ import {
   AriaValidatableProps,
   Direction,
   Reactivify,
+  Arrayable,
 } from '../types';
 import { useUniqId, createDescribedByProps, normalizeProps, isEqual } from '../utils/common';
 import { useLocale } from '../i18n/useLocale';
@@ -28,7 +29,7 @@ export interface CheckboxGroupContext<TCheckbox> {
   readonly modelValue: CheckboxGroupValue<TCheckbox> | undefined;
   readonly isTouched: boolean;
 
-  setValidity(message: string): void;
+  setErrors(message: Arrayable<string>): void;
   setValue(value: CheckboxGroupValue<TCheckbox>): void;
   hasValue(value: TCheckbox): boolean;
   toggleValue(value: TCheckbox, force?: boolean): void;
@@ -74,12 +75,13 @@ export function useCheckboxGroup<TCheckbox>(_props: Reactivify<CheckboxGroupProp
     label: props.label,
   });
 
-  const { fieldValue, setValue, isTouched, setTouched } = useFormField({
+  const field = useFormField({
     path: props.name,
     initialValue: toValue(props.modelValue),
   });
 
-  const { setValidity, errorMessage } = useInputValidity();
+  const { validityDetails } = useInputValidity({ field });
+  const { fieldValue, setValue, isTouched, setTouched, errorMessage } = field;
   const { describedBy, descriptionProps, errorMessageProps } = createDescribedByProps({
     inputId: groupId,
     errorMessage,
@@ -152,7 +154,7 @@ export function useCheckboxGroup<TCheckbox>(_props: Reactivify<CheckboxGroupProp
     groupState,
     modelValue: fieldValue,
     isTouched,
-    setValidity,
+    setErrors: field.setErrors,
     setValue,
     useCheckboxRegistration,
     toggleValue,
@@ -171,5 +173,12 @@ export function useCheckboxGroup<TCheckbox>(_props: Reactivify<CheckboxGroupProp
     checkboxGroupProps,
     errorMessage,
     isTouched,
+    errors: field.errors,
+    isValid: field.isValid,
+    validityDetails,
+
+    setValue,
+    setTouched,
+    setErrors: field.setErrors,
   };
 }

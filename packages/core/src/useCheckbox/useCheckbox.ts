@@ -100,7 +100,7 @@ export function useCheckbox<TValue = string>(
       return {
         ...baseHandlers,
         onInvalid() {
-          group?.setValidity(inputRef.value?.validationMessage ?? '');
+          group?.setErrors(inputRef.value?.validationMessage ?? '');
         },
       };
     }
@@ -137,7 +137,7 @@ export function useCheckbox<TValue = string>(
       focus();
       group?.toggleValue(getTrueValue(), force);
       nextTick(() => {
-        group?.setValidity(inputRef.value?.validationMessage ?? '');
+        group?.setErrors(inputRef.value?.validationMessage ?? '');
       });
 
       return true;

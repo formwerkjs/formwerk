@@ -8,6 +8,7 @@ import {
   AriaValidatableProps,
   Direction,
   Reactivify,
+  Arrayable,
 } from '../types';
 import { useUniqId, createDescribedByProps, getNextCycleArrIdx, normalizeProps, isEmpty } from '../utils/common';
 import { useLocale } from '../i18n/useLocale';
@@ -21,7 +22,7 @@ export interface RadioGroupContext<TValue> {
   required: boolean;
 
   readonly modelValue: TValue | undefined;
-  setValidity(message: string): void;
+  setErrors(message: Arrayable<string>): void;
   setValue(value: TValue): void;
   setTouched(touched: boolean): void;
   useRadioRegistration(radio: RadioItemContext): { canReceiveFocus(): boolean };
@@ -83,13 +84,14 @@ export function useRadioGroup<TValue = string>(_props: Reactivify<RadioGroupProp
     label: props.label,
   });
 
-  const { fieldValue, setValue, isTouched, setTouched } = useFormField<TValue>({
+  const field = useFormField<TValue>({
     path: props.name,
     initialValue: toValue(props.modelValue) as TValue,
     disabled: props.disabled,
   });
 
-  const { setValidity, errorMessage } = useInputValidity();
+  const { validityDetails } = useInputValidity({ field });
+  const { fieldValue, setValue, isTouched, setTouched, errorMessage, errors } = field;
   const { describedBy, descriptionProps, errorMessageProps } = createDescribedByProps({
     inputId: groupId,
     errorMessage,
@@ -184,7 +186,7 @@ export function useRadioGroup<TValue = string>(_props: Reactivify<RadioGroupProp
     readonly: computed(() => toValue(props.readonly) ?? false),
     required: computed(() => toValue(props.required) ?? false),
     modelValue: fieldValue,
-    setValidity,
+    setErrors: field.setErrors,
     setValue,
     setTouched,
     useRadioRegistration,
@@ -200,5 +202,11 @@ export function useRadioGroup<TValue = string>(_props: Reactivify<RadioGroupProp
     radioGroupProps,
     errorMessage,
     isTouched,
+    errors,
+    validityDetails,
+
+    setValue,
+    setTouched,
+    setErrors: field.setErrors,
   };
 }

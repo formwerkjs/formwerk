@@ -129,7 +129,7 @@ export function isEmpty(value: unknown): value is null | undefined | '' {
 export const isSSR = typeof window === 'undefined';
 
 export function normalizeArrayable<T>(value: Arrayable<T>): T[] {
-  return Array.isArray(value) ? value : [value];
+  return Array.isArray(value) ? [...value] : [value];
 }
 
 export const isObject = (obj: unknown): obj is Record<string, unknown> =>

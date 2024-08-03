@@ -69,10 +69,10 @@ export function useRadio<TValue = string>(
       return {
         ...baseHandlers,
         onChange() {
-          group?.setValidity(inputRef.value?.validationMessage ?? '');
+          group?.setErrors(inputRef.value?.validationMessage ?? '');
         },
         onInvalid() {
-          group?.setValidity(inputRef.value?.validationMessage ?? '');
+          group?.setErrors(inputRef.value?.validationMessage ?? '');
         },
       };
     }
@@ -106,7 +106,7 @@ export function useRadio<TValue = string>(
       group?.setValue(toValue(props.value) as TValue);
       focus();
       nextTick(() => {
-        group?.setValidity(inputRef.value?.validationMessage ?? '');
+        group?.setErrors(inputRef.value?.validationMessage ?? '');
       });
 
       return true;

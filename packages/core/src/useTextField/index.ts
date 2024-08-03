@@ -55,13 +55,14 @@ export function useTextField(
   const props = normalizeProps(_props);
   const inputId = useUniqId(FieldTypePrefixes.TextField);
   const inputRef = elementRef || shallowRef<HTMLInputElement>();
-  const { errorMessage, validityDetails, isInvalid } = useInputValidity(inputRef);
-  const { fieldValue, setValue, isTouched, setTouched } = useFormField<string | undefined>({
+  const field = useFormField<string | undefined>({
     path: props.name,
     initialValue: toValue(props.modelValue),
     disabled: props.disabled,
   });
 
+  const { validityDetails } = useInputValidity({ inputRef, field });
+  const { fieldValue, setValue, isTouched, setTouched, errorMessage, isValid, errors, setErrors } = field;
   const { labelProps, labelledByProps } = useLabel({
     for: inputId,
     label: props.label,
@@ -114,7 +115,12 @@ export function useTextField(
     errorMessageProps,
     descriptionProps,
     validityDetails,
-    isInvalid,
     isTouched,
+    isValid,
+    errors,
+
+    setErrors,
+    setValue,
+    setTouched,
   };
 }

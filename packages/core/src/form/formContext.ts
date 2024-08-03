@@ -1,5 +1,5 @@
-import { DisabledSchema, FormObject, Path, PathValue, TouchedSchema } from '../types';
-import { cloneDeep, merge } from '../utils/common';
+import { Arrayable, DisabledSchema, FormObject, Path, PathValue, TouchedSchema, ValiditySchema } from '../types';
+import { cloneDeep, merge, normalizeArrayable } from '../utils/common';
 import { escapePath, getFromPath, isPathSet, setInPath, unsetPath as unsetInObject } from '../utils/path';
 import { FormSnapshot } from './formSnapshot';
 
@@ -18,6 +18,8 @@ export interface FormContext<TForm extends FormObject = FormObject> {
   setInitialValues: (newValues: Partial<TForm>, opts?: SetValueOptions) => void;
   setInitialTouched: (newTouched: Partial<TouchedSchema<TForm>>, opts?: SetValueOptions) => void;
   setFieldDisabled<TPath extends Path<TForm>>(path: TPath, value: boolean): void;
+  getFieldErrors<TPath extends Path<TForm>>(path: TPath): string[];
+  setFieldErrors<TPath extends Path<TForm>>(path: TPath, message: Arrayable<string>): void;
   getValues: () => TForm;
   setValues: (newValues: Partial<TForm>, opts?: SetValueOptions) => void;
   revertValues: () => void;
@@ -33,6 +35,7 @@ export interface FormContextCreateOptions<TForm extends FormObject = FormObject>
   values: TForm;
   touched: TouchedSchema<TForm>;
   disabled: DisabledSchema<TForm>;
+  errors: ValiditySchema<TForm>;
   snapshots: {
     values: FormSnapshot<TForm>;
     touched: FormSnapshot<TouchedSchema<TForm>>;
@@ -43,6 +46,7 @@ export function createFormContext<TForm extends FormObject = FormObject>({
   id,
   values,
   disabled,
+  errors,
   touched,
   snapshots,
 }: FormContextCreateOptions<TForm>): FormContext<TForm> {
@@ -70,12 +74,14 @@ export function createFormContext<TForm extends FormObject = FormObject>({
     unsetInObject(values, path, true);
     unsetInObject(touched, path, true);
     unsetInObject(disabled, escapePath(path), true);
+    unsetInObject(errors, escapePath(path), true);
   }
 
   function unsetPath<TPath extends Path<TForm>>(path: TPath) {
     unsetInObject(values, path, false);
     unsetInObject(touched, path, false);
     unsetInObject(disabled, escapePath(path), false);
+    unsetInObject(errors, escapePath(path), false);
   }
 
   function getFieldInitialValue<TPath extends Path<TForm>>(path: TPath) {
@@ -140,6 +146,14 @@ export function createFormContext<TForm extends FormObject = FormObject>({
     });
   }
 
+  function getFieldErrors<TPath extends Path<TForm>>(path: TPath) {
+    return getFromPath<string[]>(errors, escapePath(path), []) || [];
+  }
+
+  function setFieldErrors<TPath extends Path<TForm>>(path: TPath, message: Arrayable<string>) {
+    setInPath(errors, escapePath(path), message ? normalizeArrayable(message) : []);
+  }
+
   function setTouched(newTouched: Partial<TouchedSchema<TForm>>, opts?: SetValueOptions) {
     if (opts?.mode === 'merge') {
       merge(touched, newTouched);
@@ -182,5 +196,7 @@ export function createFormContext<TForm extends FormObject = FormObject>({
     setInitialTouched,
     getFieldOriginalValue,
     setFieldDisabled,
+    setFieldErrors,
+    getFieldErrors,
   };
 }
