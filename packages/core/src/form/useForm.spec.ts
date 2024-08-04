@@ -353,6 +353,17 @@ describe('validation', () => {
     expect(screen.getByTestId('form-err').textContent).toBe('Constraints not satisfied');
   });
 
+  test('displays errors if the field is touched', async () => {
+    const { setFieldTouched, displayError, setFieldErrors } = await renderSetup(() => {
+      return useForm();
+    });
+
+    setFieldErrors('test', 'error');
+    expect(displayError('test')).toBeUndefined();
+    setFieldTouched('test', true);
+    expect(displayError('test')).toBe('error');
+  });
+
   test('updates the form isValid', async () => {
     const input = ref<HTMLInputElement>();
 

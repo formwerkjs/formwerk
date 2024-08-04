@@ -83,6 +83,10 @@ export function useForm<TForm extends FormObject = FormObject, TOutput extends F
     return ctx.getFieldErrors(path)[0];
   }
 
+  function displayError(path: Path<TForm>) {
+    return ctx.isFieldTouched(path) ? getError(path) : undefined;
+  }
+
   provide(FormKey, {
     ...ctx,
     ...transactionsManager,
@@ -103,6 +107,7 @@ export function useForm<TForm extends FormObject = FormObject, TOutput extends F
     setFieldErrors: ctx.setFieldErrors,
     setValues: ctx.setValues,
     getError,
+    displayError,
     ...actions,
   };
 }
