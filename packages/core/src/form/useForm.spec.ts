@@ -488,7 +488,7 @@ describe('validation', () => {
     expect(handler).toHaveBeenCalledOnce();
   });
 
-  test('type schema clears errors on successful submission', async () => {
+  test('typed schema clears errors on successful submission', async () => {
     const handler = vi.fn();
     const input = ref<HTMLInputElement>();
     const schema: TypedSchema<object, object> = {
@@ -530,7 +530,7 @@ describe('validation', () => {
     expect(screen.getByTestId('form-err').textContent).toBe('');
   });
 
-  test('type schema parses values which is used on submission', async () => {
+  test('typed schema parses values which is used on submission', async () => {
     const handler = vi.fn();
     const input = ref<HTMLInputElement>();
     const schema: TypedSchema<object, { test: true; foo: string }> = {
@@ -571,5 +571,75 @@ describe('validation', () => {
     await nextTick();
     expect(handler).toHaveBeenCalledOnce();
     expect(handler).toHaveBeenLastCalledWith({ test: true, foo: 'bar' });
+  });
+
+  test('typed schema is executed on form init', async () => {
+    const schema: TypedSchema<object, object> = {
+      async parse() {
+        return {
+          errors: [{ path: 'test', errors: ['error'] }],
+        };
+      },
+    };
+
+    await render({
+      setup() {
+        const { getError } = useForm({
+          schema,
+        });
+
+        return { getError };
+      },
+      template: `
+      <span data-testid="form-err">{{ getError('test') }}</span>
+    `,
+    });
+
+    await nextTick();
+    expect(screen.getByTestId('form-err').textContent).toBe('error');
+  });
+
+  test('form reset clears errors', async () => {
+    const schema: TypedSchema<{ test: string }> = {
+      async parse() {
+        return {
+          errors: [{ path: 'test', errors: ['error'] }],
+        };
+      },
+    };
+
+    const { reset, getError } = await renderSetup(() => {
+      return useForm<{ test: string }>({
+        schema,
+      });
+    });
+
+    await nextTick();
+    expect(getError('test')).toBe('error');
+    await reset();
+    expect(getError('test')).toBeUndefined();
+  });
+
+  test('form reset can revalidate', async () => {
+    let wasReset = false;
+    const schema: TypedSchema<{ test: string }> = {
+      async parse() {
+        return {
+          errors: [{ path: 'test', errors: wasReset ? ['reset'] : ['error'] }],
+        };
+      },
+    };
+
+    const { reset, getError } = await renderSetup(() => {
+      return useForm<{ test: string }>({
+        schema,
+      });
+    });
+
+    await nextTick();
+    expect(getError('test')).toBe('error');
+    wasReset = true;
+    await reset({ revalidate: true });
+    expect(getError('test')).toBe('reset');
   });
 });

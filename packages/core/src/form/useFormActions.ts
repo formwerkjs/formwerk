@@ -8,6 +8,7 @@ import { unsetPath } from '../utils/path';
 export interface ResetState<TForm extends FormObject> {
   values: Partial<TForm>;
   touched: Partial<TouchedSchema<TForm>>;
+  revalidate?: boolean;
 }
 
 export interface FormActionsOptions<TForm extends FormObject = FormObject, TOutput extends FormObject = TForm> {
@@ -88,7 +89,7 @@ export function useFormActions<TForm extends FormObject = FormObject, TOutput ex
     }
   }
 
-  function reset(state?: Partial<ResetState<TForm>>, opts?: SetValueOptions) {
+  async function reset(state?: Partial<ResetState<TForm>>, opts?: SetValueOptions) {
     if (state?.values) {
       form.setInitialValues(state.values, opts);
     }
@@ -99,7 +100,14 @@ export function useFormActions<TForm extends FormObject = FormObject, TOutput ex
 
     form.revertValues();
     form.revertTouched();
-    validate();
+    if (state?.revalidate) {
+      await validate();
+      return;
+    }
+
+    form.clearErrors();
+
+    return Promise.resolve();
   }
 
   return {
