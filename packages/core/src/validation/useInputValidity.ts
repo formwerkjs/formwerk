@@ -29,7 +29,7 @@ export function useInputValidity(opts: InputValidityOptions) {
 
   useEventListener(opts.inputRef, opts?.events || ['invalid', 'change', 'blur'], updateValidity);
 
-  form?.onSubmitted(updateValiditySync);
+  form?.onValidateTriggered(updateValiditySync);
 
   if (opts.inputRef) {
     watch(errorMessage, msg => {

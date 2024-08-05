@@ -6,4 +6,4 @@ export type TouchedSchema<TForm extends FormObject> = Simplify<Schema<TForm, boo
 
 export type DisabledSchema<TForm extends FormObject> = Partial<Record<Path<TForm>, boolean>>;
 
-export type ValiditySchema<TForm extends FormObject> = Partial<Record<Path<TForm>, string[]>>;
+export type ErrorsSchema<TForm extends FormObject> = Partial<Record<Path<TForm>, string[]>>;

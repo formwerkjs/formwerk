@@ -245,13 +245,12 @@ describe('form submit', () => {
     const cb = vi.fn();
     const onSubmit = handleSubmit(cb);
     expect(values).toEqual(defaults());
-    onSubmit(new Event('submit'));
-    await nextTick();
+    await onSubmit(new Event('submit'));
     expect(cb).toHaveBeenLastCalledWith(defaults());
 
     disabled.value = true;
-    onSubmit(new Event('submit'));
-    await nextTick();
+    await onSubmit(new Event('submit'));
+    expect(cb).toHaveBeenCalledTimes(2);
     expect(cb).toHaveBeenLastCalledWith({ multiple: ['field 1', 'field 3', 'field 4'] });
   });
 });
@@ -414,6 +413,7 @@ describe('validation', () => {
     expect(handler).not.toHaveBeenCalled();
     await fireEvent.change(screen.getByTestId('input'), { target: { value: 'test' } });
     await fireEvent.click(screen.getByText('Submit'));
+    await nextTick();
     expect(handler).toHaveBeenCalledOnce();
   });
 

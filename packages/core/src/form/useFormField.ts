@@ -88,7 +88,7 @@ export function useFormField<TValue = unknown>(opts?: Partial<FormFieldOptions<T
     toValue(opts?.disabled) ?? false,
   );
 
-  form.onSubmitted(() => {
+  form.onSubmitAttempt(() => {
     setTouched(true);
   });
 

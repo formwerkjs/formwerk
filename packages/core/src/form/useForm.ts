@@ -1,4 +1,4 @@
-import { computed, InjectionKey, provide, reactive, readonly, Ref, ref } from 'vue';
+import { computed, InjectionKey, onMounted, provide, reactive, readonly, Ref, ref } from 'vue';
 import { cloneDeep, isEqual, useUniqId } from '../utils/common';
 import {
   FormObject,
@@ -6,7 +6,7 @@ import {
   MaybeGetter,
   TouchedSchema,
   DisabledSchema,
-  ValiditySchema,
+  ErrorsSchema,
   Path,
   TypedSchema,
 } from '../types';
@@ -26,7 +26,8 @@ export interface FormOptions<TForm extends FormObject = FormObject, TOutput exte
 export interface FormContextWithTransactions<TForm extends FormObject = FormObject>
   extends FormContext<TForm>,
     FormTransactionManager<TForm> {
-  onSubmitted(cb: () => void): void;
+  onSubmitAttempt(cb: () => void): void;
+  onValidateTriggered(cb: () => void): void;
 }
 
 export const FormKey: InjectionKey<FormContextWithTransactions<any>> = Symbol('Formwerk FormKey');
@@ -42,7 +43,7 @@ export function useForm<TForm extends FormObject = FormObject, TOutput extends F
   const values = reactive(cloneDeep(valuesSnapshot.originals.value)) as TForm;
   const touched = reactive(cloneDeep(touchedSnapshot.originals.value)) as TouchedSchema<TForm>;
   const disabled = {} as DisabledSchema<TForm>;
-  const errors = ref({}) as Ref<ValiditySchema<TForm>>;
+  const errors = ref({}) as Ref<ErrorsSchema<TForm>>;
 
   const ctx = createFormContext({
     id: opts?.id || useUniqId('form'),
@@ -74,7 +75,7 @@ export function useForm<TForm extends FormObject = FormObject, TOutput extends F
   }
 
   const transactionsManager = useFormTransactions(ctx);
-  const { actions, onSubmitted, isSubmitting } = useFormActions<TForm, TOutput>(ctx, {
+  const { actions, onSubmitAttempt, onValidateTriggered, isSubmitting } = useFormActions<TForm, TOutput>(ctx, {
     disabled,
     schema: opts?.schema,
   });
@@ -90,8 +91,15 @@ export function useForm<TForm extends FormObject = FormObject, TOutput extends F
   provide(FormKey, {
     ...ctx,
     ...transactionsManager,
-    onSubmitted,
+    onSubmitAttempt,
+    onValidateTriggered,
   } as FormContextWithTransactions<TForm>);
+
+  if (ctx.getValidationMode() === 'schema') {
+    onMounted(() => {
+      actions.validate();
+    });
+  }
 
   return {
     values: readonly(values),

@@ -7,7 +7,8 @@ import {
   PathValue,
   TouchedSchema,
   TypedSchema,
-  ValiditySchema,
+  ErrorsSchema,
+  TypedSchemaError,
 } from '../types';
 import { cloneDeep, merge, normalizeArrayable } from '../utils/common';
 import { escapePath, findLeaf, getFromPath, isPathSet, setInPath, unsetPath as unsetInObject } from '../utils/path';
@@ -33,6 +34,7 @@ export interface FormContext<TForm extends FormObject = FormObject> {
   getFieldErrors<TPath extends Path<TForm>>(path: TPath): string[];
   setFieldErrors<TPath extends Path<TForm>>(path: TPath, message: Arrayable<string>): void;
   getValidationMode(): FormValidationMode;
+  getErrors: () => TypedSchemaError[];
   clearErrors: () => void;
   hasErrors: () => boolean;
   getValues: () => TForm;
@@ -50,7 +52,7 @@ export interface FormContextCreateOptions<TForm extends FormObject = FormObject,
   values: TForm;
   touched: TouchedSchema<TForm>;
   disabled: DisabledSchema<TForm>;
-  errors: Ref<ValiditySchema<TForm>>;
+  errors: Ref<ErrorsSchema<TForm>>;
   schema: TypedSchema<TForm, TOutput> | undefined;
   snapshots: {
     values: FormSnapshot<TForm>;
@@ -119,6 +121,12 @@ export function createFormContext<TForm extends FormObject = FormObject, TOutput
 
   function hasErrors() {
     return !!findLeaf(errors.value, l => Array.isArray(l) && l.length > 0);
+  }
+
+  function getErrors(): TypedSchemaError[] {
+    return Object.entries(errors.value)
+      .map<TypedSchemaError>(([key, value]) => ({ path: key, errors: value as string[] }))
+      .filter(e => e.errors.length > 0);
   }
 
   function setInitialValues(newValues: Partial<TForm>, opts?: SetValueOptions) {
@@ -191,7 +199,7 @@ export function createFormContext<TForm extends FormObject = FormObject, TOutput
   }
 
   function clearErrors() {
-    errors.value = {} as ValiditySchema<TForm>;
+    errors.value = {} as ErrorsSchema<TForm>;
   }
 
   function revertValues() {
@@ -228,6 +236,7 @@ export function createFormContext<TForm extends FormObject = FormObject, TOutput
     setFieldErrors,
     getFieldErrors,
     hasErrors,
+    getErrors,
     clearErrors,
     getValidationMode,
   };
