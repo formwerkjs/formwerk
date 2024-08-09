@@ -411,7 +411,7 @@ describe('validation', () => {
     await nextTick();
     await fireEvent.click(screen.getByText('Submit'));
     expect(handler).not.toHaveBeenCalled();
-    await fireEvent.change(screen.getByTestId('input'), { target: { value: 'test' } });
+    await fireEvent.update(screen.getByTestId('input'), 'test');
     await fireEvent.click(screen.getByText('Submit'));
     await nextTick();
     expect(handler).toHaveBeenCalledOnce();

@@ -15,11 +15,12 @@ export function useInputValidity(opts: InputValidityOptions) {
   const validationMode = form?.getValidationMode() ?? 'native';
 
   function updateValiditySync() {
-    validityDetails.value = opts.inputRef?.value?.validity;
-
-    if (validationMode === 'native') {
-      setErrors(opts.inputRef?.value?.validationMessage || []);
+    if (validationMode !== 'native') {
+      return;
     }
+
+    validityDetails.value = opts.inputRef?.value?.validity;
+    setErrors(opts.inputRef?.value?.validationMessage || []);
   }
 
   async function updateValidity() {
