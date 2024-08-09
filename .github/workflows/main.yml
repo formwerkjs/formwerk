@@ -12,9 +12,11 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: "pnpm"
+          cache: 'pnpm'
       - name: Install dependencies
         run: pnpm install
+      - name: Build
+        run: pnpm build
       - name: Type Check
         run: pnpm typecheck
       - name: Lint
