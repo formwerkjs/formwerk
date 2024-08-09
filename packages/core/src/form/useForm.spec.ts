@@ -422,7 +422,7 @@ describe('validation', () => {
     const schema: TypedSchema<object, object> = {
       async parse() {
         return {
-          errors: [{ path: 'test', errors: ['error'] }],
+          errors: [{ path: 'test', messages: ['error'] }],
         };
       },
     };
@@ -454,7 +454,7 @@ describe('validation', () => {
     const schema: TypedSchema<object, object> = {
       async parse() {
         return {
-          errors: shouldError ? [{ path: 'test', errors: ['error'] }] : [],
+          errors: shouldError ? [{ path: 'test', messages: ['error'] }] : [],
         };
       },
     };
@@ -577,7 +577,7 @@ describe('validation', () => {
     const schema: TypedSchema<object, object> = {
       async parse() {
         return {
-          errors: [{ path: 'test', errors: ['error'] }],
+          errors: [{ path: 'test', messages: ['error'] }],
         };
       },
     };
@@ -603,7 +603,7 @@ describe('validation', () => {
     const schema: TypedSchema<{ test: string }> = {
       async parse() {
         return {
-          errors: [{ path: 'test', errors: ['error'] }],
+          errors: [{ path: 'test', messages: ['error'] }],
         };
       },
     };
@@ -625,7 +625,7 @@ describe('validation', () => {
     const schema: TypedSchema<{ test: string }> = {
       async parse() {
         return {
-          errors: [{ path: 'test', errors: wasReset ? ['reset'] : ['error'] }],
+          errors: [{ path: 'test', messages: wasReset ? ['reset'] : ['error'] }],
         };
       },
     };

@@ -1,4 +1,5 @@
-import { isIndex, isNullOrUndefined, isObject } from './common';
+import { isIndex, isObject } from '../../../shared/src';
+import { isNullOrUndefined } from './common';
 
 export function isContainerValue(value: unknown): value is Record<string, unknown> {
   return isObject(value) || Array.isArray(value);

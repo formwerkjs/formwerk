@@ -85,7 +85,7 @@ export function useFormActions<TForm extends FormObject = FormObject, TOutput ex
 
   function applyErrors(errors: TypedSchemaError[]) {
     for (const entry of errors) {
-      form.setFieldErrors(entry.path as Path<TForm>, entry.errors);
+      form.setFieldErrors(entry.path as Path<TForm>, entry.messages);
     }
   }
 

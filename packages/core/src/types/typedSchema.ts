@@ -2,7 +2,7 @@ import { FormObject } from './common';
 
 export interface TypedSchemaError {
   path: string;
-  errors: string[];
+  messages: string[];
 }
 
 export interface TypedSchemaContext {

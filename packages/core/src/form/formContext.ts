@@ -10,9 +10,10 @@ import {
   ErrorsSchema,
   TypedSchemaError,
 } from '../types';
-import { cloneDeep, merge, normalizeArrayable } from '../utils/common';
+import { cloneDeep, normalizeArrayable } from '../utils/common';
 import { escapePath, findLeaf, getFromPath, isPathSet, setInPath, unsetPath as unsetInObject } from '../utils/path';
 import { FormSnapshot } from './formSnapshot';
+import { merge } from '../../../shared/src';
 
 export type FormValidationMode = 'native' | 'schema';
 
@@ -125,8 +126,8 @@ export function createFormContext<TForm extends FormObject = FormObject, TOutput
 
   function getErrors(): TypedSchemaError[] {
     return Object.entries(errors.value)
-      .map<TypedSchemaError>(([key, value]) => ({ path: key, errors: value as string[] }))
-      .filter(e => e.errors.length > 0);
+      .map<TypedSchemaError>(([key, value]) => ({ path: key, messages: value as string[] }))
+      .filter(e => e.messages.length > 0);
   }
 
   function setInitialValues(newValues: Partial<TForm>, opts?: SetValueOptions) {
