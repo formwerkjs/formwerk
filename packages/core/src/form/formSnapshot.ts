@@ -23,13 +23,13 @@ export function useFormSnapshots<TForm extends FormObject, TOutput extends FormO
   const provided = toValue(provider);
   if (isPromise(provided)) {
     provided.then(resolved => {
-      const inits = opts?.schema?.cast?.(resolved) ?? resolved;
+      const inits = opts?.schema?.defaults?.(resolved) ?? resolved;
       initials.value = cloneDeep(inits || {}) as TForm;
       originals.value = cloneDeep(inits || {}) as TForm;
       opts?.onAsyncInit?.(cloneDeep(inits));
     });
   } else {
-    const inits = opts?.schema?.cast?.(provided || {}) ?? provided;
+    const inits = opts?.schema?.defaults?.(provided || ({} as TForm)) ?? provided;
     initials.value = cloneDeep(inits || {}) as TForm;
     originals.value = cloneDeep(inits || {}) as TForm;
   }

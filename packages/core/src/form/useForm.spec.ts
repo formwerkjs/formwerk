@@ -647,13 +647,10 @@ describe('validation', () => {
     const { values } = await renderSetup(() => {
       return useForm({
         schema: {
-          cast: () => ({ test: 'foo' }),
+          defaults: () => ({ test: 'foo' }),
           async parse() {
             return {
               errors: [],
-              output: {
-                test: 'foo',
-              },
             };
           },
         },

@@ -47,7 +47,7 @@ export function defineSchema<TSchema extends Schema, TOutput = InferType<TSchema
         return { errors: Object.values(errors) };
       }
     },
-    cast(values) {
+    defaults(values) {
       try {
         return yupSchema.cast(values);
       } catch {
