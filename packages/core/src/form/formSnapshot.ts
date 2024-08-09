@@ -1,9 +1,10 @@
 import { Ref, shallowRef, toValue } from 'vue';
-import { FormObject, MaybeGetter, MaybeAsync } from '../types';
+import { FormObject, MaybeGetter, MaybeAsync, TypedSchema } from '../types';
 import { cloneDeep, isPromise } from '../utils/common';
 
-interface FormSnapshotOptions<TForm extends FormObject> {
+interface FormSnapshotOptions<TForm extends FormObject, TOutput extends FormObject = TForm> {
   onAsyncInit?: (values: TForm) => void;
+  schema?: TypedSchema<TForm, TOutput>;
 }
 
 export interface FormSnapshot<TForm extends FormObject> {
@@ -11,24 +12,26 @@ export interface FormSnapshot<TForm extends FormObject> {
   originals: Ref<TForm>;
 }
 
-export function useFormSnapshots<TForm extends FormObject>(
+export function useFormSnapshots<TForm extends FormObject, TOutput extends FormObject = TForm>(
   provider: MaybeGetter<MaybeAsync<TForm>> | undefined,
-  opts?: FormSnapshotOptions<TForm>,
+  opts?: FormSnapshotOptions<TForm, TOutput>,
 ): FormSnapshot<TForm> {
   // We need two copies of the initial values
   const initials = shallowRef<TForm>({} as TForm) as Ref<TForm>;
   const originals = shallowRef<TForm>({} as TForm) as Ref<TForm>;
 
-  const initialValuesUnref = toValue(provider);
-  if (isPromise(initialValuesUnref)) {
-    initialValuesUnref.then(inits => {
+  const provided = toValue(provider);
+  if (isPromise(provided)) {
+    provided.then(resolved => {
+      const inits = opts?.schema?.cast?.(resolved) ?? resolved;
       initials.value = cloneDeep(inits || {}) as TForm;
       originals.value = cloneDeep(inits || {}) as TForm;
       opts?.onAsyncInit?.(cloneDeep(inits));
     });
   } else {
-    initials.value = cloneDeep(initialValuesUnref || {}) as TForm;
-    originals.value = cloneDeep(initialValuesUnref || {}) as TForm;
+    const inits = opts?.schema?.cast?.(provided || {}) ?? provided;
+    initials.value = cloneDeep(inits || {}) as TForm;
+    originals.value = cloneDeep(inits || {}) as TForm;
   }
 
   return {

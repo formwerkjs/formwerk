@@ -642,4 +642,24 @@ describe('validation', () => {
     await reset({ revalidate: true });
     expect(getError('test')).toBe('reset');
   });
+
+  test('typed schema can initialize with default values', async () => {
+    const { values } = await renderSetup(() => {
+      return useForm({
+        schema: {
+          cast: () => ({ test: 'foo' }),
+          async parse() {
+            return {
+              errors: [],
+              output: {
+                test: 'foo',
+              },
+            };
+          },
+        },
+      });
+    });
+
+    expect(values).toEqual({ test: 'foo' });
+  });
 });

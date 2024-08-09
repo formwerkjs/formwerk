@@ -36,8 +36,9 @@ export function useForm<TForm extends FormObject = FormObject, TOutput extends F
   opts?: Partial<FormOptions<TForm, TOutput>>,
 ) {
   const touchedSnapshot = useFormSnapshots(opts?.initialTouched);
-  const valuesSnapshot = useFormSnapshots<TForm>(opts?.initialValues, {
+  const valuesSnapshot = useFormSnapshots<TForm, TOutput>(opts?.initialValues, {
     onAsyncInit,
+    schema: opts?.schema,
   });
 
   const values = reactive(cloneDeep(valuesSnapshot.originals.value)) as TForm;
