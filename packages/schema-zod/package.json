@@ -1,0 +1,35 @@
+{
+  "name": "@formwerk/schema-zod",
+  "version": "0.0.1",
+  "description": "",
+  "sideEffects": false,
+  "module": "dist/schema-zod.esm.js",
+  "unpkg": "dist/schema-zod.js",
+  "main": "dist/schema-zod.js",
+  "types": "dist/schema-zod.d.ts",
+  "repository": {
+    "url": "https://github.com/formwerkjs/formwerk.git",
+    "type": "git",
+    "directory": "packages/schema-yup"
+  },
+  "keywords": [
+    "VueJS",
+    "Vue",
+    "validation",
+    "validator",
+    "inputs",
+    "form",
+    "zod"
+  ],
+  "files": [
+    "dist/*.js",
+    "dist/*.d.ts"
+  ],
+  "dependencies": {
+    "@formwerk/core": "workspace:*",
+    "type-fest": "^4.24.0",
+    "zod": "^3.23.8"
+  },
+  "author": "",
+  "license": "MIT"
+}
