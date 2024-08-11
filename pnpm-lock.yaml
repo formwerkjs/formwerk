@@ -149,12 +149,24 @@ importers:
       '@formwerk/core':
         specifier: workspace:*
         version: link:../core
+      '@formwerk/schema-yup':
+        specifier: workspace:*
+        version: link:../schema-yup
+      '@formwerk/schema-zod':
+        specifier: workspace:*
+        version: link:../schema-zod
       tailwindcss:
         specifier: ^3.4.9
         version: 3.4.9
       vue:
         specifier: ^3.5.0-alpha.4
         version: 3.5.0-alpha.4(typescript@5.5.4)
+      yup:
+        specifier: ^1.3.2
+        version: 1.4.0
+      zod:
+        specifier: ^3.23.8
+        version: 3.23.8
     devDependencies:
       '@vitejs/plugin-vue':
         specifier: ^5.1.2
@@ -180,6 +192,18 @@ importers:
       yup:
         specifier: ^1.3.2
         version: 1.4.0
+
+  packages/schema-zod:
+    dependencies:
+      '@formwerk/core':
+        specifier: workspace:*
+        version: link:../core
+      type-fest:
+        specifier: ^4.24.0
+        version: 4.24.0
+      zod:
+        specifier: ^3.23.8
+        version: 3.23.8
 
   packages/test-utils: {}
 

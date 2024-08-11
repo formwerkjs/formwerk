@@ -11,10 +11,14 @@ const __dirname = dirname(__filename);
 
 const formatNameMap = {
   core: 'FormwerkCore',
+  'schema-yup': 'FWSchemaYup',
+  'schema-zod': 'FWSchemaZod',
 };
 
 const pkgNameMap = {
   core: 'core',
+  'schema-yup': 'schema-yup',
+  'schema-zod': 'schema-zod',
 };
 
 const formatMap = {
@@ -60,7 +64,7 @@ async function createConfig(pkg, format) {
     bundleName: `${pkgNameMap[pkg]}${formatMap[format] ? '.' + formatMap[format] : ''}.js`,
     input: {
       input: slashes(path.resolve(__dirname, `../packages/${pkg}/src/index.ts`)),
-      external: ['vue', isEsm ? '@vue/devtools-api' : undefined].filter(Boolean) as string[],
+      external: ['vue', isEsm ? '@vue/devtools-api' : undefined, 'yup', 'zod'].filter(Boolean) as string[],
       plugins: createPlugins({ version, pkg, format }),
     },
     output: {
