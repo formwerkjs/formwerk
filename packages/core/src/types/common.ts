@@ -4,7 +4,7 @@ export type Numberish = number | `${number}`;
 
 export type AriaLabelProps = {
   id: string;
-  for: string;
+  for?: string;
 };
 
 export type AriaDescriptionProps = {

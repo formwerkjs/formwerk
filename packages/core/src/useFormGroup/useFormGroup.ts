@@ -1,12 +1,17 @@
-import { computed, Ref, shallowRef } from 'vue';
+import { computed, createBlock, defineComponent, Fragment, openBlock, Ref, shallowRef, toValue, VNode } from 'vue';
 import { useLabel } from '../a11y/useLabel';
 import { FieldTypePrefixes } from '../constants';
-import { FormObject, Reactivify, TypedSchema } from '../types';
+import { AriaLabelableProps, AriaLabelProps, FormObject, Reactivify, TypedSchema } from '../types';
 import { normalizeProps, useUniqId, withRefCapture } from '../utils/common';
 
 export interface FormGroupProps<TInput extends FormObject = FormObject, TOutput extends FormObject = TInput> {
   label?: string;
   schema?: TypedSchema<TInput, TOutput>;
+}
+
+interface GroupProps extends AriaLabelableProps {
+  id: string;
+  role?: 'group';
 }
 
 export function useFormGroup<TInput extends FormObject = FormObject, TOutput extends FormObject = TInput>(
@@ -23,7 +28,7 @@ export function useFormGroup<TInput extends FormObject = FormObject, TOutput ext
     targetRef: groupRef,
   });
 
-  const groupProps = computed(() => {
+  const groupProps = computed<GroupProps>(() => {
     const isFieldSet = groupRef.value?.tagName === 'FIELDSET';
 
     return withRefCapture(
@@ -37,9 +42,37 @@ export function useFormGroup<TInput extends FormObject = FormObject, TOutput ext
     );
   });
 
+  const FormGroup = createInlineFormGroupComponent({ groupProps, labelProps });
+
   return {
     groupRef,
     labelProps,
     groupProps,
+    FormGroup,
+  };
+}
+
+interface InlineComponentProps {
+  groupProps: GroupProps;
+  labelProps: AriaLabelProps;
+}
+
+function createInlineFormGroupComponent({ groupProps, labelProps }: Reactivify<InlineComponentProps>) {
+  const impl = defineComponent({
+    setup(_, { slots }) {
+      return () => (
+        openBlock(),
+        createBlock(Fragment),
+        slots.default?.({ groupProps: toValue(groupProps), labelProps: toValue(labelProps) })
+      );
+    },
+  });
+
+  return impl as typeof impl & {
+    new (): {
+      $slots: {
+        default: (arg: InlineComponentProps) => VNode[];
+      };
+    };
   };
 }
