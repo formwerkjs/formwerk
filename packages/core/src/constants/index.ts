@@ -8,6 +8,7 @@ export const FieldTypePrefixes = {
   RadioButtonGroup: 'rbg',
   Slider: 'sl',
   SearchField: 'sf',
+  FormGroup: 'fg',
 } as const;
 
 export const NOOP = () => {};

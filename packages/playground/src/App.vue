@@ -1,21 +1,20 @@
 <template>
   <div class="flex flex-col">
-    <InputText label="deep" name="some.deep.path" />
-    <InputText label="arr" name="some.array.0.path" />
-
-    <span data-testid="e2">{{ getError('some.array.0.path') }}</span>
-
-    <pre>{{ getErrors() }}</pre>
+    <FormGroup label="Shipping Information">
+      <InputText label="deep" name="some.deep.path" />
+      <InputText label="arr" name="some.array.0.path" />
+    </FormGroup>
   </div>
 </template>
 
 <script lang="ts" setup>
 import InputText from '@/components/InputText.vue';
-import { useForm } from '@formwerk/core';
+import FormGroup from '@/components/FormGroup.vue';
+import { useForm, useFormGroup } from '@formwerk/core';
 import { defineSchema } from '@formwerk/schema-zod';
 import { z } from 'zod';
 
-const { getError, isValid, getErrors } = useForm({
+const form = useForm({
   schema: defineSchema(
     z.object({
       some: z.object({
