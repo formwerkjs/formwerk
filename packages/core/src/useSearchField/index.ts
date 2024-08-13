@@ -11,7 +11,7 @@ import {
 import { createDescribedByProps, normalizeProps, propsToValues, useUniqId, withRefCapture } from '../utils/common';
 import { useInputValidity } from '../validation/useInputValidity';
 import { useLabel } from '../a11y/useLabel';
-import { useFormField } from '../form/useFormField';
+import { useFormField } from '../useFormField';
 import { FieldTypePrefixes } from '../constants';
 import { useErrorDisplay } from '../form/useErrorDisplay';
 

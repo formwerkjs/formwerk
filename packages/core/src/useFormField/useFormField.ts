@@ -10,7 +10,7 @@ import {
   toValue,
   watch,
 } from 'vue';
-import { FormContext, FormKey } from './useForm';
+import { FormContext, FormKey } from '../form/useForm';
 import { Arrayable, Getter } from '../types';
 import { useSyncModel } from '../reactivity/useModelSync';
 import { cloneDeep, isEqual, normalizeArrayable } from '../utils/common';

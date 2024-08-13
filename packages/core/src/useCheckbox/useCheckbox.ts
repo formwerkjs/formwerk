@@ -3,7 +3,7 @@ import { isEqual, normalizeProps, useUniqId, withRefCapture } from '../utils/com
 import { AriaLabelableProps, Reactivify, InputBaseAttributes, RovingTabIndex } from '../types';
 import { useLabel } from '../a11y/useLabel';
 import { CheckboxGroupContext, CheckboxGroupKey } from './useCheckboxGroup';
-import { useFormField } from '../form/useFormField';
+import { useFormField } from '../useFormField';
 import { FieldTypePrefixes } from '../constants';
 
 export interface CheckboxProps<TValue = string> {

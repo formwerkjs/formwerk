@@ -21,7 +21,7 @@ import { useLabel } from '../a11y/useLabel';
 import { useNumberParser } from '../i18n/useNumberParser';
 import { useSpinButton } from '../useSpinButton';
 import { useLocale } from '../i18n/useLocale';
-import { useFormField } from '../form/useFormField';
+import { useFormField } from '../useFormField';
 import { FieldTypePrefixes } from '../constants';
 import { useErrorDisplay } from '../form/useErrorDisplay';
 

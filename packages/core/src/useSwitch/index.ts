@@ -2,7 +2,7 @@ import { Ref, computed, shallowRef, toValue } from 'vue';
 import { AriaDescribableProps, AriaLabelableProps, InputBaseAttributes, InputEvents, Reactivify } from '../types';
 import { isEqual, normalizeProps, useUniqId, withRefCapture } from '../utils/common';
 import { useLabel } from '../a11y/useLabel';
-import { useFormField } from '../form/useFormField';
+import { useFormField } from '../useFormField';
 import { FieldTypePrefixes } from '../constants';
 
 export interface SwitchDOMProps extends InputBaseAttributes, AriaLabelableProps, AriaDescribableProps, InputEvents {

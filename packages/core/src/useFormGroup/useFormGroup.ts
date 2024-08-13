@@ -65,7 +65,7 @@ export function useFormGroup<TInput extends FormObject = FormObject, TOutput ext
 
   const ctx: FormGroupContext = {
     prefixPath(path: string | undefined) {
-      return prefixPath(toValue(props.name), path);
+      return prefixGroupPath(toValue(props.name), path);
     },
   };
 
@@ -104,7 +104,7 @@ function createInlineFormGroupComponent({ groupProps, labelProps }: Reactivify<I
   };
 }
 
-function prefixPath(prefix: string | undefined, path: string | undefined) {
+function prefixGroupPath(prefix: string | undefined, path: string | undefined) {
   if (!path) {
     return path;
   }

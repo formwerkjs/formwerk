@@ -1,6 +1,6 @@
 import { flush, renderSetup } from '@test-utils/index';
 import { useForm } from './useForm';
-import { useFormField } from './useFormField';
+import { useFormField } from '../useFormField';
 import { Component, nextTick, Ref, ref } from 'vue';
 import { useInputValidity } from '../validation/useInputValidity';
 import { fireEvent, render, screen } from '@testing-library/vue';

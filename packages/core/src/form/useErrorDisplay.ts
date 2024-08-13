@@ -1,4 +1,4 @@
-import { FormField } from './useFormField';
+import { FormField } from '../useFormField';
 
 export function useErrorDisplay(field: FormField<any>) {
   function displayError(msg?: string) {

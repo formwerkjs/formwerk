@@ -1,7 +1,8 @@
 import { Ref, inject, nextTick, onMounted, shallowRef, watch } from 'vue';
 import { useEventListener } from '../helpers/useEventListener';
-import { FormField, FormKey } from '../form';
+import { FormKey } from '../form';
 import { Maybe } from '../types';
+import { FormField } from '../useFormField';
 
 interface InputValidityOptions {
   inputRef?: Ref<HTMLInputElement | HTMLTextAreaElement | undefined>;

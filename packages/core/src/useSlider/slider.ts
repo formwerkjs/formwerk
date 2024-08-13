@@ -4,7 +4,7 @@ import { AriaLabelableProps, Arrayable, Direction, Orientation, Reactivify } fro
 import { isNullOrUndefined, normalizeProps, useUniqId, withRefCapture } from '../utils/common';
 import { toNearestMultipleOf } from '../utils/math';
 import { useLocale } from '../i18n/useLocale';
-import { useFormField } from '../form/useFormField';
+import { useFormField } from '../useFormField';
 import { FieldTypePrefixes } from '../constants';
 
 export interface SliderProps {

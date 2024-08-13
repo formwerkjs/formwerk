@@ -1,7 +1,7 @@
 import { nextTick, ref } from 'vue';
 import { useInputValidity } from './useInputValidity';
 import { fireEvent, render, screen } from '@testing-library/vue';
-import { FormField, useFormField } from '../form';
+import { FormField, useFormField } from '../useFormField';
 
 test('updates the validity state on blur events', async () => {
   const input = ref<HTMLInputElement>();
