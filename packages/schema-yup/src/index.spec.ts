@@ -1,4 +1,4 @@
-import { type Component, nextTick } from 'vue';
+import { type Component } from 'vue';
 import { fireEvent, render, screen } from '@testing-library/vue';
 import { useForm, useTextField } from '@formwerk/core';
 import { defineSchema } from '.';
@@ -129,8 +129,8 @@ describe('schema-yup', () => {
     `,
     });
 
-    await nextTick();
     await fireEvent.click(screen.getByText('Submit'));
+    await flush();
     expect(handler).not.toHaveBeenCalled();
     await fireEvent.update(screen.getByTestId('test'), 'test');
     await fireEvent.click(screen.getByText('Submit'));
