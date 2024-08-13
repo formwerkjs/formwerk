@@ -14,6 +14,7 @@ import { FormContext, FormKey } from './useForm';
 import { Arrayable, Getter } from '../types';
 import { useSyncModel } from '../reactivity/useModelSync';
 import { cloneDeep, isEqual, normalizeArrayable } from '../utils/common';
+import { FormGroupKey } from '../useFormGroup';
 
 interface FormFieldOptions<TValue = unknown> {
   path: MaybeRefOrGetter<string | undefined> | undefined;
@@ -38,7 +39,12 @@ export type FormField<TValue> = {
 
 export function useFormField<TValue = unknown>(opts?: Partial<FormFieldOptions<TValue>>): FormField<TValue> {
   const form = inject(FormKey, null);
-  const getPath = () => toValue(opts?.path);
+  const formGroup = inject(FormGroupKey, null);
+  const getPath = () => {
+    const path = toValue(opts?.path);
+
+    return formGroup ? formGroup.prefixPath(path) : path;
+  };
   const { fieldValue, pathlessValue, setValue } = useFieldValue(getPath, form, opts?.initialValue);
   const { isTouched, pathlessTouched, setTouched } = useFieldTouched(getPath, form);
   const { errors, setErrors, isValid, errorMessage, pathlessValidity } = useFieldValidity(getPath, form);

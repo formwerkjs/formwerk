@@ -4,10 +4,13 @@
       <div v-bind="groupProps">
         <div v-bind="labelProps">Shipping Address</div>
 
-        <InputText label="deep" name="some.deep.path" />
-        <InputText label="arr" name="some.array.0.path" />
+        <InputText label="deep" name="deep.path" />
+        <InputText label="arr" name="array.0.path" />
       </div>
     </FormGroup>
+
+    <pre>{{ values }}</pre>
+    <pre>{{ getErrors() }}</pre>
   </div>
 </template>
 
@@ -18,9 +21,9 @@ import { useForm, useFormGroup } from '@formwerk/core';
 import { defineSchema } from '@formwerk/schema-zod';
 import { z } from 'zod';
 
-const { FormGroup } = useFormGroup({ label: 'Shipping Information' });
+const { FormGroup } = useFormGroup({ name: 'some.deep', label: 'Shipping Information' });
 
-const form = useForm({
+const { getErrors, values } = useForm({
   schema: defineSchema(
     z.object({
       some: z.object({

@@ -1,10 +1,23 @@
-import { computed, createBlock, defineComponent, Fragment, openBlock, Ref, shallowRef, toValue, VNode } from 'vue';
+import {
+  computed,
+  createBlock,
+  defineComponent,
+  Fragment,
+  InjectionKey,
+  openBlock,
+  provide,
+  Ref,
+  shallowRef,
+  toValue,
+  VNode,
+} from 'vue';
 import { useLabel } from '../a11y/useLabel';
 import { FieldTypePrefixes } from '../constants';
 import { AriaLabelableProps, AriaLabelProps, FormObject, Reactivify, TypedSchema } from '../types';
 import { normalizeProps, useUniqId, withRefCapture } from '../utils/common';
 
 export interface FormGroupProps<TInput extends FormObject = FormObject, TOutput extends FormObject = TInput> {
+  name?: string;
   label?: string;
   schema?: TypedSchema<TInput, TOutput>;
 }
@@ -13,6 +26,12 @@ interface GroupProps extends AriaLabelableProps {
   id: string;
   role?: 'group';
 }
+
+interface FormGroupContext {
+  prefixPath: (path: string | undefined) => string | undefined;
+}
+
+export const FormGroupKey: InjectionKey<FormGroupContext> = Symbol('FormGroup');
 
 export function useFormGroup<TInput extends FormObject = FormObject, TOutput extends FormObject = TInput>(
   _props: Reactivify<FormGroupProps<TInput, TOutput>>,
@@ -43,6 +62,14 @@ export function useFormGroup<TInput extends FormObject = FormObject, TOutput ext
   });
 
   const FormGroup = createInlineFormGroupComponent({ groupProps, labelProps });
+
+  const ctx: FormGroupContext = {
+    prefixPath(path: string | undefined) {
+      return prefixPath(toValue(props.name), path);
+    },
+  };
+
+  provide(FormGroupKey, ctx);
 
   return {
     groupRef,
@@ -75,4 +102,14 @@ function createInlineFormGroupComponent({ groupProps, labelProps }: Reactivify<I
       };
     };
   };
+}
+
+function prefixPath(prefix: string | undefined, path: string | undefined) {
+  if (!path) {
+    return path;
+  }
+
+  prefix = prefix ? `${prefix}.` : '';
+
+  return `${prefix}${path}`;
 }
