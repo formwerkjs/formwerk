@@ -14,6 +14,7 @@ import { useLabel } from '../a11y/useLabel';
 import { useFormField } from '../useFormField';
 import { FieldTypePrefixes } from '../constants';
 import { useErrorDisplay } from '../useFormField/useErrorDisplay';
+import { TypedSchema } from '../types';
 
 export type TextInputDOMType = 'text' | 'password' | 'email' | 'number' | 'tel' | 'url';
 
@@ -47,19 +48,22 @@ export interface TextFieldProps {
   required?: boolean;
   readonly?: boolean;
   disabled?: boolean;
+
+  schema?: TypedSchema<string>;
 }
 
 export function useTextField(
-  _props: Reactivify<TextFieldProps>,
+  _props: Reactivify<TextFieldProps, 'schema'>,
   elementRef?: Ref<HTMLInputElement | HTMLTextAreaElement>,
 ) {
-  const props = normalizeProps(_props);
+  const props = normalizeProps(_props, ['schema']);
   const inputId = useUniqId(FieldTypePrefixes.TextField);
   const inputRef = elementRef || shallowRef<HTMLInputElement>();
   const field = useFormField<string | undefined>({
     path: props.name,
     initialValue: toValue(props.modelValue),
     disabled: props.disabled,
+    schema: props.schema,
   });
 
   const { validityDetails } = useInputValidity({ inputRef, field });

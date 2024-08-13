@@ -417,7 +417,8 @@ describe('form validation', () => {
         inheritAttrs: false,
         setup: (_, { attrs }) => {
           const name = (attrs.name || 'test') as string;
-          const { errorMessage, inputProps } = useTextField({ name, label: name });
+          const schema = attrs.schema as TypedSchema<any>;
+          const { errorMessage, inputProps } = useTextField({ name, label: name, schema });
 
           return { errorMessage: errorMessage, inputProps, name };
         },
@@ -632,6 +633,52 @@ describe('form validation', () => {
       });
 
       expect(values).toEqual({ test: 'foo' });
+    });
+
+    test('combines errors from field-level schemas', async () => {
+      const handler = vi.fn();
+      const schema: TypedSchema<object, object> = {
+        async parse() {
+          return {
+            errors: [{ path: 'test', messages: ['error'] }],
+          };
+        },
+      };
+
+      const fieldSchema: TypedSchema<object, object> = {
+        async parse() {
+          return {
+            errors: [{ path: 'field', messages: ['field error'] }],
+          };
+        },
+      };
+
+      await render({
+        components: { Child: createInputComponent() },
+        setup() {
+          const { handleSubmit, getError } = useForm({
+            schema,
+          });
+
+          return { getError, onSubmit: handleSubmit(handler), fieldSchema };
+        },
+        template: `
+      <form @submit="onSubmit" novalidate>
+      <Child />
+      <Child name="field" :schema="fieldSchema" />
+        <span data-testid="form-err">{{ getError('test') }}</span>
+        <span data-testid="field-err">{{ getError('field') }}</span>
+
+        <button type="submit">Submit</button>
+      </form>
+    `,
+      });
+
+      await fireEvent.click(screen.getByText('Submit'));
+      await flush();
+      expect(screen.getByTestId('form-err').textContent).toBe('error');
+      expect(screen.getByTestId('field-err').textContent).toBe('field error');
+      expect(handler).not.toHaveBeenCalled();
     });
   });
 

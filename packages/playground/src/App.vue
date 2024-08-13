@@ -9,7 +9,7 @@
       </div>
     </FormGroup> -->
 
-    <InputText label="Email" name="email" type="email" required />
+    <InputText label="Email" name="email" type="email" :schema="defineSchema(z.string().email())" />
     <InputText label="Other" name="other" required />
 
     <button @click="onSubmit">Submit</button>
@@ -31,7 +31,6 @@ import { z } from 'zod';
 const { getErrors, values, handleSubmit } = useForm({
   schema: defineSchema(
     z.object({
-      email: z.string().email(),
       other: z.string().min(3),
     }),
   ),

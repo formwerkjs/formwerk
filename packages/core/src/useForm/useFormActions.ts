@@ -100,7 +100,7 @@ export function useFormActions<TForm extends FormObject = FormObject, TOutput ex
     return {
       mode: 'schema',
       isValid: !allErrors.length,
-      errors,
+      errors: allErrors,
       output: cloneDeep(output ?? (form.getValues() as unknown as TOutput)),
     };
   }

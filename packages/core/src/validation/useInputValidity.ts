@@ -32,12 +32,8 @@ export function useInputValidity(opts: InputValidityOptions) {
   }
 
   function _updateValidity() {
-    if (schema) {
-      return validateField(true);
-    }
-
     if (validationMode === 'native') {
-      return validateNative(true);
+      return schema ? validateField(true) : validateNative(true);
     }
 
     form?.requestValidation();
