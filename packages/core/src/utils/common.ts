@@ -89,7 +89,7 @@ export function normalizeProps<TProps extends Record<string, unknown>, Exclude e
         return [key, (...args: any[]) => (props[key] as any)(...args)];
       }
 
-      return [key, () => props[key]];
+      return [key, props[key]];
     }),
   ) as NormalizedProps<TProps, Exclude>;
 }
