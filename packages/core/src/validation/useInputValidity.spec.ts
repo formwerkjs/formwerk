@@ -91,6 +91,7 @@ test('updates the input native validity with custom validity errors', async () =
     `,
   });
 
+  await nextTick();
   field.setErrors('Custom error');
   await nextTick();
   expect(screen.getByTestId('err').textContent).toBe('Custom error');

@@ -1,13 +1,18 @@
 <template>
   <div class="flex flex-col">
-    <FormGroup v-slot="{ groupProps, labelProps }">
+    <!-- <FormGroup v-slot="{ groupProps, labelProps }">
       <div v-bind="groupProps">
         <div v-bind="labelProps">Shipping Address</div>
 
         <InputText label="deep" name="deep.path" />
         <InputText label="arr" name="array.0.path" />
       </div>
-    </FormGroup>
+    </FormGroup> -->
+
+    <InputText label="Email" name="email" type="email" required />
+    <InputText label="Other" name="other" required />
+
+    <button @click="onSubmit">Submit</button>
 
     <pre>{{ values }}</pre>
     <pre>{{ getErrors() }}</pre>
@@ -21,22 +26,18 @@ import { useForm, useFormGroup } from '@formwerk/core';
 import { defineSchema } from '@formwerk/schema-zod';
 import { z } from 'zod';
 
-const { FormGroup } = useFormGroup({ name: 'some.deep', label: 'Shipping Information' });
+// const { FormGroup } = useFormGroup({ name: 'some.deep', label: 'Shipping Information' });
 
-const { getErrors, values } = useForm({
+const { getErrors, values, handleSubmit } = useForm({
   schema: defineSchema(
     z.object({
-      some: z.object({
-        deep: z.object({
-          path: z.string().min(1, 'REQUIRED'),
-        }),
-        array: z.array(
-          z.object({
-            path: z.string().min(1, 'REQUIRED'),
-          }),
-        ),
-      }),
+      email: z.string().email(),
+      other: z.string().min(3),
     }),
   ),
+});
+
+const onSubmit = handleSubmit(values => {
+  console.log(values);
 });
 </script>

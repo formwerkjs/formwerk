@@ -1,6 +1,7 @@
 import { renderSetup } from '@test-utils/index';
 import { useFormField } from './useFormField';
 import { useForm } from '../useForm/useForm';
+import { nextTick } from 'vue';
 
 test('it initializes the field value', async () => {
   const { fieldValue } = await renderSetup(() => {
@@ -113,4 +114,39 @@ test('formless fields maintain their own error state', async () => {
   expect(isValid.value).toBe(false);
   expect(errorMessage.value).toBe('error');
   expect(errors.value).toEqual(['error']);
+});
+
+test('can have a typed schema for validation', async () => {
+  const { validate, errors } = await renderSetup(() => {
+    return useFormField({
+      initialValue: 'bar',
+      schema: {
+        parse: async () => {
+          return { errors: [{ messages: ['error'], path: 'field' }] };
+        },
+      },
+    });
+  });
+
+  expect(errors.value).toEqual([]);
+  await validate(true);
+  expect(errors.value).toEqual(['error']);
+});
+
+test('can have a typed schema for initial value', async () => {
+  const { fieldValue } = await renderSetup(() => {
+    return useFormField({
+      schema: {
+        parse: async () => {
+          return { errors: [] };
+        },
+        defaults(value) {
+          return value || 'default';
+        },
+      },
+    });
+  });
+
+  await nextTick();
+  expect(fieldValue.value).toEqual('default');
 });

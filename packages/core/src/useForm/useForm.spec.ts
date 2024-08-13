@@ -489,7 +489,7 @@ describe('form validation', () => {
       });
 
       await fireEvent.click(screen.getByText('Submit'));
-      await nextTick();
+      await flush();
       expect(screen.getByTestId('err').textContent).toBe('error');
       expect(screen.getByTestId('form-err').textContent).toBe('error');
       expect(handler).not.toHaveBeenCalled();
@@ -534,7 +534,7 @@ describe('form validation', () => {
       expect(screen.getByTestId('err').textContent).toBe('error');
       expect(screen.getByTestId('form-err').textContent).toBe('error');
       await fireEvent.click(screen.getByText('Submit'));
-      await nextTick();
+      await flush();
       expect(handler).toHaveBeenCalledOnce();
       expect(screen.getByTestId('err').textContent).toBe('');
       expect(screen.getByTestId('form-err').textContent).toBe('');
@@ -577,7 +577,7 @@ describe('form validation', () => {
       });
 
       await fireEvent.click(screen.getByText('Submit'));
-      await nextTick();
+      await flush();
       expect(handler).toHaveBeenCalledOnce();
       expect(handler).toHaveBeenLastCalledWith({ test: true, foo: 'bar' });
     });

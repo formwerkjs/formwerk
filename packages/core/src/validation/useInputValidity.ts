@@ -1,8 +1,9 @@
 import { Ref, inject, nextTick, onMounted, shallowRef, watch } from 'vue';
 import { useEventListener } from '../helpers/useEventListener';
 import { FormKey } from '../useForm';
-import { Maybe } from '../types';
+import { Maybe, ValidationResult } from '../types';
 import { FormField } from '../useFormField';
+import { normalizeArrayable } from '../utils/common';
 
 interface InputValidityOptions {
   inputRef?: Ref<HTMLInputElement | HTMLTextAreaElement | undefined>;
@@ -12,20 +13,31 @@ interface InputValidityOptions {
 
 export function useInputValidity(opts: InputValidityOptions) {
   const form = inject(FormKey, null);
-  const { setErrors, errorMessage } = opts.field;
+  const { setErrors, errorMessage, schema, validate: validateField, getPath } = opts.field;
   const validityDetails = shallowRef<ValidityState>();
   const validationMode = form?.getValidationMode() ?? 'native';
   useMessageCustomValiditySync(errorMessage, opts.inputRef);
 
-  function updateWithNativeValidity() {
+  function validateNative(mutate?: boolean): ValidationResult {
     validityDetails.value = opts.inputRef?.value?.validity;
-    setErrors(opts.inputRef?.value?.validationMessage || []);
+    const messages = normalizeArrayable(opts.inputRef?.value?.validationMessage || ([] as string[])).filter(Boolean);
+    if (mutate) {
+      setErrors(messages);
+    }
+
+    return {
+      isValid: !messages.length,
+      errors: [{ messages, path: getPath() || '' }],
+    };
   }
 
   function _updateValidity() {
+    if (schema) {
+      return validateField(true);
+    }
+
     if (validationMode === 'native') {
-      updateWithNativeValidity();
-      return;
+      return validateNative(true);
     }
 
     form?.requestValidation();
@@ -38,16 +50,30 @@ export function useInputValidity(opts: InputValidityOptions) {
 
   useEventListener(opts.inputRef, opts?.events || ['change', 'blur'], updateValidity);
 
+  // It shouldn't mutate the field if the validation is sourced by the form.
+  // The form will handle the mutation later once it aggregates all the results.
+  form?.onValidationDispatch(enqueue => {
+    if (schema) {
+      enqueue(validateField(false));
+      return;
+    }
+
+    if (validationMode === 'native') {
+      enqueue(Promise.resolve(validateNative(false)));
+      return;
+    }
+  });
+
   if (validationMode === 'native') {
-    form?.onNativeValidationDispatch(updateWithNativeValidity);
-    useEventListener(opts.inputRef, opts?.events || ['invalid'], updateWithNativeValidity);
+    // It should self-mutate the field errors because this is fired by a native validation and not sourced by the form.
+    useEventListener(opts.inputRef, opts?.events || ['invalid'], () => validateNative(true));
   }
 
   /**
    * Validity is always updated on mount.
    */
   onMounted(() => {
-    nextTick(updateValidity);
+    nextTick(_updateValidity);
   });
 
   return {

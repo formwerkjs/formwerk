@@ -11,7 +11,7 @@ import {
   watch,
 } from 'vue';
 import { FormContext, FormKey } from '../useForm/useForm';
-import { Arrayable, Getter } from '../types';
+import { Arrayable, Getter, TypedSchema, ValidationResult } from '../types';
 import { useSyncModel } from '../reactivity/useModelSync';
 import { cloneDeep, isEqual, normalizeArrayable } from '../utils/common';
 import { FormGroupKey } from '../useFormGroup';
@@ -23,6 +23,7 @@ interface FormFieldOptions<TValue = unknown> {
   syncModel: boolean;
   modelName: string;
   disabled: MaybeRefOrGetter<boolean | undefined>;
+  schema: TypedSchema<TValue>;
 }
 
 export type FormField<TValue> = {
@@ -32,6 +33,9 @@ export type FormField<TValue> = {
   isValid: Ref<boolean>;
   errors: Ref<string[]>;
   errorMessage: Ref<string>;
+  schema: TypedSchema<TValue> | undefined;
+  validate(mutate?: boolean): Promise<ValidationResult>;
+  getPath: Getter<string | undefined>;
   setValue: (value: TValue | undefined) => void;
   setTouched: (touched: boolean) => void;
   setErrors: (messages: Arrayable<string>) => void;
@@ -45,18 +49,19 @@ export function useFormField<TValue = unknown>(opts?: Partial<FormFieldOptions<T
 
     return formGroup ? formGroup.prefixPath(path) : path;
   };
-  const { fieldValue, pathlessValue, setValue } = useFieldValue(getPath, form, opts?.initialValue);
+  const initialValue = opts?.schema?.defaults?.(opts?.initialValue as TValue) ?? opts?.initialValue;
+  const { fieldValue, pathlessValue, setValue } = useFieldValue(getPath, form, initialValue);
   const { isTouched, pathlessTouched, setTouched } = useFieldTouched(getPath, form);
   const { errors, setErrors, isValid, errorMessage, pathlessValidity } = useFieldValidity(getPath, form);
 
   const isDirty = computed(() => {
     if (!form) {
-      return !isEqual(fieldValue.value, opts?.initialValue);
+      return !isEqual(fieldValue.value, initialValue);
     }
 
     const path = getPath();
     if (!path) {
-      return !isEqual(pathlessValue.value, opts?.initialValue);
+      return !isEqual(pathlessValue.value, initialValue);
     }
 
     return !isEqual(fieldValue.value, form.getFieldOriginalValue(path));
@@ -70,6 +75,23 @@ export function useFormField<TValue = unknown>(opts?: Partial<FormFieldOptions<T
     });
   }
 
+  async function validate(mutate?: boolean) {
+    const schema = opts?.schema;
+    if (!schema) {
+      return Promise.resolve({ isValid: true, errors: [] });
+    }
+
+    const { errors } = await schema.parse(fieldValue.value as TValue);
+    if (mutate) {
+      setErrors(errors.map(e => e.messages).flat());
+    }
+
+    return {
+      isValid: errors.length === 0,
+      errors: errors.map(e => ({ messages: e.messages, path: getPath() || e.path })),
+    };
+  }
+
   const field: FormField<TValue> = {
     fieldValue: readonly(fieldValue) as Ref<TValue | undefined>,
     isTouched: readonly(isTouched) as Ref<boolean>,
@@ -77,6 +99,9 @@ export function useFormField<TValue = unknown>(opts?: Partial<FormFieldOptions<T
     isValid,
     errors,
     errorMessage,
+    schema: opts?.schema,
+    validate,
+    getPath,
     setValue,
     setTouched,
     setErrors,
@@ -86,13 +111,7 @@ export function useFormField<TValue = unknown>(opts?: Partial<FormFieldOptions<T
     return field;
   }
 
-  initFormPathIfNecessary(
-    form,
-    getPath,
-    opts?.initialValue,
-    opts?.initialTouched ?? false,
-    toValue(opts?.disabled) ?? false,
-  );
+  initFormPathIfNecessary(form, getPath, initialValue, opts?.initialTouched ?? false, toValue(opts?.disabled) ?? false);
 
   form.onSubmitAttempt(() => {
     setTouched(true);
