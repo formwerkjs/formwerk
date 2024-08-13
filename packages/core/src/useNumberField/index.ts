@@ -23,7 +23,7 @@ import { useSpinButton } from '../useSpinButton';
 import { useLocale } from '../i18n/useLocale';
 import { useFormField } from '../useFormField';
 import { FieldTypePrefixes } from '../constants';
-import { useErrorDisplay } from '../form/useErrorDisplay';
+import { useErrorDisplay } from '../useFormField/useErrorDisplay';
 
 export interface NumberInputDOMAttributes {
   name?: string;

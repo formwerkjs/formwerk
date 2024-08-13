@@ -14,7 +14,7 @@ import { useUniqId, createDescribedByProps, normalizeProps, isEqual } from '../u
 import { useLocale } from '../i18n/useLocale';
 import { useFormField } from '../useFormField';
 import { FieldTypePrefixes } from '../constants';
-import { useErrorDisplay } from '../form/useErrorDisplay';
+import { useErrorDisplay } from '../useFormField/useErrorDisplay';
 
 export type CheckboxGroupValue<TCheckbox> = TCheckbox[];
 

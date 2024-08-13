@@ -1,6 +1,6 @@
 import { renderSetup } from '@test-utils/index';
 import { useFormField } from './useFormField';
-import { useForm } from '../form/useForm';
+import { useForm } from '../useForm/useForm';
 
 test('it initializes the field value', async () => {
   const { fieldValue } = await renderSetup(() => {

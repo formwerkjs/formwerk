@@ -1,6 +1,6 @@
 import { Ref, inject, nextTick, onMounted, shallowRef, watch } from 'vue';
 import { useEventListener } from '../helpers/useEventListener';
-import { FormKey } from '../form';
+import { FormKey } from '../useForm';
 import { Maybe } from '../types';
 import { FormField } from '../useFormField';
 

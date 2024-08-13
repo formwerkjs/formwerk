@@ -13,7 +13,7 @@ import { useInputValidity } from '../validation/useInputValidity';
 import { useLabel } from '../a11y/useLabel';
 import { useFormField } from '../useFormField';
 import { FieldTypePrefixes } from '../constants';
-import { useErrorDisplay } from '../form/useErrorDisplay';
+import { useErrorDisplay } from '../useFormField/useErrorDisplay';
 
 export interface SearchInputDOMAttributes extends TextInputBaseAttributes {
   type?: 'search';

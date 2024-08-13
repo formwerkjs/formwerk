@@ -1,6 +1,6 @@
 import { renderSetup } from '@test-utils/index';
 import { useErrorDisplay } from './useErrorDisplay';
-import { useFormField } from '../useFormField';
+import { useFormField } from './useFormField';
 
 test('displays field errors only if they are touched', async () => {
   const { setErrors, isValid, errorMessage, displayError, setTouched } = await renderSetup(() => {

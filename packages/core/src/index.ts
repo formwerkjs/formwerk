@@ -8,7 +8,7 @@ export * from './useNumberField';
 export * from './useSpinButton';
 export * from './types';
 export * from './config';
-export * from './form';
+export * from './useForm';
 export * from './useFormGroup';
 export * from './validation';
 export { normalizePath } from './utils/path';
