@@ -36,7 +36,7 @@ export interface BaseFormContext<TForm extends FormObject = FormObject> {
   setFieldErrors<TPath extends Path<TForm>>(path: TPath, message: Arrayable<string>): void;
   getValidationMode(): FormValidationMode;
   getErrors: () => TypedSchemaError[];
-  clearErrors: () => void;
+  clearErrors: (path?: string) => void;
   hasErrors: () => boolean;
   getValues: () => TForm;
   setValues: (newValues: Partial<TForm>, opts?: SetValueOptions) => void;
@@ -204,8 +204,17 @@ export function createFormContext<TForm extends FormObject = FormObject, TOutput
     merge(touched, newTouched);
   }
 
-  function clearErrors() {
-    errors.value = {} as ErrorsSchema<TForm>;
+  function clearErrors(path?: string) {
+    if (!path) {
+      errors.value = {} as ErrorsSchema<TForm>;
+      return;
+    }
+
+    Object.keys(errors.value).forEach(key => {
+      if (key === path || key.startsWith(path)) {
+        delete errors.value[key as Path<TForm>];
+      }
+    });
   }
 
   function revertValues() {

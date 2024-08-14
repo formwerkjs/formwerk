@@ -9,11 +9,10 @@ import {
   TypedSchemaError,
   ValidationResult,
 } from '../types';
-import { batchAsync, cloneDeep, withLatestCall } from '../utils/common';
 import { createEventDispatcher } from '../utils/events';
 import { BaseFormContext, FormValidationMode, SetValueOptions } from './formContext';
 import { unsetPath } from '../utils/path';
-import { SCHEMA_BATCH_MS } from '../constants';
+import { useValidationProvider } from '../validation/useValidationProvider';
 
 export interface ResetState<TForm extends FormObject> {
   values: Partial<TForm>;
@@ -37,8 +36,12 @@ export function useFormActions<TForm extends FormObject = FormObject, TOutput ex
 ) {
   const isSubmitting = shallowRef(false);
   const [dispatchSubmit, onSubmitAttempt] = createEventDispatcher<void>('submit');
-  const [dispatchValidate, onValidationDispatch] =
-    createEventDispatcher<(pending: Promise<ValidationResult>) => void>('form-validate');
+  const {
+    validate: _validate,
+    onValidationDispatch,
+    defineValidationRequest,
+  } = useValidationProvider({ schema, getValues: () => form.getValues() });
+  const requestValidation = defineValidationRequest(updateValidationStateFromResult);
 
   function handleSubmit<TReturns>(onSuccess: (values: TOutput) => MaybeAsync<TReturns>) {
     return async function onSubmit(e: Event) {
@@ -68,40 +71,6 @@ export function useFormActions<TForm extends FormObject = FormObject, TOutput ex
       isSubmitting.value = false;
 
       return result;
-    };
-  }
-
-  /**
-   * Validates but tries to not mutate anything if possible.
-   */
-  async function _validate(): Promise<FormValidationResult<TOutput>> {
-    const validationQueue: Promise<ValidationResult>[] = [];
-    const enqueue = (promise: Promise<ValidationResult>) => validationQueue.push(promise);
-    // This is meant to trigger a signal for all fields that can validate themselves to do so.
-    // Native validation is sync so no need to wait for pending validators.
-    // But field-level and group-level validations are async, so we need to wait for them.
-    await dispatchValidate(enqueue);
-    const fieldErrors = (await Promise.all(validationQueue)).flatMap(r => r.errors).filter(e => e.messages.length);
-
-    // If we are using native validation, then we don't stop the state mutation
-    // Because it already has happened, since validations are sourced from the fields.
-    if (form.getValidationMode() === 'native' || !schema) {
-      return {
-        mode: 'native',
-        isValid: !fieldErrors.length,
-        errors: fieldErrors,
-        output: cloneDeep(form.getValues() as unknown as TOutput),
-      };
-    }
-
-    const { errors, output } = await schema.parse(form.getValues());
-    const allErrors = [...errors, ...fieldErrors];
-
-    return {
-      mode: 'schema',
-      isValid: !allErrors.length,
-      errors: allErrors,
-      output: cloneDeep(output ?? (form.getValues() as unknown as TOutput)),
     };
   }
 
@@ -145,12 +114,6 @@ export function useFormActions<TForm extends FormObject = FormObject, TOutput ex
 
     return Promise.resolve();
   }
-
-  const requestValidation = withLatestCall(batchAsync(_validate, SCHEMA_BATCH_MS), result => {
-    updateValidationStateFromResult(result);
-
-    return result;
-  });
 
   return {
     actions: {

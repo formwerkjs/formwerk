@@ -1,15 +1,19 @@
 <template>
   <div class="flex flex-col">
-  <FormGroup name="group1" label="Group 1">
     <InputText label="Email" name="email" type="email" :schema="defineSchema(z.string().email())" />
-    <InputText label="Other" name="other" required />
+    <InputText label="Full Name" name="fullName" />
+
+  <FormGroup name="address" label="Shipping Address" :schema="groupSchema">
+    <InputText label="Address Line 1" name="street" />
+
+    <div class="grid grid-cols-3 gap-4">
+      <InputText label="City" name="city" />
+      <InputText label="State" name="state" />
+    <InputText label="Zip" name="zip" />
+    </div>
   </FormGroup>
 
-    <FormGroup name="group2" label="Group 2" class="mt-6">
-      <InputText label="Email" name="email" type="email" :schema="defineSchema(z.string().email())" />
-      <InputText label="Other" name="other" required />
-    </FormGroup>
-
+    {{values }}
 
     <button @click="onSubmit">Submit</button>
   </div>
@@ -22,11 +26,18 @@ import { useForm } from '@formwerk/core';
 import { defineSchema } from '@formwerk/schema-zod';
 import { z } from 'zod';
 
+const groupSchema = defineSchema(z.object({
+  street: z.string().min(1),
+  city: z.string().min(1),
+  state: z.string().min(1),
+
+  zip: z.preprocess((v) => Number(v), z.number().lte(1000).gte(100)),
+}));
 
 const { getErrors, values, handleSubmit } = useForm({
   schema: defineSchema(
     z.object({
-      other: z.string().min(3),
+      fullName: z.string().min(1),
     }),
   ),
 });

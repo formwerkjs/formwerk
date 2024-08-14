@@ -4,6 +4,7 @@ import { FormKey } from '../useForm';
 import { Maybe, ValidationResult } from '../types';
 import { FormField } from '../useFormField';
 import { normalizeArrayable } from '../utils/common';
+import { FormGroupKey } from '../useFormGroup';
 
 interface InputValidityOptions {
   inputRef?: Ref<HTMLInputElement | HTMLTextAreaElement | undefined>;
@@ -13,6 +14,7 @@ interface InputValidityOptions {
 
 export function useInputValidity(opts: InputValidityOptions) {
   const form = inject(FormKey, null);
+  const formGroup = inject(FormGroupKey, null);
   const { setErrors, errorMessage, schema, validate: validateField, getPath } = opts.field;
   const validityDetails = shallowRef<ValidityState>();
   const validationMode = form?.getValidationMode() ?? 'native';
@@ -36,7 +38,7 @@ export function useInputValidity(opts: InputValidityOptions) {
       return schema ? validateField(true) : validateNative(true);
     }
 
-    form?.requestValidation();
+    (formGroup || form)?.requestValidation();
   }
 
   async function updateValidity() {
@@ -48,7 +50,7 @@ export function useInputValidity(opts: InputValidityOptions) {
 
   // It shouldn't mutate the field if the validation is sourced by the form.
   // The form will handle the mutation later once it aggregates all the results.
-  form?.onValidationDispatch(enqueue => {
+  (formGroup || form)?.onValidationDispatch(enqueue => {
     if (schema) {
       enqueue(validateField(false));
       return;

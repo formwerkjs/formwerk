@@ -4,13 +4,13 @@
 
     <slot :display-error="displayError" :get-error="getError" />
 
-    <pre class="bg-gray-600 text-white text-xs p-2.5 rounded-lg">Errors: {{getErrors()}}
-    </pre>
+<!--    <pre class="bg-gray-600 text-white text-xs p-2.5 rounded-lg">Errors: {{getErrors()}}-->
+<!--    </pre>-->
 
-    <div>values: {{ getValues()}}</div>
-    <div>touched: {{ isTouched }}</div>
-    <div>dirty: {{ isDirty }}</div>
-    <div>valid: {{ isValid }}</div>
+<!--    <div>values: {{ getValues()}}</div>-->
+<!--    <div>touched: {{ isTouched }}</div>-->
+<!--    <div>dirty: {{ isDirty }}</div>-->
+<!--    <div>valid: {{ isValid }}</div>-->
   </fieldset>
 </template>
 

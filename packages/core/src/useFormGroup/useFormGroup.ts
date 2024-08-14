@@ -14,9 +14,11 @@ import {
 } from 'vue';
 import { useLabel } from '../a11y/useLabel';
 import { FieldTypePrefixes } from '../constants';
-import { AriaLabelableProps, AriaLabelProps, FormObject, Reactivify, TypedSchema } from '../types';
+import { AriaLabelableProps, AriaLabelProps, FormObject, Reactivify, TypedSchema, ValidationResult } from '../types';
 import { isEqual, normalizeProps, useUniqId, warn, withRefCapture } from '../utils/common';
-import { FormKey } from '@core/useForm';
+import { FormKey } from '../useForm';
+import { useValidationProvider } from '../validation/useValidationProvider';
+import { FormValidationResult } from '../useForm/useFormActions';
 
 export interface FormGroupProps<TInput extends FormObject = FormObject, TOutput extends FormObject = TInput> {
   name: string;
@@ -29,20 +31,35 @@ interface GroupProps extends AriaLabelableProps {
   role?: 'group';
 }
 
-interface FormGroupContext {
+interface FormGroupContext<TOutput extends FormObject = FormObject> {
   prefixPath: (path: string | undefined) => string | undefined;
+  onValidationDispatch(cb: (enqueue: (promise: Promise<ValidationResult>) => void) => void): void;
+  requestValidation(): Promise<FormValidationResult<TOutput>>;
 }
 
 export const FormGroupKey: InjectionKey<FormGroupContext> = Symbol('FormGroup');
 
 export function useFormGroup<TInput extends FormObject = FormObject, TOutput extends FormObject = TInput>(
-  _props: Reactivify<FormGroupProps<TInput, TOutput>>,
+  _props: Reactivify<FormGroupProps<TInput, TOutput>, 'schema'>,
   elementRef?: Ref<HTMLElement>,
 ) {
   const id = useUniqId(FieldTypePrefixes.FormGroup);
-  const props = normalizeProps(_props);
+  const props = normalizeProps(_props, ['schema']);
   const groupRef = elementRef || shallowRef<HTMLInputElement>();
   const form = inject(FormKey, null);
+  const { validate, onValidationDispatch, defineValidationRequest } = useValidationProvider({
+    schema: props.schema,
+    getValues,
+  });
+
+  const requestValidation = defineValidationRequest(({ errors }) => {
+    // Clears Errors in that path before proceeding.
+    form?.clearErrors(toValue(props.name));
+    for (const entry of errors) {
+      form?.setFieldErrors(prefixPath(entry.path) ?? '', entry.messages);
+    }
+  });
+
   if (!form) {
     warn('Form groups must have a parent form. Please make sure to call `useForm` at a parent component.');
   }
@@ -99,11 +116,28 @@ export function useFormGroup<TInput extends FormObject = FormObject, TOutput ext
     return form?.isFieldTouched(path) ? msg : undefined;
   }
 
+  function prefixPath(path: string | undefined) {
+    return prefixGroupPath(toValue(props.name), path);
+  }
+
   const ctx: FormGroupContext = {
-    prefixPath(path: string | undefined) {
-      return prefixGroupPath(toValue(props.name), path);
-    },
+    prefixPath,
+    onValidationDispatch,
+    requestValidation,
   };
+
+  // Whenever the form is validated, it is deferred to the form group to do that.
+  // Fields should not validate in response to their form triggering a validate and instead should follow the field group event
+  form?.onValidationDispatch(enqueue => {
+    enqueue(
+      validate().then(result => {
+        return {
+          ...result,
+          errors: result.errors.map(e => ({ path: prefixPath(e.path) ?? '', messages: e.messages })),
+        };
+      }),
+    );
+  });
 
   provide(FormGroupKey, ctx);
 
@@ -119,6 +153,7 @@ export function useFormGroup<TInput extends FormObject = FormObject, TOutput ext
     getValues,
     getError,
     displayError,
+    validate,
   };
 }
 
