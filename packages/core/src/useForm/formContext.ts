@@ -13,7 +13,7 @@ import {
 import { cloneDeep, normalizeArrayable } from '../utils/common';
 import { escapePath, findLeaf, getFromPath, isPathSet, setInPath, unsetPath as unsetInObject } from '../utils/path';
 import { FormSnapshot } from './formSnapshot';
-import { merge } from '../../../shared/src';
+import { isObject, merge } from '../../../shared/src';
 
 export type FormValidationMode = 'native' | 'schema';
 
@@ -83,7 +83,12 @@ export function createFormContext<TForm extends FormObject = FormObject, TOutput
   }
 
   function isFieldTouched<TPath extends Path<TForm>>(path: TPath) {
-    return !!getFromPath(touched, path);
+    const value = getFromPath(touched, path);
+    if (isObject(value)) {
+      return !!findLeaf(value, v => !!v);
+    }
+
+    return !!value;
   }
 
   function isFieldSet<TPath extends Path<TForm>>(path: TPath) {

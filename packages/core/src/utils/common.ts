@@ -278,3 +278,9 @@ export function batchAsync<TFunction extends (...args: any) => Promise<any>, TRe
     return new Promise<TResult>(resolve => resolves.push(resolve));
   };
 }
+
+export function warn(message: string) {
+  if (__DEV__) {
+    console.warn(`[Formwerk]: ${message}`);
+  }
+}

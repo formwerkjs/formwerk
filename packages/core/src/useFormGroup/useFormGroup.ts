@@ -3,6 +3,7 @@ import {
   createBlock,
   defineComponent,
   Fragment,
+  inject,
   InjectionKey,
   openBlock,
   provide,
@@ -14,10 +15,11 @@ import {
 import { useLabel } from '../a11y/useLabel';
 import { FieldTypePrefixes } from '../constants';
 import { AriaLabelableProps, AriaLabelProps, FormObject, Reactivify, TypedSchema } from '../types';
-import { normalizeProps, useUniqId, withRefCapture } from '../utils/common';
+import { isEqual, normalizeProps, useUniqId, warn, withRefCapture } from '../utils/common';
+import { FormKey } from '@core/useForm';
 
 export interface FormGroupProps<TInput extends FormObject = FormObject, TOutput extends FormObject = TInput> {
-  name?: string;
+  name: string;
   label?: string;
   schema?: TypedSchema<TInput, TOutput>;
 }
@@ -40,6 +42,10 @@ export function useFormGroup<TInput extends FormObject = FormObject, TOutput ext
   const id = useUniqId(FieldTypePrefixes.FormGroup);
   const props = normalizeProps(_props);
   const groupRef = elementRef || shallowRef<HTMLInputElement>();
+  const form = inject(FormKey, null);
+  if (!form) {
+    warn('Form groups must have a parent form. Please make sure to call `useForm` at a parent component.');
+  }
 
   const { labelProps, labelledByProps } = useLabel({
     for: id,
@@ -63,6 +69,36 @@ export function useFormGroup<TInput extends FormObject = FormObject, TOutput ext
 
   const FormGroup = createInlineFormGroupComponent({ groupProps, labelProps });
 
+  function getValues() {
+    return form?.getFieldValue(toValue(props.name)) ?? {};
+  }
+
+  function getErrors() {
+    const path = toValue(props.name);
+    const allErrors = form?.getErrors() || [];
+
+    return allErrors.filter(e => e.path.startsWith(path));
+  }
+
+  const isValid = computed(() => getErrors().length === 0);
+  const isTouched = computed(() => form?.isFieldTouched(toValue(props.name)) ?? false);
+  const isDirty = computed(() => {
+    const path = toValue(props.name);
+
+    return !isEqual(getValues(), form?.getFieldOriginalValue(path) ?? {});
+  });
+
+  function getError(name: string) {
+    return form?.getFieldErrors(ctx.prefixPath(name) ?? '')?.[0];
+  }
+
+  function displayError(name: string) {
+    const msg = getError(name);
+    const path = ctx.prefixPath(name) ?? '';
+
+    return form?.isFieldTouched(path) ? msg : undefined;
+  }
+
   const ctx: FormGroupContext = {
     prefixPath(path: string | undefined) {
       return prefixGroupPath(toValue(props.name), path);
@@ -76,6 +112,13 @@ export function useFormGroup<TInput extends FormObject = FormObject, TOutput ext
     labelProps,
     groupProps,
     FormGroup,
+    isDirty,
+    isValid,
+    isTouched,
+    getErrors,
+    getValues,
+    getError,
+    displayError,
   };
 }
 
