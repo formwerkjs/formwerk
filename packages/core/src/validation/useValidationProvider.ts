@@ -101,13 +101,13 @@ export function useValidationProvider<
 
   function mergeOutputs(base: TOutput, results: (ValidationResult | GroupValidationResult)[]): TOutput {
     const all = cloneDeep(base);
-    // Make sure we start with groups first since it may override indivdual fields
+    // Make sure we start with groups first since it may override individual fields
     const sorted = [...results].sort((a, b) => {
       if (a.type === b.type) {
         return 0;
       }
 
-      return a.type === 'FIELD' ? -1 : 1;
+      return a.type === 'FIELD' ? 1 : -1;
     });
 
     for (const result of sorted) {
