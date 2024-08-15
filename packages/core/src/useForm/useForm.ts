@@ -10,10 +10,12 @@ import {
   Path,
   TypedSchema,
   ValidationResult,
+  FormValidationResult,
+  GroupValidationResult,
 } from '../types';
 import { createFormContext, BaseFormContext } from './formContext';
 import { FormTransactionManager, useFormTransactions } from './useFormTransactions';
-import { FormValidationResult, useFormActions } from './useFormActions';
+import { useFormActions } from './useFormActions';
 import { useFormSnapshots } from './formSnapshot';
 import { findLeaf } from '../utils/path';
 
@@ -29,7 +31,9 @@ export interface FormContext<TForm extends FormObject = FormObject, TOutput exte
     FormTransactionManager<TForm> {
   requestValidation(): Promise<FormValidationResult<TOutput>>;
   onSubmitAttempt(cb: () => void): void;
-  onValidationDispatch(cb: (enqueue: (promise: Promise<ValidationResult>) => void) => void): void;
+  onValidationDispatch(
+    cb: (enqueue: (promise: Promise<ValidationResult | GroupValidationResult>) => void) => void,
+  ): void;
 }
 
 export const FormKey: InjectionKey<FormContext<any>> = Symbol('Formwerk FormKey');

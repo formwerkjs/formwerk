@@ -2,15 +2,15 @@ import { shallowRef } from 'vue';
 import {
   DisabledSchema,
   FormObject,
+  FormValidationResult,
   MaybeAsync,
   Path,
   TouchedSchema,
   TypedSchema,
   TypedSchemaError,
-  ValidationResult,
 } from '../types';
 import { createEventDispatcher } from '../utils/events';
-import { BaseFormContext, FormValidationMode, SetValueOptions } from './formContext';
+import { BaseFormContext, SetValueOptions } from './formContext';
 import { unsetPath } from '../utils/path';
 import { useValidationProvider } from '../validation/useValidationProvider';
 
@@ -25,11 +25,6 @@ export interface FormActionsOptions<TForm extends FormObject = FormObject, TOutp
   disabled: DisabledSchema<TForm>;
 }
 
-export interface FormValidationResult<TOutput extends FormObject = FormObject> extends ValidationResult {
-  output: TOutput;
-  mode: FormValidationMode;
-}
-
 export function useFormActions<TForm extends FormObject = FormObject, TOutput extends FormObject = TForm>(
   form: BaseFormContext<TForm>,
   { disabled, schema }: FormActionsOptions<TForm, TOutput>,
@@ -40,7 +35,7 @@ export function useFormActions<TForm extends FormObject = FormObject, TOutput ex
     validate: _validate,
     onValidationDispatch,
     defineValidationRequest,
-  } = useValidationProvider({ schema, getValues: () => form.getValues() });
+  } = useValidationProvider({ schema, getValues: () => form.getValues(), type: 'FORM' });
   const requestValidation = defineValidationRequest(updateValidationStateFromResult);
 
   function handleSubmit<TReturns>(onSuccess: (values: TOutput) => MaybeAsync<TReturns>) {

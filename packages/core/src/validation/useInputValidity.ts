@@ -3,7 +3,7 @@ import { useEventListener } from '../helpers/useEventListener';
 import { FormKey } from '../useForm';
 import { Maybe, ValidationResult } from '../types';
 import { FormField } from '../useFormField';
-import { normalizeArrayable } from '../utils/common';
+import { cloneDeep, normalizeArrayable } from '../utils/common';
 import { FormGroupKey } from '../useFormGroup';
 
 interface InputValidityOptions {
@@ -15,7 +15,7 @@ interface InputValidityOptions {
 export function useInputValidity(opts: InputValidityOptions) {
   const form = inject(FormKey, null);
   const formGroup = inject(FormGroupKey, null);
-  const { setErrors, errorMessage, schema, validate: validateField, getPath } = opts.field;
+  const { setErrors, errorMessage, schema, validate: validateField, getPath, fieldValue } = opts.field;
   const validityDetails = shallowRef<ValidityState>();
   const validationMode = form?.getValidationMode() ?? 'native';
   useMessageCustomValiditySync(errorMessage, opts.inputRef);
@@ -28,6 +28,9 @@ export function useInputValidity(opts: InputValidityOptions) {
     }
 
     return {
+      type: 'FIELD',
+      path: getPath() || '',
+      output: cloneDeep(fieldValue.value),
       isValid: !messages.length,
       errors: [{ messages, path: getPath() || '' }],
     };

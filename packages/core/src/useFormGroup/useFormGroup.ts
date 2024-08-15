@@ -14,11 +14,18 @@ import {
 } from 'vue';
 import { useLabel } from '../a11y/useLabel';
 import { FieldTypePrefixes } from '../constants';
-import { AriaLabelableProps, AriaLabelProps, FormObject, Reactivify, TypedSchema, ValidationResult } from '../types';
+import {
+  AriaLabelableProps,
+  AriaLabelProps,
+  FormObject,
+  GroupValidationResult,
+  Reactivify,
+  TypedSchema,
+  ValidationResult,
+} from '../types';
 import { isEqual, normalizeProps, useUniqId, warn, withRefCapture } from '../utils/common';
 import { FormKey } from '../useForm';
 import { useValidationProvider } from '../validation/useValidationProvider';
-import { FormValidationResult } from '../useForm/useFormActions';
 
 export interface FormGroupProps<TInput extends FormObject = FormObject, TOutput extends FormObject = TInput> {
   name: string;
@@ -34,7 +41,7 @@ interface GroupProps extends AriaLabelableProps {
 interface FormGroupContext<TOutput extends FormObject = FormObject> {
   prefixPath: (path: string | undefined) => string | undefined;
   onValidationDispatch(cb: (enqueue: (promise: Promise<ValidationResult>) => void) => void): void;
-  requestValidation(): Promise<FormValidationResult<TOutput>>;
+  requestValidation(): Promise<GroupValidationResult<TOutput>>;
 }
 
 export const FormGroupKey: InjectionKey<FormGroupContext> = Symbol('FormGroup');
@@ -45,11 +52,14 @@ export function useFormGroup<TInput extends FormObject = FormObject, TOutput ext
 ) {
   const id = useUniqId(FieldTypePrefixes.FormGroup);
   const props = normalizeProps(_props, ['schema']);
+  const getPath = () => toValue(props.name);
   const groupRef = elementRef || shallowRef<HTMLInputElement>();
   const form = inject(FormKey, null);
   const { validate, onValidationDispatch, defineValidationRequest } = useValidationProvider({
-    schema: props.schema,
     getValues,
+    getPath,
+    schema: props.schema,
+    type: 'GROUP',
   });
 
   const requestValidation = defineValidationRequest(({ errors }) => {
@@ -87,20 +97,20 @@ export function useFormGroup<TInput extends FormObject = FormObject, TOutput ext
   const FormGroup = createInlineFormGroupComponent({ groupProps, labelProps });
 
   function getValues() {
-    return form?.getFieldValue(toValue(props.name)) ?? {};
+    return form?.getFieldValue(getPath()) ?? {};
   }
 
   function getErrors() {
-    const path = toValue(props.name);
+    const path = getPath();
     const allErrors = form?.getErrors() || [];
 
     return allErrors.filter(e => e.path.startsWith(path));
   }
 
   const isValid = computed(() => getErrors().length === 0);
-  const isTouched = computed(() => form?.isFieldTouched(toValue(props.name)) ?? false);
+  const isTouched = computed(() => form?.isFieldTouched(getPath()) ?? false);
   const isDirty = computed(() => {
-    const path = toValue(props.name);
+    const path = getPath();
 
     return !isEqual(getValues(), form?.getFieldOriginalValue(path) ?? {});
   });
@@ -117,7 +127,7 @@ export function useFormGroup<TInput extends FormObject = FormObject, TOutput ext
   }
 
   function prefixPath(path: string | undefined) {
-    return prefixGroupPath(toValue(props.name), path);
+    return prefixGroupPath(getPath(), path);
   }
 
   const ctx: FormGroupContext = {

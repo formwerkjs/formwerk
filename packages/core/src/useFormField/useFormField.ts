@@ -75,21 +75,32 @@ export function useFormField<TValue = unknown>(opts?: Partial<FormFieldOptions<T
     });
   }
 
-  async function validate(mutate?: boolean) {
+  function createValidationResult(result: Omit<ValidationResult, 'type' | 'path'>): ValidationResult {
+    return {
+      type: 'FIELD',
+      path: getPath() || '',
+      ...result,
+    };
+  }
+
+  async function validate(mutate?: boolean): Promise<ValidationResult> {
     const schema = opts?.schema;
     if (!schema) {
-      return Promise.resolve({ isValid: true, errors: [] });
+      return Promise.resolve(
+        createValidationResult({ isValid: true, errors: [], output: cloneDeep(fieldValue.value) }),
+      );
     }
 
-    const { errors } = await schema.parse(fieldValue.value as TValue);
+    const { errors, output } = await schema.parse(fieldValue.value as TValue);
     if (mutate) {
       setErrors(errors.map(e => e.messages).flat());
     }
 
-    return {
+    return createValidationResult({
       isValid: errors.length === 0,
+      output,
       errors: errors.map(e => ({ messages: e.messages, path: getPath() || e.path })),
-    };
+    });
   }
 
   const field: FormField<TValue> = {
