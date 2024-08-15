@@ -15,9 +15,9 @@ interface InputValidityOptions {
 export function useInputValidity(opts: InputValidityOptions) {
   const form = inject(FormKey, null);
   const formGroup = inject(FormGroupKey, null);
-  const { setErrors, errorMessage, schema, validate: validateField, getPath, fieldValue } = opts.field;
+  const { setErrors, errorMessage, schema, validate: validateField, getPath, getName, fieldValue } = opts.field;
   const validityDetails = shallowRef<ValidityState>();
-  const validationMode = form?.getValidationMode() ?? 'native';
+  const validationMode = (formGroup || form)?.getValidationMode() ?? 'aggregate';
   useMessageCustomValiditySync(errorMessage, opts.inputRef);
 
   function validateNative(mutate?: boolean): ValidationResult {
@@ -29,7 +29,7 @@ export function useInputValidity(opts: InputValidityOptions) {
 
     return {
       type: 'FIELD',
-      path: getPath() || '',
+      path: (formGroup ? getName() : getPath()) || '',
       output: cloneDeep(fieldValue.value),
       isValid: !messages.length,
       errors: [{ messages, path: getPath() || '' }],
@@ -37,7 +37,7 @@ export function useInputValidity(opts: InputValidityOptions) {
   }
 
   function _updateValidity() {
-    if (validationMode === 'native') {
+    if (validationMode === 'aggregate') {
       return schema ? validateField(true) : validateNative(true);
     }
 
@@ -59,13 +59,13 @@ export function useInputValidity(opts: InputValidityOptions) {
       return;
     }
 
-    if (validationMode === 'native') {
+    if (validationMode === 'aggregate') {
       enqueue(Promise.resolve(validateNative(false)));
       return;
     }
   });
 
-  if (validationMode === 'native') {
+  if (validationMode === 'aggregate') {
     // It should self-mutate the field errors because this is fired by a native validation and not sourced by the form.
     useEventListener(opts.inputRef, opts?.events || ['invalid'], () => validateNative(true));
   }

@@ -39,13 +39,7 @@ const groupSchema = defineSchema(
   }),
 );
 
-const { getErrors, values, handleSubmit } = useForm({
-  schema: defineSchema(
-    z.object({
-      fullName: z.string().min(1),
-    }),
-  ),
-});
+const { getErrors, values, handleSubmit } = useForm({});
 
 const onSubmit = handleSubmit(values => {
   console.log(values);

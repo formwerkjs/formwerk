@@ -86,7 +86,7 @@ export function useValidationProvider<
     if (type === 'FORM') {
       return {
         type,
-        mode: schema ? 'schema' : 'native',
+        mode: schema ? 'schema' : 'aggregate',
         ...base,
       } as TResult;
     }
@@ -94,7 +94,7 @@ export function useValidationProvider<
     return {
       type: 'GROUP',
       path: getPath?.() || '',
-      mode: schema ? 'schema' : 'native',
+      mode: schema ? 'schema' : 'aggregate',
       ...base,
     } as TResult;
   }

@@ -26,6 +26,7 @@ import {
 import { isEqual, normalizeProps, useUniqId, warn, withRefCapture } from '../utils/common';
 import { FormKey } from '../useForm';
 import { useValidationProvider } from '../validation/useValidationProvider';
+import { FormValidationMode } from '../useForm/formContext';
 
 export interface FormGroupProps<TInput extends FormObject = FormObject, TOutput extends FormObject = TInput> {
   name: string;
@@ -42,6 +43,7 @@ interface FormGroupContext<TOutput extends FormObject = FormObject> {
   prefixPath: (path: string | undefined) => string | undefined;
   onValidationDispatch(cb: (enqueue: (promise: Promise<ValidationResult>) => void) => void): void;
   requestValidation(): Promise<GroupValidationResult<TOutput>>;
+  getValidationMode(): FormValidationMode;
 }
 
 export const FormGroupKey: InjectionKey<FormGroupContext> = Symbol('FormGroup');
@@ -134,6 +136,7 @@ export function useFormGroup<TInput extends FormObject = FormObject, TOutput ext
     prefixPath,
     onValidationDispatch,
     requestValidation,
+    getValidationMode: () => (props.schema ? 'schema' : 'aggregate'),
   };
 
   // Whenever the form is validated, it is deferred to the form group to do that.

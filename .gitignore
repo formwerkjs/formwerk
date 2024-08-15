@@ -13,4 +13,5 @@ dist
 .DS_STORE
 
 lerna-debug.log
+packages/*/dist/**
 packages/*/src/playground.ts

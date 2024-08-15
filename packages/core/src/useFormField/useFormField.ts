@@ -36,6 +36,7 @@ export type FormField<TValue> = {
   schema: TypedSchema<TValue> | undefined;
   validate(mutate?: boolean): Promise<ValidationResult>;
   getPath: Getter<string | undefined>;
+  getName: Getter<string | undefined>;
   setValue: (value: TValue | undefined) => void;
   setTouched: (touched: boolean) => void;
   setErrors: (messages: Arrayable<string>) => void;
@@ -78,7 +79,7 @@ export function useFormField<TValue = unknown>(opts?: Partial<FormFieldOptions<T
   function createValidationResult(result: Omit<ValidationResult, 'type' | 'path'>): ValidationResult {
     return {
       type: 'FIELD',
-      path: getPath() || '',
+      path: (formGroup ? toValue(opts?.path) : getPath()) || '',
       ...result,
     };
   }
@@ -113,6 +114,7 @@ export function useFormField<TValue = unknown>(opts?: Partial<FormFieldOptions<T
     schema: opts?.schema,
     validate,
     getPath,
+    getName: () => toValue(opts?.path),
     setValue,
     setTouched,
     setErrors,

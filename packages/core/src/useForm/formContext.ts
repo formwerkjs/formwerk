@@ -15,7 +15,7 @@ import { escapePath, findLeaf, getFromPath, isPathSet, setInPath, unsetPath as u
 import { FormSnapshot } from './formSnapshot';
 import { isObject, merge } from '../../../shared/src';
 
-export type FormValidationMode = 'native' | 'schema';
+export type FormValidationMode = 'aggregate' | 'schema';
 
 export interface BaseFormContext<TForm extends FormObject = FormObject> {
   id: string;
@@ -226,7 +226,7 @@ export function createFormContext<TForm extends FormObject = FormObject, TOutput
   }
 
   function getValidationMode(): FormValidationMode {
-    return schema ? 'schema' : 'native';
+    return schema ? 'schema' : 'aggregate';
   }
 
   return {
