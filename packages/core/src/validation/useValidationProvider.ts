@@ -52,7 +52,7 @@ export function useValidationProvider<
       return createValidationResult({
         isValid: !fieldErrors.length,
         errors: fieldErrors,
-        output: mergeOutputs(getValues() as unknown as TOutput, results),
+        output: stitchOutput(getValues() as unknown as TOutput, results),
       });
     }
 
@@ -62,7 +62,7 @@ export function useValidationProvider<
     return createValidationResult({
       isValid: !allErrors.length,
       errors: allErrors,
-      output: mergeOutputs(output ?? (getValues() as unknown as TOutput), results),
+      output: stitchOutput(output ?? (getValues() as unknown as TOutput), results),
     });
   }
 
@@ -99,7 +99,7 @@ export function useValidationProvider<
     } as TResult;
   }
 
-  function mergeOutputs(base: TOutput, results: (ValidationResult | GroupValidationResult)[]): TOutput {
+  function stitchOutput(base: TOutput, results: (ValidationResult | GroupValidationResult)[]): TOutput {
     const all = cloneDeep(base);
     // Make sure we start with groups first since it may override individual fields
     const sorted = [...results].sort((a, b) => {
