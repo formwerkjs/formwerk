@@ -24,6 +24,7 @@ import { useLocale } from '../i18n/useLocale';
 import { useFormField } from '../useFormField';
 import { FieldTypePrefixes } from '../constants';
 import { useErrorDisplay } from '../useFormField/useErrorDisplay';
+import { TypedSchema } from '../types';
 
 export interface NumberInputDOMAttributes {
   name?: string;
@@ -59,13 +60,15 @@ export interface NumberFieldProps {
   disabled?: boolean;
 
   formatOptions?: Intl.NumberFormatOptions;
+
+  schema?: TypedSchema<number>;
 }
 
 export function useNumberField(
-  _props: Reactivify<NumberFieldProps>,
+  _props: Reactivify<NumberFieldProps, 'schema'>,
   elementRef?: Ref<HTMLInputElement | HTMLTextAreaElement>,
 ) {
-  const props = normalizeProps(_props);
+  const props = normalizeProps(_props, ['schema']);
   const inputId = useUniqId(FieldTypePrefixes.NumberField);
   const inputRef = elementRef || shallowRef<HTMLInputElement>();
   const { locale } = useLocale();
@@ -74,6 +77,7 @@ export function useNumberField(
     path: props.name,
     initialValue: toValue(props.modelValue),
     disabled: props.disabled,
+    schema: props.schema,
   });
 
   const { validityDetails } = useInputValidity({ inputRef, field });

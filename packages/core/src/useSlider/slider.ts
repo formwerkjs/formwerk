@@ -1,6 +1,6 @@
 import { InjectionKey, computed, onBeforeUnmount, provide, ref, toValue } from 'vue';
 import { useLabel } from '../a11y/useLabel';
-import { AriaLabelableProps, Arrayable, Direction, Orientation, Reactivify } from '../types';
+import { AriaLabelableProps, Arrayable, Direction, Orientation, Reactivify, TypedSchema } from '../types';
 import { isNullOrUndefined, normalizeProps, useUniqId, withRefCapture } from '../utils/common';
 import { toNearestMultipleOf } from '../utils/math';
 import { useLocale } from '../i18n/useLocale';
@@ -19,6 +19,8 @@ export interface SliderProps {
   step?: number;
 
   disabled?: boolean;
+
+  schema?: TypedSchema<number>;
 }
 
 export type Coordinate = { x: number; y: number };
@@ -94,8 +96,8 @@ export interface SliderContext {
 
 export const SliderInjectionKey: InjectionKey<SliderContext> = Symbol('Slider');
 
-export function useSlider(_props: Reactivify<SliderProps>) {
-  const props = normalizeProps(_props);
+export function useSlider(_props: Reactivify<SliderProps, 'schema'>) {
+  const props = normalizeProps(_props, ['schema']);
   const inputId = useUniqId(FieldTypePrefixes.Slider);
   const trackRef = ref<HTMLElement>();
   const thumbs = ref<ThumbContext[]>([]);
@@ -105,6 +107,7 @@ export function useSlider(_props: Reactivify<SliderProps>) {
     path: props.name,
     initialValue: toValue(props.modelValue),
     disabled: props.disabled,
+    schema: props.schema,
   });
 
   const { labelProps, labelledByProps } = useLabel({

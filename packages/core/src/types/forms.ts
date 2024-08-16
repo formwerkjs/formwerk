@@ -2,7 +2,7 @@ import { Schema, Simplify } from 'type-fest';
 import { FormObject } from './common';
 import { Path } from './paths';
 import { TypedSchemaError } from './typedSchema';
-import { FormValidationMode } from '@core/useForm/formContext';
+import { FormValidationMode } from '../useForm/formContext';
 
 export type TouchedSchema<TForm extends FormObject> = Simplify<Schema<TForm, boolean>>;
 

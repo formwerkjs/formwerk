@@ -1,6 +1,6 @@
 import { Ref, computed, inject, nextTick, ref, toValue } from 'vue';
 import { isEqual, normalizeProps, useUniqId, withRefCapture } from '../utils/common';
-import { AriaLabelableProps, Reactivify, InputBaseAttributes, RovingTabIndex } from '../types';
+import { AriaLabelableProps, Reactivify, InputBaseAttributes, RovingTabIndex, TypedSchema } from '../types';
 import { useLabel } from '../a11y/useLabel';
 import { CheckboxGroupContext, CheckboxGroupKey } from './useCheckboxGroup';
 import { useFormField } from '../useFormField';
@@ -14,6 +14,8 @@ export interface CheckboxProps<TValue = string> {
   trueValue?: TValue;
   falseValue?: TValue;
   indeterminate?: boolean;
+
+  schema?: TypedSchema<TValue>;
 }
 
 export interface CheckboxDomInputProps extends AriaLabelableProps, InputBaseAttributes {
@@ -30,10 +32,10 @@ export interface CheckboxDomProps extends AriaLabelableProps {
 }
 
 export function useCheckbox<TValue = string>(
-  _props: Reactivify<CheckboxProps<TValue>>,
+  _props: Reactivify<CheckboxProps<TValue>, 'schema'>,
   elementRef?: Ref<HTMLInputElement | undefined>,
 ) {
-  const props = normalizeProps(_props);
+  const props = normalizeProps(_props, ['schema']);
   const inputId = useUniqId(FieldTypePrefixes.Checkbox);
   const getTrueValue = () => (toValue(props.trueValue) as TValue) ?? (true as TValue);
   const getFalseValue = () => (toValue(props.falseValue) as TValue) ?? (false as TValue);
@@ -45,6 +47,7 @@ export function useCheckbox<TValue = string>(
         path: props.name,
         initialValue: toValue(props.modelValue) as TValue,
         disabled: props.disabled,
+        schema: props.schema,
       });
 
   const checked = computed({

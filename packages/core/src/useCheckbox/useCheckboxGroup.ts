@@ -9,6 +9,7 @@ import {
   Direction,
   Reactivify,
   Arrayable,
+  TypedSchema,
 } from '../types';
 import { useUniqId, createDescribedByProps, normalizeProps, isEqual } from '../utils/common';
 import { useLocale } from '../i18n/useLocale';
@@ -59,6 +60,8 @@ export interface CheckboxGroupProps<TCheckbox = unknown> {
   disabled?: boolean;
   readonly?: boolean;
   required?: boolean;
+
+  schema?: TypedSchema<CheckboxGroupValue<TCheckbox>>;
 }
 
 interface CheckboxGroupDomProps extends AriaLabelableProps, AriaDescribableProps, AriaValidatableProps {
@@ -66,8 +69,8 @@ interface CheckboxGroupDomProps extends AriaLabelableProps, AriaDescribableProps
   dir: Direction;
 }
 
-export function useCheckboxGroup<TCheckbox>(_props: Reactivify<CheckboxGroupProps<TCheckbox>>) {
-  const props = normalizeProps(_props);
+export function useCheckboxGroup<TCheckbox>(_props: Reactivify<CheckboxGroupProps<TCheckbox>, 'schema'>) {
+  const props = normalizeProps(_props, ['schema']);
   const groupId = useUniqId(FieldTypePrefixes.CheckboxGroup);
   const { direction } = useLocale();
   const checkboxes: CheckboxContext[] = [];
@@ -79,6 +82,7 @@ export function useCheckboxGroup<TCheckbox>(_props: Reactivify<CheckboxGroupProp
   const field = useFormField({
     path: props.name,
     initialValue: toValue(props.modelValue),
+    schema: props.schema,
   });
 
   const { displayError } = useErrorDisplay(field);

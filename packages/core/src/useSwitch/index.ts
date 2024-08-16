@@ -1,5 +1,12 @@
 import { Ref, computed, shallowRef, toValue } from 'vue';
-import { AriaDescribableProps, AriaLabelableProps, InputBaseAttributes, InputEvents, Reactivify } from '../types';
+import {
+  AriaDescribableProps,
+  AriaLabelableProps,
+  InputBaseAttributes,
+  InputEvents,
+  Reactivify,
+  TypedSchema,
+} from '../types';
 import { isEqual, normalizeProps, useUniqId, withRefCapture } from '../utils/common';
 import { useLabel } from '../a11y/useLabel';
 import { useFormField } from '../useFormField';
@@ -22,10 +29,12 @@ export type SwitchProps = {
 
   trueValue?: unknown;
   falseValue?: unknown;
+
+  schema?: TypedSchema<unknown>;
 };
 
-export function useSwitch(_props: Reactivify<SwitchProps>, elementRef?: Ref<HTMLInputElement>) {
-  const props = normalizeProps(_props);
+export function useSwitch(_props: Reactivify<SwitchProps, 'schema'>, elementRef?: Ref<HTMLInputElement>) {
+  const props = normalizeProps(_props, ['schema']);
   const id = useUniqId(FieldTypePrefixes.Switch);
   const inputRef = elementRef || shallowRef<HTMLInputElement>();
   const { labelProps, labelledByProps } = useLabel({
@@ -38,6 +47,7 @@ export function useSwitch(_props: Reactivify<SwitchProps>, elementRef?: Ref<HTML
     path: props.name,
     initialValue: toValue(props.modelValue) ?? toValue(props.falseValue) ?? false,
     disabled: props.disabled,
+    schema: props.schema,
   });
 
   /**
