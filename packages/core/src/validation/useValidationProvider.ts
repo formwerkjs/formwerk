@@ -9,7 +9,7 @@ import {
 import { batchAsync, cloneDeep, withLatestCall } from '../utils/common';
 import { createEventDispatcher } from '../utils/events';
 import { SCHEMA_BATCH_MS } from '../constants';
-import { setInPath } from '@core/utils/path';
+import { setInPath } from '../utils/path';
 
 type AggregatorResult<TOutput extends FormObject> = FormValidationResult<TOutput> | GroupValidationResult<TOutput>;
 
