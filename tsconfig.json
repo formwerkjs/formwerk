@@ -26,6 +26,6 @@
     "types": ["vitest/globals"],
     "typeRoots": ["node_modules/@types", "node_modules"]
   },
-  "include": ["packages/*/src", "packages/*/tests", "commitlint.config.ts", "global.d.ts"],
+  "include": ["packages/*/src", "packages/*/tests", "commitlint.config.ts", "global.d.ts", "vitest.setup.ts"],
   "exclude": ["packages/playground"]
 }

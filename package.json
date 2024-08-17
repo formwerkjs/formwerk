@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "type": "module",
-  "packageManager": "pnpm@9.6.0",
+  "packageManager": "pnpm@9.7.1",
   "homepage": "https://formwerk.dev",
   "repository": "https://github.com/formwerkjs/formwerk",
   "scripts": {
@@ -64,6 +64,7 @@
     "typescript-eslint": "^8.0.1",
     "vite-tsconfig-paths": "^5.0.1",
     "vitest": "^2.0.5",
+    "vitest-axe": "1.0.0-pre.3",
     "vue": "^3.5.0-beta.1"
   },
   "lint-staged": {
