@@ -65,6 +65,7 @@
     "vite-tsconfig-paths": "^5.0.1",
     "vitest": "^2.0.5",
     "vitest-axe": "1.0.0-pre.3",
+    "vitest-dom": "^0.1.1",
     "vue": "^3.5.0-beta.1"
   },
   "lint-staged": {

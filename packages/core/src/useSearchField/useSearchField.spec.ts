@@ -142,9 +142,9 @@ test('Escape key clears the value', async () => {
   const value = 'Best keyboard';
   await flush();
   await fireEvent.update(screen.getByLabelText(label), value);
-  expect(screen.getByLabelText(label).value).toBe(value);
+  expect(screen.getByLabelText(label)).toHaveDisplayValue(value);
   await fireEvent.keyDown(screen.getByLabelText(label), { key: 'Escape' });
-  expect(screen.getByLabelText(label).value).toBe('');
+  expect(screen.getByLabelText(label)).toHaveDisplayValue('');
 });
 
 test('Can have a clear button that clears the value', async () => {
@@ -182,9 +182,9 @@ test('Can have a clear button that clears the value', async () => {
   const value = 'Best keyboard';
   await flush();
   await fireEvent.update(screen.getByLabelText(label), value);
-  expect(screen.getByLabelText(label).value).toBe(value);
+  expect(screen.getByLabelText(label)).toHaveDisplayValue(value);
   await fireEvent.click(screen.getByLabelText('Clear search'));
-  expect(screen.getByLabelText(label).value).toBe('');
+  expect(screen.getByLabelText(label)).toHaveDisplayValue('');
 });
 
 test('change event updates the value', async () => {
@@ -220,5 +220,5 @@ test('change event updates the value', async () => {
   const value = 'Best keyboard';
   await flush();
   await fireEvent.change(screen.getByLabelText(label), { target: { value } });
-  expect(screen.getByLabelText(label).value).toBe(value);
+  expect(screen.getByLabelText(label)).toHaveDisplayValue(value);
 });
