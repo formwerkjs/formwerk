@@ -111,7 +111,6 @@ test('blur sets touched to true', async () => {
 
 test('Escape key clears the value', async () => {
   const label = 'Search';
-  const onSubmit = vi.fn();
 
   await render({
     setup() {
@@ -119,7 +118,6 @@ test('Escape key clears the value', async () => {
       const { inputProps, descriptionProps, labelProps } = useSearchField({
         label,
         description,
-        onSubmit,
       });
 
       return {
@@ -149,7 +147,6 @@ test('Escape key clears the value', async () => {
 
 test('Can have a clear button that clears the value', async () => {
   const label = 'Search';
-  const onSubmit = vi.fn();
 
   await render({
     setup() {
@@ -157,7 +154,6 @@ test('Can have a clear button that clears the value', async () => {
       const { inputProps, descriptionProps, labelProps, clearBtnProps } = useSearchField({
         label,
         description,
-        onSubmit,
       });
 
       return {
@@ -189,7 +185,6 @@ test('Can have a clear button that clears the value', async () => {
 
 test('change event updates the value', async () => {
   const label = 'Search';
-  const onSubmit = vi.fn();
 
   await render({
     setup() {
@@ -197,7 +192,6 @@ test('change event updates the value', async () => {
       const { inputProps, descriptionProps, labelProps } = useSearchField({
         label,
         description,
-        onSubmit,
       });
 
       return {
