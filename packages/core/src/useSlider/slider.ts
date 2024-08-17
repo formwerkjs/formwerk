@@ -1,7 +1,7 @@
 import { InjectionKey, computed, onBeforeUnmount, provide, ref, toValue } from 'vue';
 import { useLabel } from '../a11y/useLabel';
 import { AriaLabelableProps, Arrayable, Direction, Orientation, Reactivify, TypedSchema } from '../types';
-import { isNullOrUndefined, normalizeProps, useUniqId, withRefCapture } from '../utils/common';
+import { isNullOrUndefined, normalizeArrayable, normalizeProps, useUniqId, withRefCapture } from '../utils/common';
 import { toNearestMultipleOf } from '../utils/math';
 import { useLocale } from '../i18n/useLocale';
 import { useFormField } from '../useFormField';
@@ -142,12 +142,12 @@ export function useSlider(_props: Reactivify<SliderProps, 'schema'>) {
       return;
     }
 
-    if (!Array.isArray(fieldValue.value)) {
+    if (thumbs.value.length <= 1) {
       setValue(value);
       return;
     }
 
-    const nextValue = [...fieldValue.value];
+    const nextValue = normalizeArrayable(fieldValue.value).filter(v => !isNullOrUndefined(v));
     nextValue[idx] = value;
     setValue(nextValue);
   }
