@@ -1,5 +1,5 @@
 import { Direction } from '../types';
-import { isCallable } from '../utils/common';
+import { isCallable, warn } from '../utils/common';
 
 export function getDirection(locale: string): Direction {
   try {
@@ -14,7 +14,7 @@ export function getDirection(locale: string): Direction {
 
     throw new Error(`Cannot determine direction for locale ${locale}`);
   } catch {
-    // TODO: WARN
+    warn(`Cannot determine direction for locale ${locale}, defaulting to LTR`);
 
     return 'ltr';
   }
