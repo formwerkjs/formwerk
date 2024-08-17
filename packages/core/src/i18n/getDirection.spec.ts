@@ -7,7 +7,7 @@ test('gets the direction of a locale', () => {
 
 test('warns if the direction was not recognized', () => {
   const warn = vi.spyOn(console, 'warn');
-  expect(getDirection(null)).toBe('ltr');
+  expect(getDirection(null as any)).toBe('ltr');
   expect(warn).toHaveBeenCalledTimes(1);
   warn.mockRestore();
 });
