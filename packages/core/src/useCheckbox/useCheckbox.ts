@@ -20,6 +20,8 @@ export interface CheckboxProps<TValue = string> {
 
 export interface CheckboxDomInputProps extends AriaLabelableProps, InputBaseAttributes {
   type: 'checkbox';
+  name?: string;
+  indeterminate?: boolean;
 }
 
 export interface CheckboxDomProps extends AriaLabelableProps {
@@ -121,8 +123,8 @@ export function useCheckbox<TValue = string>(
     inputRef.value?.focus();
   }
 
-  function createBindings(isInput: boolean) {
-    return {
+  function createBindings(isInput: boolean): CheckboxDomProps | CheckboxDomInputProps {
+    const base = {
       ...labelledByProps.value,
       ...createHandlers(isInput),
       id: inputId,
@@ -130,6 +132,21 @@ export function useCheckbox<TValue = string>(
       [isInput ? 'readonly' : 'aria-readonly']: group?.readonly || undefined,
       [isInput ? 'disabled' : 'aria-disabled']: isDisabled() || undefined,
       [isInput ? 'required' : 'aria-required']: group?.required,
+    };
+
+    if (isInput) {
+      return {
+        ...base,
+        type: 'checkbox',
+        name: group?.name || toValue(props.name),
+        indeterminate: toValue(props.indeterminate) || false,
+      };
+    }
+
+    return {
+      ...base,
+      role: 'checkbox',
+      tabindex: toValue(props.disabled) ? '-1' : '0',
     };
   }
 
@@ -147,29 +164,8 @@ export function useCheckbox<TValue = string>(
     },
   });
 
-  const inputProps = computed<CheckboxDomInputProps>(() =>
-    withRefCapture(
-      {
-        type: 'checkbox',
-        name: group?.name || props.name,
-        indeterminate: toValue(props.indeterminate) || false,
-        ...createBindings(true),
-      },
-      inputRef,
-      elementRef,
-    ),
-  );
-
-  const checkboxProps = computed<CheckboxDomProps>(() =>
-    withRefCapture(
-      {
-        role: 'checkbox',
-        tabindex: toValue(props.disabled) ? '-1' : '0',
-        ...createBindings(false),
-      },
-      inputRef,
-      elementRef,
-    ),
+  const inputProps = computed(() =>
+    withRefCapture(createBindings(inputRef.value?.tagName === 'INPUT'), inputRef, elementRef),
   );
 
   function setChecked(force?: boolean) {
@@ -196,7 +192,6 @@ export function useCheckbox<TValue = string>(
     inputRef,
     labelProps,
     inputProps,
-    checkboxProps,
     isChecked: checked,
     isTouched,
     setChecked,

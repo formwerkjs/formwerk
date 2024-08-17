@@ -1,6 +1,6 @@
 import { Ref, computed, inject, nextTick, ref, toValue } from 'vue';
 import { isEqual, normalizeProps, useUniqId, withRefCapture } from '../utils/common';
-import { AriaLabelableProps, InputBaseAttributes, Reactivify, RovingTabIndex } from '../types';
+import { AriaInputProps, AriaLabelableProps, InputBaseAttributes, Reactivify, RovingTabIndex } from '../types';
 import { useLabel } from '../a11y/useLabel';
 import { RadioGroupContext, RadioGroupKey } from './useRadioGroup';
 import { FieldTypePrefixes } from '../constants';
@@ -15,13 +15,10 @@ export interface RadioDomInputProps extends AriaLabelableProps, InputBaseAttribu
   type: 'radio';
 }
 
-export interface RadioDomProps extends AriaLabelableProps {
+export interface RadioDomProps extends AriaInputProps, AriaLabelableProps {
   tabindex: RovingTabIndex;
   role: 'radio';
   'aria-checked'?: boolean;
-  'aria-readonly'?: boolean;
-  'aria-disabled'?: boolean;
-  'aria-required'?: boolean;
 }
 
 export function useRadio<TValue = string>(
@@ -86,16 +83,29 @@ export function useRadio<TValue = string>(
     inputRef.value?.focus();
   }
 
-  function createBindings(isInput: boolean) {
-    return {
+  function createBindings(isInput: boolean): RadioDomInputProps | RadioDomProps {
+    const base = {
       ...labelledByProps.value,
       ...createHandlers(isInput),
       id: inputId,
-      name: group?.name,
       [isInput ? 'checked' : 'aria-checked']: checked.value || undefined,
       [isInput ? 'readonly' : 'aria-readonly']: group?.readonly || undefined,
       [isInput ? 'disabled' : 'aria-disabled']: isDisabled() || undefined,
       [isInput ? 'required' : 'aria-required']: group?.required,
+    };
+
+    if (isInput) {
+      return {
+        ...base,
+        name: group?.name,
+        type: 'radio',
+      };
+    }
+
+    return {
+      ...base,
+      role: 'radio',
+      tabindex: checked.value ? '0' : registration?.canReceiveFocus() ? '0' : '-1',
     };
   }
 
@@ -113,34 +123,14 @@ export function useRadio<TValue = string>(
     },
   });
 
-  const inputProps = computed<RadioDomInputProps>(() =>
-    withRefCapture(
-      {
-        type: 'radio',
-        ...createBindings(true),
-      },
-      inputRef,
-      elementRef,
-    ),
-  );
-
-  const radioProps = computed<RadioDomProps>(() =>
-    withRefCapture(
-      {
-        role: 'radio',
-        tabindex: checked.value ? '0' : registration?.canReceiveFocus() ? '0' : '-1',
-        ...createBindings(false),
-      },
-      inputRef,
-      elementRef,
-    ),
+  const inputProps = computed(() =>
+    withRefCapture(createBindings(inputRef.value?.tagName === 'INPUT'), inputRef, elementRef),
   );
 
   return {
     inputRef,
     labelProps,
     inputProps,
-    radioProps,
     isChecked: checked,
   };
 }

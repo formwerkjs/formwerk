@@ -1,6 +1,7 @@
 import { Ref, computed, shallowRef, toValue } from 'vue';
 import {
   AriaDescribableProps,
+  AriaInputProps,
   AriaLabelableProps,
   InputBaseAttributes,
   InputEvents,
@@ -12,11 +13,23 @@ import { useLabel } from '../a11y/useLabel';
 import { useFormField } from '../useFormField';
 import { FieldTypePrefixes } from '../constants';
 
-export interface SwitchDOMProps extends InputBaseAttributes, AriaLabelableProps, AriaDescribableProps, InputEvents {
+export interface SwitchDomInputProps
+  extends InputBaseAttributes,
+    AriaLabelableProps,
+    InputBaseAttributes,
+    AriaDescribableProps,
+    InputEvents {
+  type: 'checkbox';
+  role: 'switch';
+}
+
+export interface SwitchDOMProps extends AriaInputProps, AriaLabelableProps, AriaDescribableProps, InputEvents {
   id: string;
-  checked: boolean;
-  name?: string;
-  role?: string;
+  tabindex: '0';
+  role: 'switch';
+  'aria-checked'?: boolean;
+
+  onClick: (e: Event) => void;
 }
 
 export type SwitchProps = {
@@ -35,10 +48,10 @@ export type SwitchProps = {
 
 export function useSwitch(_props: Reactivify<SwitchProps, 'schema'>, elementRef?: Ref<HTMLInputElement>) {
   const props = normalizeProps(_props, ['schema']);
-  const id = useUniqId(FieldTypePrefixes.Switch);
+  const inputId = useUniqId(FieldTypePrefixes.Switch);
   const inputRef = elementRef || shallowRef<HTMLInputElement>();
   const { labelProps, labelledByProps } = useLabel({
-    for: id,
+    for: inputId,
     label: props.label,
     targetRef: inputRef,
   });
@@ -103,39 +116,39 @@ export function useSwitch(_props: Reactivify<SwitchProps, 'schema'>, elementRef?
     },
   });
 
+  function createBindings(isInput: boolean): SwitchDOMProps | SwitchDomInputProps {
+    const base = {
+      id: inputId,
+      ...labelledByProps.value,
+      [isInput ? 'checked' : 'aria-checked']: isPressed.value || false,
+      [isInput ? 'readonly' : 'aria-readonly']: toValue(props.readonly) || undefined,
+      [isInput ? 'disabled' : 'aria-disabled']: toValue(props.disabled) || undefined,
+      role: 'switch' as const,
+    };
+
+    if (isInput) {
+      return {
+        ...base,
+        ...handlers,
+        name: toValue(props.name),
+        type: 'checkbox',
+      };
+    }
+
+    return {
+      ...base,
+      onClick,
+      tabindex: '0',
+      onKeydown: handlers.onKeydown,
+    };
+  }
+
   /**
    * Use this if you are using a native input[type=checkbox] element.
    */
-  const inputProps = computed<SwitchDOMProps>(() =>
-    withRefCapture(
-      {
-        ...labelledByProps.value,
-        id: id,
-        name: toValue(props.name),
-        disabled: toValue(props.disabled),
-        readonly: toValue(props.readonly),
-        checked: isPressed.value,
-        role: 'switch',
-        ...handlers,
-      },
-      inputRef,
-      elementRef,
-    ),
+  const inputProps = computed(() =>
+    withRefCapture(createBindings(inputRef.value?.tagName === 'INPUT'), inputRef, elementRef),
   );
-
-  /**
-   * Use this if you are using divs or buttons
-   */
-  const switchProps = computed(() => ({
-    ...labelledByProps.value,
-    role: 'switch',
-    tabindex: '0',
-    'aria-checked': isPressed.value ?? false,
-    'aria-readonly': toValue(props.readonly) ?? undefined,
-    'aria-disabled': toValue(props.disabled) ?? undefined,
-    onKeydown: handlers.onKeydown,
-    onClick,
-  }));
 
   function togglePressed(force?: boolean) {
     isPressed.value = force ?? !isPressed.value;
@@ -147,7 +160,6 @@ export function useSwitch(_props: Reactivify<SwitchProps, 'schema'>, elementRef?
     inputRef,
     labelProps,
     inputProps,
-    switchProps,
     togglePressed,
     isTouched,
   };

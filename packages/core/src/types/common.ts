@@ -24,6 +24,12 @@ export type AriaValidatableProps = {
   'aria-invalid'?: boolean;
 };
 
+export type AriaInputProps = {
+  'aria-checked'?: boolean;
+  'aria-readonly'?: boolean;
+  'aria-disabled'?: boolean;
+};
+
 export type InputEvents = {
   onInput?: (event: InputEvent) => void;
   onChange?: (event: Event) => void;
@@ -38,6 +44,7 @@ export type PressEvents = {
 };
 
 export type InputBaseAttributes = {
+  name?: string;
   readonly?: boolean;
   disabled?: boolean;
 };
