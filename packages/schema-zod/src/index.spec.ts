@@ -204,4 +204,59 @@ describe('schema-zod', () => {
     expect(screen.getByTestId('e1').textContent).toBe('');
     expect(screen.getByTestId('e2').textContent).toBe('');
   });
+
+  test('handles zod union errors', async () => {
+    await render({
+      components: { Child: createInputComponent() },
+      setup() {
+        const schema = z.object({
+          email: z.string().email({ message: 'valid email' }).min(1, 'Email is required'),
+          name: z.string().min(1, 'Name is required'),
+        });
+
+        const schemaBothUndefined = z.object({
+          email: z.undefined(),
+          name: z.undefined(),
+        });
+
+        const bothOrNeither = schema.or(schemaBothUndefined);
+
+        const { getError } = useForm({
+          schema: defineSchema(bothOrNeither),
+        });
+
+        return {
+          schema,
+          getError,
+        };
+      },
+      template: `
+    <div>
+      <Child name="email" />
+      <span data-testid="emailErr">{{ getError('email') }}</span>
+
+      <Child name="name" />
+      <span data-testid="nameErr">{{ getError('name') }}</span>
+    </div>
+    `,
+    });
+
+    const emailField = screen.getByTestId('email');
+    const nameField = screen.getByTestId('name');
+    const emailError = screen.getByTestId('emailErr');
+    const nameError = screen.getByTestId('nameErr');
+
+    await flush();
+
+    await fireEvent.update(nameField, '4');
+    await fireEvent.blur(nameField);
+    await flush();
+    expect(nameError.textContent).toBe('Expected undefined, received string');
+    await fireEvent.update(emailField, 'test@gmail.com');
+    await fireEvent.blur(nameField);
+    await flush();
+
+    expect(emailError.textContent).toBe('');
+    expect(nameError.textContent).toBe('');
+  });
 });
