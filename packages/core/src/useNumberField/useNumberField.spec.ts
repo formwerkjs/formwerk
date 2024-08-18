@@ -18,6 +18,8 @@ const makeTest = (props?: SetOptional<NumberFieldProps, 'label'>): Component => 
       incrementButtonProps,
       decrementButtonProps,
       isTouched,
+      errorMessageProps,
+      errorMessage,
     } = useNumberField({
       ...(props || {}),
       label,
@@ -34,6 +36,8 @@ const makeTest = (props?: SetOptional<NumberFieldProps, 'label'>): Component => 
       decrementButtonProps,
       isTouched,
       fieldValue,
+      errorMessageProps,
+      errorMessage,
     };
   },
   template: `
@@ -41,6 +45,8 @@ const makeTest = (props?: SetOptional<NumberFieldProps, 'label'>): Component => 
         <label v-bind="labelProps">{{ label }}</label>
         <input v-bind="inputProps" />
         <span v-bind="descriptionProps">description</span>
+        <span v-bind="errorMessageProps">{{ errorMessage }}</span>
+
         <button v-bind="incrementButtonProps">Incr</button>
         <button v-bind="decrementButtonProps">Decr</button>
         <div data-testid="value">{{ JSON.stringify(fieldValue) }}</div>
@@ -105,4 +111,16 @@ test('Prevents invalid numeric input', async () => {
 test('Applies decimal inputmode if the step contains decimals', async () => {
   await render(makeTest({ step: 1.5 }));
   expect(screen.getByLabelText(label)).toHaveAttribute('inputmode', 'decimal');
+});
+
+test('picks up native error messages', async () => {
+  await render(makeTest({ required: true }));
+
+  await fireEvent.invalid(screen.getByLabelText(label));
+  await flush();
+  expect(screen.getByLabelText(label)).toHaveErrorMessage('Constraints not satisfied');
+
+  vi.useRealTimers();
+  expect(await axe(screen.getByTestId('fixture'))).toHaveNoViolations();
+  vi.useFakeTimers();
 });

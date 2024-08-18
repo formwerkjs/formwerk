@@ -1,4 +1,4 @@
-import { MaybeRefOrGetter, Ref, toValue, useId } from 'vue';
+import { computed, MaybeRefOrGetter, Ref, shallowRef, toValue, useId } from 'vue';
 import { klona } from 'klona/full';
 import { AriaDescriptionProps, Arrayable, Maybe, NormalizedProps } from '../types';
 import { AsyncReturnType } from 'type-fest';
@@ -13,30 +13,55 @@ export function createDescriptionProps(inputId: string): AriaDescriptionProps {
   };
 }
 
-export function createErrorProps(inputId: string): AriaDescriptionProps {
+export function createErrorProps(inputId: string) {
   return {
     id: `${inputId}-r`,
+    'aria-live': 'polite',
+    'aria-atomic': true,
   };
 }
 
 interface CreateDescribedByInit {
   inputId: string;
-  errorMessage: MaybeRefOrGetter<string | undefined>;
   description: MaybeRefOrGetter<string | undefined>;
 }
 
-export function createDescribedByProps({ inputId, errorMessage, description }: CreateDescribedByInit) {
-  const errorMessageProps = createErrorProps(inputId);
-  const descriptionProps = createDescriptionProps(inputId);
+export function createDescribedByProps({ inputId, description }: CreateDescribedByInit) {
+  const descriptionRef = shallowRef<HTMLElement>();
+  const descriptionProps = withRefCapture(createDescriptionProps(inputId), descriptionRef);
 
-  const describedBy = () => {
-    return toValue(errorMessage) ? errorMessageProps.id : toValue(description) ? descriptionProps.id : undefined;
-  };
+  const describedByProps = computed(() => {
+    return {
+      'aria-describedby': descriptionRef.value ? toValue(description) : undefined,
+    };
+  });
 
   return {
-    describedBy,
-    errorMessageProps,
+    describedByProps,
     descriptionProps,
+  };
+}
+
+interface CreateAccessibleErrorMessageInit {
+  inputId: string;
+  errorMessage: MaybeRefOrGetter<string | undefined>;
+}
+
+export function createAccessibleErrorMessageProps({ inputId, errorMessage }: CreateAccessibleErrorMessageInit) {
+  const errorMessageRef = shallowRef<HTMLElement>();
+  const errorMessageProps = withRefCapture(createErrorProps(inputId), errorMessageRef);
+
+  const accessibleErrorProps = computed(() => {
+    const isInvalid = !!toValue(errorMessage);
+    return {
+      'aria-invalid': isInvalid,
+      'aria-errormessage': isInvalid ? errorMessageProps.id : undefined,
+    };
+  });
+
+  return {
+    errorMessageProps,
+    accessibleErrorProps,
   };
 }
 

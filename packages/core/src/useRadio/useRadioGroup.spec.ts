@@ -4,6 +4,7 @@ import { RadioProps, useRadio } from './useRadio';
 import { fireEvent, render, screen } from '@testing-library/vue';
 import { axe } from 'vitest-axe';
 import { describe } from 'vitest';
+import { flush } from '@test-utils/flush';
 
 const createGroup = (props: RadioGroupProps): Component => {
   return defineComponent({
@@ -368,5 +369,31 @@ describe('Arrow keys behavior', () => {
     expect(screen.getByTestId('value')).toHaveTextContent('');
     await fireEvent.keyDown(screen.getByLabelText('Group'), { key: 'ArrowDown' });
     expect(screen.getByTestId('value')).toHaveTextContent('');
+  });
+});
+
+describe('validation', () => {
+  test('picks up native error messages', async () => {
+    const RadioGroup = createGroup({ label: 'Group', required: true });
+    const RadioInput = createRadio();
+
+    await render({
+      components: { RadioGroup, RadioInput },
+      template: `
+        <RadioGroup data-testid="fixture">
+          <RadioInput label="First" value="1" />
+          <RadioInput label="Second" value="2" />
+          <RadioInput label="Third"  value="3" />
+        </RadioGroup>
+      `,
+    });
+
+    await fireEvent.invalid(screen.getByLabelText('First'));
+    await flush();
+    expect(screen.getByLabelText('Group')).toHaveErrorMessage('Constraints not satisfied');
+
+    vi.useRealTimers();
+    expect(await axe(screen.getByTestId('fixture'))).toHaveNoViolations();
+    vi.useFakeTimers();
   });
 });

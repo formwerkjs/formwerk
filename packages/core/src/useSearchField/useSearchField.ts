@@ -9,7 +9,14 @@ import {
   TextInputBaseAttributes,
   TypedSchema,
 } from '../types';
-import { createDescribedByProps, normalizeProps, propsToValues, useUniqId, withRefCapture } from '../utils/common';
+import {
+  createAccessibleErrorMessageProps,
+  createDescribedByProps,
+  normalizeProps,
+  propsToValues,
+  useUniqId,
+  withRefCapture,
+} from '../utils/common';
 import { useInputValidity } from '../validation/useInputValidity';
 import { useLabel } from '../a11y/useLabel';
 import { useFormField } from '../useFormField';
@@ -74,10 +81,14 @@ export function useSearchField(
     targetRef: inputRef,
   });
 
-  const { errorMessageProps, descriptionProps, describedBy } = createDescribedByProps({
+  const { descriptionProps, describedByProps } = createDescribedByProps({
+    inputId,
+    description: props.description,
+  });
+
+  const { accessibleErrorProps, errorMessageProps } = createAccessibleErrorMessageProps({
     inputId,
     errorMessage,
-    description: props.description,
   });
 
   const clearBtnProps = {
@@ -124,13 +135,13 @@ export function useSearchField(
       {
         ...propsToValues(props, ['name', 'pattern', 'placeholder', 'required', 'readonly', 'disabled']),
         ...labelledByProps.value,
+        ...describedByProps.value,
+        ...accessibleErrorProps.value,
         id: inputId,
         value: fieldValue.value,
         type: 'search',
         maxlength: toValue(props.maxLength),
         minlength: toValue(props.minLength),
-        'aria-describedby': describedBy(),
-        'aria-invalid': errorMessage.value ? true : undefined,
         ...handlers,
       },
       inputRef,

@@ -1,5 +1,6 @@
 import { Ref, computed, nextTick, shallowRef, toValue } from 'vue';
 import {
+  createAccessibleErrorMessageProps,
   createDescribedByProps,
   isEmpty,
   isNullOrUndefined,
@@ -97,10 +98,14 @@ export function useNumberField(
     targetRef: inputRef,
   });
 
-  const { errorMessageProps, descriptionProps, describedBy } = createDescribedByProps({
+  const { descriptionProps, describedByProps } = createDescribedByProps({
+    inputId,
+    description: props.description,
+  });
+
+  const { accessibleErrorProps, errorMessageProps } = createAccessibleErrorMessageProps({
     inputId,
     errorMessage,
-    description: props.description,
   });
 
   const { incrementButtonProps, decrementButtonProps, increment, decrement, spinButtonProps, applyClamp } =
@@ -172,6 +177,8 @@ export function useNumberField(
       {
         ...propsToValues(props, ['name', 'placeholder', 'required', 'readonly', 'disabled']),
         ...labelledByProps.value,
+        ...describedByProps.value,
+        ...accessibleErrorProps.value,
         ...handlers,
         onKeydown: spinButtonProps.value.onKeydown,
         id: inputId,
@@ -179,8 +186,6 @@ export function useNumberField(
         value: formattedText.value,
         max: toValue(props.max),
         min: toValue(props.min),
-        'aria-describedby': describedBy(),
-        'aria-invalid': errorMessage.value ? true : undefined,
         type: 'text',
         spellcheck: false,
       },

@@ -141,6 +141,42 @@ describe('with input as base element', () => {
     await fireEvent.click(screen.getByLabelText(label));
     expect(screen.getByTestId('value')).toContainHTML('"yes": true');
   });
+
+  test('picks up native validation', async () => {
+    const label = 'Subscribe to our newsletter';
+    await render({
+      setup() {
+        const { inputProps, labelProps, isPressed, errorMessage, errorMessageProps } = useSwitch({
+          label,
+          required: true,
+        });
+
+        return {
+          inputProps,
+          labelProps,
+          isPressed,
+          label,
+          errorMessage,
+          errorMessageProps,
+        };
+      },
+      template: `
+      <div data-testid="fixture">
+        <input v-bind="inputProps" type="checkbox" />
+        <label class="ml-2" v-bind="labelProps">{{ label }}</label>
+        <span v-bind="errorMessageProps">{{ errorMessage }}</span>
+      </div>
+    `,
+    });
+
+    await fireEvent.invalid(screen.getByLabelText(label));
+    await flush();
+    expect(screen.getByLabelText(label)).toHaveErrorMessage('Constraints not satisfied');
+
+    vi.useRealTimers();
+    expect(await axe(screen.getByTestId('fixture'))).toHaveNoViolations();
+    vi.useFakeTimers();
+  });
 });
 
 describe('with custom base element', () => {

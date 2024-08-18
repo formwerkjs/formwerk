@@ -1,5 +1,12 @@
 import { Ref, computed, shallowRef, toValue } from 'vue';
-import { createDescribedByProps, normalizeProps, propsToValues, useUniqId, withRefCapture } from '../utils/common';
+import {
+  createAccessibleErrorMessageProps,
+  createDescribedByProps,
+  normalizeProps,
+  propsToValues,
+  useUniqId,
+  withRefCapture,
+} from '../utils/common';
 import {
   AriaDescribableProps,
   AriaLabelableProps,
@@ -75,10 +82,14 @@ export function useTextField(
     targetRef: inputRef,
   });
 
-  const { errorMessageProps, descriptionProps, describedBy } = createDescribedByProps({
+  const { descriptionProps, describedByProps } = createDescribedByProps({
+    inputId,
+    description: props.description,
+  });
+
+  const { accessibleErrorProps, errorMessageProps } = createAccessibleErrorMessageProps({
     inputId,
     errorMessage,
-    description: props.description,
   });
 
   const handlers: InputEvents = {
@@ -98,14 +109,14 @@ export function useTextField(
       {
         ...propsToValues(props, ['name', 'type', 'placeholder', 'required', 'readonly', 'disabled']),
         ...labelledByProps.value,
+        ...describedByProps.value,
+        ...accessibleErrorProps.value,
         ...handlers,
         id: inputId,
         value: fieldValue.value,
         maxlength: toValue(props.maxLength),
         minlength: toValue(props.minLength),
         pattern: inputRef.value?.tagName === 'TEXTAREA' ? undefined : toValue(props.pattern),
-        'aria-describedby': describedBy(),
-        'aria-invalid': errorMessage.value ? true : undefined,
       },
       inputRef,
       elementRef,

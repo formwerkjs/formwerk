@@ -11,7 +11,13 @@ import {
   Arrayable,
   TypedSchema,
 } from '../types';
-import { useUniqId, createDescribedByProps, normalizeProps, isEqual } from '../utils/common';
+import {
+  useUniqId,
+  createDescribedByProps,
+  normalizeProps,
+  isEqual,
+  createAccessibleErrorMessageProps,
+} from '../utils/common';
 import { useLocale } from '../i18n/useLocale';
 import { useFormField } from '../useFormField';
 import { FieldTypePrefixes } from '../constants';
@@ -88,19 +94,22 @@ export function useCheckboxGroup<TCheckbox>(_props: Reactivify<CheckboxGroupProp
   const { displayError } = useErrorDisplay(field);
   const { validityDetails } = useInputValidity({ field });
   const { fieldValue, setValue, isTouched, setTouched, errorMessage } = field;
-  const { describedBy, descriptionProps, errorMessageProps } = createDescribedByProps({
+  const { describedByProps, descriptionProps } = createDescribedByProps({
+    inputId: groupId,
+    description: props.description,
+  });
+  const { accessibleErrorProps, errorMessageProps } = createAccessibleErrorMessageProps({
     inputId: groupId,
     errorMessage,
-    description: props.description,
   });
 
   const checkboxGroupProps = computed<CheckboxGroupDomProps>(() => {
     return {
       ...labelledByProps.value,
+      ...describedByProps.value,
+      ...accessibleErrorProps.value,
       dir: toValue(props.dir) ?? direction.value,
       role: 'group',
-      'aria-describedby': describedBy(),
-      'aria-invalid': errorMessage.value ? true : undefined,
     };
   });
 

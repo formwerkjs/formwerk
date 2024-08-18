@@ -8,10 +8,18 @@ import {
   Reactivify,
   TypedSchema,
 } from '../types';
-import { isEqual, isInputElement, normalizeProps, useUniqId, withRefCapture } from '../utils/common';
+import {
+  createAccessibleErrorMessageProps,
+  isEqual,
+  isInputElement,
+  normalizeProps,
+  useUniqId,
+  withRefCapture,
+} from '../utils/common';
 import { useLabel } from '../a11y/useLabel';
 import { useFormField } from '../useFormField';
 import { FieldTypePrefixes } from '../constants';
+import { useInputValidity } from '../validation';
 
 export interface SwitchDomInputProps
   extends InputBaseAttributes,
@@ -37,6 +45,7 @@ export type SwitchProps = {
   name?: string;
   modelValue?: boolean;
 
+  required?: boolean;
   readonly?: boolean;
   disabled?: boolean;
 
@@ -56,11 +65,18 @@ export function useSwitch(_props: Reactivify<SwitchProps, 'schema'>, elementRef?
     targetRef: inputRef,
   });
 
-  const { fieldValue, setValue, isTouched, setTouched } = useFormField<unknown>({
+  const field = useFormField<unknown>({
     path: props.name,
     initialValue: toValue(props.modelValue) ?? toValue(props.falseValue) ?? false,
     disabled: props.disabled,
     schema: props.schema,
+  });
+
+  useInputValidity({ field, inputRef });
+  const { fieldValue, setValue, isTouched, setTouched, errorMessage } = field;
+  const { errorMessageProps, accessibleErrorProps } = createAccessibleErrorMessageProps({
+    inputId,
+    errorMessage,
   });
 
   /**
@@ -120,7 +136,9 @@ export function useSwitch(_props: Reactivify<SwitchProps, 'schema'>, elementRef?
     const base = {
       id: inputId,
       ...labelledByProps.value,
+      ...accessibleErrorProps.value,
       [isInput ? 'checked' : 'aria-checked']: isPressed.value || false,
+      [isInput ? 'required' : 'aria-required']: toValue(props.required) || undefined,
       [isInput ? 'readonly' : 'aria-readonly']: toValue(props.readonly) || undefined,
       [isInput ? 'disabled' : 'aria-disabled']: toValue(props.disabled) || undefined,
       role: 'switch' as const,
@@ -162,5 +180,7 @@ export function useSwitch(_props: Reactivify<SwitchProps, 'schema'>, elementRef?
     inputProps,
     togglePressed,
     isTouched,
+    errorMessage,
+    errorMessageProps,
   };
 }

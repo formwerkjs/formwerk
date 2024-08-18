@@ -11,7 +11,14 @@ import {
   Arrayable,
   TypedSchema,
 } from '../types';
-import { useUniqId, createDescribedByProps, getNextCycleArrIdx, normalizeProps, isEmpty } from '../utils/common';
+import {
+  useUniqId,
+  createDescribedByProps,
+  getNextCycleArrIdx,
+  normalizeProps,
+  isEmpty,
+  createAccessibleErrorMessageProps,
+} from '../utils/common';
 import { useLocale } from '../i18n/useLocale';
 import { useFormField } from '../useFormField';
 import { FieldTypePrefixes } from '../constants';
@@ -97,12 +104,16 @@ export function useRadioGroup<TValue = string>(_props: Reactivify<RadioGroupProp
 
   const { validityDetails } = useInputValidity({ field });
   const { displayError } = useErrorDisplay(field);
-  const { fieldValue, setValue, isValid, isTouched, setTouched, errorMessage, errors } = field;
+  const { fieldValue, setValue, isTouched, setTouched, errorMessage, errors } = field;
 
-  const { describedBy, descriptionProps, errorMessageProps } = createDescribedByProps({
+  const { descriptionProps, describedByProps } = createDescribedByProps({
+    inputId: groupId,
+    description: props.description,
+  });
+
+  const { accessibleErrorProps, errorMessageProps } = createAccessibleErrorMessageProps({
     inputId: groupId,
     errorMessage,
-    description: props.description,
   });
 
   function handleArrowNext() {
@@ -132,10 +143,10 @@ export function useRadioGroup<TValue = string>(_props: Reactivify<RadioGroupProp
   const groupProps = computed<RadioGroupDomProps>(() => {
     return {
       ...labelledByProps.value,
+      ...describedByProps.value,
+      ...accessibleErrorProps.value,
       dir: toValue(props.dir) ?? direction.value,
       role: 'radiogroup',
-      'aria-describedby': describedBy(),
-      'aria-invalid': !isValid.value ? true : undefined,
       onKeydown(e: KeyboardEvent) {
         if (toValue(props.disabled)) {
           return;

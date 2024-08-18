@@ -171,3 +171,44 @@ test('change event updates the value', async () => {
   await fireEvent.change(screen.getByLabelText(label), { target: { value } });
   expect(screen.getByLabelText(label)).toHaveDisplayValue(value);
 });
+
+test('picks up native error messages', async () => {
+  const label = 'Field';
+
+  await render({
+    setup() {
+      const description = 'A friendly field';
+      const { inputProps, descriptionProps, labelProps, errorMessageProps, errorMessage } = useTextField({
+        label,
+        description,
+        required: true,
+      });
+
+      return {
+        inputProps,
+        descriptionProps,
+        labelProps,
+        label,
+        description,
+        errorMessageProps,
+        errorMessage,
+      };
+    },
+    template: `
+      <div data-testid="fixture">
+        <label v-bind="labelProps">{{ label }}</label>
+        <input v-bind="inputProps" />
+        <span v-bind="descriptionProps">description</span>
+        <span v-bind="errorMessageProps">{{errorMessage}}</span>
+      </div>
+    `,
+  });
+
+  await fireEvent.invalid(screen.getByLabelText(label));
+  await flush();
+  expect(screen.getByLabelText(label)).toHaveErrorMessage('Constraints not satisfied');
+
+  vi.useRealTimers();
+  expect(await axe(screen.getByTestId('fixture'))).toHaveNoViolations();
+  vi.useFakeTimers();
+});

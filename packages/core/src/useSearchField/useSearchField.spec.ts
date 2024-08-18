@@ -25,7 +25,7 @@ test('should not have a11y errors with labels or descriptions', async () => {
       <div data-testid="fixture">
         <label v-bind="labelProps">{{ label }}</label>
         <input v-bind="inputProps" />
-        <span v-bind="descriptionProps" class="error-message">description</span>
+        <span v-bind="descriptionProps">description</span>
       </div>
     `,
   });
@@ -61,7 +61,7 @@ test('Enter key submit the value using the onSubmit prop', async () => {
       <div data-testid="fixture">
         <label v-bind="labelProps">{{ label }}</label>
         <input v-bind="inputProps" />
-        <span v-bind="descriptionProps" class="error-message">description</span>
+        <span v-bind="descriptionProps">description</span>
       </div>
     `,
   });
@@ -98,7 +98,7 @@ test('blur sets touched to true', async () => {
       <div data-testid="fixture" :class="{ 'touched': isTouched }">
         <label v-bind="labelProps">{{ label }}</label>
         <input v-bind="inputProps" />
-        <span v-bind="descriptionProps" class="error-message">description</span>
+        <span v-bind="descriptionProps">description</span>
       </div>
     `,
   });
@@ -132,7 +132,7 @@ test('Escape key clears the value', async () => {
       <div data-testid="fixture">
         <label v-bind="labelProps">{{ label }}</label>
         <input v-bind="inputProps" />
-        <span v-bind="descriptionProps" class="error-message">description</span>
+        <span v-bind="descriptionProps">description</span>
       </div>
     `,
   });
@@ -169,7 +169,7 @@ test('Can have a clear button that clears the value', async () => {
       <div data-testid="fixture">
         <label v-bind="labelProps">{{ label }}</label>
         <input v-bind="inputProps" />
-        <span v-bind="descriptionProps" class="error-message">description</span>
+        <span v-bind="descriptionProps">description</span>
         <button v-bind="clearBtnProps">Clear</button>
       </div>
     `,
@@ -206,7 +206,7 @@ test('change event updates the value', async () => {
       <div data-testid="fixture">
         <label v-bind="labelProps">{{ label }}</label>
         <input v-bind="inputProps" />
-        <span v-bind="descriptionProps" class="error-message">description</span>
+        <span v-bind="descriptionProps">description</span>
       </div>
     `,
   });
@@ -215,4 +215,46 @@ test('change event updates the value', async () => {
   await flush();
   await fireEvent.change(screen.getByLabelText(label), { target: { value } });
   expect(screen.getByLabelText(label)).toHaveDisplayValue(value);
+});
+
+test('picks up native error messages', async () => {
+  const label = 'Search';
+
+  await render({
+    setup() {
+      const description = 'Search for the thing';
+      const { inputProps, descriptionProps, labelProps, errorMessageProps, errorMessage } = useSearchField({
+        label,
+        description,
+        required: true,
+      });
+
+      return {
+        inputProps,
+        descriptionProps,
+        labelProps,
+        label,
+        description,
+        errorMessageProps,
+        errorMessage,
+      };
+    },
+    template: `
+      <div data-testid="fixture">
+        <label v-bind="labelProps">{{ label }}</label>
+        <input v-bind="inputProps" />
+        <span v-bind="descriptionProps">description</span>
+        <span v-bind="errorMessageProps">{{errorMessage}}</span>
+
+      </div>
+    `,
+  });
+
+  await fireEvent.invalid(screen.getByLabelText(label));
+  await flush();
+  expect(screen.getByLabelText(label)).toHaveErrorMessage('Constraints not satisfied');
+
+  vi.useRealTimers();
+  expect(await axe(screen.getByTestId('fixture'))).toHaveNoViolations();
+  vi.useFakeTimers();
 });
