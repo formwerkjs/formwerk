@@ -1,6 +1,6 @@
 import { MaybeRefOrGetter, Ref, toValue, useId } from 'vue';
 import { klona } from 'klona/full';
-import { AriaDescriptionProps, Arrayable, NormalizedProps } from '../types';
+import { AriaDescriptionProps, Arrayable, Maybe, NormalizedProps } from '../types';
 import { AsyncReturnType } from 'type-fest';
 
 export function useUniqId(prefix?: string) {
@@ -283,4 +283,12 @@ export function warn(message: string) {
   if (__DEV__) {
     console.warn(`[Formwerk]: ${message}`);
   }
+}
+
+export function isInputElement(el: Maybe<HTMLElement>) {
+  if (!el) {
+    return false;
+  }
+
+  return ['INPUT', 'TEXTAREA', 'SELECT'].includes(el.tagName);
 }

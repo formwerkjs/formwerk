@@ -1,5 +1,5 @@
 import { Ref, computed, inject, nextTick, ref, toValue } from 'vue';
-import { isEqual, normalizeProps, useUniqId, withRefCapture } from '../utils/common';
+import { isEqual, isInputElement, normalizeProps, useUniqId, warn, withRefCapture } from '../utils/common';
 import { AriaInputProps, AriaLabelableProps, InputBaseAttributes, Reactivify, RovingTabIndex } from '../types';
 import { useLabel } from '../a11y/useLabel';
 import { RadioGroupContext, RadioGroupKey } from './useRadioGroup';
@@ -36,6 +36,12 @@ export function useRadio<TValue = string>(
     targetRef: inputRef,
   });
 
+  if (!group) {
+    warn(
+      'A Radio component must be a part of a Radio Group. Make sure you have called useRadioGroup at a parent component',
+    );
+  }
+
   function createHandlers(isInput: boolean) {
     const baseHandlers = {
       onClick() {
@@ -51,7 +57,7 @@ export function useRadio<TValue = string>(
           return;
         }
 
-        if (e.code === 'Space') {
+        if (e.key === 'Space') {
           e.preventDefault();
           group?.setValue(toValue(props.value) as TValue);
           group?.setTouched(true);
@@ -88,7 +94,7 @@ export function useRadio<TValue = string>(
       ...labelledByProps.value,
       ...createHandlers(isInput),
       id: inputId,
-      [isInput ? 'checked' : 'aria-checked']: checked.value || undefined,
+      [isInput ? 'checked' : 'aria-checked']: checked.value,
       [isInput ? 'readonly' : 'aria-readonly']: group?.readonly || undefined,
       [isInput ? 'disabled' : 'aria-disabled']: isDisabled() || undefined,
       [isInput ? 'required' : 'aria-required']: group?.required,
@@ -124,7 +130,7 @@ export function useRadio<TValue = string>(
   });
 
   const inputProps = computed(() =>
-    withRefCapture(createBindings(inputRef.value?.tagName === 'INPUT'), inputRef, elementRef),
+    withRefCapture(createBindings(isInputElement(inputRef.value)), inputRef, elementRef),
   );
 
   return {

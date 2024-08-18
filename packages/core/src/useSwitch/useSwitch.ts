@@ -8,7 +8,7 @@ import {
   Reactivify,
   TypedSchema,
 } from '../types';
-import { isEqual, normalizeProps, useUniqId, withRefCapture } from '../utils/common';
+import { isEqual, isInputElement, normalizeProps, useUniqId, withRefCapture } from '../utils/common';
 import { useLabel } from '../a11y/useLabel';
 import { useFormField } from '../useFormField';
 import { FieldTypePrefixes } from '../constants';
@@ -147,7 +147,7 @@ export function useSwitch(_props: Reactivify<SwitchProps, 'schema'>, elementRef?
    * Use this if you are using a native input[type=checkbox] element.
    */
   const inputProps = computed(() =>
-    withRefCapture(createBindings(inputRef.value?.tagName === 'INPUT'), inputRef, elementRef),
+    withRefCapture(createBindings(isInputElement(inputRef.value)), inputRef, elementRef),
   );
 
   function togglePressed(force?: boolean) {

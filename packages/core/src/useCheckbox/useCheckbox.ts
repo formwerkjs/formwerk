@@ -1,5 +1,5 @@
 import { Ref, computed, inject, nextTick, ref, toValue } from 'vue';
-import { isEqual, normalizeProps, useUniqId, withRefCapture } from '../utils/common';
+import { isEqual, isInputElement, normalizeProps, useUniqId, withRefCapture } from '../utils/common';
 import { AriaLabelableProps, Reactivify, InputBaseAttributes, RovingTabIndex, TypedSchema } from '../types';
 import { useLabel } from '../a11y/useLabel';
 import { CheckboxGroupContext, CheckboxGroupKey } from './useCheckboxGroup';
@@ -165,7 +165,7 @@ export function useCheckbox<TValue = string>(
   });
 
   const inputProps = computed(() =>
-    withRefCapture(createBindings(inputRef.value?.tagName === 'INPUT'), inputRef, elementRef),
+    withRefCapture(createBindings(isInputElement(inputRef.value)), inputRef, elementRef),
   );
 
   function setChecked(force?: boolean) {

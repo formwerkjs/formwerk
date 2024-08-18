@@ -3,7 +3,7 @@ import { useEventListener } from '../helpers/useEventListener';
 import { FormKey } from '../useForm';
 import { Maybe, ValidationResult } from '../types';
 import { FormField } from '../useFormField';
-import { cloneDeep, normalizeArrayable } from '../utils/common';
+import { cloneDeep, isInputElement, normalizeArrayable } from '../utils/common';
 import { FormGroupKey } from '../useFormGroup';
 
 interface InputValidityOptions {
@@ -21,6 +21,20 @@ export function useInputValidity(opts: InputValidityOptions) {
   useMessageCustomValiditySync(errorMessage, opts.inputRef);
 
   function validateNative(mutate?: boolean): ValidationResult {
+    const baseReturns: Omit<ValidationResult, 'errors' | 'isValid'> = {
+      type: 'FIELD',
+      path: (formGroup ? getName() : getPath()) || '',
+      output: cloneDeep(fieldValue.value),
+    };
+
+    if (!isInputElement(opts.inputRef?.value)) {
+      return {
+        ...baseReturns,
+        isValid: true,
+        errors: [{ messages: [], path: getPath() || '' }],
+      };
+    }
+
     validityDetails.value = opts.inputRef?.value?.validity;
     const messages = normalizeArrayable(opts.inputRef?.value?.validationMessage || ([] as string[])).filter(Boolean);
     if (mutate) {
@@ -28,9 +42,7 @@ export function useInputValidity(opts: InputValidityOptions) {
     }
 
     return {
-      type: 'FIELD',
-      path: (formGroup ? getName() : getPath()) || '',
-      output: cloneDeep(fieldValue.value),
+      ...baseReturns,
       isValid: !messages.length,
       errors: [{ messages, path: getPath() || '' }],
     };
