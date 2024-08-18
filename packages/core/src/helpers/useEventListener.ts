@@ -1,9 +1,9 @@
 import { MaybeRefOrGetter, onBeforeUnmount, toValue, watch } from 'vue';
-import { Arrayable } from '../types';
+import { Arrayable, Maybe } from '../types';
 import { normalizeArrayable } from '../utils/common';
 
 export function useEventListener(
-  targetRef: MaybeRefOrGetter<HTMLElement | undefined>,
+  targetRef: MaybeRefOrGetter<Maybe<HTMLElement>>,
   event: Arrayable<string>,
   listener: EventListener,
 ) {

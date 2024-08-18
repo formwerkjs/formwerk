@@ -1,4 +1,4 @@
-import { InjectionKey, toValue, computed, onBeforeUnmount, reactive, provide } from 'vue';
+import { InjectionKey, toValue, computed, onBeforeUnmount, reactive, provide, markRaw } from 'vue';
 import { useInputValidity } from '../validation/useInputValidity';
 import { useLabel } from '../a11y/useLabel';
 import {
@@ -19,7 +19,7 @@ import {
   createAccessibleErrorMessageProps,
 } from '../utils/common';
 import { useLocale } from '../i18n/useLocale';
-import { useFormField } from '../useFormField';
+import { FormField, useFormField } from '../useFormField';
 import { FieldTypePrefixes } from '../constants';
 import { useErrorDisplay } from '../useFormField/useErrorDisplay';
 
@@ -32,6 +32,7 @@ export interface CheckboxGroupContext<TCheckbox> {
   disabled: boolean;
   readonly: boolean;
   required: boolean;
+  field: FormField<CheckboxGroupValue<TCheckbox>>;
   groupState: CheckboxGroupState;
 
   readonly modelValue: CheckboxGroupValue<TCheckbox> | undefined;
@@ -166,6 +167,7 @@ export function useCheckboxGroup<TCheckbox>(_props: Reactivify<CheckboxGroupProp
     disabled: computed(() => toValue(props.disabled) ?? false),
     readonly: computed(() => toValue(props.readonly) ?? false),
     required: computed(() => toValue(props.required) ?? false),
+    field: markRaw(field),
     groupState,
     modelValue: fieldValue,
     isTouched,

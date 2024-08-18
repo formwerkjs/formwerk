@@ -310,7 +310,7 @@ export function warn(message: string) {
   }
 }
 
-export function isInputElement(el: Maybe<HTMLElement>) {
+export function isInputElement(el: Maybe<HTMLElement>): el is HTMLInputElement {
   if (!el) {
     return false;
   }

@@ -7,7 +7,7 @@ import { cloneDeep, isInputElement, normalizeArrayable } from '../utils/common';
 import { FormGroupKey } from '../useFormGroup';
 
 interface InputValidityOptions {
-  inputRef?: Ref<HTMLInputElement | HTMLTextAreaElement | undefined>;
+  inputRef?: Ref<Maybe<HTMLElement>>;
   field: FormField<any>;
   events?: string[];
 }
@@ -98,15 +98,16 @@ export function useInputValidity(opts: InputValidityOptions) {
 /**
  * Syncs the message with the input's native validation message.
  */
-function useMessageCustomValiditySync(
-  message: Ref<string>,
-  input?: Ref<Maybe<HTMLInputElement | HTMLTextAreaElement>>,
-) {
+function useMessageCustomValiditySync(message: Ref<string>, input?: Ref<Maybe<HTMLElement>>) {
   if (!input) {
     return;
   }
 
   watch(message, msg => {
+    if (!isInputElement(input.value)) {
+      return;
+    }
+
     const inputMsg = input?.value?.validationMessage;
     if (inputMsg !== msg) {
       input?.value?.setCustomValidity(msg || '');
