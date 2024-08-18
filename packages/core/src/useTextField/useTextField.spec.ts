@@ -2,38 +2,105 @@ import { fireEvent, render, screen } from '@testing-library/vue';
 import { axe } from 'vitest-axe';
 import { useTextField } from './useTextField';
 import { flush } from '@test-utils/flush';
+import { describe } from 'vitest';
 
-test('should not have a11y errors with labels or descriptions', async () => {
-  await render({
-    setup() {
-      const label = 'Field';
-      const description = 'A friendly field';
-      const { inputProps, descriptionProps, labelProps } = useTextField({
-        label,
-        description,
-      });
+describe('should not have a11y errors', () => {
+  test('with label and input combo', async () => {
+    await render({
+      setup() {
+        const label = 'Field';
+        const description = 'A friendly field';
+        const { inputProps, descriptionProps, labelProps } = useTextField({
+          label,
+          description,
+        });
 
-      return {
-        inputProps,
-        descriptionProps,
-        labelProps,
-        label,
-        description,
-      };
-    },
-    template: `
+        return {
+          inputProps,
+          descriptionProps,
+          labelProps,
+          label,
+          description,
+        };
+      },
+      template: `
       <div data-testid="fixture">
         <label v-bind="labelProps">{{ label }}</label>
         <input v-bind="inputProps" />
         <span v-bind="descriptionProps" class="error-message">description</span>
       </div>
     `,
+    });
+
+    await flush();
+    vi.useRealTimers();
+    expect(await axe(screen.getByTestId('fixture'))).toHaveNoViolations();
+    vi.useFakeTimers();
   });
 
-  await flush();
-  vi.useRealTimers();
-  expect(await axe(screen.getByTestId('fixture'))).toHaveNoViolations();
-  vi.useFakeTimers();
+  test('with custom label and input combo', async () => {
+    await render({
+      setup() {
+        const label = 'Field';
+        const description = 'A friendly field';
+        const { inputProps, descriptionProps, labelProps } = useTextField({
+          label,
+          description,
+        });
+
+        return {
+          inputProps,
+          descriptionProps,
+          labelProps,
+          label,
+          description,
+        };
+      },
+      template: `
+      <div data-testid="fixture">
+        <div v-bind="labelProps">{{ label }}</div>
+        <input v-bind="inputProps" />
+        <span v-bind="descriptionProps" class="error-message">description</span>
+      </div>
+    `,
+    });
+
+    await flush();
+    vi.useRealTimers();
+    expect(await axe(screen.getByTestId('fixture'))).toHaveNoViolations();
+    vi.useFakeTimers();
+  });
+
+  test('with no label element', async () => {
+    await render({
+      setup() {
+        const label = 'Field';
+        const description = 'A friendly field';
+        const { inputProps, descriptionProps } = useTextField({
+          label,
+          description,
+        });
+
+        return {
+          inputProps,
+          descriptionProps,
+          label,
+          description,
+        };
+      },
+      template: `
+      <div data-testid="fixture">
+        <input v-bind="inputProps" />
+        <span v-bind="descriptionProps" class="error-message">description</span>
+      </div>
+    `,
+    });
+
+    await flush();
+    vi.useRealTimers();
+    expect(await axe(screen.getByTestId('fixture'))).toHaveNoViolations();
+    vi.useFakeTimers();
+  });
 });
 
 test('blur sets touched to true', async () => {

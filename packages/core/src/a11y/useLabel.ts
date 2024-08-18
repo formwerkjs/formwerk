@@ -23,7 +23,7 @@ export function useLabel(props: LabelProps) {
   });
 
   const labelledByProps = computed<AriaLabelableProps>(() => {
-    if (toValue(props.label) && toValue(props.targetRef)) {
+    if (labelRef.value && toValue(props.label) && toValue(props.targetRef)) {
       return {
         'aria-labelledby': labelProps.value.id,
       };
