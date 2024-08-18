@@ -1,4 +1,4 @@
-import { Ref, computed, inject, nextTick, ref, toValue } from 'vue';
+import { computed, inject, nextTick, Ref, ref, toValue } from 'vue';
 import {
   createAccessibleErrorMessageProps,
   isEqual,
@@ -9,22 +9,24 @@ import {
 } from '../utils/common';
 import {
   AriaLabelableProps,
-  Reactivify,
   InputBaseAttributes,
+  NormalizedProps,
+  Reactivify,
   RovingTabIndex,
   TypedSchema,
-  NormalizedProps,
 } from '../types';
 import { useLabel } from '../a11y/useLabel';
 import { CheckboxGroupContext, CheckboxGroupKey } from './useCheckboxGroup';
 import { useFormField } from '../useFormField';
 import { FieldTypePrefixes } from '../constants';
-import { useInputValidity } from '@core/validation';
+import { useInputValidity } from '../validation';
 
 export interface CheckboxProps<TValue = string> {
   name?: string;
   label?: string;
   modelValue?: TValue;
+
+  value?: TValue;
   trueValue?: TValue;
   falseValue?: TValue;
 
@@ -57,7 +59,7 @@ export function useCheckbox<TValue = string>(
 ) {
   const props = normalizeProps(_props, ['schema']);
   const inputId = useUniqId(FieldTypePrefixes.Checkbox);
-  const getTrueValue = () => (toValue(props.trueValue) as TValue) ?? (true as TValue);
+  const getTrueValue = createTrueValueGetter(props);
   const getFalseValue = () => (toValue(props.falseValue) as TValue) ?? (false as TValue);
   const group: CheckboxGroupContext<TValue> | null = inject(CheckboxGroupKey, null);
   const inputRef = elementRef || ref<HTMLElement>();
@@ -108,7 +110,7 @@ export function useCheckbox<TValue = string>(
           return;
         }
 
-        if (e.code === 'Space') {
+        if (e.key === 'Space') {
           e.preventDefault();
           toggleValue();
           setTouched(true);
@@ -196,7 +198,13 @@ export function useCheckbox<TValue = string>(
       return;
     }
 
-    group?.toggleValue(getTrueValue(), force);
+    if (group) {
+      group?.toggleValue(getTrueValue(), force);
+
+      return;
+    }
+
+    setValue(force ? getTrueValue() : getFalseValue());
   }
 
   function toggleValue(force?: boolean) {
@@ -228,20 +236,19 @@ function useCheckboxField<TValue = string>(
   props: NormalizedProps<Reactivify<CheckboxProps<TValue>, 'schema'>, 'schema'>,
 ) {
   const group: CheckboxGroupContext<TValue> | null = inject(CheckboxGroupKey, null);
-  const getTrueValue = () => (toValue(props.trueValue) as TValue) ?? (true as TValue);
 
   if (group) {
+    const getTrueValue = createTrueValueGetter(props);
+
     return createGroupField(group, getTrueValue);
   }
 
-  const field = useFormField<TValue>({
+  return useFormField<TValue>({
     path: props.name,
     initialValue: toValue(props.modelValue) as TValue,
     disabled: props.disabled,
     schema: props.schema,
   });
-
-  return field;
 }
 
 function createGroupField<TValue = unknown>(group: CheckboxGroupContext<TValue>, getTrueValue: () => TValue) {
@@ -253,4 +260,8 @@ function createGroupField<TValue = unknown>(group: CheckboxGroupContext<TValue>,
     ...group.field,
     setValue,
   };
+}
+
+function createTrueValueGetter<TValue>(props: NormalizedProps<Reactivify<CheckboxProps<TValue>, 'schema'>, 'schema'>) {
+  return () => (toValue(props.trueValue) as TValue) ?? (toValue(props.value) as TValue) ?? (true as TValue);
 }

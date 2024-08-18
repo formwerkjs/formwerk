@@ -104,7 +104,7 @@ export function useCheckboxGroup<TCheckbox>(_props: Reactivify<CheckboxGroupProp
     errorMessage,
   });
 
-  const checkboxGroupProps = computed<CheckboxGroupDomProps>(() => {
+  const groupProps = computed<CheckboxGroupDomProps>(() => {
     return {
       ...labelledByProps.value,
       ...describedByProps.value,
@@ -187,7 +187,7 @@ export function useCheckboxGroup<TCheckbox>(_props: Reactivify<CheckboxGroupProp
     groupState,
     errorMessageProps,
     fieldValue,
-    checkboxGroupProps,
+    groupProps,
     errorMessage,
     isTouched,
     errors: field.errors,

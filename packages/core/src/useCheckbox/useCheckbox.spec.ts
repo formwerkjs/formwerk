@@ -10,6 +10,7 @@ const InputBase: string = `
     <input v-bind="inputProps" />
     <label v-bind="labelProps">{{ label }}</label>
     <span v-bind="errorMessageProps">{{ errorMessage }}</span>
+    <span data-testid="value">{{ fieldValue }}</span>
   </div>
 `;
 
@@ -18,19 +19,19 @@ const CustomBase: string = `
     <div v-bind="inputProps"></div>
     <div v-bind="labelProps" >{{ label }}</div>
     <span v-bind="errorMessageProps">{{ errorMessage }}</span>
+    <span data-testid="value">{{ fieldValue }}</span>
   </div>
 `;
 
-const createCheckbox = (template = InputBase): Component => {
+const createCheckbox = (props: CheckboxProps, template = InputBase): Component => {
   return defineComponent({
     template,
     inheritAttrs: false,
-    setup(props: CheckboxProps, { attrs }) {
-      const box = useCheckbox({ ...props, ...attrs });
+    setup() {
+      const box = useCheckbox(props);
 
       return {
         ...props,
-        ...attrs,
         ...box,
       };
     },
@@ -39,13 +40,13 @@ const createCheckbox = (template = InputBase): Component => {
 
 describe('has no a11y violations', () => {
   test('with input as base element', async () => {
-    const Checkbox = createCheckbox();
+    const Checkbox = createCheckbox({ label: 'First' });
 
     await render({
       components: { Checkbox },
       template: `
         <div data-testid="fixture">
-          <Checkbox label="First" value="1" />
+          <Checkbox value="1" />
         </div>
       `,
     });
@@ -56,13 +57,13 @@ describe('has no a11y violations', () => {
   });
 
   test('with custom elements as base', async () => {
-    const Checkbox = createCheckbox(CustomBase);
+    const Checkbox = createCheckbox({ label: 'First' }, CustomBase);
 
     await render({
       components: { Checkbox },
       template: `
         <div data-testid="fixture">
-          <Checkbox label="First" value="1" />
+          <Checkbox value="1" />
         </div>
       `,
     });
@@ -73,15 +74,123 @@ describe('has no a11y violations', () => {
   });
 });
 
+describe('value toggling on click', () => {
+  test('with input as base element', async () => {
+    const Checkbox = createCheckbox({ label: 'First' });
+
+    await render({
+      components: { Checkbox },
+      template: `
+        <Checkbox label="First"  />
+      `,
+    });
+
+    expect(screen.getByTestId('value')).toHaveTextContent('');
+    await fireEvent.click(screen.getByLabelText('First'));
+    expect(screen.getByTestId('value')).toHaveTextContent('true');
+    await fireEvent.click(screen.getByLabelText('First'));
+    expect(screen.getByTestId('value')).toHaveTextContent('false');
+  });
+
+  test('with custom elements as base', async () => {
+    const Checkbox = createCheckbox({ label: 'First' }, CustomBase);
+
+    await render({
+      components: { Checkbox },
+      template: `
+        <Checkbox label="First" />
+      `,
+    });
+
+    expect(screen.getByTestId('value')).toHaveTextContent('');
+    await fireEvent.click(screen.getByLabelText('First'));
+    expect(screen.getByTestId('value')).toHaveTextContent('true');
+    await fireEvent.click(screen.getByLabelText('First'));
+    expect(screen.getByTestId('value')).toHaveTextContent('false');
+  });
+});
+
+describe('value toggling on space key', () => {
+  test('with input as base element', async () => {
+    const Checkbox = createCheckbox({ label: 'First' });
+
+    await render({
+      components: { Checkbox },
+      template: `
+        <Checkbox label="First"  />
+      `,
+    });
+
+    expect(screen.getByTestId('value')).toHaveTextContent('');
+    await fireEvent.keyDown(screen.getByLabelText('First'), { key: 'Space' });
+    expect(screen.getByTestId('value')).toHaveTextContent('true');
+    await fireEvent.keyDown(screen.getByLabelText('First'), { key: 'Space' });
+    expect(screen.getByTestId('value')).toHaveTextContent('false');
+  });
+
+  test('with custom elements as base', async () => {
+    const Checkbox = createCheckbox({ label: 'First' }, CustomBase);
+
+    await render({
+      components: { Checkbox },
+      template: `
+        <Checkbox label="First" />
+      `,
+    });
+
+    expect(screen.getByTestId('value')).toHaveTextContent('');
+    await fireEvent.click(screen.getByLabelText('First'));
+    expect(screen.getByTestId('value')).toHaveTextContent('true');
+    await fireEvent.click(screen.getByLabelText('First'));
+    expect(screen.getByTestId('value')).toHaveTextContent('false');
+  });
+});
+
+describe('value toggling with custom true and false values', () => {
+  test('with input as base element', async () => {
+    const Checkbox = createCheckbox({ label: 'First', trueValue: '1', falseValue: '2' });
+
+    await render({
+      components: { Checkbox },
+      template: `
+        <Checkbox label="First"  />
+      `,
+    });
+
+    expect(screen.getByTestId('value')).toHaveTextContent('');
+    await fireEvent.click(screen.getByLabelText('First'));
+    expect(screen.getByTestId('value')).toHaveTextContent('1');
+    await fireEvent.click(screen.getByLabelText('First'));
+    expect(screen.getByTestId('value')).toHaveTextContent('2');
+  });
+
+  test('with custom elements as base', async () => {
+    const Checkbox = createCheckbox({ label: 'First', trueValue: '1', falseValue: '2' }, CustomBase);
+
+    await render({
+      components: { Checkbox },
+      template: `
+        <Checkbox label="First" />
+      `,
+    });
+
+    expect(screen.getByTestId('value')).toHaveTextContent('');
+    await fireEvent.click(screen.getByLabelText('First'));
+    expect(screen.getByTestId('value')).toHaveTextContent('1');
+    await fireEvent.click(screen.getByLabelText('First'));
+    expect(screen.getByTestId('value')).toHaveTextContent('2');
+  });
+});
+
 describe('validation', () => {
   test('picks up native error messages', async () => {
-    const Checkbox = createCheckbox();
+    const Checkbox = createCheckbox({ label: 'First', required: true });
 
     await render({
       components: { Checkbox },
       template: `
         <div data-testid="fixture">
-          <Checkbox label="First" value="1" :required="true" />
+          <Checkbox label="First" value="1"  />
         </div>
       `,
     });
