@@ -220,3 +220,13 @@ export function normalizePath(path: string): string {
 
   return fullPath;
 }
+
+export function prefixPath(prefix: string | undefined, path: string | undefined) {
+  if (!path) {
+    return path;
+  }
+
+  prefix = prefix ? `${prefix}.` : '';
+
+  return `${prefix}${path}`;
+}

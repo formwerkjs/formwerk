@@ -9,7 +9,7 @@ import {
 import { batchAsync, cloneDeep, withLatestCall } from '../utils/common';
 import { createEventDispatcher } from '../utils/events';
 import { SCHEMA_BATCH_MS } from '../constants';
-import { setInPath } from '../utils/path';
+import { prefixPath, setInPath } from '../utils/path';
 
 type AggregatorResult<TOutput extends FormObject> = FormValidationResult<TOutput> | GroupValidationResult<TOutput>;
 
@@ -56,7 +56,18 @@ export function useValidationProvider<
       });
     }
 
-    const { errors, output } = await schema.parse(getValues());
+    const { errors: parseErrors, output } = await schema.parse(getValues());
+    let errors = parseErrors;
+    const prefix = getPath?.();
+    if (prefix) {
+      errors = parseErrors.map(e => {
+        return {
+          messages: e.messages,
+          path: prefixPath(prefix, e.path) || '',
+        };
+      });
+    }
+
     const allErrors = [...errors, ...fieldErrors];
 
     return createValidationResult({
@@ -67,13 +78,11 @@ export function useValidationProvider<
   }
 
   function defineValidationRequest(mutator: (result: TResult) => void) {
-    const requestValidation = withLatestCall(batchAsync(validate, SCHEMA_BATCH_MS), result => {
+    return withLatestCall(batchAsync(validate, SCHEMA_BATCH_MS), result => {
       mutator(result);
 
       return result;
     });
-
-    return requestValidation;
   }
 
   function createValidationResult(result: Omit<AggregatorResult<TOutput>, 'mode' | 'type'>): TResult {
@@ -111,8 +120,9 @@ export function useValidationProvider<
     });
 
     for (const result of sorted) {
+      const hasOutput = 'output' in result;
       // Pathless fields will be dropped
-      if (!result.path) {
+      if (!result.path || !hasOutput) {
         continue;
       }
 

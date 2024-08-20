@@ -27,6 +27,7 @@ import { isEqual, normalizeProps, useUniqId, warn, withRefCapture } from '../uti
 import { FormKey } from '../useForm';
 import { useValidationProvider } from '../validation/useValidationProvider';
 import { FormValidationMode } from '../useForm/formContext';
+import { prefixPath as _prefixPath } from '../utils/path';
 
 export interface FormGroupProps<TInput extends FormObject = FormObject, TOutput extends FormObject = TInput> {
   name: string;
@@ -64,11 +65,11 @@ export function useFormGroup<TInput extends FormObject = FormObject, TOutput ext
     type: 'GROUP',
   });
 
-  const requestValidation = defineValidationRequest(({ errors }) => {
+  const requestValidation = defineValidationRequest(res => {
     // Clears Errors in that path before proceeding.
     form?.clearErrors(toValue(props.name));
-    for (const entry of errors) {
-      form?.setFieldErrors(prefixPath(entry.path) ?? '', entry.messages);
+    for (const entry of res.errors) {
+      form?.setFieldErrors(entry.path ?? '', entry.messages);
     }
   });
 
@@ -129,7 +130,7 @@ export function useFormGroup<TInput extends FormObject = FormObject, TOutput ext
   }
 
   function prefixPath(path: string | undefined) {
-    return prefixGroupPath(getPath(), path);
+    return _prefixPath(getPath(), path);
   }
 
   const ctx: FormGroupContext = {
@@ -146,7 +147,7 @@ export function useFormGroup<TInput extends FormObject = FormObject, TOutput ext
       validate().then(result => {
         return {
           ...result,
-          errors: result.errors.map(e => ({ path: prefixPath(e.path) ?? '', messages: e.messages })),
+          errors: result.errors,
         };
       }),
     );
@@ -193,14 +194,4 @@ function createInlineFormGroupComponent({ groupProps, labelProps }: Reactivify<I
       };
     };
   };
-}
-
-function prefixGroupPath(prefix: string | undefined, path: string | undefined) {
-  if (!path) {
-    return path;
-  }
-
-  prefix = prefix ? `${prefix}.` : '';
-
-  return `${prefix}${path}`;
 }

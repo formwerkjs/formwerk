@@ -83,6 +83,7 @@ describe('schema-zod', () => {
     await fireEvent.update(screen.getByTestId('test'), 'test');
     await fireEvent.click(screen.getByText('Submit'));
     await flush();
+
     expect(handler).toHaveBeenCalledOnce();
   });
 

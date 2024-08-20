@@ -15,10 +15,10 @@ function createInputComponent(): Component {
       const schema = attrs.schema as TypedSchema<any>;
       const { errorMessage, inputProps } = useTextField({ name, label: name, schema });
 
-      return { errorMessage: errorMessage, inputProps, name };
+      return { errorMessage: errorMessage, inputProps, name, attrs };
     },
     template: `
-        <input v-bind="inputProps" :data-testid="name" />
+        <input v-bind="{...inputProps, ...attrs}" :data-testid="name" />
         <span data-testid="err">{{ errorMessage }}</span>
       `,
   };
@@ -257,12 +257,77 @@ test('validation combines schema with form schema', async () => {
 
   await flush();
   expect(form.getErrors()).toHaveLength(2);
+
   await fireEvent.update(screen.getByTestId('field'), 'test');
-  await fireEvent.blur(screen.getByTestId('other'));
+  await fireEvent.blur(screen.getByTestId('field'));
+
   await flush();
   expect(form.getErrors()).toHaveLength(1);
   await fireEvent.update(screen.getByTestId('other'), 'test');
   await fireEvent.blur(screen.getByTestId('other'));
+  await flush();
+  expect(form.getErrors()).toHaveLength(0);
+});
+
+test('validation cascades', async () => {
+  let form!: ReturnType<typeof useForm>;
+  const groups: ReturnType<typeof useFormGroup>[] = [];
+  const groupSchema: TypedSchema<{ field: string }> = {
+    async parse(value) {
+      return {
+        errors: value.field === 'valid' ? [] : [{ path: 'field', messages: ['error'] }],
+      };
+    },
+  };
+
+  const formSchema: TypedSchema<{ other: string }> = {
+    async parse(value) {
+      return {
+        errors: value.other === 'valid' ? [] : [{ path: 'other', messages: ['error'] }],
+      };
+    },
+  };
+
+  await render({
+    components: { TInput: createInputComponent(), TGroup: createGroupComponent(fg => groups.push(fg)) },
+    setup() {
+      form = useForm({
+        schema: formSchema,
+      }) as any;
+
+      return {
+        groupSchema,
+      };
+    },
+    template: `
+      <TGroup name="group" :schema="groupSchema">
+        <TInput name="field" :required="true" />
+      </TGroup>
+
+      <TInput name="other" :required="true" />
+    `,
+  });
+
+  await flush();
+  expect(form.getErrors()).toHaveLength(2);
+  expect(form.getErrors().flatMap(e => e.messages)).toEqual(['Constraints not satisfied', 'Constraints not satisfied']);
+
+  await fireEvent.update(screen.getByTestId('field'), 'test');
+  await fireEvent.blur(screen.getByTestId('field'));
+
+  await flush();
+  expect(form.getErrors()).toHaveLength(2);
+  expect(form.getErrors().flatMap(e => e.messages)).toEqual(['Constraints not satisfied', 'error']);
+  await fireEvent.update(screen.getByTestId('other'), 'test');
+  await fireEvent.blur(screen.getByTestId('other'));
+  await flush();
+  expect(form.getErrors()).toHaveLength(2);
+  expect(form.getErrors().flatMap(e => e.messages)).toEqual(['error', 'error']);
+
+  await fireEvent.update(screen.getByTestId('other'), 'valid');
+  await fireEvent.update(screen.getByTestId('field'), 'valid');
+  await fireEvent.blur(screen.getByTestId('other'));
+  await fireEvent.blur(screen.getByTestId('field'));
   await flush();
   expect(form.getErrors()).toHaveLength(0);
 });

@@ -3,7 +3,7 @@ import { useEventListener } from '../helpers/useEventListener';
 import { FormKey } from '../useForm';
 import { Maybe, ValidationResult } from '../types';
 import { FormField } from '../useFormField';
-import { cloneDeep, isInputElement, normalizeArrayable } from '../utils/common';
+import { isInputElement, normalizeArrayable } from '../utils/common';
 import { FormGroupKey } from '../useFormGroup';
 
 interface InputValidityOptions {
@@ -15,19 +15,18 @@ interface InputValidityOptions {
 export function useInputValidity(opts: InputValidityOptions) {
   const form = inject(FormKey, null);
   const formGroup = inject(FormGroupKey, null);
-  const { setErrors, errorMessage, schema, validate: validateField, getPath, getName, fieldValue } = opts.field;
+  const { setErrors, errorMessage, schema, validate: validateField, getPath } = opts.field;
   const validityDetails = shallowRef<ValidityState>();
-  const validationMode = (formGroup || form)?.getValidationMode() ?? 'aggregate';
   useMessageCustomValiditySync(errorMessage, opts.inputRef);
 
   function validateNative(mutate?: boolean): ValidationResult {
     const baseReturns: Omit<ValidationResult, 'errors' | 'isValid'> = {
       type: 'FIELD',
-      path: (formGroup ? getName() : getPath()) || '',
-      output: cloneDeep(fieldValue.value),
+      path: getPath() || '',
     };
 
-    if (!isInputElement(opts.inputRef?.value)) {
+    const inputEl = opts.inputRef?.value;
+    if (!isInputElement(inputEl)) {
       return {
         ...baseReturns,
         isValid: true,
@@ -35,8 +34,10 @@ export function useInputValidity(opts: InputValidityOptions) {
       };
     }
 
-    validityDetails.value = opts.inputRef?.value?.validity;
-    const messages = normalizeArrayable(opts.inputRef?.value?.validationMessage || ([] as string[])).filter(Boolean);
+    inputEl.setCustomValidity('');
+    validityDetails.value = inputEl.validity;
+    const messages = normalizeArrayable(inputEl.validationMessage || ([] as string[])).filter(Boolean);
+
     if (mutate) {
       setErrors(messages);
     }
@@ -48,9 +49,14 @@ export function useInputValidity(opts: InputValidityOptions) {
     };
   }
 
-  function _updateValidity() {
-    if (validationMode === 'aggregate') {
-      return schema ? validateField(true) : validateNative(true);
+  async function _updateValidity() {
+    let result = validateNative(true);
+    if (schema && result.isValid) {
+      result = await validateField(true);
+    }
+
+    if (!result.isValid) {
+      return;
     }
 
     (formGroup || form)?.requestValidation();
@@ -66,18 +72,16 @@ export function useInputValidity(opts: InputValidityOptions) {
   // It shouldn't mutate the field if the validation is sourced by the form.
   // The form will handle the mutation later once it aggregates all the results.
   (formGroup || form)?.onValidationDispatch(enqueue => {
-    if (schema) {
+    const result = validateNative(false);
+    if (schema && result.isValid) {
       enqueue(validateField(false));
       return;
     }
 
-    if (validationMode === 'aggregate') {
-      enqueue(Promise.resolve(validateNative(false)));
-      return;
-    }
+    enqueue(Promise.resolve(result));
   });
 
-  if (validationMode === 'aggregate') {
+  if (!schema) {
     // It should self-mutate the field errors because this is fired by a native validation and not sourced by the form.
     useEventListener(opts.inputRef, opts?.events || ['invalid'], () => validateNative(true));
   }
