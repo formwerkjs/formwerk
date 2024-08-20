@@ -110,7 +110,7 @@ export function useCheckbox<TValue = string>(
           return;
         }
 
-        if (e.key === 'Space') {
+        if (e.code === 'Space') {
           e.preventDefault();
           toggleValue();
           setTouched(true);

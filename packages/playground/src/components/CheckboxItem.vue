@@ -3,11 +3,11 @@ import { CheckboxProps, useCheckbox } from '@formwerk/core';
 
 const props = defineProps<CheckboxProps>();
 
-const { labelProps, checkboxProps, isChecked } = useCheckbox(props);
+const { labelProps, inputProps, isChecked } = useCheckbox(props);
 </script>
 
 <template>
-  <div v-bind="checkboxProps" class="flex items-center">
+  <div v-bind="inputProps" class="flex items-center">
     <div
       class="w-5 h-5 rounded-md flex-shrink-0 border border-gray-600 flex items-center justify-center focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
     >

@@ -3,12 +3,12 @@ import { CheckboxGroupProps, useCheckboxGroup } from '@formwerk/core';
 
 const props = defineProps<CheckboxGroupProps>();
 
-const { checkboxGroupProps, labelProps, descriptionProps, errorMessageProps, errorMessage } = useCheckboxGroup(props);
+const { groupProps, labelProps, descriptionProps, errorMessageProps, errorMessage } = useCheckboxGroup(props);
 </script>
 
 <template>
   <div
-    v-bind="checkboxGroupProps"
+    v-bind="groupProps"
     class="flex border border-gray-200 rounded-md p-2"
     :class="{ 'flex-col': orientation !== 'horizontal' }"
   >

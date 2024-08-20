@@ -160,11 +160,11 @@ describe('Space key toggles the values', () => {
       `,
     });
 
-    await fireEvent.keyDown(screen.getByLabelText('First'), { key: 'Space' });
+    await fireEvent.keyDown(screen.getByLabelText('First'), { code: 'Space' });
     expect(screen.getByTestId('value')).toHaveTextContent('[ "1" ]');
-    await fireEvent.keyDown(screen.getByLabelText('Second'), { key: 'Space' });
+    await fireEvent.keyDown(screen.getByLabelText('Second'), { code: 'Space' });
     expect(screen.getByTestId('value')).toHaveTextContent('[ "1", "2" ]');
-    await fireEvent.keyDown(screen.getByLabelText('Second'), { key: 'Space' });
+    await fireEvent.keyDown(screen.getByLabelText('Second'), { code: 'Space' });
     expect(screen.getByTestId('value')).toHaveTextContent('[ "1" ]');
   });
 
@@ -182,11 +182,11 @@ describe('Space key toggles the values', () => {
       `,
     });
 
-    await fireEvent.keyDown(screen.getByLabelText('First'), { key: 'Space' });
+    await fireEvent.keyDown(screen.getByLabelText('First'), { code: 'Space' });
     expect(screen.getByTestId('value')).toHaveTextContent('[ "1" ]');
-    await fireEvent.keyDown(screen.getByLabelText('Second'), { key: 'Space' });
+    await fireEvent.keyDown(screen.getByLabelText('Second'), { code: 'Space' });
     expect(screen.getByTestId('value')).toHaveTextContent('[ "1", "2" ]');
-    await fireEvent.keyDown(screen.getByLabelText('Second'), { key: 'Space' });
+    await fireEvent.keyDown(screen.getByLabelText('Second'), { code: 'Space' });
     expect(screen.getByTestId('value')).toHaveTextContent('[ "1" ]');
   });
 });

@@ -76,13 +76,13 @@ export function useSpinButton(_props: Reactivify<SpinButtonProps, 'onChange'>) {
       return;
     }
 
-    if (e.key === 'PageUp') {
+    if (e.code === 'PageUp') {
       e.preventDefault();
       pageIncrement();
       return;
     }
 
-    if (e.key === 'PageDown') {
+    if (e.code === 'PageDown') {
       e.preventDefault();
       pageDecrement();
       return;
@@ -93,26 +93,26 @@ export function useSpinButton(_props: Reactivify<SpinButtonProps, 'onChange'>) {
       toValue(props.dir) || direction.value,
     );
 
-    if (incrKeys.includes(e.key)) {
+    if (incrKeys.includes(e.code)) {
       e.preventDefault();
       increment();
       return;
     }
 
-    if (decrKeys.includes(e.key)) {
+    if (decrKeys.includes(e.code)) {
       e.preventDefault();
       decrement();
       return;
     }
 
-    if (e.key === 'Home') {
+    if (e.code === 'Home') {
       e.preventDefault();
       incrementToMax();
 
       return;
     }
 
-    if (e.key === 'End') {
+    if (e.code === 'End') {
       e.preventDefault();
       decrementToMin();
       return;

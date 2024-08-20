@@ -78,9 +78,9 @@ test('change event updates the value and parses it as a number', async () => {
 
 test('arrow up and down should increment and decrement the value', async () => {
   await render(makeTest());
-  await fireEvent.keyDown(screen.getByLabelText(label), { key: 'ArrowUp' });
+  await fireEvent.keyDown(screen.getByLabelText(label), { code: 'ArrowUp' });
   expect(screen.getByLabelText(label)).toHaveDisplayValue('1');
-  await fireEvent.keyDown(screen.getByLabelText(label), { key: 'ArrowDown' });
+  await fireEvent.keyDown(screen.getByLabelText(label), { code: 'ArrowDown' });
   expect(screen.getByLabelText(label)).toHaveDisplayValue('0');
 });
 

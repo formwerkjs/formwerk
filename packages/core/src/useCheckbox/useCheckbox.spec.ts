@@ -122,9 +122,9 @@ describe('value toggling on space key', () => {
     });
 
     expect(screen.getByTestId('value')).toHaveTextContent('');
-    await fireEvent.keyDown(screen.getByLabelText('First'), { key: 'Space' });
+    await fireEvent.keyDown(screen.getByLabelText('First'), { code: 'Space' });
     expect(screen.getByTestId('value')).toHaveTextContent('true');
-    await fireEvent.keyDown(screen.getByLabelText('First'), { key: 'Space' });
+    await fireEvent.keyDown(screen.getByLabelText('First'), { code: 'Space' });
     expect(screen.getByTestId('value')).toHaveTextContent('false');
   });
 

@@ -155,9 +155,9 @@ describe('Space key selects the radio', () => {
       `,
     });
 
-    await fireEvent.keyDown(screen.getByLabelText('First'), { key: 'Space' });
+    await fireEvent.keyDown(screen.getByLabelText('First'), { code: 'Space' });
     expect(screen.getByTestId('value')).toHaveTextContent('1');
-    await fireEvent.click(screen.getByLabelText('Second'), { key: 'Space' });
+    await fireEvent.click(screen.getByLabelText('Second'), { code: 'Space' });
     expect(screen.getByTestId('value')).toHaveTextContent('2');
   });
 
@@ -175,9 +175,9 @@ describe('Space key selects the radio', () => {
       `,
     });
 
-    await fireEvent.keyDown(screen.getByLabelText('First'), { key: 'Space' });
+    await fireEvent.keyDown(screen.getByLabelText('First'), { code: 'Space' });
     expect(screen.getByTestId('value')).toHaveTextContent('1');
-    await fireEvent.click(screen.getByLabelText('Second'), { key: 'Space' });
+    await fireEvent.click(screen.getByLabelText('Second'), { code: 'Space' });
     expect(screen.getByTestId('value')).toHaveTextContent('2');
   });
 
@@ -195,9 +195,9 @@ describe('Space key selects the radio', () => {
       `,
     });
 
-    await fireEvent.keyDown(screen.getByLabelText('First'), { key: 'Space' });
+    await fireEvent.keyDown(screen.getByLabelText('First'), { code: 'Space' });
     expect(screen.getByTestId('value')).toHaveTextContent('');
-    await fireEvent.click(screen.getByLabelText('Second'), { key: 'Space' });
+    await fireEvent.click(screen.getByLabelText('Second'), { code: 'Space' });
     expect(screen.getByTestId('value')).toHaveTextContent('');
   });
 });
@@ -223,44 +223,44 @@ describe('Arrow keys behavior', () => {
     test('arrow down moves forward', async () => {
       await renderTest();
 
-      await fireEvent.keyDown(screen.getByLabelText('Group'), { key: 'ArrowDown' });
+      await fireEvent.keyDown(screen.getByLabelText('Group'), { code: 'ArrowDown' });
       expect(screen.getByTestId('value')).toHaveTextContent('1');
-      await fireEvent.keyDown(screen.getByLabelText('Group'), { key: 'ArrowDown' });
+      await fireEvent.keyDown(screen.getByLabelText('Group'), { code: 'ArrowDown' });
       expect(screen.getByTestId('value')).toHaveTextContent('2');
-      await fireEvent.keyDown(screen.getByLabelText('Group'), { key: 'ArrowDown' });
+      await fireEvent.keyDown(screen.getByLabelText('Group'), { code: 'ArrowDown' });
       expect(screen.getByTestId('value')).toHaveTextContent('3');
     });
 
     test('arrow up moves backward', async () => {
       await renderTest();
 
-      await fireEvent.keyDown(screen.getByLabelText('Group'), { key: 'ArrowUp' });
+      await fireEvent.keyDown(screen.getByLabelText('Group'), { code: 'ArrowUp' });
       expect(screen.getByTestId('value')).toHaveTextContent('1');
-      await fireEvent.keyDown(screen.getByLabelText('Group'), { key: 'ArrowUp' });
+      await fireEvent.keyDown(screen.getByLabelText('Group'), { code: 'ArrowUp' });
       expect(screen.getByTestId('value')).toHaveTextContent('3');
-      await fireEvent.keyDown(screen.getByLabelText('Group'), { key: 'ArrowUp' });
+      await fireEvent.keyDown(screen.getByLabelText('Group'), { code: 'ArrowUp' });
       expect(screen.getByTestId('value')).toHaveTextContent('2');
     });
 
     test('arrow right moves forward', async () => {
       await renderTest();
 
-      await fireEvent.keyDown(screen.getByLabelText('Group'), { key: 'ArrowRight' });
+      await fireEvent.keyDown(screen.getByLabelText('Group'), { code: 'ArrowRight' });
       expect(screen.getByTestId('value')).toHaveTextContent('1');
-      await fireEvent.keyDown(screen.getByLabelText('Group'), { key: 'ArrowRight' });
+      await fireEvent.keyDown(screen.getByLabelText('Group'), { code: 'ArrowRight' });
       expect(screen.getByTestId('value')).toHaveTextContent('2');
-      await fireEvent.keyDown(screen.getByLabelText('Group'), { key: 'ArrowRight' });
+      await fireEvent.keyDown(screen.getByLabelText('Group'), { code: 'ArrowRight' });
       expect(screen.getByTestId('value')).toHaveTextContent('3');
     });
 
     test('arrow left moves backward', async () => {
       await renderTest();
 
-      await fireEvent.keyDown(screen.getByLabelText('Group'), { key: 'ArrowLeft' });
+      await fireEvent.keyDown(screen.getByLabelText('Group'), { code: 'ArrowLeft' });
       expect(screen.getByTestId('value')).toHaveTextContent('1');
-      await fireEvent.keyDown(screen.getByLabelText('Group'), { key: 'ArrowLeft' });
+      await fireEvent.keyDown(screen.getByLabelText('Group'), { code: 'ArrowLeft' });
       expect(screen.getByTestId('value')).toHaveTextContent('3');
-      await fireEvent.keyDown(screen.getByLabelText('Group'), { key: 'ArrowLeft' });
+      await fireEvent.keyDown(screen.getByLabelText('Group'), { code: 'ArrowLeft' });
       expect(screen.getByTestId('value')).toHaveTextContent('2');
     });
   });
@@ -285,44 +285,44 @@ describe('Arrow keys behavior', () => {
     test('arrow down moves forward', async () => {
       await renderTest();
 
-      await fireEvent.keyDown(screen.getByLabelText('Group'), { key: 'ArrowDown' });
+      await fireEvent.keyDown(screen.getByLabelText('Group'), { code: 'ArrowDown' });
       expect(screen.getByTestId('value')).toHaveTextContent('1');
-      await fireEvent.keyDown(screen.getByLabelText('Group'), { key: 'ArrowDown' });
+      await fireEvent.keyDown(screen.getByLabelText('Group'), { code: 'ArrowDown' });
       expect(screen.getByTestId('value')).toHaveTextContent('2');
-      await fireEvent.keyDown(screen.getByLabelText('Group'), { key: 'ArrowDown' });
+      await fireEvent.keyDown(screen.getByLabelText('Group'), { code: 'ArrowDown' });
       expect(screen.getByTestId('value')).toHaveTextContent('3');
     });
 
     test('arrow up moves backward', async () => {
       await renderTest();
 
-      await fireEvent.keyDown(screen.getByLabelText('Group'), { key: 'ArrowUp' });
+      await fireEvent.keyDown(screen.getByLabelText('Group'), { code: 'ArrowUp' });
       expect(screen.getByTestId('value')).toHaveTextContent('1');
-      await fireEvent.keyDown(screen.getByLabelText('Group'), { key: 'ArrowUp' });
+      await fireEvent.keyDown(screen.getByLabelText('Group'), { code: 'ArrowUp' });
       expect(screen.getByTestId('value')).toHaveTextContent('3');
-      await fireEvent.keyDown(screen.getByLabelText('Group'), { key: 'ArrowUp' });
+      await fireEvent.keyDown(screen.getByLabelText('Group'), { code: 'ArrowUp' });
       expect(screen.getByTestId('value')).toHaveTextContent('2');
     });
 
     test('arrow left moves forward', async () => {
       await renderTest();
 
-      await fireEvent.keyDown(screen.getByLabelText('Group'), { key: 'ArrowLeft' });
+      await fireEvent.keyDown(screen.getByLabelText('Group'), { code: 'ArrowLeft' });
       expect(screen.getByTestId('value')).toHaveTextContent('1');
-      await fireEvent.keyDown(screen.getByLabelText('Group'), { key: 'ArrowLeft' });
+      await fireEvent.keyDown(screen.getByLabelText('Group'), { code: 'ArrowLeft' });
       expect(screen.getByTestId('value')).toHaveTextContent('2');
-      await fireEvent.keyDown(screen.getByLabelText('Group'), { key: 'ArrowLeft' });
+      await fireEvent.keyDown(screen.getByLabelText('Group'), { code: 'ArrowLeft' });
       expect(screen.getByTestId('value')).toHaveTextContent('3');
     });
 
     test('arrow right moves backward', async () => {
       await renderTest();
 
-      await fireEvent.keyDown(screen.getByLabelText('Group'), { key: 'ArrowRight' });
+      await fireEvent.keyDown(screen.getByLabelText('Group'), { code: 'ArrowRight' });
       expect(screen.getByTestId('value')).toHaveTextContent('1');
-      await fireEvent.keyDown(screen.getByLabelText('Group'), { key: 'ArrowRight' });
+      await fireEvent.keyDown(screen.getByLabelText('Group'), { code: 'ArrowRight' });
       expect(screen.getByTestId('value')).toHaveTextContent('3');
-      await fireEvent.keyDown(screen.getByLabelText('Group'), { key: 'ArrowRight' });
+      await fireEvent.keyDown(screen.getByLabelText('Group'), { code: 'ArrowRight' });
       expect(screen.getByTestId('value')).toHaveTextContent('2');
     });
   });
@@ -342,11 +342,11 @@ describe('Arrow keys behavior', () => {
       `,
     });
 
-    await fireEvent.keyDown(screen.getByLabelText('Group'), { key: 'ArrowDown' });
+    await fireEvent.keyDown(screen.getByLabelText('Group'), { code: 'ArrowDown' });
     expect(screen.getByTestId('value')).toHaveTextContent('1');
-    await fireEvent.keyDown(screen.getByLabelText('Group'), { key: 'ArrowDown' });
+    await fireEvent.keyDown(screen.getByLabelText('Group'), { code: 'ArrowDown' });
     expect(screen.getByTestId('value')).toHaveTextContent('2');
-    await fireEvent.keyDown(screen.getByLabelText('Group'), { key: 'ArrowDown' });
+    await fireEvent.keyDown(screen.getByLabelText('Group'), { code: 'ArrowDown' });
     expect(screen.getByTestId('value')).toHaveTextContent('1');
   });
 
@@ -365,9 +365,9 @@ describe('Arrow keys behavior', () => {
       `,
     });
 
-    await fireEvent.keyDown(screen.getByLabelText('Group'), { key: 'ArrowDown' });
+    await fireEvent.keyDown(screen.getByLabelText('Group'), { code: 'ArrowDown' });
     expect(screen.getByTestId('value')).toHaveTextContent('');
-    await fireEvent.keyDown(screen.getByLabelText('Group'), { key: 'ArrowDown' });
+    await fireEvent.keyDown(screen.getByLabelText('Group'), { code: 'ArrowDown' });
     expect(screen.getByTestId('value')).toHaveTextContent('');
   });
 });

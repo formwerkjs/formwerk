@@ -96,10 +96,10 @@ describe('with input as base element', () => {
 
     expect(screen.getByTestId('value')).toHaveTextContent('false');
     expect(screen.getByLabelText(label)).not.toBeChecked();
-    await fireEvent.keyDown(screen.getByLabelText(label), { key: 'Enter' });
+    await fireEvent.keyDown(screen.getByLabelText(label), { code: 'Enter' });
     expect(screen.getByTestId('value')).toHaveTextContent('true');
     expect(screen.getByLabelText(label)).toBeChecked();
-    await fireEvent.keyDown(screen.getByLabelText(label), { key: 'Space' });
+    await fireEvent.keyDown(screen.getByLabelText(label), { code: 'Space' });
     expect(screen.getByTestId('value')).toHaveTextContent('false');
     expect(screen.getByLabelText(label)).not.toBeChecked();
   });
@@ -271,10 +271,10 @@ describe('with custom base element', () => {
 
     expect(screen.getByTestId('value')).toHaveTextContent('false');
     expect(screen.getByLabelText(label)).toHaveAttribute('aria-checked', 'false');
-    await fireEvent.keyDown(screen.getByLabelText(label), { key: 'Enter' });
+    await fireEvent.keyDown(screen.getByLabelText(label), { code: 'Enter' });
     expect(screen.getByTestId('value')).toHaveTextContent('true');
     expect(screen.getByLabelText(label)).toHaveAttribute('aria-checked', 'true');
-    await fireEvent.keyDown(screen.getByLabelText(label), { key: 'Space' });
+    await fireEvent.keyDown(screen.getByLabelText(label), { code: 'Space' });
     expect(screen.getByTestId('value')).toHaveTextContent('false');
     expect(screen.getByLabelText(label)).toHaveAttribute('aria-checked', 'false');
   });

@@ -154,7 +154,7 @@ export function useRadioGroup<TValue = string>(_props: Reactivify<RadioGroupProp
 
         const { next, prev } = getOrientationArrows(toValue(props.dir));
 
-        if (next.includes(e.key)) {
+        if (next.includes(e.code)) {
           e.preventDefault();
           handleArrowNext();
           setTouched(true);
@@ -162,7 +162,7 @@ export function useRadioGroup<TValue = string>(_props: Reactivify<RadioGroupProp
           return;
         }
 
-        if (prev.includes(e.key)) {
+        if (prev.includes(e.code)) {
           e.preventDefault();
           handleArrowPrevious();
           setTouched(true);

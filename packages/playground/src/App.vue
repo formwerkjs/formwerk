@@ -1,47 +1,201 @@
 <template>
-  <div class="flex flex-col">
-    <InputText label="Email" name="email" type="email" :schema="defineSchema(z.string().email())" />
-    <InputText label="Full Name" name="fullName" />
+  <div class="flex gap-4 relative p-8">
+    <form class="w-full">
+      <div class="flex flex-col gap-4">
+        <InputText
+          name="email"
+          label="Email"
+          :max-length="10"
+          :min-length="3"
+          required
+          placeholder="Sinners"
+          pattern="[0-9]+"
+        />
 
-    <FormGroup name="address" label="Shipping Address" :schema="groupSchema">
-      <InputText label="Address Line 1" name="street" />
+        <InputTextArea
+          name="email"
+          label="Email"
+          :max-length="10"
+          :min-length="3"
+          required
+          placeholder="Sinners"
+          pattern="[0-9]+"
+        />
 
-      <div class="grid grid-cols-3 gap-4">
-        <InputText label="City" name="city" />
-        <InputText label="State" name="state" />
-        <InputText label="Zip" name="zip" />
+        <InputNumber
+          name="amount"
+          :label="`amount`"
+          :max="max"
+          :format-options="{ style: 'currency', currency: 'EGP' }"
+          :min="0"
+          :step="1"
+          required
+          placeholder="nani"
+        />
+
+        <button type="button" @click="max += 5">Max ({{ max }})</button>
+
+        <SwitchInput>Toggle me</SwitchInput>
+        <Switch label="Toggle me" />
+
+        <SwitchInput :true-value="false" :false-value="true">Toggle me</SwitchInput>
+        <Switch label="Toggle me" :true-value="false" :false-value="true" />
+
+        <RadioGroup name="radio" label="Radio  (inputs)" orientation="vertical">
+          <InputRadioItem label="Radio 1" value="1" />
+          <InputRadioItem label="Radio 2" value="2" />
+          <InputRadioItem label="Radio 3" value="3" />
+        </RadioGroup>
+
+        <RadioGroup name="radio2" label="Radio Horizontal (inputs)" required>
+          <InputRadioItem label="Radio 1" value="1" />
+          <InputRadioItem label="Radio 2" value="2" />
+          <InputRadioItem label="Radio 3" value="3" />
+        </RadioGroup>
+
+        <RadioGroup name="radio2rtl" label="Radio Horizontal (inputs, RTL)" dir="rtl">
+          <InputRadioItem label="Radio 1" value="1" />
+          <InputRadioItem label="Radio 2" value="2" />
+          <InputRadioItem label="Radio 3" disabled value="3" />
+        </RadioGroup>
+
+        <RadioGroup name="radio3" label="Radio Items (non-inputs, vertical)" orientation="vertical">
+          <RadioItem label="Radio 1" value="1" />
+          <RadioItem label="Radio 2" value="2" />
+          <RadioItem label="Radio 3" value="3" />
+        </RadioGroup>
+
+        <RadioGroup name="radio4" label="Radio Items (non-inputs, horizontal)" orientation="horizontal">
+          <RadioItem label="Drink 1" value="1" />
+          <RadioItem label="Drink 2" value="2" />
+          <RadioItem label="Drink 3" value="3" />
+        </RadioGroup>
+
+        <RadioGroup name="radio5" label="Radio Items (non-inputs, horizontal, RTL)" orientation="horizontal" dir="rtl">
+          <RadioItem label="Radio 1" value="1" />
+          <RadioItem label="Radio 2" value="2" />
+          <RadioItem label="Radio 3" disabled value="3" />
+        </RadioGroup>
+
+        <Slider name="opacity" label="Opacity" :min="0" :max="100" />
+
+        <Slider name="opacity" dir="rtl" label="Opacity RTL" :min="0" :max="100" />
+
+        <MultiSlider name="opacity2" label="Opacity Multiple" :min="0" :max="100" />
+
+        <MultiSlider name="opacity2" dir="rtl" label="Opacity Multiple RTL" :min="0" :max="100" />
+
+        <Slider name="opacity" label="Opacity" :min="0" :max="100" :step="2" orientation="vertical" />
+
+        <MultiSlider name="opacity2" label="Opacity" :min="0" :max="100" orientation="vertical" />
+
+        <CheckboxGroup name="checkboxGroup" label="Checkbox Group">
+          <CheckboxItem label="Checkbox 1" true-value="1" />
+          <CheckboxItem label="Checkbox 2" true-value="2" />
+          <CheckboxItem label="Checkbox 3" disabled true-value="3" />
+        </CheckboxGroup>
+
+        <CheckboxItem
+          label="Standalone Box"
+          name="dat-box"
+          :true-value="{ wowzers: 1 }"
+          :false-value="{ 'damn-boi': 7 }"
+        />
+
+        <CheckboxGroup name="checkboxGroup" label="Checkbox Group (Inputs)">
+          <CheckboxInput label="Checkbox 1" true-value="1" />
+          <CheckboxInput label="Checkbox 2" true-value="2" />
+          <CheckboxInput label="Checkbox 3" disabled true-value="3" />
+        </CheckboxGroup>
+
+        <CheckboxInput label="Standalone Input Box" :true-value="'lil'" indeterminate />
+
+        <button class="mt-9 bg-blue-500 text-white px-4 py-1.5 rounded-md">KeKL</button>
       </div>
-    </FormGroup>
 
-    {{ values }}
+      <InputSearch name="search" label="Search" :min-length="10" @submit="onSearchSubmit" />
+    </form>
 
-    <button @click="onSubmit">Submit</button>
+    <div class="w-1/3 relative">
+      <pre class="max-h-[95vh] overflow-y-auto bg-gray-200 rounded-lg p-4 sticky top-4">{{ values }}</pre>
+    </div>
   </div>
 </template>
 
 <script lang="ts" setup>
+import { ref } from 'vue';
 import InputText from '@/components/InputText.vue';
-import FormGroup from '@/components/FormGroup.vue';
+import InputNumber from '@/components/InputNumber.vue';
+import InputTextArea from '@/components/InputTextArea.vue';
+import InputSearch from '@/components/InputSearch.vue';
+import SwitchInput from '@/components/SwitchInput.vue';
+import Switch from '@/components/Switch.vue';
+import RadioGroup from '@/components/RadioGroup.vue';
+import InputRadioItem from '@/components/InputRadioItem.vue';
+import RadioItem from '@/components/RadioItem.vue';
+import Slider from '@/components/Slider.vue';
+import MultiSlider from '@/components/MultiSlider.vue';
+import CheckboxGroup from '@/components/CheckboxGroup.vue';
+import CheckboxItem from '@/components/CheckboxItem.vue';
+import CheckboxInput from '@/components/CheckboxInput.vue';
 import { useForm } from '@formwerk/core';
-import { defineSchema } from '@formwerk/schema-zod';
-import { z } from 'zod';
 
-const groupSchema = defineSchema(
-  z.object({
-    street: z
-      .string()
-      .min(1)
-      .transform(v => `${v} St.`),
-    city: z.string().min(1),
-    state: z.string().min(1),
-
-    zip: z.preprocess(v => Number(v), z.number().lte(1000).gte(100)),
-  }),
-);
-
-const { getErrors, values, handleSubmit } = useForm({});
-
-const onSubmit = handleSubmit(values => {
-  console.log(values);
+const { values } = useForm({
+  initialValues: getInitials,
 });
+
+async function getInitials() {
+  await sleep(2000);
+
+  return {
+    email: 'email@gmail.com',
+    amount: 20,
+    area: 'Hello',
+    switch: true,
+    interestingSwitch: true,
+    search: 'search',
+    radio: '1',
+    radio2: '2',
+    radio2rtl: '2',
+    radio3: '3',
+    radio4: '2',
+    radio5: '2',
+    opacity: 50,
+    opacity2: [20, 80],
+    checkboxGroup: ['1'],
+  };
+}
+
+function sleep(ms: number) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+// const form = reactive({
+//   email: '',
+//   amount: 0,
+//   area: '',
+//   switch: false,
+//   interestingSwitch: false,
+//   search: '',
+//   radio: '',
+//   radio2: '',
+//   radio2rtl: '',
+//   radio3: '',
+//   radio4: '',
+//   radio5: '',
+//   opacity: 0,
+//   opacity2: [0, 100],
+//   opacity3: 0,
+//   opacity4: [0, 100],
+//   checkboxGroup1: undefined,
+//   checkboxSolo1: undefined,
+//   checkboxGroup2: undefined,
+//   checkboxSolo2: undefined,
+// });
+
+const max = ref(10);
+
+function onSearchSubmit(value: string) {
+  console.log('search submitted', value);
+}
 </script>

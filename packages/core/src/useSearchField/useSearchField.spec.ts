@@ -69,7 +69,7 @@ test('Enter key submit the value using the onSubmit prop', async () => {
   const value = 'Best keyboard';
   await flush();
   await fireEvent.update(screen.getByLabelText(label), value);
-  await fireEvent.keyDown(screen.getByLabelText(label), { key: 'Enter' });
+  await fireEvent.keyDown(screen.getByLabelText(label), { code: 'Enter' });
   expect(onSubmit).toHaveBeenCalledOnce();
   expect(onSubmit).toHaveBeenLastCalledWith(value);
 });
@@ -141,7 +141,7 @@ test('Escape key clears the value', async () => {
   await flush();
   await fireEvent.update(screen.getByLabelText(label), value);
   expect(screen.getByLabelText(label)).toHaveDisplayValue(value);
-  await fireEvent.keyDown(screen.getByLabelText(label), { key: 'Escape' });
+  await fireEvent.keyDown(screen.getByLabelText(label), { code: 'Escape' });
   expect(screen.getByLabelText(label)).toHaveDisplayValue('');
 });
 

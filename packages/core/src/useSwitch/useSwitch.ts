@@ -108,7 +108,7 @@ export function useSwitch(_props: Reactivify<SwitchProps, 'schema'>, elementRef?
 
   const handlers: InputEvents = {
     onKeydown: (evt: KeyboardEvent) => {
-      if (evt.key === 'Space' || evt.key === 'Enter') {
+      if (evt.code === 'Space' || evt.code === 'Enter') {
         evt.preventDefault();
         togglePressed();
         setTouched(true);

@@ -112,7 +112,7 @@ export function useSearchField(
       setTouched(true);
     },
     onKeydown(e: KeyboardEvent) {
-      if (e.key === 'Escape') {
+      if (e.code === 'Escape') {
         e.preventDefault();
         setValue('');
         setTouched(true);
@@ -120,7 +120,7 @@ export function useSearchField(
         return;
       }
 
-      if (e.key === 'Enter' && !inputRef.value?.form && props.onSubmit) {
+      if (e.code === 'Enter' && !inputRef.value?.form && props.onSubmit) {
         e.preventDefault();
         setTouched(true);
         if (isValid.value) {
