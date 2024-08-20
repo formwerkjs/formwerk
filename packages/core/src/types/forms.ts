@@ -17,8 +17,8 @@ type BaseValidationResult = {
 
 export interface ValidationResult<TValue = unknown> extends BaseValidationResult {
   type: 'FIELD';
-  output: TValue;
   path: string;
+  output?: TValue;
 }
 
 export interface GroupValidationResult<TOutput extends FormObject = FormObject> extends BaseValidationResult {
