@@ -1,5 +1,5 @@
 import { fireEvent, render, screen } from '@testing-library/vue';
-import { useButtonHold } from '@core/helpers/useButtonHold';
+import { useButtonHold } from './useButtonHold';
 import { flush } from '@test-utils/flush';
 import { ref } from 'vue';
 

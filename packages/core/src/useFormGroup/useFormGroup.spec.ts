@@ -1,6 +1,9 @@
 import { renderSetup } from '@test-utils/renderSetup';
 import { Component } from 'vue';
-import { TypedSchema, useTextField, useForm, useFormGroup } from '@core/index';
+import { useFormGroup } from './useFormGroup';
+import { TypedSchema } from '../types';
+import { useTextField } from '../useTextField';
+import { useForm } from '../useForm';
 import { fireEvent, render, screen } from '@testing-library/vue';
 import { flush } from '@test-utils/flush';
 
@@ -294,9 +297,9 @@ test('submission combines group data with form data', async () => {
       <TGroup name="other" >
         <TInput name="second" />
       </TGroup>
-      
+
       <TInput name="third" />
-      
+
       <button @click="onSubmit">Submit</button>
     `,
   });
