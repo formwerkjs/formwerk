@@ -28,11 +28,13 @@ import { FormKey } from '../useForm';
 import { useValidationProvider } from '../validation/useValidationProvider';
 import { FormValidationMode } from '../useForm/formContext';
 import { prefixPath as _prefixPath } from '../utils/path';
+import { getConfig } from '@core/config';
 
 export interface FormGroupProps<TInput extends FormObject = FormObject, TOutput extends FormObject = TInput> {
   name: string;
   label?: string;
   schema?: TypedSchema<TInput, TOutput>;
+  disableHtmlValidation?: boolean;
 }
 
 interface GroupProps extends AriaLabelableProps {
@@ -45,6 +47,7 @@ interface FormGroupContext<TOutput extends FormObject = FormObject> {
   onValidationDispatch(cb: (enqueue: (promise: Promise<ValidationResult>) => void) => void): void;
   requestValidation(): Promise<GroupValidationResult<TOutput>>;
   getValidationMode(): FormValidationMode;
+  isHtmlValidationDisabled(): boolean;
 }
 
 export const FormGroupKey: InjectionKey<FormGroupContext> = Symbol('FormGroup');
@@ -58,6 +61,10 @@ export function useFormGroup<TInput extends FormObject = FormObject, TOutput ext
   const getPath = () => toValue(props.name);
   const groupRef = elementRef || shallowRef<HTMLInputElement>();
   const form = inject(FormKey, null);
+  const isHtmlValidationDisabled = () =>
+    toValue(props.disableHtmlValidation) ??
+    form?.isHtmlValidationDisabled() ??
+    getConfig().validation.disableHtmlValidation;
   const { validate, onValidationDispatch, defineValidationRequest } = useValidationProvider({
     getValues,
     getPath,
@@ -138,6 +145,7 @@ export function useFormGroup<TInput extends FormObject = FormObject, TOutput ext
     onValidationDispatch,
     requestValidation,
     getValidationMode: () => (props.schema ? 'schema' : 'aggregate'),
+    isHtmlValidationDisabled,
   };
 
   // Whenever the form is validated, it is deferred to the form group to do that.

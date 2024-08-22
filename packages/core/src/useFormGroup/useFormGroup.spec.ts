@@ -30,7 +30,7 @@ function createGroupComponent(fn?: (fg: ReturnType<typeof useFormGroup>) => void
     setup: (_, { attrs }) => {
       const name = (attrs.name || 'test') as string;
       const schema = attrs.schema as TypedSchema<any>;
-      const fg = useFormGroup({ name, label: name, schema });
+      const fg = useFormGroup({ name, label: name, schema, disableHtmlValidation: attrs.disableHtmlValidation as any });
       fn?.(fg);
 
       return {};
@@ -382,5 +382,65 @@ test('submission combines group data with form data', async () => {
     group: { first: 'wow', second: 'how' },
     other: { second: 'second' },
     third: 'third',
+  });
+});
+
+describe('disabling HTML validation', () => {
+  test('can be disabled on the group level', async () => {
+    await render({
+      components: { TInput: createInputComponent(), TGroup: createGroupComponent() },
+      setup() {
+        useForm();
+
+        return {};
+      },
+      template: `
+        <TGroup :disableHtmlValidation="true">
+          <TInput name="field1" :required="true" />
+        </TGroup>
+
+        <TInput name="field2" :required="true" />
+      `,
+    });
+
+    await flush();
+    await fireEvent.touch(screen.getByTestId('field1'));
+    await fireEvent.touch(screen.getByTestId('field2'));
+
+    const errors = screen.getAllByTestId('err');
+    expect(errors[0]).toHaveTextContent('');
+    expect(errors[1]).toHaveTextContent('Constraints not satisfied');
+  });
+
+  test('can be disabled on the form level', async () => {
+    await render({
+      components: { TInput: createInputComponent(), TGroup: createGroupComponent() },
+      setup() {
+        useForm({ disableHtmlValidation: true });
+
+        return {};
+      },
+      template: `
+        <TGroup>
+          <TInput name="field1" :required="true" />
+        </TGroup>
+
+        <TInput name="field2" :required="true" />
+
+        <TGroup :disableHtmlValidation="false">
+          <TInput name="field3" :required="true" />
+        </TGroup>
+      `,
+    });
+
+    await flush();
+    await fireEvent.touch(screen.getByTestId('field1'));
+    await fireEvent.touch(screen.getByTestId('field2'));
+    await fireEvent.touch(screen.getByTestId('field3'));
+
+    const errors = screen.getAllByTestId('err');
+    expect(errors[0]).toHaveTextContent('');
+    expect(errors[1]).toHaveTextContent('');
+    expect(errors[2]).toHaveTextContent('Constraints not satisfied');
   });
 });

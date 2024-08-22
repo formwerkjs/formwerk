@@ -5,9 +5,11 @@ import { Maybe, ValidationResult } from '../types';
 import { FormField } from '../useFormField';
 import { isInputElement, normalizeArrayable } from '../utils/common';
 import { FormGroupKey } from '../useFormGroup';
+import { getConfig } from '../config';
 
 interface InputValidityOptions {
   inputRef?: Ref<Maybe<HTMLElement>>;
+  disableHtmlValidation?: boolean;
   field: FormField<any>;
   events?: string[];
 }
@@ -18,6 +20,10 @@ export function useInputValidity(opts: InputValidityOptions) {
   const { setErrors, errorMessage, schema, validate: validateField, getPath } = opts.field;
   const validityDetails = shallowRef<ValidityState>();
   useMessageCustomValiditySync(errorMessage, opts.inputRef);
+  const isHtmlValidationDisabled = () =>
+    (formGroup || form)?.isHtmlValidationDisabled() ??
+    opts.disableHtmlValidation ??
+    getConfig().validation.disableHtmlValidation;
 
   function validateNative(mutate?: boolean): ValidationResult {
     const baseReturns: Omit<ValidationResult, 'errors' | 'isValid'> = {
@@ -26,7 +32,7 @@ export function useInputValidity(opts: InputValidityOptions) {
     };
 
     const inputEl = opts.inputRef?.value;
-    if (!isInputElement(inputEl)) {
+    if (!isInputElement(inputEl) || isHtmlValidationDisabled()) {
       return {
         ...baseReturns,
         isValid: true,

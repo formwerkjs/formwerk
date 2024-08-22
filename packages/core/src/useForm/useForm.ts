@@ -18,12 +18,14 @@ import { FormTransactionManager, useFormTransactions } from './useFormTransactio
 import { useFormActions } from './useFormActions';
 import { useFormSnapshots } from './formSnapshot';
 import { findLeaf } from '../utils/path';
+import { getConfig } from '../config';
 
 export interface FormOptions<TForm extends FormObject = FormObject, TOutput extends FormObject = TForm> {
   id: string;
   initialValues: MaybeGetter<MaybeAsync<TForm>>;
   initialTouched: TouchedSchema<TForm>;
   schema: TypedSchema<TForm, TOutput>;
+  disableHtmlValidation: boolean;
 }
 
 export interface FormContext<TForm extends FormObject = FormObject, TOutput extends FormObject = TForm>
@@ -31,6 +33,7 @@ export interface FormContext<TForm extends FormObject = FormObject, TOutput exte
     FormTransactionManager<TForm> {
   requestValidation(): Promise<FormValidationResult<TOutput>>;
   onSubmitAttempt(cb: () => void): void;
+  isHtmlValidationDisabled(): boolean;
   onValidationDispatch(
     cb: (enqueue: (promise: Promise<ValidationResult | GroupValidationResult>) => void) => void,
   ): void;
@@ -47,6 +50,7 @@ export function useForm<TForm extends FormObject = FormObject, TOutput extends F
     schema: opts?.schema,
   });
 
+  const isHtmlValidationDisabled = () => opts?.disableHtmlValidation ?? getConfig().validation.disableHtmlValidation;
   const values = reactive(cloneDeep(valuesSnapshot.originals.value)) as TForm;
   const touched = reactive(cloneDeep(touchedSnapshot.originals.value)) as TouchedSchema<TForm>;
   const disabled = {} as DisabledSchema<TForm>;
@@ -103,6 +107,7 @@ export function useForm<TForm extends FormObject = FormObject, TOutput extends F
     ...ctx,
     ...transactionsManager,
     ...privateActions,
+    isHtmlValidationDisabled,
   } as FormContext<TForm, TOutput>);
 
   if (ctx.getValidationMode() === 'schema') {
