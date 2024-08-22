@@ -122,7 +122,6 @@ export function useSlider(_props: Reactivify<SliderProps, 'schema'>) {
     id: inputId,
     role: 'group',
     dir: toValue(props.dir),
-    'aria-orientation': toValue(props.orientation) || 'horizontal',
   }));
 
   function getThumbValue(idx: number) {

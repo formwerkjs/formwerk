@@ -75,6 +75,8 @@ export function useSliderThumb(_props: Reactivify<SliderThumbProps>, elementRef?
     return withRefCapture(
       {
         tabindex: '0',
+        role: 'slider',
+        'aria-orientation': slider.getOrientation(),
         'aria-label': ownLabel ?? undefined,
         ...(ownLabel ? {} : slider.getSliderLabelProps()),
         ...spinButtonProps.value,
