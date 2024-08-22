@@ -55,6 +55,8 @@ export interface SearchFieldProps {
   schema?: TypedSchema<string>;
 
   onSubmit?: (value: string) => void;
+
+  disableHtmlValidation?: boolean;
 }
 
 export function useSearchField(
@@ -71,7 +73,11 @@ export function useSearchField(
     schema: props.schema,
   });
 
-  const { validityDetails, updateValidity } = useInputValidity({ inputRef, field });
+  const { validityDetails, updateValidity } = useInputValidity({
+    inputRef,
+    field,
+    disableHtmlValidation: props.disableHtmlValidation,
+  });
   const { displayError } = useErrorDisplay(field);
   const { fieldValue, setValue, isTouched, setTouched, errorMessage, isValid, errors } = field;
 

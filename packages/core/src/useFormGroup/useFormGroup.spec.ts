@@ -6,6 +6,7 @@ import { useTextField } from '../useTextField';
 import { useForm } from '../useForm';
 import { fireEvent, render, screen } from '@testing-library/vue';
 import { flush } from '@test-utils/flush';
+import { configure } from '../config';
 
 function createInputComponent(): Component {
   return {
@@ -13,7 +14,12 @@ function createInputComponent(): Component {
     setup: (_, { attrs }) => {
       const name = (attrs.name || 'test') as string;
       const schema = attrs.schema as TypedSchema<any>;
-      const { errorMessage, inputProps } = useTextField({ name, label: name, schema });
+      const { errorMessage, inputProps } = useTextField({
+        name,
+        label: name,
+        schema,
+        disableHtmlValidation: attrs.disableHtmlValidation as any,
+      });
 
       return { errorMessage: errorMessage, inputProps, name, attrs };
     },
@@ -442,5 +448,78 @@ describe('disabling HTML validation', () => {
     expect(errors[0]).toHaveTextContent('');
     expect(errors[1]).toHaveTextContent('');
     expect(errors[2]).toHaveTextContent('Constraints not satisfied');
+  });
+
+  test('can be disabled on the field level', async () => {
+    await render({
+      components: { TInput: createInputComponent(), TGroup: createGroupComponent() },
+      setup() {
+        useForm();
+
+        return {};
+      },
+      template: `
+        <TGroup>
+          <TInput name="field1" :required="true" />
+          <TInput name="field2" :required="true" :disableHtmlValidation="true" />
+        </TGroup>
+
+        <TInput name="field3" :required="true" :disableHtmlValidation="true" />
+      `,
+    });
+
+    await flush();
+    await fireEvent.touch(screen.getByTestId('field1'));
+    await fireEvent.touch(screen.getByTestId('field2'));
+    await fireEvent.touch(screen.getByTestId('field3'));
+
+    const errors = screen.getAllByTestId('err');
+    expect(errors[0]).toHaveTextContent('Constraints not satisfied');
+    expect(errors[1]).toHaveTextContent('');
+    expect(errors[2]).toHaveTextContent('');
+  });
+
+  test('can be disabled globally and overridden', async () => {
+    configure({
+      validation: {
+        disableHtmlValidation: true,
+      },
+    });
+
+    await render({
+      components: { TInput: createInputComponent(), TGroup: createGroupComponent() },
+      setup() {
+        useForm({ disableHtmlValidation: true });
+
+        return {};
+      },
+      template: `
+        <TGroup>
+          <TInput name="field1" :required="true" />
+        </TGroup>
+
+        <TInput name="field2" :required="true" />
+
+        <TGroup :disableHtmlValidation="false">
+          <TInput name="field3" :required="true" />
+        </TGroup>
+      `,
+    });
+
+    await flush();
+    await fireEvent.touch(screen.getByTestId('field1'));
+    await fireEvent.touch(screen.getByTestId('field2'));
+    await fireEvent.touch(screen.getByTestId('field3'));
+
+    const errors = screen.getAllByTestId('err');
+    expect(errors[0]).toHaveTextContent('');
+    expect(errors[1]).toHaveTextContent('');
+    expect(errors[2]).toHaveTextContent('Constraints not satisfied');
+
+    configure({
+      validation: {
+        disableHtmlValidation: false,
+      },
+    });
   });
 });

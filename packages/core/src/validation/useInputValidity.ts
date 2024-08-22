@@ -1,4 +1,4 @@
-import { Ref, inject, nextTick, onMounted, shallowRef, watch } from 'vue';
+import { Ref, inject, nextTick, onMounted, shallowRef, watch, MaybeRefOrGetter, toValue } from 'vue';
 import { useEventListener } from '../helpers/useEventListener';
 import { FormKey } from '../useForm';
 import { Maybe, ValidationResult } from '../types';
@@ -9,7 +9,7 @@ import { getConfig } from '../config';
 
 interface InputValidityOptions {
   inputRef?: Ref<Maybe<HTMLElement>>;
-  disableHtmlValidation?: boolean;
+  disableHtmlValidation?: MaybeRefOrGetter<boolean | undefined>;
   field: FormField<any>;
   events?: string[];
 }
@@ -21,8 +21,8 @@ export function useInputValidity(opts: InputValidityOptions) {
   const validityDetails = shallowRef<ValidityState>();
   useMessageCustomValiditySync(errorMessage, opts.inputRef);
   const isHtmlValidationDisabled = () =>
+    toValue(opts.disableHtmlValidation) ??
     (formGroup || form)?.isHtmlValidationDisabled() ??
-    opts.disableHtmlValidation ??
     getConfig().validation.disableHtmlValidation;
 
   function validateNative(mutate?: boolean): ValidationResult {

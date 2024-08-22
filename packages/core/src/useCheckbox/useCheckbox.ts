@@ -36,6 +36,8 @@ export interface CheckboxProps<TValue = string> {
   indeterminate?: boolean;
 
   schema?: TypedSchema<TValue>;
+
+  disableHtmlValidation?: boolean;
 }
 
 export interface CheckboxDomInputProps extends AriaLabelableProps, InputBaseAttributes {
@@ -64,7 +66,7 @@ export function useCheckbox<TValue = string>(
   const group: CheckboxGroupContext<TValue> | null = inject(CheckboxGroupKey, null);
   const inputRef = elementRef || ref<HTMLElement>();
   const field = useCheckboxField(props);
-  useInputValidity({ inputRef, field });
+  useInputValidity({ inputRef, field, disableHtmlValidation: props.disableHtmlValidation });
   const { fieldValue, isTouched, setTouched, setValue, errorMessage, setErrors } = field;
 
   const checked = computed({

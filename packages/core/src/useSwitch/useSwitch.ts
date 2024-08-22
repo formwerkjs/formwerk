@@ -53,6 +53,8 @@ export type SwitchProps = {
   falseValue?: unknown;
 
   schema?: TypedSchema<unknown>;
+
+  disableHtmlValidation?: boolean;
 };
 
 export function useSwitch(_props: Reactivify<SwitchProps, 'schema'>, elementRef?: Ref<HTMLInputElement>) {
@@ -72,7 +74,7 @@ export function useSwitch(_props: Reactivify<SwitchProps, 'schema'>, elementRef?
     schema: props.schema,
   });
 
-  useInputValidity({ field, inputRef });
+  useInputValidity({ field, inputRef, disableHtmlValidation: props.disableHtmlValidation });
   const { fieldValue, setValue, isTouched, setTouched, errorMessage } = field;
   const { errorMessageProps, accessibleErrorProps } = createAccessibleErrorMessageProps({
     inputId,

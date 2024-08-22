@@ -31,6 +31,7 @@ export interface RadioGroupContext<TValue> {
   required: boolean;
 
   readonly modelValue: TValue | undefined;
+
   setErrors(message: Arrayable<string>): void;
   setValue(value: TValue): void;
   setTouched(touched: boolean): void;
@@ -59,6 +60,8 @@ export interface RadioGroupProps<TValue = string> {
   required?: boolean;
 
   schema?: TypedSchema<TValue>;
+
+  disableHtmlValidation?: boolean;
 }
 
 interface RadioGroupDomProps extends AriaLabelableProps, AriaDescribableProps, AriaValidatableProps {

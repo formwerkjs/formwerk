@@ -63,6 +63,8 @@ export interface NumberFieldProps {
   formatOptions?: Intl.NumberFormatOptions;
 
   schema?: TypedSchema<number>;
+
+  disableHtmlValidation?: boolean;
 }
 
 export function useNumberField(
@@ -81,7 +83,7 @@ export function useNumberField(
     schema: props.schema,
   });
 
-  const { validityDetails } = useInputValidity({ inputRef, field });
+  const { validityDetails } = useInputValidity({ inputRef, field, disableHtmlValidation: props.disableHtmlValidation });
   const { displayError } = useErrorDisplay(field);
   const { fieldValue, setValue, setTouched, isTouched, errorMessage } = field;
   const formattedText = computed<string>(() => {

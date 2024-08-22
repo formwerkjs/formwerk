@@ -57,6 +57,8 @@ export interface TextFieldProps {
   disabled?: boolean;
 
   schema?: TypedSchema<string>;
+
+  disableHtmlValidation?: boolean;
 }
 
 export function useTextField(
@@ -73,7 +75,7 @@ export function useTextField(
     schema: props.schema,
   });
 
-  const { validityDetails } = useInputValidity({ inputRef, field });
+  const { validityDetails } = useInputValidity({ inputRef, field, disableHtmlValidation: props.disableHtmlValidation });
   const { displayError } = useErrorDisplay(field);
   const { fieldValue, setValue, isTouched, setTouched, errorMessage, isValid, errors, setErrors } = field;
   const { labelProps, labelledByProps } = useLabel({
