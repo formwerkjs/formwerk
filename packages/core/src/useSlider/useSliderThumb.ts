@@ -1,6 +1,6 @@
 import { Ref, computed, inject, ref, toValue } from 'vue';
-import { SliderContext, SliderInjectionKey, ThumbContext } from './slider';
-import { normalizeProps, withRefCapture } from '../utils/common';
+import { SliderContext, SliderInjectionKey, ThumbContext } from './useSlider';
+import { normalizeProps, warn, withRefCapture } from '../utils/common';
 import { Reactivify } from '../types';
 import { useSpinButton } from '../useSpinButton';
 import { useLocale } from '../i18n/useLocale';
@@ -38,11 +38,18 @@ export function useSliderThumb(_props: Reactivify<SliderThumbProps>, elementRef?
       setThumbValue: NOOP,
       setTouched: NOOP,
       isDisabled: () => false,
+      __isMock: true,
     }),
   });
 
   const slider = inject(SliderInjectionKey, mockSlider, true).registerThumb(thumbContext);
   const thumbValue = computed(() => slider.getThumbValue());
+
+  if ('__isMock' in slider) {
+    warn(
+      'A Thumb must be used within a slider component. Make sure you have called `useSlider` in a parent component.',
+    );
+  }
 
   const { spinButtonProps, applyClamp } = useSpinButton({
     current: thumbValue,
@@ -91,14 +98,14 @@ export function useSliderThumb(_props: Reactivify<SliderThumbProps>, elementRef?
     const inlineBound = dir === 'rtl' ? 'right' : 'left';
 
     const positionProp = orientation === 'vertical' ? 'bottom' : inlineBound;
-    const translateX = orientation === 'vertical' ? '0' : `calc(${percent}cqw - 50%)`;
+    const translateX = orientation === 'vertical' ? '0' : `calc(${percent}cqw ${dir === 'rtl' ? '+' : '-'} 50%)`;
     const translateY = orientation === 'vertical' ? `calc(${percent}cqh - 50%)` : '0';
 
     return {
       position: 'absolute',
       [positionProp]: '0',
-      willChange: 'transform',
-      transform: `translate3d(${translateX}, ${translateY}, 0)`,
+      willChange: 'translate',
+      translate: `${translateX} ${translateY}`,
     };
   }
 

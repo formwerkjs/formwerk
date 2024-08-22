@@ -1,2 +1,2 @@
-export * from './slider';
-export * from './thumb';
+export * from './useSlider';
+export * from './useSliderThumb';
