@@ -1,119 +1,121 @@
 <template>
   <div class="flex gap-4 relative p-8">
     <form class="w-full">
-      <div class="flex flex-col gap-4">
-        <InputText
-          name="email"
-          label="Email"
-          :max-length="10"
-          :min-length="3"
-          required
-          placeholder="Sinners"
-          pattern="[0-9]+"
-        />
+      <InputSelect name="select" label="Select Input" :options="['Hello', 'World', 'Foo', 'Bar']" />
 
-        <InputTextArea
-          name="email"
-          label="Email"
-          :max-length="10"
-          :min-length="3"
-          required
-          placeholder="Sinners"
-          pattern="[0-9]+"
-        />
+      <!--      <div class="flex flex-col gap-4">-->
+      <!--        <InputText-->
+      <!--          name="email"-->
+      <!--          label="Email"-->
+      <!--          :max-length="10"-->
+      <!--          :min-length="3"-->
+      <!--          required-->
+      <!--          placeholder="Sinners"-->
+      <!--          pattern="[0-9]+"-->
+      <!--        />-->
 
-        <InputNumber
-          name="amount"
-          :label="`amount`"
-          :max="max"
-          :format-options="{ style: 'currency', currency: 'EGP' }"
-          :min="0"
-          :step="1"
-          required
-          placeholder="nani"
-        />
+      <!--        <InputTextArea-->
+      <!--          name="email"-->
+      <!--          label="Email"-->
+      <!--          :max-length="10"-->
+      <!--          :min-length="3"-->
+      <!--          required-->
+      <!--          placeholder="Sinners"-->
+      <!--          pattern="[0-9]+"-->
+      <!--        />-->
 
-        <button type="button" @click="max += 5">Max ({{ max }})</button>
+      <!--        <InputNumber-->
+      <!--          name="amount"-->
+      <!--          :label="`amount`"-->
+      <!--          :max="max"-->
+      <!--          :format-options="{ style: 'currency', currency: 'EGP' }"-->
+      <!--          :min="0"-->
+      <!--          :step="1"-->
+      <!--          required-->
+      <!--          placeholder="nani"-->
+      <!--        />-->
 
-        <SwitchInput>Toggle me</SwitchInput>
-        <Switch label="Toggle me" />
+      <!--        <button type="button" @click="max += 5">Max ({{ max }})</button>-->
 
-        <SwitchInput :true-value="false" :false-value="true">Toggle me</SwitchInput>
-        <Switch label="Toggle me" :true-value="false" :false-value="true" />
+      <!--        <SwitchInput>Toggle me</SwitchInput>-->
+      <!--        <Switch label="Toggle me" />-->
 
-        <RadioGroup name="radio" label="Radio  (inputs)" orientation="vertical">
-          <InputRadioItem label="Radio 1" value="1" />
-          <InputRadioItem label="Radio 2" value="2" />
-          <InputRadioItem label="Radio 3" value="3" />
-        </RadioGroup>
+      <!--        <SwitchInput :true-value="false" :false-value="true">Toggle me</SwitchInput>-->
+      <!--        <Switch label="Toggle me" :true-value="false" :false-value="true" />-->
 
-        <RadioGroup name="radio2" label="Radio Horizontal (inputs)" required>
-          <InputRadioItem label="Radio 1" value="1" />
-          <InputRadioItem label="Radio 2" value="2" />
-          <InputRadioItem label="Radio 3" value="3" />
-        </RadioGroup>
+      <!--        <RadioGroup name="radio" label="Radio  (inputs)" orientation="vertical">-->
+      <!--          <InputRadioItem label="Radio 1" value="1" />-->
+      <!--          <InputRadioItem label="Radio 2" value="2" />-->
+      <!--          <InputRadioItem label="Radio 3" value="3" />-->
+      <!--        </RadioGroup>-->
 
-        <RadioGroup name="radio2rtl" label="Radio Horizontal (inputs, RTL)" dir="rtl">
-          <InputRadioItem label="Radio 1" value="1" />
-          <InputRadioItem label="Radio 2" value="2" />
-          <InputRadioItem label="Radio 3" disabled value="3" />
-        </RadioGroup>
+      <!--        <RadioGroup name="radio2" label="Radio Horizontal (inputs)" required>-->
+      <!--          <InputRadioItem label="Radio 1" value="1" />-->
+      <!--          <InputRadioItem label="Radio 2" value="2" />-->
+      <!--          <InputRadioItem label="Radio 3" value="3" />-->
+      <!--        </RadioGroup>-->
 
-        <RadioGroup name="radio3" label="Radio Items (non-inputs, vertical)" orientation="vertical">
-          <RadioItem label="Radio 1" value="1" />
-          <RadioItem label="Radio 2" value="2" />
-          <RadioItem label="Radio 3" value="3" />
-        </RadioGroup>
+      <!--        <RadioGroup name="radio2rtl" label="Radio Horizontal (inputs, RTL)" dir="rtl">-->
+      <!--          <InputRadioItem label="Radio 1" value="1" />-->
+      <!--          <InputRadioItem label="Radio 2" value="2" />-->
+      <!--          <InputRadioItem label="Radio 3" disabled value="3" />-->
+      <!--        </RadioGroup>-->
 
-        <RadioGroup name="radio4" label="Radio Items (non-inputs, horizontal)" orientation="horizontal">
-          <RadioItem label="Drink 1" value="1" />
-          <RadioItem label="Drink 2" value="2" />
-          <RadioItem label="Drink 3" value="3" />
-        </RadioGroup>
+      <!--        <RadioGroup name="radio3" label="Radio Items (non-inputs, vertical)" orientation="vertical">-->
+      <!--          <RadioItem label="Radio 1" value="1" />-->
+      <!--          <RadioItem label="Radio 2" value="2" />-->
+      <!--          <RadioItem label="Radio 3" value="3" />-->
+      <!--        </RadioGroup>-->
 
-        <RadioGroup name="radio5" label="Radio Items (non-inputs, horizontal, RTL)" orientation="horizontal" dir="rtl">
-          <RadioItem label="Radio 1" value="1" />
-          <RadioItem label="Radio 2" value="2" />
-          <RadioItem label="Radio 3" disabled value="3" />
-        </RadioGroup>
+      <!--        <RadioGroup name="radio4" label="Radio Items (non-inputs, horizontal)" orientation="horizontal">-->
+      <!--          <RadioItem label="Drink 1" value="1" />-->
+      <!--          <RadioItem label="Drink 2" value="2" />-->
+      <!--          <RadioItem label="Drink 3" value="3" />-->
+      <!--        </RadioGroup>-->
 
-        <Slider name="opacity" label="Opacity" :min="0" :max="100" />
+      <!--        <RadioGroup name="radio5" label="Radio Items (non-inputs, horizontal, RTL)" orientation="horizontal" dir="rtl">-->
+      <!--          <RadioItem label="Radio 1" value="1" />-->
+      <!--          <RadioItem label="Radio 2" value="2" />-->
+      <!--          <RadioItem label="Radio 3" disabled value="3" />-->
+      <!--        </RadioGroup>-->
 
-        <Slider name="opacity" dir="rtl" label="Opacity RTL" :min="0" :max="100" />
+      <!--        <Slider name="opacity" label="Opacity" :min="0" :max="100" />-->
 
-        <MultiSlider name="opacity2" label="Opacity Multiple" :min="0" :max="100" />
+      <!--        <Slider name="opacity" dir="rtl" label="Opacity RTL" :min="0" :max="100" />-->
 
-        <MultiSlider name="opacity2" dir="rtl" label="Opacity Multiple RTL" :min="0" :max="100" />
+      <!--        <MultiSlider name="opacity2" label="Opacity Multiple" :min="0" :max="100" />-->
 
-        <Slider name="opacity" label="Opacity" :min="0" :max="100" :step="2" orientation="vertical" />
+      <!--        <MultiSlider name="opacity2" dir="rtl" label="Opacity Multiple RTL" :min="0" :max="100" />-->
 
-        <MultiSlider name="opacity2" label="Opacity" :min="0" :max="100" orientation="vertical" />
+      <!--        <Slider name="opacity" label="Opacity" :min="0" :max="100" :step="2" orientation="vertical" />-->
 
-        <CheckboxGroup name="checkboxGroup" label="Checkbox Group">
-          <CheckboxItem label="Checkbox 1" true-value="1" />
-          <CheckboxItem label="Checkbox 2" true-value="2" />
-          <CheckboxItem label="Checkbox 3" disabled true-value="3" />
-        </CheckboxGroup>
+      <!--        <MultiSlider name="opacity2" label="Opacity" :min="0" :max="100" orientation="vertical" />-->
 
-        <CheckboxItem
-          label="Standalone Box"
-          name="dat-box"
-          :true-value="{ wowzers: 1 }"
-          :false-value="{ 'damn-boi': 7 }"
-        />
+      <!--        <CheckboxGroup name="checkboxGroup" label="Checkbox Group">-->
+      <!--          <CheckboxItem label="Checkbox 1" true-value="1" />-->
+      <!--          <CheckboxItem label="Checkbox 2" true-value="2" />-->
+      <!--          <CheckboxItem label="Checkbox 3" disabled true-value="3" />-->
+      <!--        </CheckboxGroup>-->
 
-        <CheckboxGroup name="checkboxGroup" label="Checkbox Group (Inputs)">
-          <CheckboxInput label="Checkbox 1" true-value="1" />
-          <CheckboxInput label="Checkbox 2" true-value="2" />
-          <CheckboxInput label="Checkbox 3" disabled true-value="3" />
-        </CheckboxGroup>
+      <!--        <CheckboxItem-->
+      <!--          label="Standalone Box"-->
+      <!--          name="dat-box"-->
+      <!--          :true-value="{ wowzers: 1 }"-->
+      <!--          :false-value="{ 'damn-boi': 7 }"-->
+      <!--        />-->
 
-        <CheckboxInput label="Standalone Input Box" :true-value="'lil'" indeterminate />
+      <!--        <CheckboxGroup name="checkboxGroup" label="Checkbox Group (Inputs)">-->
+      <!--          <CheckboxInput label="Checkbox 1" true-value="1" />-->
+      <!--          <CheckboxInput label="Checkbox 2" true-value="2" />-->
+      <!--          <CheckboxInput label="Checkbox 3" disabled true-value="3" />-->
+      <!--        </CheckboxGroup>-->
 
-        <button class="mt-9 bg-blue-500 text-white px-4 py-1.5 rounded-md">KeKL</button>
-      </div>
+      <!--        <CheckboxInput label="Standalone Input Box" :true-value="'lil'" indeterminate />-->
 
-      <InputSearch name="search" label="Search" :min-length="10" @submit="onSearchSubmit" />
+      <!--        <button class="mt-9 bg-blue-500 text-white px-4 py-1.5 rounded-md">KeKL</button>-->
+      <!--      </div>-->
+
+      <!--      <InputSearch name="search" label="Search" :min-length="10" @submit="onSearchSubmit" />-->
     </form>
 
     <div class="w-1/3 relative">
@@ -139,6 +141,7 @@ import CheckboxGroup from '@/components/CheckboxGroup.vue';
 import CheckboxItem from '@/components/CheckboxItem.vue';
 import CheckboxInput from '@/components/CheckboxInput.vue';
 import { useForm } from '@formwerk/core';
+import InputSelect from '@/components/InputSelect.vue';
 
 const { values } = useForm({
   initialValues: getInitials,

@@ -101,9 +101,13 @@ export function normalizeProps<TProps extends Record<string, unknown>, Exclude e
   props: TProps,
   exclude?: Exclude[],
 ): NormalizedProps<TProps, Exclude> {
+  if ('__isFwNormalized__' in props) {
+    return props as NormalizedProps<TProps, Exclude>;
+  }
+
   const excludeDict = exclude ? arrayToKeys(exclude) : ({} as Record<string, true>);
 
-  return Object.fromEntries(
+  const normalized = Object.fromEntries(
     Object.keys(props).map(key => {
       // Existing getters are kept as is
       if (!excludeDict[key]) {
@@ -117,6 +121,10 @@ export function normalizeProps<TProps extends Record<string, unknown>, Exclude e
       return [key, props[key]];
     }),
   ) as NormalizedProps<TProps, Exclude>;
+
+  normalized.__isFwNormalized__ = true;
+
+  return normalized;
 }
 
 export function getNextCycleArrIdx(idx: number, arr: unknown[]): number {
@@ -316,4 +324,18 @@ export function isInputElement(el: Maybe<HTMLElement>): el is HTMLInputElement {
   }
 
   return ['INPUT', 'TEXTAREA', 'SELECT'].includes(el.tagName);
+}
+
+export function toggleValueSelection<TValue>(current: Arrayable<TValue>, value: TValue, force?: boolean): TValue[] {
+  const nextValue = normalizeArrayable(current);
+  const idx = nextValue.findIndex(v => isEqual(v, value));
+  const shouldAdd = force ?? idx === -1;
+
+  if (shouldAdd) {
+    nextValue.push(value);
+  } else {
+    nextValue.splice(idx, 1);
+  }
+
+  return nextValue;
 }

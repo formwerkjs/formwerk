@@ -84,6 +84,8 @@ export type NormalizedProps<TProps extends object, Exclude extends keyof TProps 
     : TProps[TProp] extends MaybeRefOrGetter<infer TValue>
       ? Getter<TValue>
       : Getter<TProps[TProp]>;
+} & {
+  __isFwNormalized__: boolean;
 };
 
 export type Arrayable<T> = T | T[];

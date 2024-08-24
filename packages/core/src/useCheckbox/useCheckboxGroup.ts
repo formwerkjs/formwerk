@@ -17,6 +17,7 @@ import {
   normalizeProps,
   isEqual,
   createAccessibleErrorMessageProps,
+  toggleValueSelection,
 } from '../utils/common';
 import { useLocale } from '../i18n/useLocale';
 import { FormField, useFormField } from '../useFormField';
@@ -133,15 +134,7 @@ export function useCheckboxGroup<TCheckbox>(_props: Reactivify<CheckboxGroupProp
   }
 
   function toggleValue(value: TCheckbox, force?: boolean) {
-    const nextValue = [...(fieldValue.value ?? [])];
-    const idx = nextValue.findIndex(v => isEqual(v, value));
-    const shouldAdd = force ?? idx === -1;
-
-    if (shouldAdd) {
-      nextValue.push(value);
-    } else {
-      nextValue.splice(idx, 1);
-    }
+    const nextValue = toggleValueSelection(fieldValue.value ?? [], value, force);
 
     setValue(nextValue);
   }

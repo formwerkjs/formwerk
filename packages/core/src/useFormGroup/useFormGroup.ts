@@ -28,7 +28,7 @@ import { FormKey } from '../useForm';
 import { useValidationProvider } from '../validation/useValidationProvider';
 import { FormValidationMode } from '../useForm/formContext';
 import { prefixPath as _prefixPath } from '../utils/path';
-import { getConfig } from '@core/config';
+import { getConfig } from '../config';
 
 export interface FormGroupProps<TInput extends FormObject = FormObject, TOutput extends FormObject = TInput> {
   name: string;
