@@ -11,6 +11,8 @@ export interface ListBoxProps<TOption> {
   orientation?: Orientation;
 
   onToggleAll?(): void;
+  onToggleBefore?(): void;
+  onToggleAfter?(): void;
 }
 
 export interface ListBoxDomProps {
@@ -86,6 +88,28 @@ export function useListBox<TOption>(_props: Reactivify<ListBoxProps<TOption>>) {
         return;
       }
 
+      if (e.code === 'Home' && isShiftPressed.value) {
+        e.preventDefault();
+        e.stopPropagation();
+        props.onToggleBefore?.();
+
+        if (isMetaPressed.value) {
+          unfocusCurrent();
+          options.value.at(0)?.focus();
+        }
+      }
+
+      if (e.code === 'End' && isShiftPressed.value) {
+        e.preventDefault();
+        e.stopPropagation();
+        props.onToggleAfter?.();
+
+        if (isMetaPressed.value) {
+          unfocusCurrent();
+          options.value.at(-1)?.focus();
+        }
+      }
+
       if (e.code === 'Tab') {
         isOpen.value = false;
       }
@@ -99,8 +123,15 @@ export function useListBox<TOption>(_props: Reactivify<ListBoxProps<TOption>>) {
     }
   }
 
-  function focusNext() {
+  function unfocusCurrent() {
     const currentlyFocusedIdx = options.value.findIndex(o => o.isFocused());
+    options.value[currentlyFocusedIdx]?.unfocus();
+
+    return currentlyFocusedIdx;
+  }
+
+  function focusNext() {
+    const currentlyFocusedIdx = unfocusCurrent();
     // Focus first one if none is focused
     if (currentlyFocusedIdx === -1) {
       focusAndToggleIfShiftPressed(0);
@@ -108,12 +139,11 @@ export function useListBox<TOption>(_props: Reactivify<ListBoxProps<TOption>>) {
     }
 
     const nextIdx = Math.min(currentlyFocusedIdx + 1, options.value.length - 1);
-    options.value[currentlyFocusedIdx]?.unfocus();
     focusAndToggleIfShiftPressed(nextIdx);
   }
 
   function focusPrev() {
-    const currentlyFocusedIdx = options.value.findIndex(o => o.isFocused());
+    const currentlyFocusedIdx = unfocusCurrent();
     // Focus first one if none is focused
     if (currentlyFocusedIdx === -1) {
       focusAndToggleIfShiftPressed(0);
@@ -121,7 +151,6 @@ export function useListBox<TOption>(_props: Reactivify<ListBoxProps<TOption>>) {
     }
 
     const nextIdx = Math.max(currentlyFocusedIdx - 1, 0);
-    options.value[currentlyFocusedIdx]?.unfocus();
     focusAndToggleIfShiftPressed(nextIdx);
   }
 

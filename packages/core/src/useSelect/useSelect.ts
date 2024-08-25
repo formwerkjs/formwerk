@@ -67,7 +67,10 @@ export function useSelect<TOption>(_props: Reactivify<SelectProps<TOption>, 'sch
   const { listBoxProps, isOpen, options, isShiftPressed } = useListBox<TOption>({
     ...props,
     onToggleAll: toggleAll,
+    onToggleBefore: toggleBefore,
+    onToggleAfter: toggleAfter,
   });
+
   const { updateValidity } = useInputValidity({ field });
   const { fieldValue, setValue, isTouched, errorMessage } = field;
   const { displayError } = useErrorDisplay(field);
@@ -118,13 +121,34 @@ export function useSelect<TOption>(_props: Reactivify<SelectProps<TOption>, 'sch
 
       lastRecentIdx = lastRecentIdx === -1 ? 0 : lastRecentIdx;
       const startIdx = Math.min(lastRecentIdx, targetIdx);
-      const endIdx = Math.min(Math.max(lastRecentIdx, targetIdx + 1), options.value.length - 1);
-      const range = options.value.slice(startIdx, endIdx);
-      const nextValue = range.map(opt => opt.getValue());
-      setValue(nextValue);
-      updateValidity();
+      const endIdx = Math.min(Math.max(lastRecentIdx, targetIdx), options.value.length - 1);
+      selectRange(startIdx, endIdx);
     },
   };
+
+  function selectRange(start: number, end: number) {
+    const nextValue = options.value.slice(start, end + 1).map(opt => opt.getValue());
+    setValue(nextValue);
+    updateValidity();
+  }
+
+  function toggleBefore() {
+    const focusedIdx = options.value.findIndex(opt => opt.isFocused());
+    if (focusedIdx < 0) {
+      return;
+    }
+
+    const startIdx = 0;
+    const endIdx = Math.min(focusedIdx, options.value.length - 1);
+    selectRange(startIdx, endIdx);
+  }
+
+  function toggleAfter() {
+    const focusedIdx = options.value.findIndex(opt => opt.isFocused());
+    const startIdx = Math.max(0, focusedIdx);
+    const endIdx = options.value.length - 1;
+    selectRange(startIdx, endIdx);
+  }
 
   function toggleAll() {
     const isMultiple = toValue(props.multiple);
