@@ -1,17 +1,22 @@
 import { useEventListener } from './useEventListener';
 import { MaybeRefOrGetter, shallowRef } from 'vue';
 import { Arrayable } from '../types';
+import { isCallable, normalizeArrayable } from '../utils/common';
 
-export function useKeyPressed(codes: Arrayable<string>, disabled?: MaybeRefOrGetter<boolean>) {
+export function useKeyPressed(
+  codes: Arrayable<string> | ((evt: KeyboardEvent) => boolean),
+  disabled?: MaybeRefOrGetter<boolean>,
+) {
   const isPressed = shallowRef(false);
+  const predicate = isCallable(codes) ? codes : (e: KeyboardEvent) => normalizeArrayable(codes).includes(e.code);
   function onKeydown(e: KeyboardEvent) {
-    if (codes.includes(e.code)) {
+    if (predicate(e)) {
       isPressed.value = true;
     }
   }
 
   function onKeyup(e: KeyboardEvent) {
-    if (codes.includes(e.code)) {
+    if (predicate(e)) {
       isPressed.value = false;
     }
   }

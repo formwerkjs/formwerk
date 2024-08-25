@@ -42,9 +42,14 @@ export function useOption<TValue>(_props: Reactivify<OptionProps<TValue>>, eleme
 
   const isFocused = shallowRef(false);
 
+  function toggleSelected() {
+    selectionCtx?.toggleOption(toValue(props.value));
+  }
+
   const isSelected = computed(() => selectionCtx?.isValueSelected(toValue(props.value)) ?? false);
   const id =
     listManager?.useOptionRegistration({
+      toggleSelected,
       isDisabled: () => !!toValue(props.disabled),
       isSelected: () => isSelected.value,
       isFocused: () => isFocused.value,
@@ -72,7 +77,7 @@ export function useOption<TValue>(_props: Reactivify<OptionProps<TValue>>, eleme
       if (e.code === 'Space' || e.code === 'Enter') {
         e.preventDefault();
         e.stopPropagation();
-        selectionCtx?.toggleOption(toValue(props.value));
+        toggleSelected();
       }
     },
   };

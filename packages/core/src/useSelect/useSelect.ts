@@ -15,7 +15,6 @@ import { useListBox } from './useListBox';
 import { useLabel } from '../a11y/useLabel';
 import { FieldTypePrefixes } from '../constants';
 import { useErrorDisplay } from '../useFormField/useErrorDisplay';
-import { useKeyPressed } from '@core/helpers/useKeyPressed';
 
 export interface SelectProps<TOption> {
   label: string;
@@ -65,7 +64,10 @@ export function useSelect<TOption>(_props: Reactivify<SelectProps<TOption>, 'sch
   });
 
   let lastRecentlySelectedOption: TOption | undefined;
-  const { listBoxProps, isOpen, options } = useListBox<TOption>(props);
+  const { listBoxProps, isOpen, options, isShiftPressed } = useListBox<TOption>({
+    ...props,
+    onToggleAll: toggleAll,
+  });
   const { updateValidity } = useInputValidity({ field });
   const { fieldValue, setValue, isTouched, errorMessage } = field;
   const { displayError } = useErrorDisplay(field);
@@ -81,8 +83,6 @@ export function useSelect<TOption>(_props: Reactivify<SelectProps<TOption>, 'sch
   function getSelectedIdx() {
     return options.value.findIndex(opt => opt.isSelected());
   }
-
-  const isShiftPressed = useKeyPressed(['ShiftLeft', 'ShiftRight'], () => !isOpen.value);
 
   const selectionCtx: SelectionContext<TOption> = {
     isMultiple: () => toValue(props.multiple) ?? false,
@@ -125,6 +125,23 @@ export function useSelect<TOption>(_props: Reactivify<SelectProps<TOption>, 'sch
       updateValidity();
     },
   };
+
+  function toggleAll() {
+    const isMultiple = toValue(props.multiple);
+    if (!isMultiple) {
+      return;
+    }
+
+    const isAllSelected = options.value.every(opt => opt.isSelected());
+    if (isAllSelected) {
+      setValue([]);
+      updateValidity();
+      return;
+    }
+
+    setValue(options.value.map(opt => opt.getValue()));
+    updateValidity();
+  }
 
   provide(SelectionContextKey, selectionCtx);
 

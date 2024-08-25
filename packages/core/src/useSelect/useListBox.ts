@@ -2,11 +2,15 @@ import { Orientation, Reactivify } from '../types';
 import { computed, InjectionKey, nextTick, onBeforeUnmount, provide, shallowRef, toValue, watch } from 'vue';
 import { normalizeProps, removeFirst, useUniqId } from '../utils/common';
 import { FieldTypePrefixes } from '../constants';
+import { useKeyPressed } from '../helpers/useKeyPressed';
+import { isMac } from '../utils/platform';
 
 export interface ListBoxProps<TOption> {
   options: TOption[];
   multiple?: boolean;
   orientation?: Orientation;
+
+  onToggleAll?(): void;
 }
 
 export interface ListBoxDomProps {
@@ -20,6 +24,7 @@ export interface OptionRegistration<TValue> {
   isDisabled(): boolean;
   getValue(): TValue;
   focus(): void;
+  toggleSelected(): void;
   unfocus(): void;
 }
 
@@ -37,6 +42,11 @@ export function useListBox<TOption>(_props: Reactivify<ListBoxProps<TOption>>) {
   const props = normalizeProps(_props);
   const options = shallowRef<OptionRegistrationWithId<TOption>[]>([]);
   const isOpen = shallowRef(false);
+  const isShiftPressed = useKeyPressed(['ShiftLeft', 'ShiftRight'], () => !isOpen.value);
+  const isMetaPressed = useKeyPressed(
+    isMac() ? ['MetaLeft', 'MetaRight'] : ['ControlLeft', 'ControlRight'],
+    () => !isOpen.value,
+  );
 
   const listManager: ListManagerCtx = {
     useOptionRegistration(init: OptionRegistration<TOption>) {
@@ -69,36 +79,50 @@ export function useListBox<TOption>(_props: Reactivify<ListBoxProps<TOption>>) {
         return;
       }
 
+      if (e.code === 'KeyA' && isMetaPressed.value) {
+        e.preventDefault();
+        e.stopPropagation();
+        props.onToggleAll?.();
+        return;
+      }
+
       if (e.code === 'Tab') {
         isOpen.value = false;
       }
     },
   };
 
+  function focusAndToggleIfShiftPressed(idx: number) {
+    options.value[idx]?.focus();
+    if (isShiftPressed.value) {
+      options.value[idx]?.toggleSelected();
+    }
+  }
+
   function focusNext() {
     const currentlyFocusedIdx = options.value.findIndex(o => o.isFocused());
     // Focus first one if none is focused
     if (currentlyFocusedIdx === -1) {
-      options.value[0]?.focus();
+      focusAndToggleIfShiftPressed(0);
       return;
     }
 
     const nextIdx = Math.min(currentlyFocusedIdx + 1, options.value.length - 1);
     options.value[currentlyFocusedIdx]?.unfocus();
-    options.value[nextIdx]?.focus();
+    focusAndToggleIfShiftPressed(nextIdx);
   }
 
   function focusPrev() {
     const currentlyFocusedIdx = options.value.findIndex(o => o.isFocused());
     // Focus first one if none is focused
     if (currentlyFocusedIdx === -1) {
-      options.value[0]?.focus();
+      focusAndToggleIfShiftPressed(0);
       return;
     }
 
     const nextIdx = Math.max(currentlyFocusedIdx - 1, 0);
     options.value[currentlyFocusedIdx]?.unfocus();
-    options.value[nextIdx]?.focus();
+    focusAndToggleIfShiftPressed(nextIdx);
   }
 
   const listBoxProps = computed<ListBoxDomProps>(() => {
@@ -126,5 +150,6 @@ export function useListBox<TOption>(_props: Reactivify<ListBoxProps<TOption>>) {
     listBoxProps,
     isOpen,
     options,
+    isShiftPressed,
   };
 }
