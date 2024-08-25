@@ -1,5 +1,5 @@
 <template>
-  <div v-bind="optionProps" :class="{ 'bg-gray-400': isHighlighted }">
+  <div v-bind="optionProps" class="option">
     <slot />
   </div>
 </template>
@@ -9,12 +9,16 @@ import { OptionProps, useOption } from '@formwerk/core';
 
 const props = defineProps<OptionProps<any>>();
 
-const { optionProps, isHighlighted, isSelected } = useOption(props);
+const { optionProps } = useOption(props);
 </script>
 
 <style scoped>
-[aria-selected='true'] {
+option:focus {
+  @apply bg-gray-200;
+}
+
+[aria-selected='true'],
+[aria-checked='true'] {
   @apply bg-gray-700 text-white;
 }
 </style>
-/

@@ -65,7 +65,7 @@ export function createAccessibleErrorMessageProps({ inputId, errorMessage }: Cre
   };
 }
 
-export function createRefCapture<TEl extends HTMLElement>(elRef: Ref<TEl | undefined>) {
+export function createRefCapture<TEl extends HTMLElement>(elRef: Ref<Maybe<TEl>>) {
   return function captureRef(el: HTMLElement) {
     elRef.value = el as TEl;
   };
@@ -138,8 +138,8 @@ export function getNextCycleArrIdx(idx: number, arr: unknown[]): number {
  */
 export function withRefCapture<TProps>(
   props: TProps,
-  inputRef: Ref<HTMLElement | undefined>,
-  elementRef?: Ref<HTMLElement | undefined>,
+  inputRef: Ref<Maybe<HTMLElement>>,
+  elementRef?: Ref<Maybe<HTMLElement>>,
 ): TProps {
   if (!elementRef) {
     (props as any).ref = createRefCapture(inputRef);
@@ -338,4 +338,12 @@ export function toggleValueSelection<TValue>(current: Arrayable<TValue>, value: 
   }
 
   return nextValue;
+}
+
+export function removeFirst<TItem>(items: TItem[], predicate: (item: TItem) => boolean) {
+  const idx = items.findIndex(predicate);
+  if (idx >= 0) {
+    items.splice(idx, 1);
+    return;
+  }
 }

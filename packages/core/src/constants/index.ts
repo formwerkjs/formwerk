@@ -10,6 +10,7 @@ export const FieldTypePrefixes = {
   SearchField: 'sf',
   FormGroup: 'fg',
   Select: 'se',
+  Option: 'opt',
 } as const;
 
 export const NOOP = () => {};

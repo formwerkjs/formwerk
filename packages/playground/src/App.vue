@@ -1,7 +1,7 @@
 <template>
   <div class="flex gap-4 relative p-8">
     <form class="w-full">
-      <InputSelect name="select" label="Select Input" :options="['Hello', 'World', 'Foo', 'Bar']" />
+      <InputSelect name="select" label="Select Input" multiple :options="['Hello', 'World', 'Foo', 'Bar']" />
 
       <!--      <div class="flex flex-col gap-4">-->
       <!--        <InputText-->

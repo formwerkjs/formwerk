@@ -1,4 +1,4 @@
-import { computed, InjectionKey, provide, shallowRef, toValue } from 'vue';
+import { computed, InjectionKey, provide, toValue } from 'vue';
 import { useFormField } from '../useFormField';
 import { AriaLabelableProps, Arrayable, Orientation, Reactivify, TypedSchema } from '../types';
 import {
@@ -38,10 +38,11 @@ export interface SelectTriggerDomProps extends AriaLabelableProps {
 }
 
 export interface SelectionContext<TValue> {
-  isSelected(value: TValue): boolean;
+  isValueSelected(value: TValue): boolean;
+  getOptionIndex(value: TValue): number;
   isMultiple(): boolean;
-  isHighlighted(opt: TValue): boolean;
-  toggleOption(value: TValue): void;
+  toggleOption(value: TValue, force?: boolean): void;
+  toggleIdx(idx: number, force?: boolean): void;
 }
 
 export const SelectionContextKey: InjectionKey<SelectionContext<unknown>> = Symbol('SelectionContextKey');
@@ -50,7 +51,6 @@ const MENU_OPEN_KEYS = ['Enter', 'Space', 'ArrowDown', 'ArrowUp'];
 
 export function useSelect<TOption>(_props: Reactivify<SelectProps<TOption>, 'schema'>) {
   const inputId = useUniqId(FieldTypePrefixes.Select);
-  const isOpen = shallowRef(false);
   const props = normalizeProps(_props, ['schema']);
   const field = useFormField<Arrayable<TOption>>({
     path: props.name,
@@ -65,7 +65,7 @@ export function useSelect<TOption>(_props: Reactivify<SelectProps<TOption>, 'sch
     for: inputId,
   });
 
-  const { listBoxProps, isHighlighted, highlightPrev, highlightNext, highlightedOption } = useListBox<TOption>(props);
+  const { listBoxProps, isOpen } = useListBox<TOption>(props);
   const { updateValidity } = useInputValidity({ field });
   const { fieldValue, setValue, isTouched, errorMessage } = field;
   const { displayError } = useErrorDisplay(field);
@@ -84,12 +84,21 @@ export function useSelect<TOption>(_props: Reactivify<SelectProps<TOption>, 'sch
 
   const selectionCtx: SelectionContext<TOption> = {
     isMultiple: () => toValue(props.multiple) ?? false,
-    isSelected(value: TOption): boolean {
+    isValueSelected(value: TOption): boolean {
       const selectedOptions = normalizeArrayable(fieldValue.value ?? []);
 
       return selectedOptions.some(opt => isEqual(opt, value));
     },
-    isHighlighted,
+    getOptionIndex(value: TOption) {
+      const opts = toValue(props.options) || [];
+
+      return opts.findIndex(opt => isEqual(opt, value));
+    },
+    toggleIdx(idx: number, force?: boolean) {
+      const opts = toValue(props.options) || [];
+
+      this.toggleOption(opts[idx], force);
+    },
     toggleOption(optionValue: TOption, force?: boolean) {
       const isMultiple = toValue(props.multiple);
       if (!isMultiple) {
@@ -138,27 +147,6 @@ export function useSelect<TOption>(_props: Reactivify<SelectProps<TOption>, 'sch
           setSelectedByRelativeIdx(1);
           return;
         }
-      }
-
-      if (e.code === 'ArrowDown') {
-        e.preventDefault();
-        highlightNext();
-        return;
-      }
-
-      if (e.code === 'ArrowUp') {
-        e.preventDefault();
-        highlightPrev();
-        return;
-      }
-
-      if (e.code === 'Space' || e.code === 'Enter') {
-        if (highlightedOption.value) {
-          e.preventDefault();
-          selectionCtx.toggleOption(highlightedOption.value);
-        }
-
-        return;
       }
     },
   };
