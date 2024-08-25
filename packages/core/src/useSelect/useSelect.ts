@@ -15,6 +15,7 @@ import { useListBox } from './useListBox';
 import { useLabel } from '../a11y/useLabel';
 import { FieldTypePrefixes } from '../constants';
 import { useErrorDisplay } from '../useFormField/useErrorDisplay';
+import { useKeyPressed } from '@core/helpers/useKeyPressed';
 
 export interface SelectProps<TOption> {
   label: string;
@@ -39,10 +40,8 @@ export interface SelectTriggerDomProps extends AriaLabelableProps {
 
 export interface SelectionContext<TValue> {
   isValueSelected(value: TValue): boolean;
-  getOptionIndex(value: TValue): number;
   isMultiple(): boolean;
   toggleOption(value: TValue, force?: boolean): void;
-  toggleIdx(idx: number, force?: boolean): void;
 }
 
 export const SelectionContextKey: InjectionKey<SelectionContext<unknown>> = Symbol('SelectionContextKey');
@@ -65,7 +64,8 @@ export function useSelect<TOption>(_props: Reactivify<SelectProps<TOption>, 'sch
     for: inputId,
   });
 
-  const { listBoxProps, isOpen } = useListBox<TOption>(props);
+  let lastRecentlySelectedOption: TOption | undefined;
+  const { listBoxProps, isOpen, options } = useListBox<TOption>(props);
   const { updateValidity } = useInputValidity({ field });
   const { fieldValue, setValue, isTouched, errorMessage } = field;
   const { displayError } = useErrorDisplay(field);
@@ -79,8 +79,10 @@ export function useSelect<TOption>(_props: Reactivify<SelectProps<TOption>, 'sch
   });
 
   function getSelectedIdx() {
-    return toValue(props.options).findIndex(opt => isEqual(opt, fieldValue.value));
+    return options.value.findIndex(opt => opt.isSelected());
   }
+
+  const isShiftPressed = useKeyPressed(['ShiftLeft', 'ShiftRight'], () => !isOpen.value);
 
   const selectionCtx: SelectionContext<TOption> = {
     isMultiple: () => toValue(props.multiple) ?? false,
@@ -89,26 +91,36 @@ export function useSelect<TOption>(_props: Reactivify<SelectProps<TOption>, 'sch
 
       return selectedOptions.some(opt => isEqual(opt, value));
     },
-    getOptionIndex(value: TOption) {
-      const opts = toValue(props.options) || [];
-
-      return opts.findIndex(opt => isEqual(opt, value));
-    },
-    toggleIdx(idx: number, force?: boolean) {
-      const opts = toValue(props.options) || [];
-
-      this.toggleOption(opts[idx], force);
-    },
     toggleOption(optionValue: TOption, force?: boolean) {
       const isMultiple = toValue(props.multiple);
       if (!isMultiple) {
+        lastRecentlySelectedOption = optionValue;
         setValue(optionValue);
         updateValidity();
         isOpen.value = false;
         return;
       }
 
-      const nextValue = toggleValueSelection<TOption>(fieldValue.value ?? [], optionValue, force);
+      if (!isShiftPressed.value) {
+        lastRecentlySelectedOption = optionValue;
+        const nextValue = toggleValueSelection<TOption>(fieldValue.value ?? [], optionValue, force);
+        setValue(nextValue);
+        updateValidity();
+        return;
+      }
+
+      // Handles contiguous selection when shift key is pressed, aka select all options between the two ranges.
+      let lastRecentIdx = options.value.findIndex(opt => isEqual(opt.getValue(), lastRecentlySelectedOption));
+      const targetIdx = options.value.findIndex(opt => isEqual(opt.getValue(), optionValue));
+      if (targetIdx === -1) {
+        return;
+      }
+
+      lastRecentIdx = lastRecentIdx === -1 ? 0 : lastRecentIdx;
+      const startIdx = Math.min(lastRecentIdx, targetIdx);
+      const endIdx = Math.min(Math.max(lastRecentIdx, targetIdx + 1), options.value.length - 1);
+      const range = options.value.slice(startIdx, endIdx);
+      const nextValue = range.map(opt => opt.getValue());
       setValue(nextValue);
       updateValidity();
     },

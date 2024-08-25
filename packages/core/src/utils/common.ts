@@ -331,10 +331,15 @@ export function toggleValueSelection<TValue>(current: Arrayable<TValue>, value: 
   const idx = nextValue.findIndex(v => isEqual(v, value));
   const shouldAdd = force ?? idx === -1;
 
-  if (shouldAdd) {
-    nextValue.push(value);
-  } else {
+  if (!shouldAdd) {
     nextValue.splice(idx, 1);
+
+    return nextValue;
+  }
+
+  // If it doesn't exist add it
+  if (idx === -1) {
+    nextValue.push(value);
   }
 
   return nextValue;

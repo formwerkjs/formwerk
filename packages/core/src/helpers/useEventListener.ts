@@ -1,13 +1,18 @@
-import { MaybeRefOrGetter, onBeforeUnmount, toValue, watch } from 'vue';
+import { isRef, MaybeRefOrGetter, onBeforeUnmount, toValue, watch } from 'vue';
 import { Arrayable, Maybe } from '../types';
-import { normalizeArrayable } from '../utils/common';
+import { isCallable, normalizeArrayable } from '../utils/common';
+
+interface ListenerOptions {
+  disabled?: MaybeRefOrGetter<boolean>;
+}
 
 export function useEventListener(
-  targetRef: MaybeRefOrGetter<Maybe<HTMLElement>>,
+  targetRef: MaybeRefOrGetter<Maybe<EventTarget>>,
   event: Arrayable<string>,
   listener: EventListener,
+  opts?: ListenerOptions,
 ) {
-  function cleanup(el: HTMLElement) {
+  function cleanup(el: EventTarget) {
     const events = normalizeArrayable(event);
 
     events.forEach(evt => {
@@ -15,7 +20,11 @@ export function useEventListener(
     });
   }
 
-  function setup(el: HTMLElement) {
+  function setup(el: EventTarget) {
+    if (toValue(opts?.disabled)) {
+      return;
+    }
+
     const events = normalizeArrayable(event);
 
     events.forEach(evt => {
@@ -44,4 +53,13 @@ export function useEventListener(
 
     stop();
   });
+
+  if (isCallable(opts?.disabled) || isRef(opts?.disabled)) {
+    watch(opts.disabled, value => {
+      const target = toValue(targetRef);
+      if (!value && target) {
+        setup(target);
+      }
+    });
+  }
 }

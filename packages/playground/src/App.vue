@@ -1,7 +1,20 @@
 <template>
   <div class="flex gap-4 relative p-8">
     <form class="w-full">
-      <InputSelect name="select" label="Select Input" multiple :options="['Hello', 'World', 'Foo', 'Bar']" />
+      <select multiple>
+        <option value="volvo">Volvo</option>
+        <option value="saab">Saab</option>
+        <option value="mercedes">Mercedes</option>
+        <option value="audi">Audi</option>
+        <option value="audi">Audi</option>
+      </select>
+
+      <InputSelect
+        name="select"
+        label="Select Input"
+        multiple
+        :options="['Hello', 'World', 'Foo', 'Bar', 'Test', 'GG', 'BIG', 'UUUGE']"
+      />
 
       <!--      <div class="flex flex-col gap-4">-->
       <!--        <InputText-->

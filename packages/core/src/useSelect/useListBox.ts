@@ -125,5 +125,6 @@ export function useListBox<TOption>(_props: Reactivify<ListBoxProps<TOption>>) {
   return {
     listBoxProps,
     isOpen,
+    options,
   };
 }

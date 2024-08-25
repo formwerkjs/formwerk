@@ -2,8 +2,8 @@ import { Maybe, Reactivify, RovingTabIndex } from '../types';
 import { computed, inject, nextTick, ref, Ref, shallowRef, toValue } from 'vue';
 import { SelectionContextKey } from './useSelect';
 import { normalizeProps, useUniqId, warn, withRefCapture } from '../utils/common';
-import { ListManagerKey } from '@core/useSelect/useListBox';
-import { FieldTypePrefixes } from '@core/constants';
+import { ListManagerKey } from './useListBox';
+import { FieldTypePrefixes } from '../constants';
 
 interface OptionDomProps {
   id: string;
