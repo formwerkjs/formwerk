@@ -1,20 +1,18 @@
 <template>
   <div class="flex gap-4 relative p-8">
     <form class="w-full">
-      <select multiple>
-        <option value="volvo">Volvo</option>
-        <option value="saab">Saab</option>
-        <option value="mercedes">Mercedes</option>
-        <option value="audi">Audi</option>
-        <option value="audi">Audi</option>
-      </select>
-
       <InputSelect
         name="select"
         label="Select Input"
+        :model-value="''"
+        :options="options"
+        :get-value="option => option.code"
         multiple
-        :options="['Hello', 'World', 'Foo', 'Bar', 'Test', 'GG', 'BIG', 'UUUGE']"
-      />
+      >
+        <template #option="{ option }">
+          <div>{{ option.name }}</div>
+        </template>
+      </InputSelect>
 
       <!--      <div class="flex flex-col gap-4">-->
       <!--        <InputText-->
@@ -159,6 +157,18 @@ import InputSelect from '@/components/InputSelect.vue';
 const { values } = useForm({
   initialValues: getInitials,
 });
+
+const model = ref('');
+
+const options = [
+  { name: 'Egypt', code: 'EG' },
+  { name: 'United States', code: 'US' },
+  { name: 'Canada', code: 'CA' },
+  { name: 'Brazil', code: 'BR' },
+  { name: 'Germany', code: 'DE' },
+  { name: 'France', code: 'FR' },
+  { name: 'Japan', code: 'JP' },
+];
 
 async function getInitials() {
   await sleep(2000);

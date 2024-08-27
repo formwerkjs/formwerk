@@ -1,9 +1,9 @@
-<script setup lang="ts" generic="TOption">
+<script setup lang="ts" generic="TOption, TValue">
 import { useSelect, SelectProps } from '@formwerk/core';
 import OptionItem from '@/components/OptionItem.vue';
 import { onMounted, ref, watch } from 'vue';
 
-const props = defineProps<SelectProps<TOption>>();
+const props = defineProps<SelectProps<TOption, TValue>>();
 
 const { triggerProps, labelProps, errorMessageProps, isTouched, displayError, fieldValue, isOpen, listBoxProps } =
   useSelect(props);
@@ -42,8 +42,8 @@ onMounted(() => {
 
     <div ref="popoverEl" v-bind="listBoxProps" popover class="listbox">
       <div v-for="opt in options" :key="opt">
-        <OptionItem :value="opt">
-          {{ opt }}
+        <OptionItem :option="opt">
+          <slot name="option" :option="opt" />
         </OptionItem>
       </div>
     </div>

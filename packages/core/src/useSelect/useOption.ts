@@ -18,52 +18,52 @@ interface OptionDomProps {
 }
 
 export interface OptionProps<TValue> {
-  value: TValue;
+  option: TValue;
 
   disabled?: boolean;
 }
 
-export function useOption<TValue>(_props: Reactivify<OptionProps<TValue>>, elementRef?: Ref<Maybe<HTMLElement>>) {
+export function useOption<TOption>(_props: Reactivify<OptionProps<TOption>>, elementRef?: Ref<Maybe<HTMLElement>>) {
   const props = normalizeProps(_props);
   const optionRef = elementRef || ref<HTMLElement>();
+  const isFocused = shallowRef(false);
   const selectionCtx = inject(SelectionContextKey, null);
+  const listManager = inject(ListManagerKey, null);
+  const isSelected = computed(() => selectionCtx?.isValueSelected(getValue()) ?? false);
   if (!selectionCtx) {
     warn(
       'An option component must exist within a Selection Context. Did you forget to call `useSelect` in a parent component?',
     );
   }
 
-  const listManager = inject(ListManagerKey, null);
   if (!listManager) {
     warn(
       'An option component must exist within a ListBox Context. Did you forget to call `useSelect` or `useListBox` in a parent component?',
     );
   }
 
-  const isFocused = shallowRef(false);
-
-  function toggleSelected() {
-    selectionCtx?.toggleOption(toValue(props.value));
+  function getValue() {
+    return selectionCtx?.evaluateOption(toValue(props.option));
   }
 
-  const isSelected = computed(() => selectionCtx?.isValueSelected(toValue(props.value)) ?? false);
   const id =
     listManager?.useOptionRegistration({
       toggleSelected,
       isDisabled: () => !!toValue(props.disabled),
       isSelected: () => isSelected.value,
       isFocused: () => isFocused.value,
-      getValue: () => toValue(props.value),
+      getValue,
       focus: () => {
         isFocused.value = true;
         nextTick(() => {
           optionRef.value?.focus();
         });
       },
-      unfocus() {
-        isFocused.value = false;
-      },
     }) ?? useUniqId(FieldTypePrefixes.Option);
+
+  function toggleSelected() {
+    selectionCtx?.toggleValue(getValue());
+  }
 
   const handlers = {
     onClick() {
@@ -71,7 +71,7 @@ export function useOption<TValue>(_props: Reactivify<OptionProps<TValue>>, eleme
         return;
       }
 
-      selectionCtx?.toggleOption(toValue(props.value));
+      selectionCtx?.toggleValue(getValue());
     },
     onKeydown(e: KeyboardEvent) {
       if (e.code === 'Space' || e.code === 'Enter') {
@@ -79,6 +79,9 @@ export function useOption<TValue>(_props: Reactivify<OptionProps<TValue>>, eleme
         e.stopPropagation();
         toggleSelected();
       }
+    },
+    onBlur() {
+      isFocused.value = false;
     },
   };
 

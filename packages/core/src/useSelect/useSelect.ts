@@ -16,19 +16,20 @@ import { useLabel } from '../a11y/useLabel';
 import { FieldTypePrefixes } from '../constants';
 import { useErrorDisplay } from '../useFormField/useErrorDisplay';
 
-export interface SelectProps<TOption> {
+export interface SelectProps<TOption, TValue = TOption> {
   label: string;
   name?: string;
   description?: string;
 
-  modelValue?: Arrayable<TOption>;
-  disabled?: boolean;
-
   options: TOption[];
+  getValue?(option: TOption): TValue;
+  modelValue?: Arrayable<TValue>;
+
+  disabled?: boolean;
   multiple?: boolean;
   orientation?: Orientation;
 
-  schema?: TypedSchema<Arrayable<TOption>>;
+  schema?: TypedSchema<Arrayable<TValue>>;
 }
 
 export interface SelectTriggerDomProps extends AriaLabelableProps {
@@ -37,22 +38,26 @@ export interface SelectTriggerDomProps extends AriaLabelableProps {
   'aria-expanded': boolean;
 }
 
-export interface SelectionContext<TValue> {
+export interface SelectionContext<TOption, TValue = TOption> {
   isValueSelected(value: TValue): boolean;
   isMultiple(): boolean;
-  toggleOption(value: TValue, force?: boolean): void;
+  toggleValue(value: TValue, force?: boolean): void;
+  evaluateOption(option: TOption): TValue;
 }
 
 export const SelectionContextKey: InjectionKey<SelectionContext<unknown>> = Symbol('SelectionContextKey');
 
 const MENU_OPEN_KEYS = ['Enter', 'Space', 'ArrowDown', 'ArrowUp'];
 
-export function useSelect<TOption>(_props: Reactivify<SelectProps<TOption>, 'schema'>) {
+export function useSelect<TOption, TValue = TOption>(
+  _props: Reactivify<SelectProps<TOption, TValue>, 'schema' | 'getValue'>,
+) {
   const inputId = useUniqId(FieldTypePrefixes.Select);
-  const props = normalizeProps(_props, ['schema']);
-  const field = useFormField<Arrayable<TOption>>({
+  const props = normalizeProps(_props, ['schema', 'getValue']);
+  const evaluate = props.getValue || ((opt: TOption) => opt as unknown as TValue);
+  const field = useFormField<Arrayable<TValue>>({
     path: props.name,
-    initialValue: toValue(props.modelValue) as Arrayable<TOption>,
+    initialValue: toValue(props.modelValue) as Arrayable<TValue>,
     disabled: props.disabled,
 
     schema: props.schema,
@@ -63,8 +68,8 @@ export function useSelect<TOption>(_props: Reactivify<SelectProps<TOption>, 'sch
     for: inputId,
   });
 
-  let lastRecentlySelectedOption: TOption | undefined;
-  const { listBoxProps, isOpen, options, isShiftPressed } = useListBox<TOption>({
+  let lastRecentlySelectedOption: TValue | undefined;
+  const { listBoxProps, isOpen, options, isShiftPressed } = useListBox<TOption, TValue>({
     ...props,
     onToggleAll: toggleAll,
     onToggleBefore: toggleBefore,
@@ -87,14 +92,15 @@ export function useSelect<TOption>(_props: Reactivify<SelectProps<TOption>, 'sch
     return options.value.findIndex(opt => opt.isSelected());
   }
 
-  const selectionCtx: SelectionContext<TOption> = {
+  const selectionCtx: SelectionContext<TOption, TValue> = {
     isMultiple: () => toValue(props.multiple) ?? false,
-    isValueSelected(value: TOption): boolean {
-      const selectedOptions = normalizeArrayable(fieldValue.value ?? []);
+    evaluateOption: evaluate,
+    isValueSelected(value): boolean {
+      const values = normalizeArrayable(fieldValue.value ?? []);
 
-      return selectedOptions.some(opt => isEqual(opt, value));
+      return values.some(item => isEqual(item, value));
     },
-    toggleOption(optionValue: TOption, force?: boolean) {
+    toggleValue(optionValue, force) {
       const isMultiple = toValue(props.multiple);
       if (!isMultiple) {
         lastRecentlySelectedOption = optionValue;
@@ -106,7 +112,7 @@ export function useSelect<TOption>(_props: Reactivify<SelectProps<TOption>, 'sch
 
       if (!isShiftPressed.value) {
         lastRecentlySelectedOption = optionValue;
-        const nextValue = toggleValueSelection<TOption>(fieldValue.value ?? [], optionValue, force);
+        const nextValue = toggleValueSelection<TValue>(fieldValue.value ?? [], optionValue, force);
         setValue(nextValue);
         updateValidity();
         return;
@@ -170,11 +176,10 @@ export function useSelect<TOption>(_props: Reactivify<SelectProps<TOption>, 'sch
   provide(SelectionContextKey, selectionCtx);
 
   function setSelectedByRelativeIdx(relativeIdx: number) {
-    const options = toValue(props.options);
     // Clamps selection between 0 and the array length
-    const nextIdx = Math.max(0, Math.min(options.length - 1, getSelectedIdx() + relativeIdx));
-    const option = options[nextIdx];
-    selectionCtx.toggleOption(option);
+    const nextIdx = Math.max(0, Math.min(options.value.length - 1, getSelectedIdx() + relativeIdx));
+    const option = options.value[nextIdx];
+    selectionCtx.toggleValue(option.getValue());
   }
 
   const handlers = {
