@@ -18,6 +18,7 @@ interface OptionDomProps {
 }
 
 export interface OptionProps<TValue> {
+  label: string;
   option: TValue;
 
   disabled?: boolean;
@@ -54,6 +55,7 @@ export function useOption<TOption>(_props: Reactivify<OptionProps<TOption>>, ele
     isDisabled: () => !!toValue(props.disabled),
     isSelected: () => isSelected.value,
     isFocused: () => isFocused.value,
+    getLabel: () => toValue(props.label) ?? '',
     getValue,
     focus: () => {
       isFocused.value = true;

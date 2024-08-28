@@ -33,6 +33,7 @@ const { triggerProps, labelProps, errorMessageProps, isTouched, displayError, fi
                 v-for="(option, idx) in group.items"
                 :key="(getValue?.(option) as any) ?? idx"
                 :option="option"
+                :label="option.label"
               >
                 <slot name="option" :option="option">
                   {{ option.label }}
@@ -43,7 +44,12 @@ const { triggerProps, labelProps, errorMessageProps, isTouched, displayError, fi
         </template>
 
         <template v-else-if="options">
-          <OptionItem v-for="(option, idx) in options" :key="(getValue?.(option) as any) ?? idx" :option="option">
+          <OptionItem
+            v-for="(option, idx) in options"
+            :key="(getValue?.(option) as any) ?? idx"
+            :option="option"
+            :label="option.label"
+          >
             <slot name="option" :option="option" />
           </OptionItem>
         </template>
