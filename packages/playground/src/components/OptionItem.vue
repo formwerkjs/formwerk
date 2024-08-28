@@ -13,8 +13,8 @@ const { optionProps } = useOption(props);
 </script>
 
 <style scoped>
-option:focus {
-  @apply bg-gray-200;
+.option:focus {
+  @apply bg-gray-200 outline-none;
 }
 
 [aria-selected='true'],

@@ -92,6 +92,12 @@ export function useSelect<TOption, TValue = TOption>(
     return options.value.findIndex(opt => opt.isSelected());
   }
 
+  function isSingle() {
+    const isMultiple = toValue(props.multiple);
+
+    return !isMultiple;
+  }
+
   const selectionCtx: SelectionContext<TOption, TValue> = {
     isMultiple: () => toValue(props.multiple) ?? false,
     evaluateOption: evaluate,
@@ -101,8 +107,7 @@ export function useSelect<TOption, TValue = TOption>(
       return values.some(item => isEqual(item, value));
     },
     toggleValue(optionValue, force) {
-      const isMultiple = toValue(props.multiple);
-      if (!isMultiple) {
+      if (isSingle()) {
         lastRecentlySelectedOption = optionValue;
         setValue(optionValue);
         updateValidity();
@@ -139,6 +144,10 @@ export function useSelect<TOption, TValue = TOption>(
   }
 
   function toggleBefore() {
+    if (isSingle()) {
+      return;
+    }
+
     const focusedIdx = options.value.findIndex(opt => opt.isFocused());
     if (focusedIdx < 0) {
       return;
@@ -150,6 +159,10 @@ export function useSelect<TOption, TValue = TOption>(
   }
 
   function toggleAfter() {
+    if (isSingle()) {
+      return;
+    }
+
     const focusedIdx = options.value.findIndex(opt => opt.isFocused());
     const startIdx = Math.max(0, focusedIdx);
     const endIdx = options.value.length - 1;
@@ -157,8 +170,7 @@ export function useSelect<TOption, TValue = TOption>(
   }
 
   function toggleAll() {
-    const isMultiple = toValue(props.multiple);
-    if (!isMultiple) {
+    if (isSingle()) {
       return;
     }
 

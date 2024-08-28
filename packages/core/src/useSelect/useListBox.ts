@@ -1,7 +1,6 @@
 import { Orientation, Reactivify } from '../types';
 import { computed, InjectionKey, nextTick, onBeforeUnmount, provide, shallowRef, toValue, watch } from 'vue';
-import { normalizeProps, removeFirst, useUniqId } from '../utils/common';
-import { FieldTypePrefixes } from '../constants';
+import { normalizeProps, removeFirst } from '../utils/common';
 import { useKeyPressed } from '../helpers/useKeyPressed';
 import { isMac } from '../utils/platform';
 
@@ -18,9 +17,11 @@ export interface ListBoxProps<TOption> {
 export interface ListBoxDomProps {
   role: 'listbox';
   'aria-multiselectable'?: boolean;
+  'aria-activedescendant'?: string;
 }
 
 export interface OptionRegistration<TValue> {
+  id: string;
   isFocused(): boolean;
   isSelected(): boolean;
   isDisabled(): boolean;
@@ -34,7 +35,7 @@ export interface OptionRegistrationWithId<TValue> extends OptionRegistration<TVa
 }
 
 export interface ListManagerCtx<TOption = unknown> {
-  useOptionRegistration(init: OptionRegistration<TOption>): string;
+  useOptionRegistration(init: OptionRegistration<TOption>): void;
 }
 
 export const ListManagerKey: InjectionKey<ListManagerCtx> = Symbol('ListManagerKey');
@@ -51,14 +52,11 @@ export function useListBox<TOption, TValue = TOption>(_props: Reactivify<ListBox
 
   const listManager: ListManagerCtx = {
     useOptionRegistration(init: OptionRegistration<TValue>) {
-      const id = useUniqId(FieldTypePrefixes.Option);
-      options.value.push({ ...init, id });
-
+      const id = init.id;
+      options.value.push(init);
       onBeforeUnmount(() => {
         removeFirst(options.value, reg => reg.id === id);
       });
-
-      return id;
     },
   };
 
@@ -87,24 +85,24 @@ export function useListBox<TOption, TValue = TOption>(_props: Reactivify<ListBox
         return;
       }
 
-      if (e.code === 'Home' && isShiftPressed.value) {
+      if (e.code === 'Home') {
         e.preventDefault();
         e.stopPropagation();
-        props.onToggleBefore?.();
-
-        if (isMetaPressed.value) {
-          options.value.at(0)?.focus();
+        if (isShiftPressed.value) {
+          props.onToggleBefore?.();
         }
+
+        options.value.at(0)?.focus();
       }
 
-      if (e.code === 'End' && isShiftPressed.value) {
+      if (e.code === 'End') {
         e.preventDefault();
         e.stopPropagation();
-        props.onToggleAfter?.();
-
-        if (isMetaPressed.value) {
-          options.value.at(-1)?.focus();
+        if (isShiftPressed.value) {
+          props.onToggleAfter?.();
         }
+
+        options.value.at(-1)?.focus();
       }
 
       if (e.code === 'Tab') {
@@ -149,9 +147,13 @@ export function useListBox<TOption, TValue = TOption>(_props: Reactivify<ListBox
   }
 
   const listBoxProps = computed<ListBoxDomProps>(() => {
+    const isMultiple = toValue(props.multiple);
+    const option = !isMultiple && isOpen.value ? options.value.find(o => o.isFocused()) : undefined;
+
     return {
       role: 'listbox',
-      'aria-multiselectable': toValue(props.multiple) ?? undefined,
+      'aria-multiselectable': isMultiple ?? undefined,
+      'aria-activedescendant': option?.id ?? undefined,
       ...handlers,
     };
   });

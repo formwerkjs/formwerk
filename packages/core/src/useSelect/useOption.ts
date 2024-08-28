@@ -46,20 +46,22 @@ export function useOption<TOption>(_props: Reactivify<OptionProps<TOption>>, ele
     return selectionCtx?.evaluateOption(toValue(props.option));
   }
 
-  const id =
-    listManager?.useOptionRegistration({
-      toggleSelected,
-      isDisabled: () => !!toValue(props.disabled),
-      isSelected: () => isSelected.value,
-      isFocused: () => isFocused.value,
-      getValue,
-      focus: () => {
-        isFocused.value = true;
-        nextTick(() => {
-          optionRef.value?.focus();
-        });
-      },
-    }) ?? useUniqId(FieldTypePrefixes.Option);
+  const optionId = useUniqId(FieldTypePrefixes.Option);
+
+  listManager?.useOptionRegistration({
+    id: optionId,
+    toggleSelected,
+    isDisabled: () => !!toValue(props.disabled),
+    isSelected: () => isSelected.value,
+    isFocused: () => isFocused.value,
+    getValue,
+    focus: () => {
+      isFocused.value = true;
+      nextTick(() => {
+        optionRef.value?.focus();
+      });
+    },
+  });
 
   function toggleSelected() {
     selectionCtx?.toggleValue(getValue());
@@ -90,7 +92,7 @@ export function useOption<TOption>(_props: Reactivify<OptionProps<TOption>>, ele
 
     return withRefCapture(
       {
-        id,
+        id: optionId,
         role: 'option',
         tabindex: isFocused.value ? '0' : '-1',
         'aria-selected': isMultiple ? undefined : isSelected.value,

@@ -41,11 +41,7 @@ onMounted(() => {
     </div>
 
     <div ref="popoverEl" v-bind="listBoxProps" popover class="listbox">
-      <div v-for="opt in options" :key="opt">
-        <OptionItem :option="opt">
-          <slot name="option" :option="opt" />
-        </OptionItem>
-      </div>
+      <slot />
     </div>
 
     <span v-bind="errorMessageProps" class="error-message">
@@ -79,12 +75,28 @@ onMounted(() => {
     position-area: bottom;
     inset-area: bottom;
     @apply shadow-sm border border-gray-200 w-[300px];
+    opacity: 0;
+    transition:
+      display 0.4s allow-discrete,
+      opacity 0.4s allow-discrete,
+      transform 0.4s allow-discrete,
+      overlay 0.4s allow-discrete;
+
+    &:popover-open {
+      opacity: 1;
+    }
   }
 
   &.touched {
     input {
       @apply bg-blue-50;
     }
+  }
+}
+
+@starting-style {
+  .listbox:popover-open {
+    opacity: 0;
   }
 }
 </style>
