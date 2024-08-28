@@ -11,6 +11,7 @@ export const FieldTypePrefixes = {
   FormGroup: 'fg',
   Select: 'se',
   Option: 'opt',
+  OptionGroup: 'og',
 } as const;
 
 export const NOOP = () => {};

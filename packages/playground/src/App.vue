@@ -1,17 +1,8 @@
 <template>
   <div class="flex gap-4 relative p-8">
     <form class="w-full">
-      <InputSelect
-        name="select"
-        label="Select Input"
-        :model-value="''"
-        :options="options"
-        :get-value="option => option.code"
-        multiple
-      >
-        <template #option="{ option }">
-          <div>{{ option.name }}</div>
-        </template>
+      <InputSelect name="select" label="Select Input" :options="options" :get-value="option => option.code">
+        <OptionItem v-for="option in options" :key="option.code" :option="option">{{ option.name }}</OptionItem>
       </InputSelect>
 
       <!--      <div class="flex flex-col gap-4">-->
@@ -153,6 +144,7 @@ import CheckboxItem from '@/components/CheckboxItem.vue';
 import CheckboxInput from '@/components/CheckboxInput.vue';
 import { useForm } from '@formwerk/core';
 import InputSelect from '@/components/InputSelect.vue';
+import OptionItem from './components/OptionItem.vue';
 
 const { values } = useForm({
   initialValues: getInitials,
