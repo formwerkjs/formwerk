@@ -6,17 +6,17 @@ interface ListenerOptions {
   disabled?: MaybeRefOrGetter<boolean>;
 }
 
-export function useEventListener(
+export function useEventListener<TEvent extends Event>(
   targetRef: MaybeRefOrGetter<Maybe<EventTarget>>,
   event: Arrayable<string>,
-  listener: EventListener,
+  listener: (e: TEvent) => unknown,
   opts?: ListenerOptions,
 ) {
   function cleanup(el: EventTarget) {
     const events = normalizeArrayable(event);
 
     events.forEach(evt => {
-      el.removeEventListener(evt, listener);
+      el.removeEventListener(evt, listener as EventListener);
     });
   }
 
@@ -28,7 +28,7 @@ export function useEventListener(
     const events = normalizeArrayable(event);
 
     events.forEach(evt => {
-      el.addEventListener(evt, listener);
+      el.addEventListener(evt, listener as EventListener);
     });
   }
 

@@ -1,33 +1,10 @@
 <script setup lang="ts" generic="TOption, TValue">
 import { useSelect, SelectProps } from '@formwerk/core';
-import OptionItem from '@/components/OptionItem.vue';
-import { onMounted, ref, watch } from 'vue';
 
 const props = defineProps<SelectProps<TOption, TValue>>();
 
-const { triggerProps, labelProps, errorMessageProps, isTouched, displayError, fieldValue, isOpen, listBoxProps } =
+const { triggerProps, labelProps, errorMessageProps, isTouched, displayError, fieldValue, listBoxProps } =
   useSelect(props);
-
-const popoverEl = ref<HTMLElement | null>(null);
-
-watch(isOpen, value => {
-  if (value === popoverEl.value?.matches(':popover-open')) {
-    return;
-  }
-
-  value ? popoverEl.value?.showPopover() : popoverEl.value?.hidePopover();
-});
-
-onMounted(() => {
-  popoverEl.value?.addEventListener('toggle', evt => {
-    const shouldBeOpen = evt.newState === 'open';
-    if (isOpen.value === shouldBeOpen) {
-      return;
-    }
-
-    isOpen.value = shouldBeOpen;
-  });
-});
 </script>
 
 <template>
@@ -40,7 +17,7 @@ onMounted(() => {
       <span class="ml-auto">⬇️</span>
     </div>
 
-    <div ref="popoverEl" v-bind="listBoxProps" popover class="listbox">
+    <div v-bind="listBoxProps" popover class="listbox">
       <slot />
     </div>
 

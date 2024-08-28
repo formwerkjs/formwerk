@@ -1,8 +1,9 @@
-import { Orientation, Reactivify } from '../types';
-import { computed, InjectionKey, nextTick, onBeforeUnmount, provide, shallowRef, toValue, watch } from 'vue';
-import { normalizeProps, removeFirst } from '../utils/common';
+import { Maybe, Orientation, Reactivify } from '../types';
+import { computed, InjectionKey, nextTick, onBeforeUnmount, provide, ref, Ref, shallowRef, toValue, watch } from 'vue';
+import { normalizeProps, removeFirst, withRefCapture } from '../utils/common';
 import { useKeyPressed } from '../helpers/useKeyPressed';
 import { isMac } from '../utils/platform';
+import { usePopoverController } from '../helpers/usePopoverController';
 
 export interface ListBoxProps<TOption> {
   options: TOption[];
@@ -40,10 +41,15 @@ export interface ListManagerCtx<TOption = unknown> {
 
 export const ListManagerKey: InjectionKey<ListManagerCtx> = Symbol('ListManagerKey');
 
-export function useListBox<TOption, TValue = TOption>(_props: Reactivify<ListBoxProps<TOption>>) {
+export function useListBox<TOption, TValue = TOption>(
+  _props: Reactivify<ListBoxProps<TOption>>,
+  elementRef?: Ref<Maybe<HTMLElement>>,
+) {
   const props = normalizeProps(_props);
+  const listBoxRef = elementRef || ref<HTMLElement>();
   const options = shallowRef<OptionRegistrationWithId<TValue>[]>([]);
-  const isOpen = shallowRef(false);
+  // Initialize popover controller, NO-OP if the element is not a popover-enabled element.
+  const { isOpen } = usePopoverController(listBoxRef);
   const isShiftPressed = useKeyPressed(['ShiftLeft', 'ShiftRight'], () => !isOpen.value);
   const isMetaPressed = useKeyPressed(
     isMac() ? ['MetaLeft', 'MetaRight'] : ['ControlLeft', 'ControlRight'],
@@ -150,12 +156,16 @@ export function useListBox<TOption, TValue = TOption>(_props: Reactivify<ListBox
     const isMultiple = toValue(props.multiple);
     const option = !isMultiple && isOpen.value ? options.value.find(o => o.isFocused()) : undefined;
 
-    return {
-      role: 'listbox',
-      'aria-multiselectable': isMultiple ?? undefined,
-      'aria-activedescendant': option?.id ?? undefined,
-      ...handlers,
-    };
+    return withRefCapture(
+      {
+        role: 'listbox',
+        'aria-multiselectable': isMultiple ?? undefined,
+        'aria-activedescendant': option?.id ?? undefined,
+        ...handlers,
+      },
+      listBoxRef,
+      elementRef,
+    );
   });
 
   watch(isOpen, async value => {
