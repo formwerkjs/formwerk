@@ -21,7 +21,6 @@ export interface SelectProps<TOption, TValue = TOption> {
   name?: string;
   description?: string;
 
-  options: TOption[];
   getValue?(option: TOption): TValue;
   modelValue?: Arrayable<TValue>;
 

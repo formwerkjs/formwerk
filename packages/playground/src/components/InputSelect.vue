@@ -1,7 +1,14 @@
-<script setup lang="ts" generic="TOption, TValue">
+<script setup lang="ts" generic="TOption extends { label: string }, TValue">
 import { useSelect, SelectProps } from '@formwerk/core';
+import OptionItem from './OptionItem.vue';
+import OptionGroup from './OptionGroup.vue';
 
-const props = defineProps<SelectProps<TOption, TValue>>();
+export interface TheProps<TOption, TValue> extends SelectProps<TOption, TValue> {
+  groups?: { items: TOption[]; label: string }[];
+  options?: TOption[];
+}
+
+const props = defineProps<TheProps<TOption, TValue>>();
 
 const { triggerProps, labelProps, errorMessageProps, isTouched, displayError, fieldValue, listBoxProps } =
   useSelect(props);
@@ -18,7 +25,29 @@ const { triggerProps, labelProps, errorMessageProps, isTouched, displayError, fi
     </div>
 
     <div v-bind="listBoxProps" popover class="listbox">
-      <slot />
+      <slot>
+        <template v-if="groups">
+          <OptionGroup v-for="group in groups" :key="group.label" :label="group.label">
+            <slot name="group" :options="group.items">
+              <OptionItem
+                v-for="(option, idx) in group.items"
+                :key="(getValue?.(option) as any) ?? idx"
+                :option="option"
+              >
+                <slot name="option" :option="option">
+                  {{ option.label }}
+                </slot>
+              </OptionItem>
+            </slot>
+          </OptionGroup>
+        </template>
+
+        <template v-else-if="options">
+          <OptionItem v-for="(option, idx) in options" :key="(getValue?.(option) as any) ?? idx" :option="option">
+            <slot name="option" :option="option" />
+          </OptionItem>
+        </template>
+      </slot>
     </div>
 
     <span v-bind="errorMessageProps" class="error-message">
@@ -48,6 +77,7 @@ const { triggerProps, labelProps, errorMessageProps, isTouched, displayError, fi
 
   .listbox {
     margin: 0;
+    @apply p-0 max-h-[60vh] relative;
     position-anchor: --trigger;
     position-area: bottom;
     inset-area: bottom;

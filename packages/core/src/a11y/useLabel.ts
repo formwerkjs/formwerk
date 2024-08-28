@@ -5,7 +5,7 @@ import { createRefCapture } from '../utils/common';
 interface LabelProps {
   for: MaybeRefOrGetter<string>;
   label: MaybeRefOrGetter<Maybe<string>>;
-  targetRef?: MaybeRefOrGetter<HTMLElement | undefined>;
+  targetRef?: MaybeRefOrGetter<Maybe<HTMLElement>>;
   handleClick?: () => void;
 }
 

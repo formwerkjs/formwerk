@@ -5,8 +5,7 @@ import { useKeyPressed } from '../helpers/useKeyPressed';
 import { isMac } from '../utils/platform';
 import { usePopoverController } from '../helpers/usePopoverController';
 
-export interface ListBoxProps<TOption> {
-  options: TOption[];
+export interface ListBoxProps {
   multiple?: boolean;
   orientation?: Orientation;
 
@@ -42,7 +41,7 @@ export interface ListManagerCtx<TOption = unknown> {
 export const ListManagerKey: InjectionKey<ListManagerCtx> = Symbol('ListManagerKey');
 
 export function useListBox<TOption, TValue = TOption>(
-  _props: Reactivify<ListBoxProps<TOption>>,
+  _props: Reactivify<ListBoxProps>,
   elementRef?: Ref<Maybe<HTMLElement>>,
 ) {
   const props = normalizeProps(_props);

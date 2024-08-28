@@ -16,6 +16,7 @@ export function useOptionGroup(_props: Reactivify<OptionGroupProps>, elementRef?
   const { labelProps, labelledByProps } = useLabel({
     label: props.label,
     for: groupId,
+    targetRef: groupRef,
   });
 
   const groupProps = computed(() => {

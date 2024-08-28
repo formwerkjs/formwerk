@@ -1,5 +1,5 @@
 <template>
-  <div v-bind="optionProps" class="option">
+  <div v-bind="optionProps" class="option px-2 rounded-md py-0.5 border">
     <slot />
   </div>
 </template>
@@ -13,12 +13,15 @@ const { optionProps } = useOption(props);
 </script>
 
 <style scoped>
-.option:focus {
-  @apply bg-gray-200 outline-none;
-}
+.option {
+  @apply border border-transparent select-none;
+  &:focus {
+    @apply border-gray-400 outline-none;
+  }
 
-[aria-selected='true'],
-[aria-checked='true'] {
-  @apply bg-gray-700 text-white;
+  &[aria-selected='true'],
+  &[aria-checked='true'] {
+    @apply bg-blue-700 text-white;
+  }
 }
 </style>

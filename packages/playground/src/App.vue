@@ -1,9 +1,7 @@
 <template>
   <div class="flex gap-4 relative p-8">
     <form class="w-full">
-      <InputSelect name="select" label="Select Input" :options="options" :get-value="option => option.code">
-        <OptionItem v-for="option in options" :key="option.code" :option="option">{{ option.name }}</OptionItem>
-      </InputSelect>
+      <InputSelect name="select" label="Select Input" :get-value="option => option.code" :groups="continents" />
 
       <!--      <div class="flex flex-col gap-4">-->
       <!--        <InputText-->
@@ -151,6 +149,53 @@ const { values } = useForm({
 });
 
 const model = ref('');
+
+const continents = [
+  {
+    label: 'Africa',
+    code: 'AF',
+    items: [
+      { label: 'Egypt', code: 'EG' },
+      { label: 'Nigeria', code: 'NG' },
+      { label: 'South Africa', code: 'ZA' },
+    ],
+  },
+  {
+    label: 'America',
+    code: 'AM',
+    items: [
+      { label: 'United States', code: 'US' },
+      { label: 'Canada', code: 'CA' },
+      { label: 'Brazil', code: 'BR' },
+    ],
+  },
+  {
+    label: 'Asia',
+    code: 'AS',
+    items: [
+      { label: 'China', code: 'CN' },
+      { label: 'Japan', code: 'JP' },
+      { label: 'India', code: 'IN' },
+    ],
+  },
+  {
+    label: 'Europe',
+    code: 'EU',
+    items: [
+      { label: 'Germany', code: 'DE' },
+      { label: 'France', code: 'FR' },
+      { label: 'United Kingdom', code: 'UK' },
+    ],
+  },
+  {
+    label: 'Oceania',
+    code: 'OC',
+    items: [
+      { label: 'Australia', code: 'AU' },
+      { label: 'New Zealand', code: 'NZ' },
+    ],
+  },
+];
 
 const options = [
   { name: 'Egypt', code: 'EG' },
