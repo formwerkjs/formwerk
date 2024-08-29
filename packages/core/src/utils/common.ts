@@ -1,4 +1,4 @@
-import { computed, MaybeRefOrGetter, Ref, shallowRef, toValue, useId } from 'vue';
+import { computed, getCurrentScope, MaybeRefOrGetter, onScopeDispose, Ref, shallowRef, toValue, useId } from 'vue';
 import { klona } from 'klona/full';
 import { AriaDescriptionProps, Arrayable, Maybe, NormalizedProps } from '../types';
 import { AsyncReturnType } from 'type-fest';
@@ -351,4 +351,17 @@ export function removeFirst<TItem>(items: TItem[], predicate: (item: TItem) => b
     items.splice(idx, 1);
     return;
   }
+}
+
+/**
+ * VueUse uses this to dispose of watchers/events in composable hooks.
+ * https://vueuse.org/shared/tryOnScopeDispose/
+ */
+export function tryOnScopeDispose(fn: () => void) {
+  if (getCurrentScope()) {
+    onScopeDispose(fn);
+    return true;
+  }
+
+  return false;
 }

@@ -1,6 +1,6 @@
-import { isRef, MaybeRefOrGetter, onBeforeUnmount, toValue, watch } from 'vue';
+import { MaybeRefOrGetter, toValue, watch } from 'vue';
 import { Arrayable, Maybe } from '../../types';
-import { isCallable, normalizeArrayable } from '../../utils/common';
+import { normalizeArrayable, tryOnScopeDispose } from '../../utils/common';
 
 interface ListenerOptions {
   disabled?: MaybeRefOrGetter<boolean>;
@@ -12,12 +12,9 @@ export function useEventListener<TEvent extends Event>(
   listener: (e: TEvent) => unknown,
   opts?: ListenerOptions,
 ) {
-  function cleanup(el: EventTarget) {
-    const events = normalizeArrayable(event);
-
-    events.forEach(evt => {
-      el.removeEventListener(evt, listener as EventListener);
-    });
+  let controller: AbortController | undefined;
+  function cleanup() {
+    controller?.abort();
   }
 
   function setup(el: EventTarget) {
@@ -25,50 +22,27 @@ export function useEventListener<TEvent extends Event>(
       return;
     }
 
+    controller = new AbortController();
     const events = normalizeArrayable(event);
+    const listenerOpts = { signal: controller.signal };
     events.forEach(evt => {
-      el.addEventListener(evt, listener as EventListener);
+      el.addEventListener(evt, listener as EventListener, listenerOpts);
     });
   }
 
-  const stop = watch(
-    () => toValue(targetRef),
-    (target, oldTarget) => {
-      if (oldTarget) {
-        cleanup(oldTarget);
-      }
-
-      if (target) {
-        setup(target);
+  const stopWatch = watch(
+    () => [toValue(targetRef), toValue(opts?.disabled)] as const,
+    ([el, disabled]) => {
+      cleanup();
+      if (el && !disabled) {
+        setup(el);
       }
     },
     { immediate: true },
   );
 
-  onBeforeUnmount(() => {
-    const target = toValue(targetRef);
-    if (target) {
-      cleanup(target);
-    }
-
-    stop();
+  tryOnScopeDispose(() => {
+    cleanup();
+    stopWatch();
   });
-
-  if (isCallable(opts?.disabled) || isRef(opts?.disabled)) {
-    watch(opts.disabled, value => {
-      const target = toValue(targetRef);
-      if (!target) {
-        return;
-      }
-
-      if (!value) {
-        setup(target);
-        return;
-      }
-
-      if (value) {
-        cleanup(target);
-      }
-    });
-  }
 }

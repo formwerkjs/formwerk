@@ -66,4 +66,13 @@ test('can be disabled', async () => {
   expect(isPressed.value).toBe(true);
   await fireEvent.keyUp(window, { code: 'KeyK' });
   expect(isPressed.value).toBe(false);
+
+  isDisabled.value = true;
+  await nextTick();
+
+  expect(isPressed.value).toBe(false);
+  await fireEvent.keyDown(window, { code: 'KeyK' });
+  expect(isPressed.value).toBe(false);
+  await fireEvent.keyUp(window, { code: 'KeyK' });
+  expect(isPressed.value).toBe(false);
 });
