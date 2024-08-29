@@ -10,6 +10,7 @@ export default defineConfig({
     exclude: ['docs/*', ...configDefaults.exclude],
     coverage: {
       reporter: ['html', 'json'],
+      include: [...(configDefaults.coverage.include || [])],
       exclude: [
         '**/*/devtools.ts',
         'packages/**/dist/**',

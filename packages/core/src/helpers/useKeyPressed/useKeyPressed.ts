@@ -1,7 +1,7 @@
-import { useEventListener } from './useEventListener';
 import { MaybeRefOrGetter, shallowRef } from 'vue';
-import { Arrayable } from '../types';
-import { isCallable, normalizeArrayable } from '../utils/common';
+import { useEventListener } from '../useEventListener';
+import { Arrayable } from '../../types';
+import { isCallable, normalizeArrayable } from '../../utils/common';
 
 export function useKeyPressed(
   codes: Arrayable<string> | ((evt: KeyboardEvent) => boolean),
@@ -15,6 +15,8 @@ export function useKeyPressed(
     }
   }
 
+  // We don't care if the multiple keys can be pressed to trigger it initially
+  // because it's a rare case and it's not worth the complexity, user can split it into multiple hooks
   function onKeyup(e: KeyboardEvent) {
     if (predicate(e)) {
       isPressed.value = false;

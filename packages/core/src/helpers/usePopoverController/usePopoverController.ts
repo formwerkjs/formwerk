@@ -1,6 +1,6 @@
 import { Ref, shallowRef, watch } from 'vue';
-import { useEventListener } from './useEventListener';
-import { Maybe } from '../types';
+import { useEventListener } from '../useEventListener';
+import { Maybe } from '../../types';
 
 export function usePopoverController(popoverEl: Ref<Maybe<HTMLElement>>) {
   const isOpen = shallowRef(false);
