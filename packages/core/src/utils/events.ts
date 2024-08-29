@@ -1,5 +1,5 @@
 import { ComponentInternalInstance, nextTick, onBeforeUnmount } from 'vue';
-import { isSSR, useUniqId } from './common';
+import { isSSR, tryOnScopeDispose, useUniqId } from './common';
 import { NOOP } from '../constants';
 
 export function createEventDispatcher<TPayload>(eventName?: string) {
@@ -32,7 +32,7 @@ export function createEventDispatcher<TPayload>(eventName?: string) {
     return removeListener;
   }
 
-  onBeforeUnmount(() => {
+  tryOnScopeDispose(() => {
     controller.abort();
   });
 

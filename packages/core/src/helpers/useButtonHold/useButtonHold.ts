@@ -1,4 +1,5 @@
-import { MaybeRefOrGetter, onBeforeUnmount, toValue } from 'vue';
+import { MaybeRefOrGetter, toValue } from 'vue';
+import { tryOnScopeDispose } from '../../utils/common';
 
 export interface ButtonHoldOptions {
   onHoldTick: () => void;
@@ -55,7 +56,7 @@ export function useButtonHold(opts: ButtonHoldOptions) {
     onMousedown,
   };
 
-  onBeforeUnmount(() => {
+  tryOnScopeDispose(() => {
     document.removeEventListener('mouseup', onMouseup);
     clearAll();
   });

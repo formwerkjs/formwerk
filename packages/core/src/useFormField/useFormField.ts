@@ -1,19 +1,8 @@
-import {
-  computed,
-  inject,
-  MaybeRefOrGetter,
-  nextTick,
-  onBeforeUnmount,
-  readonly,
-  Ref,
-  shallowRef,
-  toValue,
-  watch,
-} from 'vue';
+import { computed, inject, MaybeRefOrGetter, nextTick, readonly, Ref, shallowRef, toValue, watch } from 'vue';
 import { FormContext, FormKey } from '../useForm/useForm';
 import { Arrayable, Getter, TypedSchema, ValidationResult } from '../types';
 import { useSyncModel } from '../reactivity/useModelSync';
-import { cloneDeep, isEqual, normalizeArrayable } from '../utils/common';
+import { cloneDeep, isEqual, normalizeArrayable, tryOnScopeDispose } from '../utils/common';
 import { FormGroupKey } from '../useFormGroup';
 
 interface FormFieldOptions<TValue = unknown> {
@@ -130,7 +119,7 @@ export function useFormField<TValue = unknown>(opts?: Partial<FormFieldOptions<T
     setTouched(true);
   });
 
-  onBeforeUnmount(() => {
+  tryOnScopeDispose(() => {
     const path = getPath();
     if (!path) {
       return null;
