@@ -197,7 +197,7 @@ describe('with custom base element', () => {
       },
       template: `
       <div data-testid="fixture">
-        <div v-bind="switchProps"></div>
+        <div v-bind="inputProps"></div>
         <div class="ml-2" v-bind="labelProps">{{ label }}</div>
       </div>
     `,

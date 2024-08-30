@@ -48,11 +48,12 @@ export function useOption<TOption>(_props: Reactivify<OptionProps<TOption>>, ele
   }
 
   const optionId = useUniqId(FieldTypePrefixes.Option);
+  const isDisabled = () => !!toValue(props.disabled);
 
   listManager?.useOptionRegistration({
     id: optionId,
     toggleSelected,
-    isDisabled: () => !!toValue(props.disabled),
+    isDisabled,
     isSelected: () => isSelected.value,
     isFocused: () => isFocused.value,
     getLabel: () => toValue(props.label) ?? '',
@@ -71,13 +72,17 @@ export function useOption<TOption>(_props: Reactivify<OptionProps<TOption>>, ele
 
   const handlers = {
     onClick() {
-      if (toValue(props.disabled)) {
+      if (isDisabled()) {
         return;
       }
 
       selectionCtx?.toggleValue(getValue());
     },
     onKeydown(e: KeyboardEvent) {
+      if (isDisabled()) {
+        return;
+      }
+
       if (e.code === 'Space' || e.code === 'Enter') {
         e.preventDefault();
         e.stopPropagation();
@@ -99,7 +104,7 @@ export function useOption<TOption>(_props: Reactivify<OptionProps<TOption>>, ele
         tabindex: isFocused.value ? '0' : '-1',
         'aria-selected': isMultiple ? undefined : isSelected.value,
         'aria-checked': isMultiple ? isSelected.value : undefined,
-        'aria-disabled': toValue(props.disabled),
+        'aria-disabled': isDisabled() || undefined,
         ...handlers,
       },
       optionRef,
