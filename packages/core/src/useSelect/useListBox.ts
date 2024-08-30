@@ -97,7 +97,7 @@ export function useListBox<TOption, TValue = TOption>(
         return;
       }
 
-      if (e.code === 'Home') {
+      if (e.code === 'Home' || e.code === 'PageUp') {
         e.preventDefault();
         e.stopPropagation();
         if (isShiftPressed.value) {
@@ -108,7 +108,7 @@ export function useListBox<TOption, TValue = TOption>(
         return;
       }
 
-      if (e.code === 'End') {
+      if (e.code === 'End' || e.code === 'PageDown') {
         e.preventDefault();
         e.stopPropagation();
         if (isShiftPressed.value) {

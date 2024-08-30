@@ -267,6 +267,27 @@ describe('keyboard features for a single select', () => {
     expect(screen.getAllByRole('option')[0]).toHaveFocus();
   });
 
+  test('Pressing PageUp should Move focus to the first option', async () => {
+    await (await renderSelect()).open();
+    const listbox = screen.getByRole('listbox');
+
+    await fireEvent.keyDown(listbox, { code: 'End' });
+    await flush();
+    expect(screen.getAllByRole('option')[2]).toHaveFocus();
+    await fireEvent.keyDown(listbox, { code: 'PageUp' });
+    await flush();
+    expect(screen.getAllByRole('option')[0]).toHaveFocus();
+  });
+
+  test('Pressing PageDown should Move focus to the first option', async () => {
+    await (await renderSelect()).open();
+    const listbox = screen.getByRole('listbox');
+
+    await fireEvent.keyDown(listbox, { code: 'PageDown' });
+    await flush();
+    expect(screen.getAllByRole('option')[2]).toHaveFocus();
+  });
+
   test('Pressing ArrowUp should Move focus through the options backwards and stays at the top', async () => {
     await (await renderSelect()).open();
     const listbox = screen.getByRole('listbox');
@@ -429,6 +450,18 @@ describe('keyboard features for a multi select', () => {
     expect(screen.getAllByRole('option')[1]).toBeChecked();
   });
 
+  test('Shift + PageUp should select all options from the first to the toggled option', async () => {
+    await (await renderSelect()).open();
+
+    const listbox = screen.getByRole('listbox');
+    await fireEvent.keyDown(listbox, { code: 'ArrowDown' });
+    await fireEvent.keyDown(listbox, { code: 'ShiftLeft' });
+    await fireEvent.keyDown(listbox, { code: 'PageUp' });
+    await flush();
+    expect(screen.getAllByRole('option')[0]).toBeChecked();
+    expect(screen.getAllByRole('option')[1]).toBeChecked();
+  });
+
   test('Shift + End should select all options from the first to the toggled option', async () => {
     await (await renderSelect()).open();
 
@@ -436,6 +469,18 @@ describe('keyboard features for a multi select', () => {
     await fireEvent.keyDown(listbox, { code: 'ArrowDown' });
     await fireEvent.keyDown(listbox, { code: 'ShiftLeft' });
     await fireEvent.keyDown(listbox, { code: 'End' });
+    await flush();
+    expect(screen.getAllByRole('option')[1]).toBeChecked();
+    expect(screen.getAllByRole('option')[2]).toBeChecked();
+  });
+
+  test('Shift + PageDown should select all options from the first to the toggled option', async () => {
+    await (await renderSelect()).open();
+
+    const listbox = screen.getByRole('listbox');
+    await fireEvent.keyDown(listbox, { code: 'ArrowDown' });
+    await fireEvent.keyDown(listbox, { code: 'ShiftLeft' });
+    await fireEvent.keyDown(listbox, { code: 'PageDown' });
     await flush();
     expect(screen.getAllByRole('option')[1]).toBeChecked();
     expect(screen.getAllByRole('option')[2]).toBeChecked();
