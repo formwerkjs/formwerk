@@ -1,4 +1,4 @@
-import { Maybe, Orientation, Reactivify } from '../types';
+import { AriaLabelableProps, Maybe, Orientation, Reactivify } from '../types';
 import { computed, InjectionKey, nextTick, onBeforeUnmount, provide, ref, Ref, shallowRef, toValue, watch } from 'vue';
 import { normalizeProps, removeFirst, withRefCapture } from '../utils/common';
 import { useKeyPressed } from '../helpers/useKeyPressed';
@@ -8,6 +8,9 @@ import { usePopoverController } from '../helpers/usePopoverController';
 const SEARCH_CLEAR_TIMEOUT = 500;
 
 export interface ListBoxProps {
+  label: string;
+
+  labeledBy?: string;
   multiple?: boolean;
   orientation?: Orientation;
 
@@ -16,7 +19,7 @@ export interface ListBoxProps {
   onToggleAfter?(): void;
 }
 
-export interface ListBoxDomProps {
+export interface ListBoxDomProps extends AriaLabelableProps {
   role: 'listbox';
   'aria-multiselectable'?: boolean;
   'aria-activedescendant'?: string;
@@ -163,10 +166,13 @@ export function useListBox<TOption, TValue = TOption>(
   const listBoxProps = computed<ListBoxDomProps>(() => {
     const isMultiple = toValue(props.multiple);
     const option = !isMultiple && isOpen.value ? options.value.find(o => o.isFocused()) : undefined;
+    const labeledBy = toValue(props.labeledBy);
 
     return withRefCapture(
       {
         role: 'listbox',
+        'aria-label': labeledBy ? undefined : toValue(props.label),
+        'aria-labelledby': labeledBy ?? undefined,
         'aria-multiselectable': isMultiple ?? undefined,
         'aria-activedescendant': option?.id ?? undefined,
         ...handlers,

@@ -33,6 +33,7 @@ export interface SelectProps<TOption, TValue = TOption> {
 
 export interface SelectTriggerDomProps extends AriaLabelableProps {
   id: string;
+  role: 'combobox';
   'aria-haspopup': 'listbox';
   'aria-expanded': boolean;
 }
@@ -69,7 +70,10 @@ export function useSelect<TOption, TValue = TOption>(
 
   let lastRecentlySelectedOption: TValue | undefined;
   const { listBoxProps, isOpen, options, isShiftPressed } = useListBox<TOption, TValue>({
-    ...props,
+    labeledBy: () => labelledByProps.value['aria-labelledby'],
+    label: props.label,
+    multiple: props.multiple,
+    orientation: props.orientation,
     onToggleAll: toggleAll,
     onToggleBefore: toggleBefore,
     onToggleAfter: toggleAfter,
@@ -227,6 +231,7 @@ export function useSelect<TOption, TValue = TOption>(
       ...accessibleErrorProps.value,
       id: inputId,
       tabindex: '0',
+      role: 'combobox',
       'aria-haspopup': 'listbox',
       'aria-expanded': isOpen.value,
       ...handlers,
