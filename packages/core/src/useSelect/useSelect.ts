@@ -91,10 +91,6 @@ export function useSelect<TOption, TValue = TOption>(
     errorMessage,
   });
 
-  function getSelectedIdx() {
-    return options.value.findIndex(opt => opt.isSelected());
-  }
-
   function isSingle() {
     const isMultiple = toValue(props.multiple);
 
@@ -190,13 +186,6 @@ export function useSelect<TOption, TValue = TOption>(
 
   provide(SelectionContextKey, selectionCtx);
 
-  function setSelectedByRelativeIdx(relativeIdx: number) {
-    // Clamps selection between 0 and the array length
-    const nextIdx = Math.max(0, Math.min(options.value.length - 1, getSelectedIdx() + relativeIdx));
-    const option = options.value[nextIdx];
-    selectionCtx.toggleValue(option.getValue());
-  }
-
   const handlers = {
     onClick() {
       isOpen.value = !isOpen.value;
@@ -206,20 +195,6 @@ export function useSelect<TOption, TValue = TOption>(
         e.preventDefault();
         isOpen.value = true;
         return;
-      }
-
-      if (!selectionCtx.isMultiple() && !isOpen.value) {
-        if (e.code === 'ArrowLeft') {
-          e.preventDefault();
-          setSelectedByRelativeIdx(-1);
-          return;
-        }
-
-        if (e.code === 'ArrowRight') {
-          e.preventDefault();
-          setSelectedByRelativeIdx(1);
-          return;
-        }
       }
     },
   };

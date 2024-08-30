@@ -376,17 +376,6 @@ describe('keyboard features for a single select', () => {
     await flush();
     expect(screen.getAllByRole('option')[1]).toHaveAttribute('aria-selected', 'false');
   });
-
-  test('Pressing ArrowRight and ArrowLeft should toggle the selected option without opening the list', async () => {
-    await renderSelect();
-
-    await fireEvent.keyDown(getSelect(), { code: 'ArrowRight' });
-    expect(screen.getAllByRole('option')[0]).toHaveAttribute('aria-selected', 'true');
-    await fireEvent.keyDown(getSelect(), { code: 'ArrowRight' });
-    expect(screen.getAllByRole('option')[1]).toHaveAttribute('aria-selected', 'true');
-    await fireEvent.keyDown(getSelect(), { code: 'ArrowLeft' });
-    expect(screen.getAllByRole('option')[0]).toHaveAttribute('aria-selected', 'true');
-  });
 });
 
 describe('keyboard features for a multi select', () => {
