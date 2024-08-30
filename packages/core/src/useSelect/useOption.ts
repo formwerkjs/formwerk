@@ -19,7 +19,7 @@ interface OptionDomProps {
 
 export interface OptionProps<TValue> {
   label?: string;
-  option: TValue;
+  value: TValue;
 
   disabled?: boolean;
 }
@@ -44,7 +44,7 @@ export function useOption<TOption>(_props: Reactivify<OptionProps<TOption>>, ele
   }
 
   function getValue() {
-    return selectionCtx?.evaluateOption(toValue(props.option));
+    return toValue(props.value);
   }
 
   const optionId = useUniqId(FieldTypePrefixes.Option);

@@ -21,7 +21,6 @@ export interface SelectProps<TOption, TValue = TOption> {
   name?: string;
   description?: string;
 
-  getValue?(option: TOption): TValue;
   modelValue?: Arrayable<TValue>;
 
   disabled?: boolean;
@@ -42,19 +41,15 @@ export interface SelectionContext<TOption, TValue = TOption> {
   isValueSelected(value: TValue): boolean;
   isMultiple(): boolean;
   toggleValue(value: TValue, force?: boolean): void;
-  evaluateOption(option: TOption): TValue;
 }
 
 export const SelectionContextKey: InjectionKey<SelectionContext<unknown>> = Symbol('SelectionContextKey');
 
 const MENU_OPEN_KEYS = ['Enter', 'Space', 'ArrowDown', 'ArrowUp'];
 
-export function useSelect<TOption, TValue = TOption>(
-  _props: Reactivify<SelectProps<TOption, TValue>, 'schema' | 'getValue'>,
-) {
+export function useSelect<TOption, TValue = TOption>(_props: Reactivify<SelectProps<TOption, TValue>, 'schema'>) {
   const inputId = useUniqId(FieldTypePrefixes.Select);
-  const props = normalizeProps(_props, ['schema', 'getValue']);
-  const evaluate = props.getValue || ((opt: TOption) => opt as unknown as TValue);
+  const props = normalizeProps(_props, ['schema']);
   const field = useFormField<Arrayable<TValue>>({
     path: props.name,
     initialValue: toValue(props.modelValue) as Arrayable<TValue>,
@@ -99,7 +94,6 @@ export function useSelect<TOption, TValue = TOption>(
 
   const selectionCtx: SelectionContext<TOption, TValue> = {
     isMultiple: () => toValue(props.multiple) ?? false,
-    evaluateOption: evaluate,
     isValueSelected(value): boolean {
       const values = normalizeArrayable(fieldValue.value ?? []);
 

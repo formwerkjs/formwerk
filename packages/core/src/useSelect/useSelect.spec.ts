@@ -83,7 +83,7 @@ function createSelect() {
                     <OptionItem
                       v-for="(option, idx) in group.items"
                       :key="(getValue?.(option)) ?? idx"
-                      :option="option"
+                      :value="option"
                       :label="option.label"
                       :disabled="!!option.disabled"
                     >
@@ -99,7 +99,7 @@ function createSelect() {
                 <OptionItem
                   v-for="(option, idx) in options"
                   :key="(getValue?.(option)) ?? idx"
-                  :option="option"
+                  :value="option"
                   :label="option.label"
                   :disabled="!!option.disabled"
                 >

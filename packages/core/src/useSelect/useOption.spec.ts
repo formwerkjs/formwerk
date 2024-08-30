@@ -7,7 +7,7 @@ import { axe } from 'vitest-axe';
 test('warns if no Selection or ListBox Context is provided', async () => {
   const warn = vi.spyOn(console, 'warn');
   await renderSetup(() => {
-    return useOption({ label: 'Ayooo', option: '' });
+    return useOption({ label: 'Ayooo', value: '' });
   });
 
   expect(warn).toHaveBeenCalledTimes(2);
@@ -19,7 +19,7 @@ test('should not have a11y errors', async () => {
   await render({
     setup() {
       const label = 'Field';
-      const { optionProps } = useOption({ label, option: '' });
+      const { optionProps } = useOption({ label, value: '' });
 
       return {
         optionProps,
