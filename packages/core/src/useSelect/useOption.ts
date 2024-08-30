@@ -11,6 +11,7 @@ interface OptionDomProps {
 
   tabindex: RovingTabIndex;
 
+  'aria-label'?: string;
   // Used when the listbox allows single selection
   'aria-selected'?: boolean;
   // Used when the listbox allows multiple selections
@@ -18,7 +19,7 @@ interface OptionDomProps {
 }
 
 export interface OptionProps<TValue> {
-  label: string;
+  label?: string;
   option: TValue;
 
   disabled?: boolean;
@@ -97,6 +98,7 @@ export function useOption<TOption>(_props: Reactivify<OptionProps<TOption>>, ele
         id: optionId,
         role: 'option',
         tabindex: isFocused.value ? '0' : '-1',
+        'aria-label': toValue(props.label) ?? undefined,
         'aria-selected': isMultiple ? undefined : isSelected.value,
         'aria-checked': isMultiple ? isSelected.value : undefined,
         'aria-disabled': toValue(props.disabled),
