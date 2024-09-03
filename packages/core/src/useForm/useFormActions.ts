@@ -25,7 +25,7 @@ export interface FormActionsOptions<TForm extends FormObject = FormObject, TOutp
   disabled: DisabledSchema<TForm>;
 }
 
-export type SubmitPayload<TOutput extends FormObject> = {
+export type ConsumableData<TOutput extends FormObject> = {
   toFormData: () => FormData;
   toJSON: () => TOutput;
 };
@@ -43,7 +43,7 @@ export function useFormActions<TForm extends FormObject = FormObject, TOutput ex
   } = useValidationProvider({ schema, getValues: () => form.getValues(), type: 'FORM' });
   const requestValidation = defineValidationRequest(updateValidationStateFromResult);
 
-  function handleSubmit<TReturns>(onSuccess: (payload: SubmitPayload<TOutput>) => MaybeAsync<TReturns>) {
+  function handleSubmit<TReturns>(onSuccess: (payload: ConsumableData<TOutput>) => MaybeAsync<TReturns>) {
     return async function onSubmit(e: Event) {
       e.preventDefault();
       isSubmitting.value = true;
@@ -128,12 +128,12 @@ export function useFormActions<TForm extends FormObject = FormObject, TOutput ex
   };
 }
 
-function withConsumers<TData extends FormObject>(data: TData): SubmitPayload<TData> {
+function withConsumers<TData extends FormObject>(data: TData): ConsumableData<TData> {
   const toJSON = () => data;
   const toFormData = () => {
     const formData = new FormData();
     for (const [key, value] of Object.entries(data)) {
-      formData.append(key, value as any);
+      formData.append(key, value);
     }
 
     return formData;
