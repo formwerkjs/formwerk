@@ -311,6 +311,120 @@ describe('form dirty state', () => {
     field.setValue('foo');
     expect(field.isDirty.value).toBe(false);
   });
+
+  test('can submit with FormData', async () => {
+    const file1 = new File([''], 'test1.jpg', { type: 'image/jpeg' });
+    const file2 = new File([''], 'test2.pdf', { type: 'application/pdf' });
+
+    const input = {
+      name: 'John Doe',
+      age: 30,
+      isStudent: false,
+      grades: {
+        math: 95,
+        science: 88,
+      },
+      hobbies: ['reading', 'cycling', null],
+      address: {
+        street: '123 Main St',
+        city: 'New York',
+        zipCode: null,
+      },
+      profilePic: file1,
+      documents: [
+        file2,
+        {
+          resume: file1,
+          coverLetter: file2,
+        },
+      ],
+      emptyObject: {},
+      nullValue: null,
+      undefinedValue: undefined,
+      nestedArrays: [
+        [1, 2],
+        [3, [4, 5]],
+      ],
+    };
+
+    const { form } = await renderSetup(() => {
+      return { form: useForm({ initialValues: input }) };
+    });
+
+    let formData!: FormData;
+    const cb = vi.fn(v => (formData = v));
+    const onSubmit = form.handleSubmit(v => cb(v.toFormData()));
+    await onSubmit(new Event('submit'));
+
+    expect(formData.get('name')).toBe('John Doe');
+    expect(formData.get('age')).toBe('30');
+    expect(formData.get('isStudent')).toBe('false');
+
+    // Nested object
+    expect(formData.get('grades[math]')).toBe('95');
+    expect(formData.get('grades[science]')).toBe('88');
+
+    // Array
+    expect(formData.get('hobbies[0]')).toBe('reading');
+    expect(formData.get('hobbies[1]')).toBe('cycling');
+    expect(formData.get('hobbies[2]')).toBe('');
+
+    // Nested object with null value
+    expect(formData.get('address[street]')).toBe('123 Main St');
+    expect(formData.get('address[city]')).toBe('New York');
+    expect(formData.get('address[zipCode]')).toBe('');
+
+    // File object
+    expect(formData.get('profilePic')).toEqual(file1);
+
+    // Array with mixed types
+    expect(formData.get('documents[0]')).toEqual(file2);
+    expect(formData.get('documents[1][resume]')).toEqual(file1);
+    expect(formData.get('documents[1][coverLetter]')).toEqual(file2);
+
+    // Empty object (should not have an entry)
+    expect(formData.has('emptyObject')).toBe(false);
+
+    // Null and undefined values
+    expect(formData.get('nullValue')).toBe('');
+    expect(formData.get('undefinedValue')).toBe('');
+
+    // Nested arrays
+    expect(formData.get('nestedArrays[0][0]')).toBe('1');
+    expect(formData.get('nestedArrays[0][1]')).toBe('2');
+    expect(formData.get('nestedArrays[1][0]')).toBe('3');
+    expect(formData.get('nestedArrays[1][1][0]')).toBe('4');
+    expect(formData.get('nestedArrays[1][1][1]')).toBe('5');
+
+    // Additional check to ensure all keys are as expected
+    const expectedKeys = [
+      'name',
+      'age',
+      'isStudent',
+      'grades[math]',
+      'grades[science]',
+      'hobbies[0]',
+      'hobbies[1]',
+      'hobbies[2]',
+      'address[street]',
+      'address[city]',
+      'address[zipCode]',
+      'profilePic',
+      'documents[0]',
+      'documents[1][resume]',
+      'documents[1][coverLetter]',
+      'nullValue',
+      'undefinedValue',
+      'nestedArrays[0][0]',
+      'nestedArrays[0][1]',
+      'nestedArrays[1][0]',
+      'nestedArrays[1][1][0]',
+      'nestedArrays[1][1][1]',
+    ];
+
+    const formDataKeys = Array.from(formData.keys());
+    expect(formDataKeys.sort()).toEqual(expectedKeys.sort());
+  });
 });
 
 describe('form validation', () => {
