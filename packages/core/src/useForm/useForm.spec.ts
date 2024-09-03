@@ -422,6 +422,7 @@ describe('form dirty state', () => {
       'nestedArrays[1][1][1]',
     ];
 
+    // @ts-expect-error - FormData does have keys() method
     const formDataKeys = Array.from(formData.keys());
     expect(formDataKeys.sort()).toEqual(expectedKeys.sort());
   });
