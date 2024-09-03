@@ -122,10 +122,16 @@ export function useForm<TForm extends FormObject = FormObject, TOutput extends F
   }
 
   function onFormdata(e: FormDataEvent) {
-    appendToFormData(values, e.formData);
+    const form = e.target as HTMLFormElement;
+    appendToFormData(form.__formOut || values, e.formData);
   }
 
-  const onSubmit = actions.handleSubmit((_, { form }) => form?.submit());
+  const onSubmit = actions.handleSubmit((output, { form }) => {
+    if (form) {
+      form.__formOut = output.toJSON();
+      form.submit();
+    }
+  });
 
   const formProps = {
     id,
