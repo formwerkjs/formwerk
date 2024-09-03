@@ -426,6 +426,30 @@ describe('form dirty state', () => {
     const formDataKeys = Array.from(formData.keys());
     expect(formDataKeys.sort()).toEqual(expectedKeys.sort());
   });
+
+  test('Adds form values to FormData on native formdata event', async () => {
+    const formData = new FormData();
+
+    await render({
+      template: `
+      <form v-bind="formProps" data-testid="form">
+        <button type="submit">Submit</button>
+      </form>
+    `,
+      setup() {
+        const { formProps } = useForm({ initialValues: { foo: 'bar' } });
+
+        return { formProps };
+      },
+    });
+
+    const e = new Event('formdata');
+    // @ts-expect-error - If only we can just new up a FormDataEvent
+    e.formData = formData;
+    await fireEvent(screen.getByTestId('form'), e);
+    await flush();
+    expect(formData.get('foo')).toBe('bar');
+  });
 });
 
 describe('form validation', () => {

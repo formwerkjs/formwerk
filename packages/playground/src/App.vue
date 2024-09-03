@@ -1,8 +1,14 @@
 <template>
   <div class="flex gap-4 relative p-8">
-    <form class="w-full" @submit.prevent="test">
+    <form class="w-full" v-bind="formProps">
       {{ model }}
-      <InputSelect name="select" v-model="model" label="Select Input" :groups="continents" />
+      <InputSelect
+        name="select"
+        v-model="model"
+        label="Select Input"
+        :get-option-value="t => t.code"
+        :groups="continents"
+      />
 
       <button>Submit lets gooo</button>
     </form>
@@ -33,17 +39,7 @@ import { useForm } from '@formwerk/core';
 import InputSelect from '@/components/InputSelect.vue';
 import OptionItem from './components/OptionItem.vue';
 
-const { values } = useForm({
-  initialValues: getInitials,
-});
-
-function test(e: SubmitEvent) {
-  const formData = new FormData(e.target);
-  formData.append('model', model.value);
-  console.log(JSON.stringify([...formData.entries()]));
-
-  e.target.submit();
-}
+const { values, formProps } = useForm({});
 
 const model = ref('');
 

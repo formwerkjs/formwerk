@@ -12,6 +12,7 @@ export const FieldTypePrefixes = {
   Select: 'se',
   Option: 'opt',
   OptionGroup: 'og',
+  Form: 'f',
 } as const;
 
 export const NOOP = () => {};

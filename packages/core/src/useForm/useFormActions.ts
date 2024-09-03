@@ -13,8 +13,7 @@ import { createEventDispatcher } from '../utils/events';
 import { BaseFormContext, SetValueOptions } from './formContext';
 import { unsetPath } from '../utils/path';
 import { useValidationProvider } from '../validation/useValidationProvider';
-import { isObject } from '../../../shared/src';
-import { isNullOrUndefined } from '../utils/common';
+import { appendToFormData } from '../utils/formData';
 
 export interface ResetState<TForm extends FormObject> {
   values: Partial<TForm>;
@@ -32,6 +31,11 @@ export type ConsumableData<TOutput extends FormObject> = {
   toJSON: () => TOutput;
 };
 
+export interface SubmitContext {
+  form?: HTMLFormElement;
+  event?: Event | SubmitEvent;
+}
+
 export function useFormActions<TForm extends FormObject = FormObject, TOutput extends FormObject = TForm>(
   form: BaseFormContext<TForm>,
   { disabled, schema }: FormActionsOptions<TForm, TOutput>,
@@ -45,9 +49,11 @@ export function useFormActions<TForm extends FormObject = FormObject, TOutput ex
   } = useValidationProvider({ schema, getValues: () => form.getValues(), type: 'FORM' });
   const requestValidation = defineValidationRequest(updateValidationStateFromResult);
 
-  function handleSubmit<TReturns>(onSuccess: (payload: ConsumableData<TOutput>) => MaybeAsync<TReturns>) {
-    return async function onSubmit(e: Event) {
-      e.preventDefault();
+  function handleSubmit<TReturns>(
+    onSuccess: (payload: ConsumableData<TOutput>, ctx: SubmitContext) => MaybeAsync<TReturns>,
+  ) {
+    return async function onSubmit(e?: Event) {
+      e?.preventDefault();
       isSubmitting.value = true;
 
       // No need to wait for this event to propagate, it is used for non-validation stuff like setting touched state.
@@ -69,7 +75,7 @@ export function useFormActions<TForm extends FormObject = FormObject, TOutput ex
         unsetPath(output, path, true);
       }
 
-      const result = await onSuccess(withConsumers(output));
+      const result = await onSuccess(withConsumers(output), { event: e, form: e?.target as HTMLFormElement });
       isSubmitting.value = false;
 
       return result;
@@ -143,44 +149,4 @@ function withConsumers<TData extends FormObject>(data: TData): ConsumableData<TD
     toJSON,
     toFormData,
   };
-}
-
-function appendToFormData(jsonObject: Record<string, any>, formData: FormData, parentKey = ''): FormData {
-  for (const key in jsonObject) {
-    if (!Object.prototype.hasOwnProperty.call(jsonObject, key)) {
-      continue;
-    }
-
-    const value = jsonObject[key];
-    const newKey = parentKey ? `${parentKey}[${key}]` : key;
-
-    if (value instanceof File) {
-      formData.append(newKey, value, value.name);
-      continue;
-    }
-
-    if (isNullOrUndefined(value)) {
-      // Treat nulls as empty strings
-      // There might be people who prefer to omit the key entirely, but this is a safer approach
-      // Since BE frameworks do convert empty strings to nulls
-      formData.append(newKey, '');
-      continue;
-    }
-
-    if (Array.isArray(value)) {
-      value.forEach((item, index) => {
-        appendToFormData({ [`${newKey}[${index}]`]: item }, formData);
-      });
-      continue;
-    }
-
-    if (isObject(value) && !(value instanceof File)) {
-      appendToFormData(value, formData, newKey);
-      continue;
-    }
-
-    formData.append(newKey, value);
-  }
-
-  return formData;
 }

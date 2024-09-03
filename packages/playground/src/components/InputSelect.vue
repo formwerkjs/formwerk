@@ -6,6 +6,7 @@ import OptionGroup from './OptionGroup.vue';
 export interface TheProps<TOption, TValue> extends SelectProps<TOption, TValue> {
   groups?: { items: TOption[]; label: string }[];
   options?: TOption[];
+  getOptionValue?: (option: TOption) => TValue;
 }
 
 const props = defineProps<TheProps<TOption, TValue>>();
@@ -32,7 +33,7 @@ const { triggerProps, labelProps, errorMessageProps, isTouched, displayError, fi
               <OptionItem
                 v-for="(option, idx) in group.items"
                 :key="(option as any) ?? idx"
-                :value="option"
+                :value="getOptionValue?.(option) ?? option"
                 :label="option.label"
               >
                 <slot name="option" :option="option">
@@ -44,7 +45,12 @@ const { triggerProps, labelProps, errorMessageProps, isTouched, displayError, fi
         </template>
 
         <template v-else-if="options">
-          <OptionItem v-for="(option, idx) in options" :key="option.label ?? idx" :value="option" :label="option.label">
+          <OptionItem
+            v-for="(option, idx) in options"
+            :key="option.label ?? idx"
+            :value="getOptionValue?.(option) ?? option"
+            :label="option.label"
+          >
             <slot name="option" :option="option" />
           </OptionItem>
         </template>
