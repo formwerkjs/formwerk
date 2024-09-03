@@ -118,7 +118,7 @@ describe('schema-yup', () => {
           ),
         });
 
-        return { onSubmit: handleSubmit(handler) };
+        return { onSubmit: handleSubmit(v => handler(v.toJSON())) };
       },
       template: `
       <form @submit="onSubmit" novalidate>
@@ -159,7 +159,7 @@ describe('schema-yup', () => {
           ),
         });
 
-        return { getError, onSubmit: handleSubmit(handler) };
+        return { getError, onSubmit: handleSubmit(v => handler(v.toJSON())) };
       },
       template: `
       <form @submit="onSubmit" novalidate>
@@ -195,7 +195,7 @@ describe('schema-yup', () => {
           ),
         });
 
-        return { getError, onSubmit: handleSubmit(handler) };
+        return { getError, onSubmit: handleSubmit(v => handler(v.toJSON())) };
       },
       template: `
       <form @submit="onSubmit" novalidate>

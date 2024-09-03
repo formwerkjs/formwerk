@@ -180,7 +180,7 @@ describe('form submit', () => {
     });
 
     const cb = vi.fn();
-    const onSubmit = handleSubmit(cb);
+    const onSubmit = handleSubmit(v => cb(v.toJSON()));
 
     await onSubmit(new Event('submit'));
 
@@ -244,7 +244,7 @@ describe('form submit', () => {
     );
 
     const cb = vi.fn();
-    const onSubmit = handleSubmit(cb);
+    const onSubmit = handleSubmit(v => cb(v.toJSON()));
     expect(values).toEqual(defaults());
     await onSubmit(new Event('submit'));
     expect(cb).toHaveBeenLastCalledWith(defaults());
@@ -363,7 +363,7 @@ describe('form validation', () => {
         setup() {
           const { handleSubmit } = useForm();
 
-          return { onSubmit: handleSubmit(handler) };
+          return { onSubmit: handleSubmit(v => handler(v.toJSON())) };
         },
         template: `
       <form @submit="onSubmit" novalidate>
@@ -445,7 +445,7 @@ describe('form validation', () => {
             schema,
           });
 
-          return { onSubmit: handleSubmit(handler) };
+          return { onSubmit: handleSubmit(v => handler(v.toJSON())) };
         },
         template: `
       <form @submit="onSubmit" novalidate>
@@ -477,7 +477,7 @@ describe('form validation', () => {
             schema,
           });
 
-          return { getError, onSubmit: handleSubmit(handler) };
+          return { getError, onSubmit: handleSubmit(v => handler(v.toJSON())) };
         },
         template: `
       <form @submit="onSubmit" novalidate>
@@ -520,7 +520,7 @@ describe('form validation', () => {
           // @ts-expect-error - We don't care about our fake form here
           setFieldErrors('test', 'error');
 
-          return { getError, onSubmit: handleSubmit(handler) };
+          return { getError, onSubmit: handleSubmit(v => handler(v.toJSON())) };
         },
         template: `
       <form @submit="onSubmit" novalidate>
@@ -565,7 +565,7 @@ describe('form validation', () => {
           // @ts-expect-error - We don't care about our fake form here
           setFieldErrors('test', 'error');
 
-          return { getError, onSubmit: handleSubmit(handler) };
+          return { getError, onSubmit: handleSubmit(v => handler(v.toJSON())) };
         },
         template: `
       <form @submit="onSubmit" novalidate>
@@ -660,7 +660,7 @@ describe('form validation', () => {
             schema,
           });
 
-          return { getError, onSubmit: handleSubmit(handler), fieldSchema };
+          return { getError, onSubmit: handleSubmit(v => handler(v.toJSON())), fieldSchema };
         },
         template: `
       <form @submit="onSubmit" novalidate>

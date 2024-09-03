@@ -66,7 +66,7 @@ describe('schema-zod', () => {
           ),
         });
 
-        return { onSubmit: handleSubmit(handler) };
+        return { onSubmit: handleSubmit(v => handler(v.toJSON())) };
       },
       template: `
       <form @submit="onSubmit" novalidate>
@@ -102,7 +102,7 @@ describe('schema-zod', () => {
           ),
         });
 
-        return { getError, onSubmit: handleSubmit(handler) };
+        return { getError, onSubmit: handleSubmit(v => handler(v.toJSON())) };
       },
       template: `
       <form @submit="onSubmit" novalidate>
@@ -138,7 +138,7 @@ describe('schema-zod', () => {
           ),
         });
 
-        return { getError, onSubmit: handleSubmit(handler) };
+        return { getError, onSubmit: handleSubmit(v => handler(v.toJSON())) };
       },
       template: `
       <form @submit="onSubmit" novalidate>

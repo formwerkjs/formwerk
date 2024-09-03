@@ -31,8 +31,8 @@ const { triggerProps, labelProps, errorMessageProps, isTouched, displayError, fi
             <slot name="group" :options="group.items">
               <OptionItem
                 v-for="(option, idx) in group.items"
-                :key="(getValue?.(option) as any) ?? idx"
-                :option="option"
+                :key="(option as any) ?? idx"
+                :value="option"
                 :label="option.label"
               >
                 <slot name="option" :option="option">
@@ -44,12 +44,7 @@ const { triggerProps, labelProps, errorMessageProps, isTouched, displayError, fi
         </template>
 
         <template v-else-if="options">
-          <OptionItem
-            v-for="(option, idx) in options"
-            :key="(getValue?.(option) as any) ?? idx"
-            :option="option"
-            :label="option.label"
-          >
+          <OptionItem v-for="(option, idx) in options" :key="option.label ?? idx" :value="option" :label="option.label">
             <slot name="option" :option="option" />
           </OptionItem>
         </template>
