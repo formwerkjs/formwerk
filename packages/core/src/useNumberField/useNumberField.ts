@@ -121,7 +121,7 @@ export function useNumberField(
       min: props.min,
       max: props.max,
       readonly: props.readonly,
-      disabled: props.disabled,
+      disabled: () => toValue(props.disabled) || toValue(props.readonly),
       incrementLabel: props.incrementLabel,
       decrementLabel: props.decrementLabel,
       orientation: 'vertical',
