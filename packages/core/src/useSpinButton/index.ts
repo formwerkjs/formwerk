@@ -201,7 +201,7 @@ export function useSpinButton(_props: Reactivify<SpinButtonProps, 'onChange'>) {
   const incrementButtonProps = computed(() => {
     return {
       ...incrementHoldProps,
-      disabled: isIncrementDisabled.value,
+      disabled: toValue(props.disabled) || isIncrementDisabled.value,
       'aria-label': toValue(props.incrementLabel) || 'Increment',
       tabindex: toValue(props.preventTabIndex) ? '-1' : undefined,
     };
@@ -210,7 +210,7 @@ export function useSpinButton(_props: Reactivify<SpinButtonProps, 'onChange'>) {
   const decrementButtonProps = computed(() => {
     return {
       ...decrementHoldProps,
-      disabled: isDecrementDisabled.value,
+      disabled: toValue(props.disabled) || isDecrementDisabled.value,
       'aria-label': toValue(props.decrementLabel) || 'Decrement',
       tabindex: toValue(props.preventTabIndex) ? '-1' : undefined,
     };
