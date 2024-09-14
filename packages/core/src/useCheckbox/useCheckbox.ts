@@ -176,6 +176,8 @@ export function useCheckbox<TValue = string>(
   }
 
   group?.useCheckboxRegistration({
+    id: inputId,
+    getElem: () => inputEl.value,
     isDisabled,
     isChecked: () => checked.value,
     setChecked: (force?: boolean) => {

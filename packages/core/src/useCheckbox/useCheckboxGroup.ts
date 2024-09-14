@@ -1,4 +1,4 @@
-import { InjectionKey, toValue, computed, onBeforeUnmount, reactive, provide, markRaw } from 'vue';
+import { InjectionKey, toValue, computed, onBeforeUnmount, reactive, provide, markRaw, ref } from 'vue';
 import { useInputValidity } from '../validation/useInputValidity';
 import { useLabel } from '../a11y/useLabel';
 import {
@@ -18,6 +18,8 @@ import {
   isEqual,
   createAccessibleErrorMessageProps,
   toggleValueSelection,
+  removeFirst,
+  isInputElement,
 } from '../utils/common';
 import { useLocale } from '../i18n/useLocale';
 import { FormField, useFormField } from '../useFormField';
@@ -27,6 +29,14 @@ import { exposeField } from '../utils/exposers';
 export type CheckboxGroupValue<TCheckbox> = TCheckbox[];
 
 export type CheckboxGroupState = 'checked' | 'unchecked' | 'mixed';
+
+export interface CheckboxRegistration {
+  id: string;
+  getElem(): HTMLElement | undefined;
+  isDisabled(): boolean;
+  setChecked(force?: boolean): boolean;
+  isChecked(): boolean;
+}
 
 export interface CheckboxGroupContext<TCheckbox> {
   name: string;
@@ -44,13 +54,7 @@ export interface CheckboxGroupContext<TCheckbox> {
   toggleValue(value: TCheckbox, force?: boolean): void;
   setTouched(touched: boolean): void;
 
-  useCheckboxRegistration(checkbox: CheckboxContext): void;
-}
-
-export interface CheckboxContext {
-  isDisabled(): boolean;
-  setChecked(force?: boolean): boolean;
-  isChecked(): boolean;
+  useCheckboxRegistration(checkbox: CheckboxRegistration): void;
 }
 
 export const CheckboxGroupKey: InjectionKey<CheckboxGroupContext<any>> = Symbol('CheckboxGroupKey');
@@ -80,7 +84,7 @@ export function useCheckboxGroup<TCheckbox>(_props: Reactivify<CheckboxGroupProp
   const props = normalizeProps(_props, ['schema']);
   const groupId = useUniqId(FieldTypePrefixes.CheckboxGroup);
   const { direction } = useLocale();
-  const checkboxes: CheckboxContext[] = [];
+  const checkboxes = ref<CheckboxRegistration[]>([]);
   const { labelProps, labelledByProps } = useLabel({
     for: groupId,
     label: props.label,
@@ -113,21 +117,12 @@ export function useCheckboxGroup<TCheckbox>(_props: Reactivify<CheckboxGroupProp
     };
   });
 
-  function registerCheckbox(checkbox: CheckboxContext) {
-    checkboxes.push(checkbox);
-  }
+  function useCheckboxRegistration(checkbox: CheckboxRegistration) {
+    const id = checkbox.id;
+    checkboxes.value.push(checkbox);
 
-  function unregisterCheckbox(checkbox: CheckboxContext) {
-    const idx = checkboxes.indexOf(checkbox);
-    if (idx >= 0) {
-      checkboxes.splice(idx, 1);
-    }
-  }
-
-  function useCheckboxRegistration(checkbox: CheckboxContext) {
-    registerCheckbox(checkbox);
     onBeforeUnmount(() => {
-      unregisterCheckbox(checkbox);
+      removeFirst(checkboxes.value, reg => reg.id === id);
     });
   }
 
@@ -135,7 +130,9 @@ export function useCheckboxGroup<TCheckbox>(_props: Reactivify<CheckboxGroupProp
     const nextValue = toggleValueSelection(fieldValue.value ?? [], value, force);
 
     setValue(nextValue);
-    updateValidity();
+    if (checkboxes.value.some(c => !isInputElement(c.getElem()))) {
+      updateValidity();
+    }
   }
 
   function hasValue(value: TCheckbox) {
@@ -147,7 +144,7 @@ export function useCheckboxGroup<TCheckbox>(_props: Reactivify<CheckboxGroupProp
       return 'unchecked';
     }
 
-    if (fieldValue.value.length > 0 && fieldValue.value.length < checkboxes.length) {
+    if (fieldValue.value.length > 0 && fieldValue.value.length < checkboxes.value.length) {
       return 'mixed';
     }
 
