@@ -7,7 +7,7 @@ interface ListenerOptions {
 }
 
 export function useEventListener<TEvent extends Event>(
-  targetRef: MaybeRefOrGetter<Maybe<EventTarget>>,
+  targetRef: MaybeRefOrGetter<Arrayable<Maybe<EventTarget>>>,
   event: Arrayable<string>,
   listener: (e: TEvent) => unknown,
   opts?: ListenerOptions,
@@ -17,7 +17,7 @@ export function useEventListener<TEvent extends Event>(
     controller?.abort();
   }
 
-  function setup(el: EventTarget) {
+  function setup(target: Arrayable<EventTarget>) {
     if (toValue(opts?.disabled)) {
       return;
     }
@@ -26,7 +26,9 @@ export function useEventListener<TEvent extends Event>(
     const events = normalizeArrayable(event);
     const listenerOpts = { signal: controller.signal };
     events.forEach(evt => {
-      el.addEventListener(evt, listener as EventListener, listenerOpts);
+      normalizeArrayable(target).forEach(el => {
+        el.addEventListener(evt, listener as EventListener, listenerOpts);
+      });
     });
   }
 
@@ -34,9 +36,12 @@ export function useEventListener<TEvent extends Event>(
     () => [toValue(targetRef), toValue(opts?.disabled)] as const,
     ([el, disabled]) => {
       cleanup();
-      if (el && !disabled) {
-        setup(el);
+      if (disabled) {
+        return;
       }
+
+      const targets = normalizeArrayable(el).filter(elm => !!elm);
+      setup(targets);
     },
     { immediate: true },
   );

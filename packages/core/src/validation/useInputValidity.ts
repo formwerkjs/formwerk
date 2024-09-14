@@ -1,14 +1,16 @@
 import { Ref, inject, nextTick, onMounted, shallowRef, watch, MaybeRefOrGetter, toValue } from 'vue';
 import { useEventListener } from '../helpers/useEventListener';
 import { FormKey } from '../useForm';
-import { Maybe, ValidationResult } from '../types';
+import { Arrayable, Maybe, ValidationResult } from '../types';
 import { FormField } from '../useFormField';
 import { isInputElement, normalizeArrayable } from '../utils/common';
 import { FormGroupKey } from '../useFormGroup';
 import { getConfig } from '../config';
 
+type ElementReference = Ref<Arrayable<Maybe<HTMLElement>>>;
+
 interface InputValidityOptions {
-  inputEl?: Ref<Maybe<HTMLElement>>;
+  inputEl?: ElementReference;
   disableHtmlValidation?: MaybeRefOrGetter<boolean | undefined>;
   field: FormField<any>;
   events?: string[];
@@ -25,14 +27,14 @@ export function useInputValidity(opts: InputValidityOptions) {
     (formGroup || form)?.isHtmlValidationDisabled() ??
     getConfig().validation.disableHtmlValidation;
 
-  function validateNative(mutate?: boolean, el?: HTMLElement): ValidationResult {
+  function validateNative(mutate?: boolean): ValidationResult {
     const baseReturns: Omit<ValidationResult, 'errors' | 'isValid'> = {
       type: 'FIELD',
       path: getPath() || '',
     };
 
-    const inputEl = el ?? opts.inputEl?.value;
-    if (!isInputElement(inputEl) || isHtmlValidationDisabled()) {
+    const inputs = normalizeArrayable(opts.inputEl?.value).filter(el => isInputElement(el));
+    if (!inputs.length || isHtmlValidationDisabled()) {
       return {
         ...baseReturns,
         isValid: true,
@@ -40,9 +42,9 @@ export function useInputValidity(opts: InputValidityOptions) {
       };
     }
 
-    inputEl.setCustomValidity('');
-    validityDetails.value = inputEl.validity;
-    const messages = normalizeArrayable(inputEl.validationMessage || ([] as string[])).filter(Boolean);
+    inputs.forEach(el => el.setCustomValidity(''));
+    validityDetails.value = inputs[0].validity;
+    const messages = normalizeArrayable(inputs.map(i => i.validationMessage) || ([] as string[])).filter(m => !!m);
 
     if (mutate) {
       setErrors(messages);
@@ -55,8 +57,8 @@ export function useInputValidity(opts: InputValidityOptions) {
     };
   }
 
-  async function _updateValidity(el?: HTMLElement) {
-    let result = validateNative(true, el);
+  async function _updateValidity() {
+    let result = validateNative(true);
     if (schema && result.isValid) {
       result = await validateField(true);
     }
@@ -92,11 +94,6 @@ export function useInputValidity(opts: InputValidityOptions) {
     useEventListener(opts.inputEl, opts?.events || ['invalid'], () => validateNative(true));
   }
 
-  async function updateValidityWithElem(element?: HTMLElement) {
-    await nextTick();
-    _updateValidity(element);
-  }
-
   /**
    * Validity is always updated on mount.
    */
@@ -107,26 +104,27 @@ export function useInputValidity(opts: InputValidityOptions) {
   return {
     validityDetails,
     updateValidity,
-    updateValidityWithElem,
   };
 }
 
 /**
  * Syncs the message with the input's native validation message.
  */
-function useMessageCustomValiditySync(message: Ref<string>, input?: Ref<Maybe<HTMLElement>>) {
+function useMessageCustomValiditySync(message: Ref<string>, input?: ElementReference) {
   if (!input) {
     return;
   }
 
-  watch(message, msg => {
-    if (!isInputElement(input.value)) {
-      return;
-    }
-
-    const inputMsg = input?.value?.validationMessage;
+  function applySync(el: HTMLInputElement, msg: string) {
+    const inputMsg = el.validationMessage;
     if (inputMsg !== msg) {
-      input?.value?.setCustomValidity(msg || '');
+      el.setCustomValidity(msg || '');
     }
+  }
+
+  watch(message, msg => {
+    normalizeArrayable(toValue(input))
+      .filter(isInputElement)
+      .forEach(el => applySync(el, msg));
   });
 }

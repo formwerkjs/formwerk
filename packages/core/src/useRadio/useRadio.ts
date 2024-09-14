@@ -57,51 +57,40 @@ export function useRadio<TValue = string>(
   }
 
   const registration = group?.useRadioRegistration({
+    id: inputId,
+    getElem: () => inputEl.value,
     isChecked: () => checked.value,
     isDisabled,
     setChecked,
   });
 
-  function createHandlers(isInput: boolean) {
-    const baseHandlers = {
-      onClick() {
-        if (toValue(props.disabled)) {
-          return;
-        }
+  const handlers = {
+    onClick() {
+      if (toValue(props.disabled)) {
+        return;
+      }
 
+      setChecked();
+    },
+    onKeydown(e: KeyboardEvent) {
+      if (toValue(props.disabled)) {
+        return;
+      }
+
+      if (e.code === 'Space') {
+        e.preventDefault();
         setChecked();
-      },
-      onKeydown(e: KeyboardEvent) {
-        if (toValue(props.disabled)) {
-          return;
-        }
-
-        if (e.code === 'Space') {
-          e.preventDefault();
-          setChecked();
-        }
-      },
-      onBlur() {
-        group?.setTouched(true);
-      },
-    };
-
-    if (isInput) {
-      return {
-        ...baseHandlers,
-        onInvalid() {
-          group?.updateValidityWithElem(inputEl.value);
-        },
-      };
-    }
-
-    return baseHandlers;
-  }
+      }
+    },
+    onBlur() {
+      group?.setTouched(true);
+    },
+  };
 
   function createBindings(isInput: boolean): RadioDomInputProps | RadioDomProps {
     const base = {
       ...labelledByProps.value,
-      ...createHandlers(isInput),
+      ...handlers,
       id: inputId,
       [isInput ? 'checked' : 'aria-checked']: checked.value,
       [isInput ? 'readonly' : 'aria-readonly']: group?.readonly || undefined,

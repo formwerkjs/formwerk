@@ -1,4 +1,4 @@
-import { InjectionKey, toValue, computed, onBeforeUnmount, reactive, provide } from 'vue';
+import { InjectionKey, toValue, computed, onBeforeUnmount, reactive, provide, ref } from 'vue';
 import { useInputValidity } from '../validation/useInputValidity';
 import { useLabel } from '../a11y/useLabel';
 import {
@@ -17,6 +17,7 @@ import {
   normalizeProps,
   isEmpty,
   createAccessibleErrorMessageProps,
+  removeFirst,
 } from '../utils/common';
 import { useLocale } from '../i18n/useLocale';
 import { useFormField } from '../useFormField';
@@ -32,15 +33,16 @@ export interface RadioGroupContext<TValue> {
   readonly modelValue: TValue | undefined;
 
   setGroupValue(value: TValue, element?: HTMLElement): void;
-  updateValidityWithElem(el?: HTMLElement): void;
   setTouched(touched: boolean): void;
-  useRadioRegistration(radio: RadioItemContext): { canReceiveFocus(): boolean };
+  useRadioRegistration(radio: RadioRegistration): { canReceiveFocus(): boolean };
 }
 
-export interface RadioItemContext {
+export interface RadioRegistration {
+  id: string;
   isChecked(): boolean;
   isDisabled(): boolean;
   setChecked(): boolean;
+  getElem(): HTMLElement | undefined;
 }
 
 export const RadioGroupKey: InjectionKey<RadioGroupContext<any>> = Symbol('RadioGroupKey');
@@ -91,7 +93,7 @@ export function useRadioGroup<TValue = string>(_props: Reactivify<RadioGroupProp
   const groupId = useUniqId(FieldTypePrefixes.RadioButtonGroup);
   const { direction } = useLocale();
 
-  const radios: RadioItemContext[] = [];
+  const radios = ref<RadioRegistration[]>([]);
   const { labelProps, labelledByProps } = useLabel({
     for: groupId,
     label: props.label,
@@ -104,7 +106,7 @@ export function useRadioGroup<TValue = string>(_props: Reactivify<RadioGroupProp
     schema: props.schema,
   });
 
-  const { validityDetails, updateValidityWithElem } = useInputValidity({ field });
+  const { validityDetails } = useInputValidity({ field, inputEl: computed(() => radios.value.map(r => r.getElem())) });
   const { fieldValue, setValue, setTouched, errorMessage } = field;
 
   const { descriptionProps, describedByProps } = createDescribedByProps({
@@ -118,25 +120,25 @@ export function useRadioGroup<TValue = string>(_props: Reactivify<RadioGroupProp
   });
 
   function handleArrowNext() {
-    const currentIdx = radios.findIndex(radio => radio.isChecked());
+    const currentIdx = radios.value.findIndex(radio => radio.isChecked());
     if (currentIdx < 0) {
-      radios[0]?.setChecked();
+      radios.value[0]?.setChecked();
       return;
     }
 
-    const availableCandidates = radios.filter(radio => !radio.isDisabled());
+    const availableCandidates = radios.value.filter(radio => !radio.isDisabled());
     const nextCandidate = availableCandidates[getNextCycleArrIdx(currentIdx + 1, availableCandidates)];
     nextCandidate?.setChecked();
   }
 
   function handleArrowPrevious() {
-    const currentIdx = radios.findIndex(radio => radio.isChecked());
+    const currentIdx = radios.value.findIndex(radio => radio.isChecked());
     if (currentIdx === -1) {
-      radios[0]?.setChecked();
+      radios.value[0]?.setChecked();
       return;
     }
 
-    const availableCandidates = radios.filter(radio => !radio.isDisabled());
+    const availableCandidates = radios.value.filter(radio => !radio.isDisabled());
     const prevCandidate = availableCandidates[getNextCycleArrIdx(currentIdx - 1, availableCandidates)];
     prevCandidate?.setChecked();
   }
@@ -174,34 +176,23 @@ export function useRadioGroup<TValue = string>(_props: Reactivify<RadioGroupProp
     };
   });
 
-  function registerRadio(radio: RadioItemContext) {
-    radios.push(radio);
-  }
-
-  function unregisterRadio(radio: RadioItemContext) {
-    const idx = radios.indexOf(radio);
-    if (idx >= 0) {
-      radios.splice(idx, 1);
-    }
-  }
-
-  function useRadioRegistration(radio: RadioItemContext) {
-    registerRadio(radio);
+  function useRadioRegistration(radio: RadioRegistration) {
+    const id = radio.id;
+    radios.value.push(radio);
 
     onBeforeUnmount(() => {
-      unregisterRadio(radio);
+      removeFirst(radios.value, reg => reg.id === id);
     });
 
     return {
       canReceiveFocus() {
-        return radios[0] === radio && isEmpty(fieldValue.value);
+        return radios.value[0].id === radio.id && isEmpty(fieldValue.value);
       },
     };
   }
 
-  function setGroupValue(value: TValue, el?: HTMLElement) {
+  function setGroupValue(value: TValue) {
     setValue(value);
-    updateValidityWithElem(el);
   }
 
   const context: RadioGroupContext<any> = reactive({
@@ -212,7 +203,6 @@ export function useRadioGroup<TValue = string>(_props: Reactivify<RadioGroupProp
     modelValue: fieldValue,
     setErrors: field.setErrors,
     setGroupValue,
-    updateValidityWithElem,
     setTouched,
     useRadioRegistration,
   });
