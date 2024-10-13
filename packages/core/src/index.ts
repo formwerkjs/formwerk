@@ -10,6 +10,7 @@ export * from './types';
 export * from './config';
 export * from './useForm';
 export * from './useFormGroup';
+export * from './useFormRepeater';
 export * from './validation';
 export { version } from './constants';
 export { normalizePath } from './utils/path';
