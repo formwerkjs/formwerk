@@ -183,15 +183,15 @@ test('swaps two items', async () => {
   await fireEvent.click(addButton);
   await fireEvent.click(addButton);
   let items = screen.getAllByTestId('key');
-  expect(items[0]).toHaveTextContent('fr--0');
-  expect(items[1]).toHaveTextContent('fr--1');
+  expect(items[0]).toHaveTextContent('-0');
+  expect(items[1]).toHaveTextContent('-1');
 
   swap(0, 1);
   await flush();
 
   items = screen.getAllByTestId('key');
-  expect(items[0]).toHaveTextContent('fr--1');
-  expect(items[1]).toHaveTextContent('fr--0');
+  expect(items[0]).toHaveTextContent('-1');
+  expect(items[1]).toHaveTextContent('-0');
 });
 
 test('inserts an item at a specific index', async () => {
