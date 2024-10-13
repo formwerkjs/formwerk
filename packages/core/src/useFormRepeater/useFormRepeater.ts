@@ -1,7 +1,7 @@
-import { computed, defineComponent, Fragment, h, inject, nextTick, ref, toValue, VNode, watch } from 'vue';
+import { computed, defineComponent, h, inject, nextTick, onMounted, ref, toValue, VNode, watch } from 'vue';
 import { Numberish, Reactivify } from '../types';
 import { FormKey } from '../useForm';
-import { cloneDeep, isEqual, normalizeProps, useUniqId, warn } from '../utils/common';
+import { cloneDeep, isEqual, isNullOrUndefined, normalizeProps, useUniqId, warn } from '../utils/common';
 import { FieldTypePrefixes } from '../constants';
 import { createPathPrefixer } from '../helpers/usePathPrefixer';
 import { prefixPath } from '../utils/path';
@@ -48,10 +48,8 @@ export function useFormRepeater<TItem = unknown>(_props: Reactivify<FormRepeater
   const repeaterProps = normalizeProps(_props);
   const getPath = () => toValue(repeaterProps.name);
   const getPathValue = () => (form?.getFieldValue(getPath()) || []) as TItem[];
+  let lastControlledValueSnapshot: TItem[] | undefined;
   const records = ref(buildRecords());
-  let lastControlledValueSnapshot: TItem[] | undefined = cloneDeep(getPathValue());
-
-  createPathPrefixer(path => prefixPath(getPath(), path));
 
   function generateRecord(): string {
     return `${id}-${counter++}`;
@@ -60,6 +58,7 @@ export function useFormRepeater<TItem = unknown>(_props: Reactivify<FormRepeater
   function buildRecords(): string[] {
     const pathArray = getPathValue();
     const length = Math.max(Number(toValue(repeaterProps.min) ?? 0), pathArray.length);
+    lastControlledValueSnapshot = cloneDeep(pathArray);
 
     return Array.from({ length }).fill(null).map(generateRecord);
   }
@@ -156,6 +155,23 @@ export function useFormRepeater<TItem = unknown>(_props: Reactivify<FormRepeater
     disabled: () => !canAdd(),
   });
 
+  const Iteration = defineComponent<{ index: number }>({
+    name: 'FormRepeaterIteration',
+    props: { index: Number },
+    setup(props, { slots }) {
+      // Prefixes the path with the index of the repeater
+      // If a path is not provided, even as an empty string, it will be considered an uncontrolled path.
+      // This is a minor divergence from the controlled/uncontrolled behavior of form fields,
+      createPathPrefixer(path =>
+        isNullOrUndefined(path) ? undefined : prefixPath(getPath(), `${props.index}${path ? `.${path}` : ''}`),
+      );
+
+      return () => {
+        return slots.default?.();
+      };
+    },
+  });
+
   const Repeat = defineComponent({
     name: 'FormRepeater',
     setup(_, { slots }) {
@@ -185,9 +201,7 @@ export function useFormRepeater<TItem = unknown>(_props: Reactivify<FormRepeater
             },
           });
 
-          return h(
-            Fragment,
-            { key },
+          return h(Iteration, { key, index }, () =>
             slots.default?.({
               index,
               key,
@@ -203,11 +217,12 @@ export function useFormRepeater<TItem = unknown>(_props: Reactivify<FormRepeater
   });
 
   if (form) {
-    watch(getPathValue, value => {
-      if (!isEqual(value, lastControlledValueSnapshot)) {
-        lastControlledValueSnapshot = cloneDeep(value);
-        records.value = buildRecords();
-      }
+    onMounted(() => {
+      watch(getPathValue, value => {
+        if (!isEqual(value, lastControlledValueSnapshot)) {
+          records.value = buildRecords();
+        }
+      });
     });
   }
 
