@@ -15,6 +15,7 @@ import { useValidationProvider } from '../validation/useValidationProvider';
 import { FormValidationMode } from '../useForm/formContext';
 import { prefixPath as _prefixPath } from '../utils/path';
 import { getConfig } from '../config';
+import { createPathPrefixer } from '../helpers/usePathPrefixer';
 
 export interface FormGroupProps<TInput extends FormObject = FormObject, TOutput extends FormObject = TInput> {
   name: string;
@@ -29,7 +30,6 @@ interface GroupProps extends AriaLabelableProps {
 }
 
 export interface FormGroupContext<TOutput extends FormObject = FormObject> {
-  prefixPath: (path: string | undefined) => string | undefined;
   onValidationDispatch(cb: (enqueue: (promise: Promise<ValidationResult>) => void) => void): void;
   onValidationDone(cb: () => void): void;
   requestValidation(): Promise<GroupValidationResult<TOutput>>;
@@ -114,12 +114,12 @@ export function useFormGroup<TInput extends FormObject = FormObject, TOutput ext
   });
 
   function getError(name: string) {
-    return form?.getFieldErrors(ctx.prefixPath(name) ?? '')?.[0];
+    return form?.getFieldErrors(prefixPath(name) ?? '')?.[0];
   }
 
   function displayError(name: string) {
     const msg = getError(name);
-    const path = ctx.prefixPath(name) ?? '';
+    const path = prefixPath(name) ?? '';
 
     return form?.isFieldTouched(path) ? msg : undefined;
   }
@@ -128,8 +128,9 @@ export function useFormGroup<TInput extends FormObject = FormObject, TOutput ext
     return _prefixPath(getPath(), path);
   }
 
+  createPathPrefixer(prefixPath);
+
   const ctx: FormGroupContext = {
-    prefixPath,
     onValidationDispatch,
     onValidationDone,
     requestValidation,

@@ -3,6 +3,8 @@ import { Numberish, Reactivify } from '../types';
 import { FormKey } from '../useForm';
 import { cloneDeep, isEqual, normalizeProps, useUniqId, warn } from '../utils/common';
 import { FieldTypePrefixes } from '../constants';
+import { createPathPrefixer } from '../helpers/usePathPrefixer';
+import { prefixPath } from '../utils/path';
 
 export interface FormRepeaterProps {
   name: string;
@@ -42,12 +44,14 @@ export interface FormRepeaterIterationSlotProps {
 export function useFormRepeater<TItem = unknown>(_props: Reactivify<FormRepeaterProps>) {
   const id = useUniqId(FieldTypePrefixes.FormRepeater);
   let counter = 0;
-  const form = inject(FormKey);
+  const form = inject(FormKey, null);
   const repeaterProps = normalizeProps(_props);
   const getPath = () => toValue(repeaterProps.name);
   const getPathValue = () => (form?.getFieldValue(getPath()) || []) as TItem[];
   const records = ref(buildRecords());
   let lastControlledValueSnapshot: TItem[] | undefined = cloneDeep(getPathValue());
+
+  createPathPrefixer(path => prefixPath(getPath(), path));
 
   function generateRecord(): string {
     return `${id}-${counter++}`;
@@ -63,10 +67,6 @@ export function useFormRepeater<TItem = unknown>(_props: Reactivify<FormRepeater
   if (__DEV__) {
     if (!getPath()) {
       warn('"name" prop is required for useFormRepeater');
-    }
-
-    if (!form) {
-      warn('form context is required for useFormRepeater');
     }
   }
 
@@ -190,6 +190,7 @@ export function useFormRepeater<TItem = unknown>(_props: Reactivify<FormRepeater
             { key },
             slots.default?.({
               index,
+              key,
               path: `${getPath()}.${index}`,
               moveDownButtonProps: moveDownButtonProps.value,
               moveUpButtonProps: moveUpButtonProps.value,
@@ -201,12 +202,14 @@ export function useFormRepeater<TItem = unknown>(_props: Reactivify<FormRepeater
     },
   });
 
-  watch(getPathValue, value => {
-    if (!isEqual(value, lastControlledValueSnapshot)) {
-      lastControlledValueSnapshot = cloneDeep(value);
-      records.value = buildRecords();
-    }
-  });
+  if (form) {
+    watch(getPathValue, value => {
+      if (!isEqual(value, lastControlledValueSnapshot)) {
+        lastControlledValueSnapshot = cloneDeep(value);
+        records.value = buildRecords();
+      }
+    });
+  }
 
   return {
     addButtonProps,

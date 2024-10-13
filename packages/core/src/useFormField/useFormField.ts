@@ -5,6 +5,7 @@ import { useSyncModel } from '../reactivity/useModelSync';
 import { cloneDeep, isEqual, normalizeArrayable, tryOnScopeDispose } from '../utils/common';
 import { FormGroupKey } from '../useFormGroup';
 import { useErrorDisplay } from './useErrorDisplay';
+import { usePathPrefixer } from '../helpers/usePathPrefixer';
 
 interface FormFieldOptions<TValue = unknown> {
   path: MaybeRefOrGetter<string | undefined> | undefined;
@@ -36,10 +37,11 @@ export type FormField<TValue> = {
 export function useFormField<TValue = unknown>(opts?: Partial<FormFieldOptions<TValue>>): FormField<TValue> {
   const form = inject(FormKey, null);
   const formGroup = inject(FormGroupKey, null);
+  const pathPrefixer = usePathPrefixer();
   const getPath = () => {
     const path = toValue(opts?.path);
 
-    return formGroup ? formGroup.prefixPath(path) : path;
+    return pathPrefixer ? pathPrefixer.prefixPath(path) : path;
   };
   const initialValue = opts?.schema?.defaults?.(opts?.initialValue as TValue) ?? opts?.initialValue;
   const { fieldValue, pathlessValue, setValue } = useFieldValue(getPath, form, initialValue);
