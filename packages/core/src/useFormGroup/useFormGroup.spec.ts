@@ -1,19 +1,19 @@
 import { renderSetup } from '@test-utils/renderSetup';
 import { Component } from 'vue';
 import { useFormGroup } from './useFormGroup';
-import { TypedSchema } from '../types';
 import { useTextField } from '../useTextField';
 import { useForm } from '../useForm';
 import { fireEvent, render, screen } from '@testing-library/vue';
-import { flush } from '@test-utils/flush';
+import { flush, defineStandardSchema } from '@test-utils/index';
 import { configure } from '../config';
+import { StandardSchema } from '../types';
 
 function createInputComponent(): Component {
   return {
     inheritAttrs: false,
     setup: (_, { attrs }) => {
       const name = (attrs.name || 'test') as string;
-      const schema = attrs.schema as TypedSchema<any>;
+      const schema = attrs.schema as StandardSchema<any>;
       const { errorMessage, inputProps } = useTextField({
         name,
         label: name,
@@ -35,7 +35,7 @@ function createGroupComponent(fn?: (fg: ReturnType<typeof useFormGroup>) => void
     inheritAttrs: false,
     setup: (_, { attrs }) => {
       const name = (attrs.name || 'test') as string;
-      const schema = attrs.schema as TypedSchema<any>;
+      const schema = attrs.schema as StandardSchema<any>;
       const fg = useFormGroup({ name, label: name, schema, disableHtmlValidation: attrs.disableHtmlValidation as any });
       fn?.(fg);
 
@@ -146,13 +146,11 @@ test('tracks its touched state', async () => {
 
 test('tracks its valid state', async () => {
   const groups: ReturnType<typeof useFormGroup>[] = [];
-  const schema: TypedSchema<string> = {
-    async parse(value) {
-      return {
-        errors: value ? [] : [{ path: 'groupTest.field1', messages: ['error'] }],
-      };
-    },
-  };
+  const schema = defineStandardSchema<any, any>(({ value }) => {
+    return {
+      issues: value ? [] : [{ path: ['groupTest', 'field1'], message: 'error' }],
+    };
+  });
 
   await render({
     components: { TInput: createInputComponent(), TGroup: createGroupComponent(fg => groups.push(fg)) },
@@ -187,13 +185,11 @@ test('tracks its valid state', async () => {
 test('validates with a typed schema', async () => {
   let form!: ReturnType<typeof useForm>;
   const groups: ReturnType<typeof useFormGroup>[] = [];
-  const schema: TypedSchema<{ field: string }> = {
-    async parse(value) {
-      return {
-        errors: value.field ? [] : [{ path: 'field', messages: ['error'] }],
-      };
-    },
-  };
+  const schema = defineStandardSchema<any, any>(({ value }) => {
+    return {
+      issues: (value as any).field ? [] : [{ message: 'error', path: ['field'] }],
+    };
+  });
 
   await render({
     components: { TInput: createInputComponent(), TGroup: createGroupComponent(fg => groups.push(fg)) },
@@ -225,21 +221,17 @@ test('validates with a typed schema', async () => {
 test('validation combines schema with form schema', async () => {
   let form!: ReturnType<typeof useForm>;
   const groups: ReturnType<typeof useFormGroup>[] = [];
-  const groupSchema: TypedSchema<{ field: string }> = {
-    async parse(value) {
-      return {
-        errors: value.field ? [] : [{ path: 'field', messages: ['error'] }],
-      };
-    },
-  };
+  const groupSchema = defineStandardSchema<{ field: string }>(({ value }) => {
+    return {
+      issues: (value as any).field ? [] : [{ message: 'error', path: ['field'] }],
+    };
+  });
 
-  const formSchema: TypedSchema<{ other: string }> = {
-    async parse(value) {
-      return {
-        errors: value.other ? [] : [{ path: 'other', messages: ['error'] }],
-      };
-    },
-  };
+  const formSchema = defineStandardSchema<{ other: string }>(({ value }) => {
+    return {
+      issues: (value as any).other ? [] : [{ message: 'error', path: ['other'] }],
+    };
+  });
 
   await render({
     components: { TInput: createInputComponent(), TGroup: createGroupComponent(fg => groups.push(fg)) },
@@ -278,21 +270,17 @@ test('validation combines schema with form schema', async () => {
 test('validation cascades', async () => {
   let form!: ReturnType<typeof useForm>;
   const groups: ReturnType<typeof useFormGroup>[] = [];
-  const groupSchema: TypedSchema<{ field: string }> = {
-    async parse(value) {
-      return {
-        errors: value.field === 'valid' ? [] : [{ path: 'field', messages: ['error'] }],
-      };
-    },
-  };
+  const groupSchema = defineStandardSchema<{ field: string }>(({ value }) => {
+    return {
+      issues: (value as any).field === 'valid' ? [] : [{ message: 'error', path: ['field'] }],
+    };
+  });
 
-  const formSchema: TypedSchema<{ other: string }> = {
-    async parse(value) {
-      return {
-        errors: value.other === 'valid' ? [] : [{ path: 'other', messages: ['error'] }],
-      };
-    },
-  };
+  const formSchema = defineStandardSchema<{ other: string }>(({ value }) => {
+    return {
+      issues: (value as any).other === 'valid' ? [] : [{ message: 'error', path: ['other'] }],
+    };
+  });
 
   await render({
     components: { TInput: createInputComponent(), TGroup: createGroupComponent(fg => groups.push(fg)) },
@@ -316,19 +304,19 @@ test('validation cascades', async () => {
 
   await flush();
   expect(form.getErrors()).toHaveLength(2);
-  expect(form.getErrors().flatMap(e => e.messages)).toEqual(['Constraints not satisfied', 'Constraints not satisfied']);
+  expect(form.getErrors().flatMap(e => e.message)).toEqual(['Constraints not satisfied', 'Constraints not satisfied']);
 
   await fireEvent.update(screen.getByTestId('field'), 'test');
   await fireEvent.blur(screen.getByTestId('field'));
 
   await flush();
   expect(form.getErrors()).toHaveLength(2);
-  expect(form.getErrors().flatMap(e => e.messages)).toEqual(['Constraints not satisfied', 'error']);
+  expect(form.getErrors().flatMap(e => e.message)).toEqual(['Constraints not satisfied', 'error']);
   await fireEvent.update(screen.getByTestId('other'), 'test');
   await fireEvent.blur(screen.getByTestId('other'));
   await flush();
   expect(form.getErrors()).toHaveLength(2);
-  expect(form.getErrors().flatMap(e => e.messages)).toEqual(['error', 'error']);
+  expect(form.getErrors().flatMap(e => e.message)).toEqual(['error', 'error']);
 
   await fireEvent.update(screen.getByTestId('other'), 'valid');
   await fireEvent.update(screen.getByTestId('field'), 'valid');
@@ -340,14 +328,12 @@ test('validation cascades', async () => {
 
 test('submission combines group data with form data', async () => {
   const submitHandler = vi.fn();
-  const groupSchema: TypedSchema<{ first: string }> = {
-    async parse() {
-      return {
-        output: { first: 'wow', second: 'how' },
-        errors: [],
-      };
-    },
-  };
+  const groupSchema = defineStandardSchema<{ first: string }>(() => {
+    return {
+      value: { first: 'wow', second: 'how' },
+    };
+  });
+
   await render({
     components: { TInput: createInputComponent(), TGroup: createGroupComponent() },
     setup() {

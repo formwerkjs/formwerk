@@ -6,7 +6,7 @@ import {
   FormObject,
   GroupValidationResult,
   Reactivify,
-  TypedSchema,
+  StandardSchema,
   ValidationResult,
 } from '../types';
 import { isEqual, normalizeProps, useUniqId, warn, withRefCapture } from '../utils/common';
@@ -20,7 +20,7 @@ import { createPathPrefixer } from '../helpers/usePathPrefixer';
 export interface FormGroupProps<TInput extends FormObject = FormObject, TOutput extends FormObject = TInput> {
   name: string;
   label?: string;
-  schema?: TypedSchema<TInput, TOutput>;
+  schema?: StandardSchema<TInput, TOutput>;
   disableHtmlValidation?: boolean;
 }
 
@@ -62,7 +62,7 @@ export function useFormGroup<TInput extends FormObject = FormObject, TOutput ext
     // Clears Errors in that path before proceeding.
     form?.clearErrors(toValue(props.name));
     for (const entry of res.errors) {
-      form?.setFieldErrors(entry.path ?? '', entry.messages);
+      form?.setFieldErrors(entry.path ?? '', entry.message ?? []);
     }
 
     dispatchValidateDone();

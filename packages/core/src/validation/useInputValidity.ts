@@ -40,7 +40,7 @@ export function useInputValidity(opts: InputValidityOptions) {
       return {
         ...baseReturns,
         isValid: true,
-        errors: [{ messages: [], path: getPath() || '' }],
+        errors: [{ message: null, path: getPath() || '' }],
       };
     }
 
@@ -81,7 +81,7 @@ export function useInputValidity(opts: InputValidityOptions) {
     return {
       ...baseReturns,
       isValid: !messages.length,
-      errors: [{ messages, path: getPath() || '' }],
+      errors: [{ message: messages[0] ?? null, path: getPath() || '' }],
     };
   }
 

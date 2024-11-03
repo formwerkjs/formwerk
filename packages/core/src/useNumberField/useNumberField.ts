@@ -16,7 +16,8 @@ import {
   AriaValidatableProps,
   Numberish,
   Reactivify,
-} from '../types/common';
+  StandardSchema,
+} from '../types';
 import { useInputValidity } from '../validation/useInputValidity';
 import { useLabel } from '../a11y/useLabel';
 import { useNumberParser } from '../i18n/useNumberParser';
@@ -24,7 +25,6 @@ import { useSpinButton } from '../useSpinButton';
 import { useLocale } from '../i18n';
 import { useFormField } from '../useFormField';
 import { FieldTypePrefixes } from '../constants';
-import { TypedSchema } from '../types';
 import { exposeField } from '../utils/exposers';
 import { useEventListener } from '../helpers/useEventListener';
 
@@ -63,7 +63,7 @@ export interface NumberFieldProps {
 
   formatOptions?: Intl.NumberFormatOptions;
 
-  schema?: TypedSchema<number>;
+  schema?: StandardSchema<number>;
 
   disableWheel?: boolean;
   disableHtmlValidation?: boolean;

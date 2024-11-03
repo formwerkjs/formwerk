@@ -1,8 +1,8 @@
 import { computed, inject, MaybeRefOrGetter, nextTick, readonly, Ref, shallowRef, toValue, watch } from 'vue';
 import { FormContext, FormKey } from '../useForm/useForm';
-import { Arrayable, Getter, TypedSchema, ValidationResult } from '../types';
+import { Arrayable, Getter, StandardSchema, ValidationResult } from '../types';
 import { useSyncModel } from '../reactivity/useModelSync';
-import { cloneDeep, isEqual, normalizeArrayable, tryOnScopeDispose } from '../utils/common';
+import { cloneDeep, isEqual, normalizeArrayable, standardIssueToSimpleIssue, tryOnScopeDispose } from '../utils/common';
 import { FormGroupKey } from '../useFormGroup';
 import { useErrorDisplay } from './useErrorDisplay';
 import { usePathPrefixer } from '../helpers/usePathPrefixer';
@@ -14,7 +14,7 @@ interface FormFieldOptions<TValue = unknown> {
   syncModel: boolean;
   modelName: string;
   disabled: MaybeRefOrGetter<boolean | undefined>;
-  schema: TypedSchema<TValue>;
+  schema: StandardSchema<TValue>;
 }
 
 export type FormField<TValue> = {
@@ -24,7 +24,7 @@ export type FormField<TValue> = {
   isValid: Ref<boolean>;
   errors: Ref<string[]>;
   errorMessage: Ref<string>;
-  schema: TypedSchema<TValue> | undefined;
+  schema: StandardSchema<TValue> | undefined;
   validate(mutate?: boolean): Promise<ValidationResult>;
   getPath: Getter<string | undefined>;
   getName: Getter<string | undefined>;
@@ -43,7 +43,7 @@ export function useFormField<TValue = unknown>(opts?: Partial<FormFieldOptions<T
 
     return pathPrefixer ? pathPrefixer.prefixPath(path) : path;
   };
-  const initialValue = opts?.schema?.defaults?.(opts?.initialValue as TValue) ?? opts?.initialValue;
+  const initialValue = opts?.initialValue;
   const { fieldValue, pathlessValue, setValue } = useFieldValue(getPath, form, initialValue);
   const { isTouched, pathlessTouched, setTouched } = useFieldTouched(getPath, form);
   const { errors, setErrors, isValid, errorMessage, pathlessValidity } = useFieldValidity(getPath, form);
@@ -86,15 +86,18 @@ export function useFormField<TValue = unknown>(opts?: Partial<FormFieldOptions<T
       );
     }
 
-    const { errors, output } = await schema.parse(fieldValue.value as TValue);
+    const result = await schema['~validate']({ value: fieldValue.value });
+    const errors = (result.issues ?? []).map(standardIssueToSimpleIssue).filter(e => e.message?.length);
+    const output = result.issues ? undefined : result.value;
+
     if (mutate) {
-      setErrors(errors.map(e => e.messages).flat());
+      setErrors(errors.map(e => e.message ?? ''));
     }
 
     return createValidationResult({
       isValid: errors.length === 0,
       output,
-      errors: errors.map(e => ({ messages: e.messages, path: getPath() || e.path })),
+      errors,
     });
   }
 

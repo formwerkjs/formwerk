@@ -14,7 +14,7 @@ import {
   NormalizedProps,
   Reactivify,
   RovingTabIndex,
-  TypedSchema,
+  StandardSchema,
 } from '../types';
 import { useLabel } from '../a11y/useLabel';
 import { CheckboxGroupContext, CheckboxGroupKey } from './useCheckboxGroup';
@@ -38,7 +38,7 @@ export interface CheckboxProps<TValue = string> {
   indeterminate?: boolean;
   standalone?: boolean;
 
-  schema?: TypedSchema<TValue>;
+  schema?: StandardSchema<TValue>;
 
   disableHtmlValidation?: boolean;
 }

@@ -6,7 +6,7 @@ import {
   InputBaseAttributes,
   InputEvents,
   Reactivify,
-  TypedSchema,
+  StandardSchema,
 } from '../types';
 import {
   createAccessibleErrorMessageProps,
@@ -54,7 +54,7 @@ export type SwitchProps = {
   trueValue?: unknown;
   falseValue?: unknown;
 
-  schema?: TypedSchema<unknown>;
+  schema?: StandardSchema<unknown>;
 
   disableHtmlValidation?: boolean;
 };

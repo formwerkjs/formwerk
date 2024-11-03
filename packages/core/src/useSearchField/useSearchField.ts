@@ -7,7 +7,7 @@ import {
   Numberish,
   Reactivify,
   TextInputBaseAttributes,
-  TypedSchema,
+  StandardSchema,
 } from '../types';
 import {
   createAccessibleErrorMessageProps,
@@ -54,7 +54,7 @@ export interface SearchFieldProps {
   readonly?: boolean;
   disabled?: boolean;
 
-  schema?: TypedSchema<string>;
+  schema?: StandardSchema<string>;
 
   onSubmit?: (value: string) => void;
 

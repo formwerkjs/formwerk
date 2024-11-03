@@ -8,7 +8,7 @@ import {
   Direction,
   Reactivify,
   Arrayable,
-  TypedSchema,
+  StandardSchema,
 } from '../types';
 import {
   useUniqId,
@@ -72,7 +72,7 @@ export interface CheckboxGroupProps<TCheckbox = unknown> {
   readonly?: boolean;
   required?: boolean;
 
-  schema?: TypedSchema<CheckboxGroupValue<TCheckbox>>;
+  schema?: StandardSchema<CheckboxGroupValue<TCheckbox>>;
 
   disableHtmlValidation?: boolean;
 }

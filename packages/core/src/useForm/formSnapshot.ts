@@ -1,10 +1,10 @@
 import { Ref, shallowRef, toValue } from 'vue';
-import { FormObject, MaybeGetter, MaybeAsync, TypedSchema } from '../types';
+import { FormObject, MaybeGetter, MaybeAsync, StandardSchema } from '../types';
 import { cloneDeep, isPromise } from '../utils/common';
 
 interface FormSnapshotOptions<TForm extends FormObject, TOutput extends FormObject = TForm> {
   onAsyncInit?: (values: TForm) => void;
-  schema?: TypedSchema<TForm, TOutput>;
+  schema?: StandardSchema<TForm, TOutput>;
 }
 
 export interface FormSnapshot<TForm extends FormObject> {
@@ -23,13 +23,13 @@ export function useFormSnapshots<TForm extends FormObject, TOutput extends FormO
   const provided = toValue(provider);
   if (isPromise(provided)) {
     provided.then(resolved => {
-      const inits = opts?.schema?.defaults?.(resolved) ?? resolved;
+      const inits = resolved;
       initials.value = cloneDeep(inits || {}) as TForm;
       originals.value = cloneDeep(inits || {}) as TForm;
       opts?.onAsyncInit?.(cloneDeep(inits));
     });
   } else {
-    const inits = opts?.schema?.defaults?.(provided || ({} as TForm)) ?? provided;
+    const inits = provided;
     initials.value = cloneDeep(inits || {}) as TForm;
     originals.value = cloneDeep(inits || {}) as TForm;
   }

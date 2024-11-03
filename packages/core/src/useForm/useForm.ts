@@ -8,7 +8,7 @@ import {
   DisabledSchema,
   ErrorsSchema,
   Path,
-  TypedSchema,
+  StandardSchema,
   ValidationResult,
   FormValidationResult,
   GroupValidationResult,
@@ -26,7 +26,7 @@ export interface FormOptions<TForm extends FormObject = FormObject, TOutput exte
   id: string;
   initialValues: MaybeGetter<MaybeAsync<TForm>>;
   initialTouched: TouchedSchema<TForm>;
-  schema: TypedSchema<TForm, TOutput>;
+  schema: StandardSchema<TForm, TOutput>;
   disableHtmlValidation: boolean;
 }
 

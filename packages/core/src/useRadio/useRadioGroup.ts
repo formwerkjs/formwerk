@@ -8,7 +8,7 @@ import {
   AriaValidatableProps,
   Direction,
   Reactivify,
-  TypedSchema,
+  StandardSchema,
 } from '../types';
 import {
   useUniqId,
@@ -61,7 +61,7 @@ export interface RadioGroupProps<TValue = string> {
   readonly?: boolean;
   required?: boolean;
 
-  schema?: TypedSchema<TValue>;
+  schema?: StandardSchema<TValue>;
 
   disableHtmlValidation?: boolean;
 }

@@ -4,9 +4,7 @@ import { CheckboxProps, useCheckbox } from './useCheckbox';
 import { fireEvent, render, screen } from '@testing-library/vue';
 import { axe } from 'vitest-axe';
 import { describe } from 'vitest';
-import { flush } from '@test-utils/flush';
-import { TypedSchema } from '../types';
-import { renderSetup } from '../../../test-utils/src';
+import { flush, renderSetup, defineStandardSchema } from '@test-utils/index';
 
 const createGroup = (
   props: CheckboxGroupProps,
@@ -224,16 +222,13 @@ describe('validation', () => {
   });
 
   test('should revalidate when value changes', async () => {
-    const schema: TypedSchema<string[]> = {
-      parse: value => {
-        return value?.length >= 2
-          ? Promise.resolve({ output: value, errors: [] })
-          : Promise.resolve({
-              output: value,
-              errors: [{ messages: ['You must select two or more options'], path: '' }],
-            });
-      },
-    };
+    const schema = defineStandardSchema<any, any>(async ({ value }) => {
+      return (value as any)?.length >= 2
+        ? Promise.resolve({ value: value })
+        : Promise.resolve({
+            issues: [{ message: 'You must select two or more options', path: [''] }],
+          });
+    });
 
     const CheckboxGroup = createGroup({ label: 'Group', schema });
     const Checkbox = createCheckbox(CustomBase);

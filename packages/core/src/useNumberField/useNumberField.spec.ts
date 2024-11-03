@@ -2,9 +2,8 @@ import { fireEvent, render, screen } from '@testing-library/vue';
 import { axe } from 'vitest-axe';
 import { NumberFieldProps, useNumberField } from './useNumberField';
 import { type Component } from 'vue';
-import { flush } from '@test-utils/flush';
+import { flush, defineStandardSchema } from '@test-utils/index';
 import { SetOptional } from 'type-fest';
-import { TypedSchema } from '../types';
 
 const label = 'Amount';
 const description = 'Enter a valid amount';
@@ -128,13 +127,11 @@ describe('validation', () => {
   });
 
   test('should revalidate when increment/decrement buttons', async () => {
-    const schema: TypedSchema<number> = {
-      parse: value => {
-        return Number(value) > 1
-          ? Promise.resolve({ errors: [] })
-          : Promise.resolve({ errors: [{ messages: ['Value must be greater than 1'], path: '' }] });
-      },
-    };
+    const schema = defineStandardSchema<number>(({ value }) => {
+      return Number(value) > 1
+        ? { value: Number(value) }
+        : { issues: [{ message: 'Value must be greater than 1', path: [] }] };
+    });
 
     await render(makeTest({ schema }));
     await flush();
@@ -148,13 +145,11 @@ describe('validation', () => {
   });
 
   test('should revalidate when increment/decrement with arrows', async () => {
-    const schema: TypedSchema<number> = {
-      parse: value => {
-        return Number(value) > 1
-          ? Promise.resolve({ output: value, errors: [] })
-          : Promise.resolve({ output: value, errors: [{ messages: ['Value must be greater than 1'], path: '' }] });
-      },
-    };
+    const schema = defineStandardSchema<number>(({ value }) => {
+      return Number(value) > 1
+        ? { value: Number(value) }
+        : { issues: [{ message: 'Value must be greater than 1', path: [] }] };
+    });
 
     await render(makeTest({ schema }));
     await fireEvent.keyDown(screen.getByLabelText(label), { code: 'ArrowUp' });

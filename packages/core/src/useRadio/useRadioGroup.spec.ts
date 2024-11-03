@@ -4,8 +4,7 @@ import { RadioProps, useRadio } from './useRadio';
 import { fireEvent, render, screen } from '@testing-library/vue';
 import { axe } from 'vitest-axe';
 import { describe } from 'vitest';
-import { flush } from '@test-utils/flush';
-import { TypedSchema } from '../..';
+import { flush, defineStandardSchema } from '@test-utils/index';
 
 const createGroup = (props: RadioGroupProps): Component => {
   return defineComponent({
@@ -443,13 +442,12 @@ describe('validation', () => {
   });
 
   test('should revalidate when value changes via arrow keys', async () => {
-    const schema: TypedSchema<string> = {
-      parse: value => {
-        return Number(value) > 2
-          ? Promise.resolve({ output: value, errors: [] })
-          : Promise.resolve({ output: value, errors: [{ messages: ['Value must be greater than 2'], path: '' }] });
-      },
-    };
+    const schema = defineStandardSchema<any, any>(({ value }) => {
+      return Number(value) > 2
+        ? { value: String(value) }
+        : { issues: [{ message: 'Value must be greater than 2', path: [] }] };
+    });
+
     const RadioGroup = createGroup({ label: 'Group', required: true, schema });
     const RadioInput = createRadio(CustomBase);
 
@@ -473,13 +471,12 @@ describe('validation', () => {
   });
 
   test('should revalidate when value changes via clicks', async () => {
-    const schema: TypedSchema<string> = {
-      parse: value => {
-        return Number(value) > 2
-          ? Promise.resolve({ output: value, errors: [] })
-          : Promise.resolve({ output: value, errors: [{ messages: ['Value must be greater than 2'], path: '' }] });
-      },
-    };
+    const schema = defineStandardSchema<any, any>(({ value }) => {
+      return Number(value) > 2
+        ? { value: String(value) }
+        : { issues: [{ message: 'Value must be greater than 2', path: [] }] };
+    });
+
     const RadioGroup = createGroup({ label: 'Group', required: true, schema });
     const RadioInput = createRadio(CustomBase);
 

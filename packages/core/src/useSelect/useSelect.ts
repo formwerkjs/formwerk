@@ -1,6 +1,6 @@
 import { computed, InjectionKey, provide, toValue } from 'vue';
 import { useFormField } from '../useFormField';
-import { AriaLabelableProps, Arrayable, Orientation, Reactivify, TypedSchema } from '../types';
+import { AriaLabelableProps, Arrayable, Orientation, Reactivify, StandardSchema } from '../types';
 import {
   createAccessibleErrorMessageProps,
   createDescribedByProps,
@@ -30,7 +30,7 @@ export interface SelectProps<TOption, TValue = TOption> {
   multiple?: boolean;
   orientation?: Orientation;
 
-  schema?: TypedSchema<Arrayable<TValue>>;
+  schema?: StandardSchema<Arrayable<TValue>>;
 }
 
 export interface SelectTriggerDomProps extends AriaLabelableProps {

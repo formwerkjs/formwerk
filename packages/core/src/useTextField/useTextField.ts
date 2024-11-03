@@ -20,7 +20,7 @@ import { useInputValidity } from '../validation/useInputValidity';
 import { useLabel } from '../a11y/useLabel';
 import { useFormField } from '../useFormField';
 import { FieldTypePrefixes } from '../constants';
-import { TypedSchema } from '../types';
+import { StandardSchema } from '../types';
 import { exposeField } from '../utils/exposers';
 
 export type TextInputDOMType = 'text' | 'password' | 'email' | 'number' | 'tel' | 'url';
@@ -56,7 +56,7 @@ export interface TextFieldProps {
   readonly?: boolean;
   disabled?: boolean;
 
-  schema?: TypedSchema<string>;
+  schema?: StandardSchema<string>;
 
   disableHtmlValidation?: boolean;
 }

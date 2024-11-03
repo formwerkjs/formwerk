@@ -1,7 +1,17 @@
 import { computed, getCurrentScope, MaybeRefOrGetter, onScopeDispose, Ref, shallowRef, toValue, useId } from 'vue';
 import { klona } from 'klona/full';
-import { AriaDescriptionProps, AriaErrorMessageProps, Arrayable, Maybe, NormalizedProps, WithId } from '../types';
+import {
+  AriaDescriptionProps,
+  AriaErrorMessageProps,
+  Arrayable,
+  Maybe,
+  NormalizedProps,
+  SimpleIssue,
+  StandardIssue,
+  WithId,
+} from '../types';
 import { AsyncReturnType } from 'type-fest';
+import { getDotPath } from '@standard-schema/utils';
 
 export function useUniqId(prefix?: string) {
   return prefix ? `${prefix}-${useId()}` : useId() || '';
@@ -390,4 +400,13 @@ export function tryOnScopeDispose(fn: () => void) {
 
 export function hasKeyCode(e: Event, code: string) {
   return (e as KeyboardEvent).code === code;
+}
+
+export function standardIssueToSimpleIssue(issue: StandardIssue): SimpleIssue {
+  const path = issue.path ? getDotPath(issue) : '';
+
+  return {
+    path: path ?? '',
+    message: issue.message,
+  };
 }

@@ -5,9 +5,9 @@ import {
   FormValidationResult,
   MaybeAsync,
   Path,
+  SimpleIssue,
+  StandardSchema,
   TouchedSchema,
-  TypedSchema,
-  TypedSchemaError,
 } from '../types';
 import { createEventDispatcher } from '../utils/events';
 import { BaseFormContext, SetValueOptions } from './formContext';
@@ -22,7 +22,7 @@ export interface ResetState<TForm extends FormObject> {
 }
 
 export interface FormActionsOptions<TForm extends FormObject = FormObject, TOutput extends FormObject = TForm> {
-  schema: TypedSchema<TForm, TOutput> | undefined;
+  schema: StandardSchema<TForm, TOutput> | undefined;
   disabled: DisabledSchema<TForm>;
 }
 
@@ -99,9 +99,9 @@ export function useFormActions<TForm extends FormObject = FormObject, TOutput ex
     return result;
   }
 
-  function applyErrors(errors: TypedSchemaError[]) {
+  function applyErrors(errors: SimpleIssue[]) {
     for (const entry of errors) {
-      form.setFieldErrors(entry.path as Path<TForm>, entry.messages);
+      form.setFieldErrors(entry.path as Path<TForm>, entry.message ?? []);
     }
   }
 

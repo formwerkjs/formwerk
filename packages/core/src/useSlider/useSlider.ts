@@ -1,6 +1,6 @@
 import { InjectionKey, computed, onBeforeUnmount, provide, ref, toValue } from 'vue';
 import { useLabel } from '../a11y/useLabel';
-import { AriaLabelableProps, Arrayable, Direction, Orientation, Reactivify, TypedSchema } from '../types';
+import { AriaLabelableProps, Arrayable, Direction, Orientation, Reactivify, StandardSchema } from '../types';
 import {
   createAccessibleErrorMessageProps,
   ErrorableAttributes,
@@ -32,7 +32,7 @@ export interface SliderProps {
   disabled?: boolean;
   readonly?: boolean;
 
-  schema?: TypedSchema<number>;
+  schema?: StandardSchema<number>;
 }
 
 export type Coordinate = { x: number; y: number };

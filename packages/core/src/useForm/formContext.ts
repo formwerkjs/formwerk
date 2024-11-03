@@ -6,9 +6,9 @@ import {
   Path,
   PathValue,
   TouchedSchema,
-  TypedSchema,
+  StandardSchema,
   ErrorsSchema,
-  TypedSchemaError,
+  SimpleIssue,
 } from '../types';
 import { cloneDeep, isEqual, normalizeArrayable } from '../utils/common';
 import { escapePath, findLeaf, getFromPath, isPathSet, setInPath, unsetPath as unsetInObject } from '../utils/path';
@@ -36,7 +36,7 @@ export interface BaseFormContext<TForm extends FormObject = FormObject> {
   getFieldErrors<TPath extends Path<TForm>>(path: TPath): string[];
   setFieldErrors<TPath extends Path<TForm>>(path: TPath, message: Arrayable<string>): void;
   getValidationMode(): FormValidationMode;
-  getErrors: () => TypedSchemaError[];
+  getErrors: () => SimpleIssue[];
   clearErrors: (path?: string) => void;
   hasErrors: () => boolean;
   getValues: () => TForm;
@@ -55,7 +55,7 @@ export interface FormContextCreateOptions<TForm extends FormObject = FormObject,
   touched: TouchedSchema<TForm>;
   disabled: DisabledSchema<TForm>;
   errors: Ref<ErrorsSchema<TForm>>;
-  schema: TypedSchema<TForm, TOutput> | undefined;
+  schema: StandardSchema<TForm, TOutput> | undefined;
   snapshots: {
     values: FormSnapshot<TForm>;
     touched: FormSnapshot<TouchedSchema<TForm>>;
@@ -134,10 +134,10 @@ export function createFormContext<TForm extends FormObject = FormObject, TOutput
     return !!findLeaf(errors.value, l => Array.isArray(l) && l.length > 0);
   }
 
-  function getErrors(): TypedSchemaError[] {
+  function getErrors(): SimpleIssue[] {
     return Object.entries(errors.value)
-      .map<TypedSchemaError>(([key, value]) => ({ path: key, messages: value as string[] }))
-      .filter(e => e.messages.length > 0);
+      .map<SimpleIssue>(([key, value]) => ({ path: key, message: value as string }))
+      .filter(e => !!e.message);
   }
 
   function setInitialValues(newValues: Partial<TForm>, opts?: SetValueOptions) {
