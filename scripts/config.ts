@@ -12,14 +12,10 @@ const __dirname = dirname(__filename);
 
 const formatNameMap = {
   core: 'Formwerk',
-  'schema-yup': 'FormwerkYup',
-  'schema-zod': 'FormwerkZod',
 };
 
 const pkgNameMap = {
   core: 'core',
-  'schema-yup': 'schema-yup',
-  'schema-zod': 'schema-zod',
 };
 
 const formatExt: Partial<Record<ModuleFormat, string>> = {
