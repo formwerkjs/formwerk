@@ -1,5 +1,4 @@
 import { flush, renderSetup, defineStandardSchema } from '@test-utils/index';
-import * as v from 'valibot';
 import { useForm } from './useForm';
 import { useFormField } from '../useFormField';
 import { Component, nextTick, Ref, ref } from 'vue';
@@ -613,39 +612,6 @@ describe('form validation', () => {
 
       await nextTick();
       await fireEvent.click(screen.getByText('Submit'));
-      expect(handler).not.toHaveBeenCalled();
-    });
-
-    test('valibot test', async () => {
-      const handler = vi.fn();
-      const schema = v.object({
-        test: v.boolean('not a boolean'),
-        foo: v.string(),
-      });
-
-      await render({
-        components: { Child: createInputComponent() },
-        setup() {
-          const { handleSubmit, getError } = useForm({
-            schema,
-          });
-
-          return { getError, onSubmit: handleSubmit(v => handler(v.toJSON())) };
-        },
-        template: `
-      <form @submit="onSubmit" novalidate>
-        <Child />
-        <span data-testid="form-err">{{ getError('test') }}</span>
-
-        <button type="submit">Submit</button>
-      </form>
-    `,
-      });
-
-      await fireEvent.click(screen.getByText('Submit'));
-      await flush();
-      expect(screen.getByTestId('err').textContent).toBe('not a boolean');
-      expect(screen.getByTestId('form-err').textContent).toBe('not a boolean');
       expect(handler).not.toHaveBeenCalled();
     });
 

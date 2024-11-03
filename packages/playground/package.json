@@ -9,8 +9,6 @@
   },
   "dependencies": {
     "@formwerk/core": "workspace:*",
-    "@formwerk/schema-yup": "workspace:*",
-    "@formwerk/schema-zod": "workspace:*",
     "tailwindcss": "^3.4.14",
     "vue": "^3.5.12",
     "vue-i18n": "^10.0.4",
