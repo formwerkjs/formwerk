@@ -5,7 +5,7 @@ import {
   FormValidationResult,
   MaybeAsync,
   Path,
-  SimpleIssue,
+  IssueCollection,
   StandardSchema,
   TouchedSchema,
 } from '../types';
@@ -99,9 +99,9 @@ export function useFormActions<TForm extends FormObject = FormObject, TOutput ex
     return result;
   }
 
-  function applyErrors(errors: SimpleIssue[]) {
+  function applyErrors(errors: IssueCollection[]) {
     for (const entry of errors) {
-      form.setFieldErrors(entry.path as Path<TForm>, entry.message ?? []);
+      form.setFieldErrors(entry.path as Path<TForm>, entry.messages);
     }
   }
 

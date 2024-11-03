@@ -4,9 +4,9 @@ import {
   AriaDescriptionProps,
   AriaErrorMessageProps,
   Arrayable,
+  IssueCollection,
   Maybe,
   NormalizedProps,
-  SimpleIssue,
   StandardIssue,
   WithId,
 } from '../types';
@@ -402,11 +402,22 @@ export function hasKeyCode(e: Event, code: string) {
   return (e as KeyboardEvent).code === code;
 }
 
-export function standardIssueToSimpleIssue(issue: StandardIssue): SimpleIssue {
-  const path = issue.path ? getDotPath(issue) : '';
+/**
+ * Aggregates issues by path.
+ */
+export function combineIssues(issues: StandardIssue[] | readonly StandardIssue[]): IssueCollection[] {
+  const issueMap: Record<string, IssueCollection> = {};
+  for (const issue of issues) {
+    const path = issue.path ? (getDotPath(issue) ?? '') : '';
+    if (!issueMap[path]) {
+      issueMap[path] = {
+        path,
+        messages: [],
+      };
+    }
 
-  return {
-    path: path ?? '',
-    message: issue.message,
-  };
+    issueMap[path].messages.push(issue.message);
+  }
+
+  return Object.values(issueMap);
 }

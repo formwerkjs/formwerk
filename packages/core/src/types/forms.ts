@@ -16,14 +16,14 @@ export type DisabledSchema<TForm extends FormObject> = Partial<Record<Path<TForm
 
 export type ErrorsSchema<TForm extends FormObject> = Partial<Record<Path<TForm>, string[]>>;
 
-export type SimpleIssue = {
+export type IssueCollection = {
   path: string;
-  message: string | null;
+  messages: string[];
 };
 
 type BaseValidationResult = {
   isValid: boolean;
-  errors: SimpleIssue[];
+  errors: IssueCollection[];
 };
 
 export interface ValidationResult<TValue = unknown> extends BaseValidationResult {

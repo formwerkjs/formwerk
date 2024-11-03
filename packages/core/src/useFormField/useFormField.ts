@@ -2,7 +2,7 @@ import { computed, inject, MaybeRefOrGetter, nextTick, readonly, Ref, shallowRef
 import { FormContext, FormKey } from '../useForm/useForm';
 import { Arrayable, Getter, StandardSchema, ValidationResult } from '../types';
 import { useSyncModel } from '../reactivity/useModelSync';
-import { cloneDeep, isEqual, normalizeArrayable, standardIssueToSimpleIssue, tryOnScopeDispose } from '../utils/common';
+import { cloneDeep, isEqual, normalizeArrayable, combineIssues, tryOnScopeDispose } from '../utils/common';
 import { FormGroupKey } from '../useFormGroup';
 import { useErrorDisplay } from './useErrorDisplay';
 import { usePathPrefixer } from '../helpers/usePathPrefixer';
@@ -87,11 +87,11 @@ export function useFormField<TValue = unknown>(opts?: Partial<FormFieldOptions<T
     }
 
     const result = await schema['~validate']({ value: fieldValue.value });
-    const errors = (result.issues ?? []).map(standardIssueToSimpleIssue).filter(e => e.message?.length);
+    const errors = combineIssues(result.issues || []);
     const output = result.issues ? undefined : result.value;
 
     if (mutate) {
-      setErrors(errors.map(e => e.message ?? ''));
+      setErrors(errors.map(e => e.messages).flat());
     }
 
     return createValidationResult({

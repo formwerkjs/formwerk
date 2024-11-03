@@ -44,3 +44,43 @@ test('valibot schemas are supported', async () => {
   expect(screen.getByTestId('form-err-2').textContent).toBe('not a string');
   expect(handler).not.toHaveBeenCalled();
 });
+
+test('collects multiple errors per field', async () => {
+  const handler = vi.fn();
+  const schema = v.object({
+    test: v.pipe(v.string(), v.email(), v.minLength(8)),
+  });
+
+  await render({
+    setup() {
+      const { getErrors, validate } = useForm({
+        schema,
+        initialValues: {
+          test: '123',
+        },
+      });
+
+      return {
+        onSubmit: async () => {
+          await validate();
+
+          handler(getErrors());
+        },
+      };
+    },
+    template: `
+      <form @submit="onSubmit" novalidate>
+        <button type="submit">Submit</button>
+      </form>
+    `,
+  });
+
+  await fireEvent.click(screen.getByText('Submit'));
+  await flush();
+  expect(handler).toHaveBeenCalledWith([
+    {
+      path: 'test',
+      messages: ['Invalid email: Received "123"', 'Invalid length: Expected >=8 but received 3'],
+    },
+  ]);
+});

@@ -3,11 +3,11 @@ import {
   FormObject,
   FormValidationResult,
   GroupValidationResult,
-  SimpleIssue,
+  IssueCollection,
   StandardSchema,
   ValidationResult,
 } from '../types';
-import { batchAsync, cloneDeep, standardIssueToSimpleIssue, withLatestCall } from '../utils/common';
+import { batchAsync, cloneDeep, combineIssues, withLatestCall } from '../utils/common';
 import { createEventDispatcher } from '../utils/events';
 import { SCHEMA_BATCH_MS } from '../constants';
 import { prefixPath, setInPath } from '../utils/path';
@@ -46,7 +46,7 @@ export function useValidationProvider<
     // But field-level and group-level validations are async, so we need to wait for them.
     await dispatchValidate(enqueue);
     const results = await Promise.all(validationQueue);
-    const fieldErrors = results.flatMap(r => r.errors).filter(e => e.message?.length);
+    const fieldErrors = results.flatMap(r => r.errors).filter(e => e.messages.length);
 
     // If we are using native validation, then we don't stop the state mutation
     // Because it already has happened, since validations are sourced from the fields.
@@ -59,12 +59,12 @@ export function useValidationProvider<
     }
 
     const result = await schema['~validate']({ value: getValues() });
-    let errors: SimpleIssue[] = (result.issues || []).map(standardIssueToSimpleIssue);
+    let errors: IssueCollection[] = combineIssues(result.issues || []);
     const prefix = getPath?.();
     if (prefix) {
       errors = errors.map(e => {
         return {
-          message: e.message,
+          messages: e.messages,
           path: prefixPath(prefix, e.path) || '',
         };
       });

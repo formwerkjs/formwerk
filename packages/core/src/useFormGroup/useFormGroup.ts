@@ -62,7 +62,7 @@ export function useFormGroup<TInput extends FormObject = FormObject, TOutput ext
     // Clears Errors in that path before proceeding.
     form?.clearErrors(toValue(props.name));
     for (const entry of res.errors) {
-      form?.setFieldErrors(entry.path ?? '', entry.message ?? []);
+      form?.setFieldErrors(entry.path, entry.messages);
     }
 
     dispatchValidateDone();

@@ -304,19 +304,19 @@ test('validation cascades', async () => {
 
   await flush();
   expect(form.getErrors()).toHaveLength(2);
-  expect(form.getErrors().flatMap(e => e.message)).toEqual(['Constraints not satisfied', 'Constraints not satisfied']);
+  expect(form.getErrors().flatMap(e => e.messages)).toEqual(['Constraints not satisfied', 'Constraints not satisfied']);
 
   await fireEvent.update(screen.getByTestId('field'), 'test');
   await fireEvent.blur(screen.getByTestId('field'));
 
   await flush();
   expect(form.getErrors()).toHaveLength(2);
-  expect(form.getErrors().flatMap(e => e.message)).toEqual(['Constraints not satisfied', 'error']);
+  expect(form.getErrors().flatMap(e => e.messages)).toEqual(['Constraints not satisfied', 'error']);
   await fireEvent.update(screen.getByTestId('other'), 'test');
   await fireEvent.blur(screen.getByTestId('other'));
   await flush();
   expect(form.getErrors()).toHaveLength(2);
-  expect(form.getErrors().flatMap(e => e.message)).toEqual(['error', 'error']);
+  expect(form.getErrors().flatMap(e => e.messages)).toEqual(['error', 'error']);
 
   await fireEvent.update(screen.getByTestId('other'), 'valid');
   await fireEvent.update(screen.getByTestId('field'), 'valid');
