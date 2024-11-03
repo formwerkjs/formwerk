@@ -8,6 +8,8 @@ export type StandardIssue = v1.StandardIssue;
 
 export type StandardSchema<TInput = unknown, TOutput = TInput> = v1.StandardSchema<TInput, TOutput>;
 
+export type FormSchema = StandardSchema<FormObject>;
+
 export type TouchedSchema<TForm extends FormObject> = Simplify<Schema<TForm, boolean>>;
 
 export type DisabledSchema<TForm extends FormObject> = Partial<Record<Path<TForm>, boolean>>;

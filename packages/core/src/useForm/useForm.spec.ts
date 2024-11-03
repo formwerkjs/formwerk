@@ -42,7 +42,7 @@ describe('form values', () => {
 
   test('setValues replaces form values by default', async () => {
     const { values, setValues } = await renderSetup(() => {
-      return useForm<Record<string, any>>({ initialValues: { x: 'y' } });
+      return useForm({ initialValues: { x: 'y' } as Record<string, any> });
     });
 
     setValues({ foo: 'baz' });
@@ -52,7 +52,7 @@ describe('form values', () => {
 
   test('setValues can merge form values if specified', async () => {
     const { values, setValues } = await renderSetup(() => {
-      return useForm<Record<string, any>>({ initialValues: { x: 'y' } });
+      return useForm({ initialValues: { x: 'y' } as Record<string, any> });
     });
 
     setValues({ foo: 'baz' }, { behavior: 'merge' });
@@ -832,7 +832,7 @@ describe('form validation', () => {
     });
 
     const { reset, getError } = await renderSetup(() => {
-      return useForm<{ test: string }>({
+      return useForm({
         schema,
       });
     });
@@ -852,7 +852,7 @@ describe('form validation', () => {
     });
 
     const { reset, getError } = await renderSetup(() => {
-      return useForm<{ test: string }>({
+      return useForm({
         schema,
       });
     });
