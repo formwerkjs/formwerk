@@ -41,6 +41,8 @@
     "dist/*.d.ts"
   ],
   "dependencies": {
+    "@standard-schema/spec": "1.0.0-beta.1",
+    "@standard-schema/utils": "^0.1.1",
     "klona": "^2.0.6",
     "type-fest": "^4.26.0",
     "vue": ">=3.5.0"

@@ -1,4 +1,7 @@
 {
   "name": "@test-utils",
-  "private": true
+  "private": true,
+  "devDependencies": {
+    "@standard-schema/spec": "1.0.0-beta.1"
+  }
 }

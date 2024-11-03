@@ -143,6 +143,12 @@ importers:
 
   packages/core:
     dependencies:
+      '@standard-schema/spec':
+        specifier: 1.0.0-beta.1
+        version: 1.0.0-beta.1
+      '@standard-schema/utils':
+        specifier: ^0.1.1
+        version: 0.1.1
       klona:
         specifier: ^2.0.6
         version: 2.0.6
@@ -217,7 +223,11 @@ importers:
         specifier: ^3.23.8
         version: 3.23.8
 
-  packages/test-utils: {}
+  packages/test-utils:
+    devDependencies:
+      '@standard-schema/spec':
+        specifier: 1.0.0-beta.1
+        version: 1.0.0-beta.1
 
 packages:
 
@@ -1014,6 +1024,12 @@ packages:
 
   '@rtsao/scc@1.1.0':
     resolution: {integrity: sha512-zt6OdqaDoOnJ1ZYsCYGt9YmWzDXl4vQdKTyJev62gFhRGKdx7mcT54V9KIjg+d2wi9EXsPvAPKe7i7WjfVWB8g==}
+
+  '@standard-schema/spec@1.0.0-beta.1':
+    resolution: {integrity: sha512-XFHxCgvFiNrofjsZ1SFLKjLSo6kM9WITBU6gPnkKtrQ6fSuPWhZ/7gLTWmMcMprFgN4FfU1Wcsr5+jNkRaksCQ==}
+
+  '@standard-schema/utils@0.1.1':
+    resolution: {integrity: sha512-Uc/EWqUoxElTp50GChAK4l/QTn82RiSMsJB9dtUiIo54HHCpxByOxBGAOh73J1AGxMjk1ALvlDCyueOdvaxxPw==}
 
   '@testing-library/dom@9.3.4':
     resolution: {integrity: sha512-FlS4ZWlp97iiNWig0Muq8p+3rVDjRiYE+YKGbAqXOu9nwJFFOdL00kFpz42M+4huzYi86vAK1sOOfyOG45muIQ==}
@@ -4656,6 +4672,10 @@ snapshots:
     optional: true
 
   '@rtsao/scc@1.1.0': {}
+
+  '@standard-schema/spec@1.0.0-beta.1': {}
+
+  '@standard-schema/utils@0.1.1': {}
 
   '@testing-library/dom@9.3.4':
     dependencies:
