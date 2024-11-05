@@ -41,7 +41,7 @@ function logPkgSize(pkg: string) {
 async function build(pkg) {
   consola.start(`📦 Generating bundle for @formwerk/${pkg}`);
   const pkgout = path.join(__dirname, `../packages/${pkg}/dist`);
-  await fs.emptyDir(pkgout);
+  // await fs.emptyDir(pkgout);
   for (const format of ['esm', 'iife', 'cjs'] as ModuleFormat[]) {
     const { input, output, bundleName } = await createConfig(pkg, format);
     const bundle = await rollup(input);
