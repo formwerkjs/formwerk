@@ -4,6 +4,7 @@ import { SelectionContextKey } from './useSelect';
 import { hasKeyCode, normalizeProps, useUniqId, warn, withRefCapture } from '../utils/common';
 import { ListManagerKey } from './useListBox';
 import { FieldTypePrefixes } from '../constants';
+import { createDisabledContext } from '../helpers/createDisabledContext/createDisabledContext';
 
 interface OptionDomProps {
   id: string;
@@ -28,6 +29,7 @@ export function useOption<TOption>(_props: Reactivify<OptionProps<TOption>>, ele
   const props = normalizeProps(_props);
   const optionEl = elementRef || ref<HTMLElement>();
   const isFocused = shallowRef(false);
+  const isDisabled = createDisabledContext(() => toValue(props.disabled));
   const selectionCtx = inject(SelectionContextKey, null);
   const listManager = inject(ListManagerKey, null);
   const isSelected = computed(() => selectionCtx?.isValueSelected(getValue()) ?? false);
@@ -48,12 +50,11 @@ export function useOption<TOption>(_props: Reactivify<OptionProps<TOption>>, ele
   }
 
   const optionId = useUniqId(FieldTypePrefixes.Option);
-  const isDisabled = () => !!toValue(props.disabled);
 
   listManager?.useOptionRegistration({
     id: optionId,
     toggleSelected,
-    isDisabled,
+    isDisabled: () => isDisabled.value,
     isSelected: () => isSelected.value,
     isFocused: () => isFocused.value,
     getLabel: () => toValue(props.label) ?? '',
@@ -72,14 +73,14 @@ export function useOption<TOption>(_props: Reactivify<OptionProps<TOption>>, ele
 
   const handlers = {
     onClick() {
-      if (isDisabled()) {
+      if (isDisabled.value) {
         return;
       }
 
       selectionCtx?.toggleValue(getValue());
     },
     onKeydown(e: KeyboardEvent) {
-      if (isDisabled()) {
+      if (isDisabled.value) {
         return;
       }
 
@@ -104,7 +105,7 @@ export function useOption<TOption>(_props: Reactivify<OptionProps<TOption>>, ele
         tabindex: isFocused.value ? '0' : '-1',
         'aria-selected': isMultiple ? undefined : isSelected.value,
         'aria-checked': isMultiple ? isSelected.value : undefined,
-        'aria-disabled': isDisabled() || undefined,
+        'aria-disabled': isDisabled.value || undefined,
         ...handlers,
       },
       optionEl,
