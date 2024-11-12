@@ -1,9 +1,9 @@
-import { computed, ref, Ref, toValue } from 'vue';
+import { computed, ref, Ref } from 'vue';
 import { Maybe, Reactivify } from '../types';
 import { useLabel } from '../a11y/useLabel';
 import { normalizeProps, useUniqId, withRefCapture } from '../utils/common';
 import { FieldTypePrefixes } from '../constants';
-import { createDisabledContext } from '../helpers/createDisabledContext/createDisabledContext';
+import { createDisabledContext } from '../helpers/createDisabledContext';
 
 export interface OptionGroupProps {
   label: string;
@@ -14,7 +14,7 @@ export function useOptionGroup(_props: Reactivify<OptionGroupProps>, elementRef?
   const groupEl = elementRef || ref<HTMLElement>();
   const props = normalizeProps(_props);
   const groupId = useUniqId(FieldTypePrefixes.OptionGroup);
-  createDisabledContext(() => toValue(props.disabled));
+  const isDisabled = createDisabledContext(props.disabled);
 
   const { labelProps, labelledByProps } = useLabel({
     label: props.label,
@@ -38,5 +38,6 @@ export function useOptionGroup(_props: Reactivify<OptionGroupProps>, elementRef?
     labelProps,
     groupProps,
     groupEl,
+    isDisabled,
   };
 }

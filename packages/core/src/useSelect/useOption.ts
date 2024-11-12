@@ -4,7 +4,7 @@ import { SelectionContextKey } from './useSelect';
 import { hasKeyCode, normalizeProps, useUniqId, warn, withRefCapture } from '../utils/common';
 import { ListManagerKey } from './useListBox';
 import { FieldTypePrefixes } from '../constants';
-import { createDisabledContext } from '../helpers/createDisabledContext/createDisabledContext';
+import { createDisabledContext } from '../helpers/createDisabledContext';
 
 interface OptionDomProps {
   id: string;
@@ -16,6 +16,7 @@ interface OptionDomProps {
   'aria-selected'?: boolean;
   // Used when the listbox allows multiple selections
   'aria-checked'?: boolean;
+  'aria-disabled'?: boolean;
 }
 
 export interface OptionProps<TValue> {
@@ -29,7 +30,7 @@ export function useOption<TOption>(_props: Reactivify<OptionProps<TOption>>, ele
   const props = normalizeProps(_props);
   const optionEl = elementRef || ref<HTMLElement>();
   const isFocused = shallowRef(false);
-  const isDisabled = createDisabledContext(() => toValue(props.disabled));
+  const isDisabled = createDisabledContext(props.disabled);
   const selectionCtx = inject(SelectionContextKey, null);
   const listManager = inject(ListManagerKey, null);
   const isSelected = computed(() => selectionCtx?.isValueSelected(getValue()) ?? false);
@@ -117,5 +118,6 @@ export function useOption<TOption>(_props: Reactivify<OptionProps<TOption>>, ele
     optionProps,
     isSelected,
     optionEl,
+    isDisabled,
   };
 }
