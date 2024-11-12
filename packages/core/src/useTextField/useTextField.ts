@@ -76,7 +76,7 @@ export function useTextField(
   });
 
   const { validityDetails } = useInputValidity({ inputEl, field, disableHtmlValidation: props.disableHtmlValidation });
-  const { fieldValue, setValue, setTouched, errorMessage } = field;
+  const { fieldValue, setValue, setTouched, errorMessage, isDisabled } = field;
   const { labelProps, labelledByProps } = useLabel({
     for: inputId,
     label: props.label,
@@ -108,7 +108,7 @@ export function useTextField(
   const inputProps = computed<TextInputDOMProps>(() => {
     return withRefCapture(
       {
-        ...propsToValues(props, ['name', 'type', 'placeholder', 'required', 'readonly', 'disabled']),
+        ...propsToValues(props, ['name', 'type', 'placeholder', 'required', 'readonly']),
         ...labelledByProps.value,
         ...describedByProps.value,
         ...accessibleErrorProps.value,
@@ -117,6 +117,7 @@ export function useTextField(
         value: fieldValue.value,
         maxlength: toValue(props.maxLength),
         minlength: toValue(props.minLength),
+        disabled: isDisabled.value ? true : undefined,
         // Maybe we need to find a better way to serialize RegExp to a pattern string
         pattern: inputEl.value?.tagName === 'TEXTAREA' ? undefined : toValue(props.pattern)?.toString(),
       },

@@ -4,6 +4,7 @@ import { AriaInputProps, AriaLabelableProps, InputBaseAttributes, Reactivify, Ro
 import { useLabel } from '../a11y/useLabel';
 import { RadioGroupContext, RadioGroupKey } from './useRadioGroup';
 import { FieldTypePrefixes } from '../constants';
+import { createDisabledContext } from '../helpers/createDisabledContext';
 
 export interface RadioProps<TValue = string> {
   value: TValue;
@@ -30,6 +31,7 @@ export function useRadio<TValue = string>(
   const group: RadioGroupContext<TValue> | null = inject(RadioGroupKey, null);
   const inputEl = elementRef || ref<HTMLInputElement>();
   const checked = computed(() => isEqual(group?.modelValue, toValue(props.value)));
+  const isDisabled = createDisabledContext(props.disabled);
   const { labelProps, labelledByProps } = useLabel({
     for: inputId,
     label: props.label,
@@ -43,8 +45,7 @@ export function useRadio<TValue = string>(
   }
 
   const isReadOnly = () => group?.readonly ?? false;
-  const isDisabled = () => (toValue(props.disabled) || group?.disabled) ?? false;
-  const isMutable = () => !isReadOnly() && !isDisabled();
+  const isMutable = () => !isReadOnly() && !isDisabled.value;
 
   function focus() {
     inputEl.value?.focus();
@@ -66,7 +67,7 @@ export function useRadio<TValue = string>(
     id: inputId,
     getElem: () => inputEl.value,
     isChecked: () => checked.value,
-    isDisabled,
+    isDisabled: () => isDisabled.value,
     setChecked,
   });
 
@@ -97,7 +98,7 @@ export function useRadio<TValue = string>(
       id: inputId,
       [isInput ? 'checked' : 'aria-checked']: checked.value,
       [isInput ? 'readonly' : 'aria-readonly']: group?.readonly || undefined,
-      [isInput ? 'disabled' : 'aria-disabled']: isDisabled() || undefined,
+      [isInput ? 'disabled' : 'aria-disabled']: isDisabled.value || undefined,
       [isInput ? 'required' : 'aria-required']: group?.required,
     };
 
@@ -112,7 +113,7 @@ export function useRadio<TValue = string>(
     return {
       ...base,
       role: 'radio',
-      tabindex: checked.value ? '0' : registration?.canReceiveFocus() ? '0' : '-1',
+      tabindex: checked.value ? '0' : registration?.canReceiveFocus() && !isDisabled.value ? '0' : '-1',
     };
   }
 
@@ -122,7 +123,7 @@ export function useRadio<TValue = string>(
     inputEl,
     inputProps,
     isChecked: checked,
-    isDisabled: computed(() => isDisabled()),
+    isDisabled,
     labelProps,
   };
 }

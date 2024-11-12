@@ -16,11 +16,13 @@ import { FormValidationMode } from '../useForm/formContext';
 import { prefixPath as _prefixPath } from '../utils/path';
 import { getConfig } from '../config';
 import { createPathPrefixer } from '../helpers/usePathPrefixer';
+import { createDisabledContext } from '../helpers/createDisabledContext';
 
 export interface FormGroupProps<TInput extends FormObject = FormObject, TOutput extends FormObject = TInput> {
   name: string;
   label?: string;
   schema?: StandardSchema<TInput, TOutput>;
+  disabled?: boolean;
   disableHtmlValidation?: boolean;
 }
 
@@ -48,6 +50,7 @@ export function useFormGroup<TInput extends FormObject = FormObject, TOutput ext
   const getPath = () => toValue(props.name);
   const groupEl = elementRef || shallowRef<HTMLInputElement>();
   const form = inject(FormKey, null);
+  const isDisabled = createDisabledContext(props.disabled);
   const isHtmlValidationDisabled = () =>
     toValue(props.disableHtmlValidation) ?? form?.isHtmlValidationDisabled() ?? getConfig().disableHtmlValidation;
   const { validate, onValidationDispatch, defineValidationRequest, onValidationDone, dispatchValidateDone } =
@@ -161,6 +164,7 @@ export function useFormGroup<TInput extends FormObject = FormObject, TOutput ext
     isDirty,
     isValid,
     isTouched,
+    isDisabled,
     getErrors,
     getValues,
     getError,

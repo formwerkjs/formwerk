@@ -23,6 +23,7 @@ import { useLabel } from '../a11y/useLabel';
 import { useFormField } from '../useFormField';
 import { FieldTypePrefixes } from '../constants';
 import { exposeField } from '../utils/exposers';
+import { createDisabledContext } from '../helpers/createDisabledContext';
 
 export interface SearchInputDOMAttributes extends TextInputBaseAttributes {
   type?: 'search';
@@ -68,14 +69,15 @@ export function useSearchField(
   const props = normalizeProps(_props, ['onSubmit', 'schema']);
   const inputId = useUniqId(FieldTypePrefixes.SearchField);
   const inputEl = elementRef || ref<HTMLInputElement>();
+  const isDisabled = createDisabledContext(props.disabled);
   const field = useFormField<string | undefined>({
     path: props.name,
     initialValue: toValue(props.modelValue) ?? toValue(props.value),
-    disabled: props.disabled,
+    disabled: isDisabled,
     schema: props.schema,
   });
 
-  const isMutable = () => !toValue(props.readonly) && !toValue(props.disabled);
+  const isMutable = () => !toValue(props.readonly) && !isDisabled.value;
 
   const { validityDetails, updateValidity } = useInputValidity({
     inputEl,
@@ -152,12 +154,13 @@ export function useSearchField(
   const inputProps = computed<SearchInputDOMProps>(() =>
     withRefCapture(
       {
-        ...propsToValues(props, ['name', 'pattern', 'placeholder', 'required', 'readonly', 'disabled']),
+        ...propsToValues(props, ['name', 'pattern', 'placeholder', 'required', 'readonly']),
         ...labelledByProps.value,
         ...describedByProps.value,
         ...accessibleErrorProps.value,
         id: inputId,
         value: fieldValue.value,
+        disabled: isDisabled.value ? true : undefined,
         type: 'search',
         maxlength: toValue(props.maxLength),
         minlength: toValue(props.minLength),

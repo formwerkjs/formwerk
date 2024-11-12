@@ -44,7 +44,6 @@ export interface SelectTriggerDomProps extends AriaLabelableProps {
 export interface SelectionContext<TOption, TValue = TOption> {
   isValueSelected(value: TValue): boolean;
   isMultiple(): boolean;
-  isDisabled(): boolean;
   toggleValue(value: TValue, force?: boolean): void;
 }
 
@@ -55,16 +54,15 @@ const MENU_OPEN_KEYS = ['Enter', 'Space', 'ArrowDown', 'ArrowUp'];
 export function useSelect<TOption, TValue = TOption>(_props: Reactivify<SelectProps<TOption, TValue>, 'schema'>) {
   const inputId = useUniqId(FieldTypePrefixes.Select);
   const props = normalizeProps(_props, ['schema']);
-  const isDisabled = () => toValue(props.disabled) ?? false;
-  const isMutable = () => !isDisabled() && !toValue(props.readonly);
   const field = useFormField<Arrayable<TValue>>({
     path: props.name,
     initialValue: (toValue(props.modelValue) ?? toValue(props.value)) as Arrayable<TValue>,
     disabled: props.disabled,
-
     schema: props.schema,
   });
 
+  const { fieldValue, setValue, errorMessage, isDisabled } = field;
+  const isMutable = () => !isDisabled.value && !toValue(props.readonly);
   const { labelProps, labelledByProps } = useLabel({
     label: props.label,
     for: inputId,
@@ -73,6 +71,7 @@ export function useSelect<TOption, TValue = TOption>(_props: Reactivify<SelectPr
   let lastRecentlySelectedOption: TValue | undefined;
   const { listBoxProps, isPopupOpen, options, isShiftPressed, listBoxEl } = useListBox<TOption, TValue>({
     labeledBy: () => labelledByProps.value['aria-labelledby'],
+    disabled: isDisabled,
     label: props.label,
     multiple: props.multiple,
     orientation: props.orientation,
@@ -82,7 +81,6 @@ export function useSelect<TOption, TValue = TOption>(_props: Reactivify<SelectPr
   });
 
   const { updateValidity } = useInputValidity({ field });
-  const { fieldValue, setValue, errorMessage } = field;
   const { descriptionProps, describedByProps } = createDescribedByProps({
     inputId,
     description: props.description,
@@ -105,7 +103,6 @@ export function useSelect<TOption, TValue = TOption>(_props: Reactivify<SelectPr
 
       return values.some(item => isEqual(item, value));
     },
-    isDisabled,
     toggleValue(optionValue, force) {
       if (!isMutable()) {
         return;
@@ -193,14 +190,14 @@ export function useSelect<TOption, TValue = TOption>(_props: Reactivify<SelectPr
 
   const handlers = {
     onClick() {
-      if (isDisabled()) {
+      if (isDisabled.value) {
         return;
       }
 
       isPopupOpen.value = !isPopupOpen.value;
     },
     onKeydown(e: KeyboardEvent) {
-      if (isDisabled()) {
+      if (isDisabled.value) {
         return;
       }
 
@@ -218,11 +215,11 @@ export function useSelect<TOption, TValue = TOption>(_props: Reactivify<SelectPr
       ...describedByProps.value,
       ...accessibleErrorProps.value,
       id: inputId,
-      tabindex: isDisabled() ? '-1' : '0',
+      tabindex: isDisabled.value ? '-1' : '0',
       role: 'combobox',
       'aria-haspopup': 'listbox',
       'aria-expanded': isPopupOpen.value,
-      'aria-disabled': isDisabled() || undefined,
+      'aria-disabled': isDisabled.value || undefined,
       ...handlers,
     };
   });

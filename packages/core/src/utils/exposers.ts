@@ -9,6 +9,7 @@ export function exposeField<TValue>(field: FormField<TValue>) {
     isDirty: field.isDirty,
     isTouched: field.isTouched,
     isValid: field.isValid,
+    isDisabled: field.isDisabled,
     setErrors: field.setErrors,
     setTouched: field.setTouched,
     setValue: field.setValue,

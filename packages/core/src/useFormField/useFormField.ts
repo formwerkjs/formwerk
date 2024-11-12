@@ -6,6 +6,7 @@ import { cloneDeep, isEqual, normalizeArrayable, combineIssues, tryOnScopeDispos
 import { FormGroupKey } from '../useFormGroup';
 import { useErrorDisplay } from './useErrorDisplay';
 import { usePathPrefixer } from '../helpers/usePathPrefixer';
+import { createDisabledContext } from '../helpers/createDisabledContext';
 
 interface FormFieldOptions<TValue = unknown> {
   path: MaybeRefOrGetter<string | undefined> | undefined;
@@ -22,6 +23,7 @@ export type FormField<TValue> = {
   isTouched: Ref<boolean>;
   isDirty: Ref<boolean>;
   isValid: Ref<boolean>;
+  isDisabled: Ref<boolean>;
   errors: Ref<string[]>;
   errorMessage: Ref<string>;
   schema: StandardSchema<TValue> | undefined;
@@ -38,6 +40,7 @@ export function useFormField<TValue = unknown>(opts?: Partial<FormFieldOptions<T
   const form = inject(FormKey, null);
   const formGroup = inject(FormGroupKey, null);
   const pathPrefixer = usePathPrefixer();
+  const isDisabled = createDisabledContext(opts?.disabled);
   const getPath = () => {
     const path = toValue(opts?.path);
 
@@ -108,6 +111,7 @@ export function useFormField<TValue = unknown>(opts?: Partial<FormFieldOptions<T
     isValid,
     errors,
     errorMessage,
+    isDisabled,
     schema: opts?.schema,
     validate,
     getPath,
@@ -122,7 +126,7 @@ export function useFormField<TValue = unknown>(opts?: Partial<FormFieldOptions<T
     return field;
   }
 
-  initFormPathIfNecessary(form, getPath, initialValue, opts?.initialTouched ?? false, toValue(opts?.disabled) ?? false);
+  initFormPathIfNecessary(form, getPath, initialValue, opts?.initialTouched ?? false, isDisabled);
 
   form.onSubmitAttempt(() => {
     setTouched(true);
@@ -159,26 +163,21 @@ export function useFormField<TValue = unknown>(opts?: Partial<FormFieldOptions<T
           path: newPath,
           value: cloneDeep(oldPath ? tf.getFieldValue(oldPath) : pathlessValue.value),
           touched: oldPath ? tf.isFieldTouched(oldPath) : pathlessTouched.value,
-          disabled: toValue(opts?.disabled) ?? false,
+          disabled: isDisabled.value,
           errors: [...(oldPath ? tf.getFieldErrors(oldPath) : pathlessValidity.errors.value)],
         };
       });
     }
   });
 
-  if (opts?.disabled) {
-    watch(
-      () => toValue(opts?.disabled) ?? false,
-      disabled => {
-        const path = getPath();
-        if (!path) {
-          return;
-        }
+  watch(isDisabled, disabled => {
+    const path = getPath();
+    if (!path) {
+      return;
+    }
 
-        form.setFieldDisabled(path, disabled);
-      },
-    );
-  }
+    form.setFieldDisabled(path, disabled);
+  });
 
   return field;
 }
@@ -292,7 +291,7 @@ function initFormPathIfNecessary(
   getPath: Getter<string | undefined>,
   initialValue: unknown,
   initialTouched: boolean,
-  disabled: boolean,
+  isDisabled: MaybeRefOrGetter<boolean>,
 ) {
   const path = getPath();
   if (!path) {
@@ -306,7 +305,7 @@ function initFormPathIfNecessary(
       path,
       value: initialValue ?? form.getFieldInitialValue(path),
       touched: initialTouched,
-      disabled,
+      disabled: toValue(isDisabled),
       errors: [...tf.getFieldErrors(path)],
     }));
   });

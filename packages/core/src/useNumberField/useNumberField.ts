@@ -91,7 +91,7 @@ export function useNumberField(
     field,
     disableHtmlValidation: props.disableHtmlValidation,
   });
-  const { fieldValue, setValue, setTouched, errorMessage } = field;
+  const { fieldValue, setValue, setTouched, errorMessage, isDisabled } = field;
   const formattedText = computed<string>(() => {
     if (Number.isNaN(fieldValue.value) || isEmpty(fieldValue.value)) {
       return '';
@@ -124,7 +124,7 @@ export function useNumberField(
       min: props.min,
       max: props.max,
       readonly: props.readonly,
-      disabled: () => toValue(props.disabled) || toValue(props.readonly),
+      disabled: () => isDisabled.value || toValue(props.readonly),
       incrementLabel: props.incrementLabel,
       decrementLabel: props.decrementLabel,
       orientation: 'vertical',
@@ -187,7 +187,7 @@ export function useNumberField(
   const inputProps = computed<NumberInputDOMProps>(() => {
     return withRefCapture(
       {
-        ...propsToValues(props, ['name', 'placeholder', 'required', 'readonly', 'disabled']),
+        ...propsToValues(props, ['name', 'placeholder', 'required', 'readonly']),
         ...labelledByProps.value,
         ...describedByProps.value,
         ...accessibleErrorProps.value,
@@ -196,6 +196,7 @@ export function useNumberField(
         id: inputId,
         inputmode: inputMode.value,
         value: formattedText.value,
+        disabled: isDisabled.value ? true : undefined,
         max: toValue(props.max),
         min: toValue(props.min),
         type: 'text',
@@ -217,7 +218,7 @@ export function useNumberField(
 
       decrement();
     },
-    { disabled: () => toValue(props.disableWheel), passive: true },
+    { disabled: () => isDisabled.value || toValue(props.disableWheel), passive: true },
   );
 
   return {

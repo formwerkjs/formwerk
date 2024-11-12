@@ -27,7 +27,6 @@ import { exposeField } from '../utils/exposers';
 
 export interface RadioGroupContext<TValue> {
   name: string;
-  disabled: boolean;
   readonly: boolean;
   required: boolean;
 
@@ -94,7 +93,6 @@ export function useRadioGroup<TValue = string>(_props: Reactivify<RadioGroupProp
   const props = normalizeProps(_props, ['schema']);
   const groupId = useUniqId(FieldTypePrefixes.RadioButtonGroup);
   const { direction } = useLocale();
-
   const radios = ref<RadioRegistration[]>([]);
   const { labelProps, labelledByProps } = useLabel({
     for: groupId,
@@ -116,7 +114,7 @@ export function useRadioGroup<TValue = string>(_props: Reactivify<RadioGroupProp
     disableHtmlValidation: props.disableHtmlValidation,
   });
 
-  const { fieldValue, setValue, setTouched, errorMessage } = field;
+  const { fieldValue, setValue, setTouched, errorMessage, isDisabled } = field;
 
   const { descriptionProps, describedByProps } = createDescribedByProps({
     inputId: groupId,
@@ -173,7 +171,7 @@ export function useRadioGroup<TValue = string>(_props: Reactivify<RadioGroupProp
       role: 'radiogroup',
       'aria-orientation': toValue(props.orientation) ?? undefined,
       onKeydown(e: KeyboardEvent) {
-        if (toValue(props.disabled)) {
+        if (isDisabled.value) {
           return;
         }
 
@@ -214,7 +212,7 @@ export function useRadioGroup<TValue = string>(_props: Reactivify<RadioGroupProp
   }
 
   function setGroupValue(value: TValue) {
-    if (toValue(props.disabled) || toValue(props.readonly)) {
+    if (isDisabled.value || toValue(props.readonly)) {
       return;
     }
 
@@ -223,7 +221,6 @@ export function useRadioGroup<TValue = string>(_props: Reactivify<RadioGroupProp
 
   const context: RadioGroupContext<TValue> = reactive({
     name: computed(() => toValue(props.name) ?? groupId),
-    disabled: computed(() => toValue(props.disabled) ?? false),
     readonly: computed(() => toValue(props.readonly) ?? false),
     required: computed(() => toValue(props.required) ?? false),
     modelValue: fieldValue,

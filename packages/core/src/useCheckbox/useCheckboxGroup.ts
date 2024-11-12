@@ -41,7 +41,6 @@ export interface CheckboxRegistration {
 
 export interface CheckboxGroupContext<TCheckbox> {
   name: string;
-  disabled: boolean;
   readonly: boolean;
   required: boolean;
   field: FormField<CheckboxGroupValue<TCheckbox>>;
@@ -97,6 +96,7 @@ export function useCheckboxGroup<TCheckbox>(_props: Reactivify<CheckboxGroupProp
     path: props.name,
     initialValue: toValue(props.modelValue),
     schema: props.schema,
+    disabled: props.disabled,
   });
 
   const { validityDetails, updateValidity } = useInputValidity({
@@ -107,7 +107,7 @@ export function useCheckboxGroup<TCheckbox>(_props: Reactivify<CheckboxGroupProp
     disableHtmlValidation: props.disableHtmlValidation,
   });
 
-  const { fieldValue, setValue, isTouched, setTouched, errorMessage } = field;
+  const { fieldValue, setValue, isTouched, setTouched, errorMessage, isDisabled } = field;
   const { describedByProps, descriptionProps } = createDescribedByProps({
     inputId: groupId,
     description: props.description,
@@ -137,6 +137,10 @@ export function useCheckboxGroup<TCheckbox>(_props: Reactivify<CheckboxGroupProp
   }
 
   function toggleValue(value: TCheckbox, force?: boolean) {
+    if (isDisabled.value || toValue(props.readonly)) {
+      return;
+    }
+
     const nextValue = toggleValueSelection(fieldValue.value ?? [], value, force);
 
     setValue(nextValue);
@@ -175,7 +179,6 @@ export function useCheckboxGroup<TCheckbox>(_props: Reactivify<CheckboxGroupProp
 
   const context: CheckboxGroupContext<TCheckbox> = reactive({
     name: computed(() => toValue(props.name) ?? groupId),
-    disabled: computed(() => toValue(props.disabled) ?? false),
     readonly: computed(() => toValue(props.readonly) ?? false),
     required: computed(() => toValue(props.required) ?? false),
     field: markRaw(field),

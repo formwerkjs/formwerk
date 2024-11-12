@@ -5,6 +5,7 @@ import { Reactivify } from '../types';
 import { useSpinButton } from '../useSpinButton';
 import { useLocale } from '../i18n';
 import { FieldTypePrefixes, NOOP } from '../constants';
+import { createDisabledContext } from '../helpers/createDisabledContext';
 
 export interface SliderThumbProps {
   label?: string;
@@ -15,6 +16,7 @@ export interface SliderThumbProps {
 export function useSliderThumb(_props: Reactivify<SliderThumbProps>, elementRef?: Ref<HTMLElement>) {
   const props = normalizeProps(_props);
   const thumbEl = elementRef || ref<HTMLElement>();
+  const isDisabled = createDisabledContext(props.disabled);
   const isDragging = ref(false);
   const { direction } = useLocale();
   const id = useUniqId(FieldTypePrefixes.SliderThumb);
@@ -50,7 +52,6 @@ export function useSliderThumb(_props: Reactivify<SliderThumbProps>, elementRef?
 
   const slider = inject(SliderInjectionKey, mockSlider, true).useSliderThumbRegistration(thumbContext);
   const thumbValue = computed(() => slider.getThumbValue());
-  const isDisabled = () => toValue(props.disabled) || slider.isDisabled();
 
   if ('__isMock' in slider) {
     warn(
@@ -81,7 +82,7 @@ export function useSliderThumb(_props: Reactivify<SliderThumbProps>, elementRef?
 
     return withRefCapture(
       {
-        tabindex: isDisabled() ? '-1' : '0',
+        tabindex: isDisabled.value ? '-1' : '0',
         role: 'slider',
         ...slider.getAccessibleErrorProps(),
         'aria-orientation': slider.getOrientation(),
@@ -150,6 +151,7 @@ export function useSliderThumb(_props: Reactivify<SliderThumbProps>, elementRef?
     thumbProps,
     currentValue: thumbValue,
     isDragging,
+    isDisabled,
     thumbEl,
   };
 }

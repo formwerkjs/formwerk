@@ -77,7 +77,7 @@ export function useCheckbox<TValue = string>(
       disableHtmlValidation: props.disableHtmlValidation,
     });
   }
-  const { fieldValue, setTouched, setValue, errorMessage, setErrors } = field;
+  const { fieldValue, setTouched, setValue, errorMessage, setErrors, isDisabled } = field;
 
   const checked = computed({
     get() {
@@ -103,10 +103,8 @@ export function useCheckbox<TValue = string>(
     errorMessage,
   });
 
-  const isDisabled = () => (toValue(props.disabled) || group?.disabled) ?? false;
   const isReadOnly = () => (toValue(props.readonly) || group?.readonly) ?? false;
-
-  const isMutable = () => !isDisabled() && !isReadOnly() && !toValue(props.indeterminate);
+  const isMutable = () => !isDisabled.value && !isReadOnly() && !toValue(props.indeterminate);
 
   function createHandlers(isInput: boolean) {
     const baseHandlers = {
@@ -163,7 +161,7 @@ export function useCheckbox<TValue = string>(
       [isInput ? 'checked' : 'aria-checked']: checked.value,
       [isInput ? 'required' : 'aria-required']: (group ? group.required : toValue(props.required)) || undefined,
       [isInput ? 'readonly' : 'aria-readonly']: isReadOnly() || undefined,
-      [isInput ? 'disabled' : 'aria-disabled']: isDisabled() || undefined,
+      [isInput ? 'disabled' : 'aria-disabled']: isDisabled.value || undefined,
       ...(group
         ? {}
         : {
@@ -183,14 +181,14 @@ export function useCheckbox<TValue = string>(
     return {
       ...base,
       role: 'checkbox',
-      tabindex: toValue(props.disabled) ? '-1' : '0',
+      tabindex: isDisabled.value ? '-1' : '0',
     };
   }
 
   group?.useCheckboxRegistration({
     id: inputId,
     getElem: () => inputEl.value,
-    isDisabled,
+    isDisabled: () => isDisabled.value,
     isChecked: () => checked.value,
     setChecked: (force?: boolean) => {
       if (!isMutable()) {

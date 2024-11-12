@@ -101,8 +101,6 @@ export interface SliderRegistration {
 
   setTouched(value: boolean): void;
 
-  isDisabled(): boolean;
-
   getAccessibleErrorProps(): ErrorableAttributes;
 }
 
@@ -117,9 +115,6 @@ export function useSlider(_props: Reactivify<SliderProps, 'schema'>) {
   const inputId = useUniqId(FieldTypePrefixes.Slider);
   const trackEl = ref<HTMLElement>();
   const thumbs = ref<ThumbRegistration[]>([]);
-  const isDisabled = () => toValue(props.disabled) ?? false;
-  const isReadonly = () => toValue(props.readonly) ?? false;
-  const isMutable = () => !isDisabled() && !isReadonly();
   const { direction } = useLocale();
   const field = useFormField<Arrayable<number>>({
     path: props.name,
@@ -128,7 +123,9 @@ export function useSlider(_props: Reactivify<SliderProps, 'schema'>) {
     schema: props.schema,
   });
 
-  const { fieldValue, setValue, setTouched } = field;
+  const { fieldValue, setValue, setTouched, isDisabled } = field;
+  const isReadonly = () => toValue(props.readonly) ?? false;
+  const isMutable = () => !isDisabled.value && !isReadonly();
   const { updateValidity } = useInputValidity({ field });
   const { labelProps, labelledByProps } = useLabel({
     for: inputId,
@@ -291,14 +288,12 @@ export function useSlider(_props: Reactivify<SliderProps, 'schema'>) {
         setThumbValue(getThumbIndex(), value);
       },
       setTouched,
-      isDisabled,
       getAccessibleErrorProps: () => accessibleErrorProps.value,
     };
 
     return reg;
   }
 
-  // TODO: IDK what this does
   const outputProps = {
     'aria-live': 'off',
   };
