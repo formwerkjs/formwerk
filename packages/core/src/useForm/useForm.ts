@@ -1,4 +1,4 @@
-import { computed, InjectionKey, onMounted, provide, reactive, readonly, Ref, ref } from 'vue';
+import { computed, InjectionKey, MaybeRefOrGetter, onMounted, provide, reactive, readonly, Ref, ref } from 'vue';
 import type { v1 } from '@standard-schema/spec';
 import { cloneDeep, isEqual, useUniqId } from '../utils/common';
 import {
@@ -24,6 +24,7 @@ import { getConfig } from '../config';
 import { FieldTypePrefixes } from '../constants';
 import { appendToFormData, clearFormData } from '../utils/formData';
 import { PartialDeep } from 'type-fest';
+import { createDisabledContext } from '../helpers/createDisabledContext';
 
 export interface FormOptions<TSchema extends GenericFormSchema, TInput extends FormObject = v1.InferInput<TSchema>> {
   id: string;
@@ -31,6 +32,7 @@ export interface FormOptions<TSchema extends GenericFormSchema, TInput extends F
   initialTouched: TouchedSchema<TInput>;
   schema: TSchema;
   disableHtmlValidation: boolean;
+  disabled: MaybeRefOrGetter<boolean | undefined>;
 }
 
 export interface FormContext<TInput extends FormObject = FormObject, TOutput extends FormObject = TInput>
@@ -64,6 +66,7 @@ export function useForm<
   });
 
   const id = opts?.id || useUniqId(FieldTypePrefixes.Form);
+  const isDisabled = createDisabledContext(opts?.disabled);
   const isHtmlValidationDisabled = () => opts?.disableHtmlValidation ?? getConfig().disableHtmlValidation;
   const values = reactive(cloneDeep(valuesSnapshot.originals.value)) as PartialDeep<TInput>;
   const touched = reactive(cloneDeep(touchedSnapshot.originals.value)) as TouchedSchema<TInput>;
@@ -155,6 +158,7 @@ export function useForm<
     isTouched,
     isDirty,
     isValid,
+    isDisabled,
     isFieldDirty: ctx.isFieldDirty,
     setFieldValue: ctx.setFieldValue,
     getFieldValue: ctx.getFieldValue,
