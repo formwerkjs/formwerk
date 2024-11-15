@@ -26,7 +26,7 @@ test('Arktype schemas are supported', async () => {
       return {
         getError,
         onSubmit: handleSubmit(v => {
-          handler(v.toJSON());
+          handler(v.toObject());
         }),
       };
     },

@@ -139,7 +139,7 @@ export function useForm<
 
   const onSubmit = actions.handleSubmit((output, { form }) => {
     if (form) {
-      form.__formOut = output.toJSON();
+      form.__formOut = output.toObject();
       form.submit();
     }
   });

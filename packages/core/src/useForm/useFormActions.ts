@@ -14,6 +14,7 @@ import { BaseFormContext, SetValueOptions } from './formContext';
 import { unsetPath } from '../utils/path';
 import { useValidationProvider } from '../validation/useValidationProvider';
 import { appendToFormData } from '../utils/formData';
+import type { Jsonify } from 'type-fest';
 
 export interface ResetState<TForm extends FormObject> {
   values: Partial<TForm>;
@@ -28,7 +29,8 @@ export interface FormActionsOptions<TForm extends FormObject = FormObject, TOutp
 
 export type ConsumableData<TOutput extends FormObject> = {
   toFormData: () => FormData;
-  toJSON: () => TOutput;
+  toObject: () => TOutput;
+  toJSON: () => Jsonify<TOutput>;
 };
 
 export interface SubmitContext {
@@ -141,7 +143,7 @@ export function useFormActions<TForm extends FormObject = FormObject, TOutput ex
 }
 
 function withConsumers<TData extends FormObject>(data: TData): ConsumableData<TData> {
-  const toJSON = () => data;
+  const toObject = () => data;
   const toFormData = () => {
     const formData = new FormData();
     appendToFormData(data, formData);
@@ -149,8 +151,13 @@ function withConsumers<TData extends FormObject>(data: TData): ConsumableData<TD
     return formData;
   };
 
+  function toJSON() {
+    return JSON.parse(JSON.stringify(toObject()));
+  }
+
   return {
-    toJSON,
+    toObject,
     toFormData,
+    toJSON,
   };
 }

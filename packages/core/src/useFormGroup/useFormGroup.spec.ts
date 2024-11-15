@@ -339,7 +339,7 @@ test('submission combines group data with form data', async () => {
     setup() {
       const { handleSubmit } = useForm({});
 
-      const onSubmit = handleSubmit(v => submitHandler(v.toJSON()));
+      const onSubmit = handleSubmit(v => submitHandler(v.toObject()));
 
       return {
         onSubmit,

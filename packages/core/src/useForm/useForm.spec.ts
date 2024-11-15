@@ -180,7 +180,7 @@ describe('form submit', () => {
     });
 
     const cb = vi.fn();
-    const onSubmit = handleSubmit(v => cb(v.toJSON()));
+    const onSubmit = handleSubmit(v => cb(v.toObject()));
 
     await onSubmit(new Event('submit'));
 
@@ -244,7 +244,7 @@ describe('form submit', () => {
     );
 
     const cb = vi.fn();
-    const onSubmit = handleSubmit(v => cb(v.toJSON()));
+    const onSubmit = handleSubmit(v => cb(v.toObject()));
     expect(values).toEqual(defaults());
     await onSubmit(new Event('submit'));
     expect(cb).toHaveBeenLastCalledWith(defaults());
@@ -253,6 +253,178 @@ describe('form submit', () => {
     await onSubmit(new Event('submit'));
     expect(cb).toHaveBeenCalledTimes(2);
     expect(cb).toHaveBeenLastCalledWith({ multiple: ['field 1', 'field 3', 'field 4'] });
+  });
+
+  test('can submit with object data', async () => {
+    const file1 = new File([''], 'test1.jpg', { type: 'image/jpeg' });
+    const file2 = new File([''], 'test2.pdf', { type: 'application/pdf' });
+
+    const input = {
+      name: 'John Doe',
+      age: 30,
+      isStudent: false,
+      grades: {
+        math: 95,
+        science: 88,
+      },
+      hobbies: ['reading', 'cycling', null],
+      address: {
+        street: '123 Main St',
+        city: 'New York',
+        zipCode: null,
+      },
+      profilePic: file1,
+      documents: [
+        file2,
+        {
+          resume: file1,
+          coverLetter: file2,
+        },
+      ],
+      emptyObject: {},
+      nullValue: null,
+      undefinedValue: undefined,
+      nestedArrays: [
+        [1, 2],
+        [3, [4, 5]],
+      ],
+    } as const;
+
+    const { form } = await renderSetup(() => {
+      return { form: useForm({ initialValues: input }) };
+    });
+
+    let data!: typeof input;
+    const cb = vi.fn(v => (data = v));
+    const onSubmit = form.handleSubmit(v => cb(v.toObject()));
+    await onSubmit(new Event('submit'));
+
+    expect(data.name).toBe('John Doe');
+    expect(data.age).toBe(30);
+    expect(data.isStudent).toBe(false);
+
+    // Nested object
+    expect(data.grades.math).toBe(95);
+    expect(data.grades.science).toBe(88);
+
+    // Array
+    expect(data.hobbies[0]).toBe('reading');
+    expect(data.hobbies[1]).toBe('cycling');
+    expect(data.hobbies[2]).toBe(null);
+
+    // Nested object with null value
+    expect(data.address.street).toBe('123 Main St');
+    expect(data.address.city).toBe('New York');
+    expect(data.address.zipCode).toBe(null);
+
+    // File object
+    expect(data.profilePic).toEqual(file1);
+
+    // Array with mixed types
+    expect(data.documents[0]).toEqual(file2);
+    expect(data.documents[1].resume).toEqual(file1);
+    expect(data.documents[1].coverLetter).toEqual(file2);
+
+    // Empty object (should not have an entry)
+    expect(data.emptyObject).toEqual({});
+
+    // Null and undefined values
+    expect(data.nullValue).toBe(null);
+    expect(data.undefinedValue).toBe(undefined);
+    expect(data).toHaveProperty('undefinedValue');
+
+    // Nested arrays
+    expect(data.nestedArrays[0][0]).toBe(1);
+    expect(data.nestedArrays[0][1]).toBe(2);
+    expect(data.nestedArrays[1][0]).toBe(3);
+    expect(data.nestedArrays[1][1][0]).toBe(4);
+    expect(data.nestedArrays[1][1][1]).toBe(5);
+  });
+
+  test('can submit with JSON data', async () => {
+    const file1 = new File([''], 'test1.jpg', { type: 'image/jpeg' });
+    const file2 = new File([''], 'test2.pdf', { type: 'application/pdf' });
+
+    const input = {
+      name: 'John Doe',
+      age: 30,
+      isStudent: false,
+      grades: {
+        math: 95,
+        science: 88,
+      },
+      hobbies: ['reading', 'cycling', null],
+      address: {
+        street: '123 Main St',
+        city: 'New York',
+        zipCode: null,
+      },
+      profilePic: file1,
+      documents: [
+        file2,
+        {
+          resume: file1,
+          coverLetter: file2,
+        },
+      ],
+      emptyObject: {},
+      nullValue: null,
+      undefinedValue: undefined,
+      nestedArrays: [
+        [1, 2],
+        [3, [4, 5]],
+      ],
+    } as const;
+
+    const { form } = await renderSetup(() => {
+      return { form: useForm({ initialValues: input }) };
+    });
+
+    let data!: typeof input;
+    const cb = vi.fn(v => (data = v));
+    const onSubmit = form.handleSubmit(v => cb(v.toJSON()));
+    await onSubmit(new Event('submit'));
+
+    expect(data.name).toBe('John Doe');
+    expect(data.age).toBe(30);
+    expect(data.isStudent).toBe(false);
+
+    // Nested object
+    expect(data.grades.math).toBe(95);
+    expect(data.grades.science).toBe(88);
+
+    // Array
+    expect(data.hobbies[0]).toBe('reading');
+    expect(data.hobbies[1]).toBe('cycling');
+    expect(data.hobbies[2]).toBe(null);
+
+    // Nested object with null value
+    expect(data.address.street).toBe('123 Main St');
+    expect(data.address.city).toBe('New York');
+    expect(data.address.zipCode).toBe(null);
+
+    // File object
+    expect(data.profilePic).toEqual({});
+
+    // Array with mixed types
+    expect(data.documents[0]).toEqual({});
+    expect(data.documents[1].resume).toEqual({});
+    expect(data.documents[1].coverLetter).toEqual({});
+
+    // Empty object (should not have an entry)
+    expect(data.emptyObject).toEqual({});
+
+    // Null and undefined values
+    expect(data.nullValue).toBe(null);
+    expect(data.undefinedValue).toBe(undefined);
+    expect(data).not.toHaveProperty('undefinedValue');
+
+    // Nested arrays
+    expect(data.nestedArrays[0][0]).toBe(1);
+    expect(data.nestedArrays[0][1]).toBe(2);
+    expect(data.nestedArrays[1][0]).toBe(3);
+    expect(data.nestedArrays[1][1][0]).toBe(4);
+    expect(data.nestedArrays[1][1][1]).toBe(5);
   });
 
   test('can submit with FormData', async () => {
@@ -521,7 +693,7 @@ describe('form validation', () => {
         setup() {
           const { handleSubmit } = useForm();
 
-          return { onSubmit: handleSubmit(v => handler(v.toJSON())) };
+          return { onSubmit: handleSubmit(v => handler(v.toObject())) };
         },
         template: `
       <form @submit="onSubmit" novalidate>
@@ -601,7 +773,7 @@ describe('form validation', () => {
             schema,
           });
 
-          return { onSubmit: handleSubmit(v => handler(v.toJSON())) };
+          return { onSubmit: handleSubmit(v => handler(v.toObject())) };
         },
         template: `
       <form @submit="onSubmit" novalidate>
@@ -631,7 +803,7 @@ describe('form validation', () => {
             schema,
           });
 
-          return { getError, onSubmit: handleSubmit(v => handler(v.toJSON())) };
+          return { getError, onSubmit: handleSubmit(v => handler(v.toObject())) };
         },
         template: `
       <form @submit="onSubmit" novalidate>
@@ -671,7 +843,7 @@ describe('form validation', () => {
 
           setFieldErrors('test', 'error');
 
-          return { getError, onSubmit: handleSubmit(v => handler(v.toJSON())) };
+          return { getError, onSubmit: handleSubmit(v => handler(v.toObject())) };
         },
         template: `
       <form @submit="onSubmit" novalidate>
@@ -712,7 +884,7 @@ describe('form validation', () => {
 
           setFieldErrors('test', 'error');
 
-          return { getError, onSubmit: handleSubmit(v => handler(v.toJSON())) };
+          return { getError, onSubmit: handleSubmit(v => handler(v.toObject())) };
         },
         template: `
       <form @submit="onSubmit" novalidate>
@@ -802,7 +974,7 @@ describe('form validation', () => {
             schema,
           });
 
-          return { getError, onSubmit: handleSubmit(v => handler(v.toJSON())), fieldSchema };
+          return { getError, onSubmit: handleSubmit(v => handler(v.toObject())), fieldSchema };
         },
         template: `
       <form @submit="onSubmit" novalidate>
