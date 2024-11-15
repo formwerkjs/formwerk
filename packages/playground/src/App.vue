@@ -24,7 +24,7 @@ const { handleSubmit, values } = useForm<
 >();
 
 const onSubmit = handleSubmit(data => {
-  console.log(data.toJSON());
+  console.log(data.toObject());
 });
 </script>
 
