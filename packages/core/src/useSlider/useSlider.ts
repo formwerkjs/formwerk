@@ -270,12 +270,10 @@ export function useSlider<TValue>(_props: Reactivify<SliderProps<TValue>, 'schem
       percent = 1 - percent;
     }
 
-    const min = fromNumberish(props.min) ?? 0;
-    const max = fromNumberish(props.max) ?? 100;
-
+    const { min, max } = getSliderRange();
     const value = percent * (max - min) + min;
 
-    return toNearestMultipleOf(value, fromNumberish(props.step) ?? 1);
+    return toNearestMultipleOf(value, getSliderStep(), !!toValue(props.stops));
   }
 
   function getSliderRange() {
@@ -300,6 +298,15 @@ export function useSlider<TValue>(_props: Reactivify<SliderProps<TValue>, 'schem
     return { min, max, absoluteMin, absoluteMax };
   }
 
+  function getSliderStep() {
+    const stops = toValue(props.stops);
+    if (stops?.length) {
+      return 1;
+    }
+
+    return fromNumberish(props.step) ?? 1;
+  }
+
   function useSliderThumbRegistration(ctx: ThumbRegistration) {
     const id = ctx.id;
     thumbs.value.push(ctx);
@@ -318,17 +325,10 @@ export function useSlider<TValue>(_props: Reactivify<SliderProps<TValue>, 'schem
     const reg: SliderRegistration<TValue> = {
       getThumbRange: () => getThumbRange(ctx),
       getSliderRange,
-      getSliderStep() {
-        const stops = toValue(props.stops);
-        if (stops?.length) {
-          return 1;
-        }
-
-        return fromNumberish(props.step) ?? 1;
-      },
       getSliderLabelProps() {
         return labelledByProps.value;
       },
+      getSliderStep,
       getValueForPagePosition,
       getOrientation: () => toValue(props.orientation) || 'horizontal',
       getInlineDirection: () => toValue(props.dir) || direction.value,
