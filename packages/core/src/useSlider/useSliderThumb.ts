@@ -35,6 +35,7 @@ export function useSliderThumb(_props: Reactivify<SliderThumbProps>, elementRef?
       getSliderStep: () => 1,
       getSliderLabelProps: () => ({}),
       getValueForPagePosition: () => 0,
+      getRealThumbValue: () => 0,
       getOrientation: () => 'horizontal',
       getInlineDirection: () => direction.value,
       getIndex: () => 0,
@@ -52,6 +53,7 @@ export function useSliderThumb(_props: Reactivify<SliderThumbProps>, elementRef?
 
   const slider = inject(SliderInjectionKey, mockSlider, true).useSliderThumbRegistration(thumbContext);
   const thumbValue = computed(() => slider.getThumbValue());
+  const thumbRealValue = computed(() => slider.getRealThumbValue());
 
   if ('__isMock' in slider) {
     warn(
@@ -149,7 +151,7 @@ export function useSliderThumb(_props: Reactivify<SliderThumbProps>, elementRef?
 
   return {
     thumbProps,
-    currentValue: thumbValue,
+    currentValue: thumbRealValue,
     isDragging,
     isDisabled,
     thumbEl,
