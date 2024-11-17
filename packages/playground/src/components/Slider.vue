@@ -1,9 +1,9 @@
-<script setup lang="ts">
+<script setup lang="ts" generic="TValue">
 import { useSlider, type SliderProps } from '@formwerk/core';
 
 import Thumb from './Thumb.vue';
 
-const props = defineProps<SliderProps>();
+const props = defineProps<SliderProps<TValue>>();
 
 const { trackProps, groupProps, labelProps, errorMessage, errorMessageProps, useThumbMetadata } = useSlider(props);
 
