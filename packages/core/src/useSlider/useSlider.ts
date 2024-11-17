@@ -5,11 +5,13 @@ import {
   createAccessibleErrorMessageProps,
   ErrorableAttributes,
   fromNumberish,
+  isEqual,
   isNullOrUndefined,
   normalizeArrayable,
   normalizeProps,
   removeFirst,
   useUniqId,
+  warn,
   withRefCapture,
 } from '../utils/common';
 import { toNearestMultipleOf } from '../utils/math';
@@ -19,21 +21,24 @@ import { FieldTypePrefixes } from '../constants';
 import { exposeField } from '../utils/exposers';
 import { useInputValidity } from '../validation';
 
-export interface SliderProps {
+export interface SliderProps<TValue = number> {
   label?: string;
   name?: string;
 
   orientation?: Orientation;
   dir?: Direction;
-  modelValue?: number | number[];
+  modelValue?: Arrayable<TValue>;
+  value?: Arrayable<TValue>;
   min?: Numberish;
   max?: Numberish;
   step?: Numberish;
 
+  stops?: TValue[];
+
   disabled?: boolean;
   readonly?: boolean;
 
-  schema?: StandardSchema<number>;
+  schema?: StandardSchema<TValue>;
 }
 
 export type Coordinate = { x: number; y: number };
@@ -48,7 +53,7 @@ export interface ValueRange {
   max: number;
 }
 
-export interface SliderRegistration {
+export interface SliderRegistration<TValue = number> {
   /**
    * Gets the available range of values for the thumb that this registration is associated with.
    */
@@ -89,6 +94,8 @@ export interface SliderRegistration {
    */
   getThumbValue(): number;
 
+  getRealThumbValue(): TValue;
+
   /**
    * Gets the index of the thumb.
    */
@@ -105,23 +112,27 @@ export interface SliderRegistration {
 }
 
 export interface SliderContext {
-  useSliderThumbRegistration(ctx: ThumbRegistration): SliderRegistration;
+  useSliderThumbRegistration(ctx: ThumbRegistration): SliderRegistration<unknown>;
 }
 
 export const SliderInjectionKey: InjectionKey<SliderContext> = Symbol('Slider');
 
-export function useSlider(_props: Reactivify<SliderProps, 'schema'>) {
+export function useSlider<TValue>(_props: Reactivify<SliderProps<TValue>, 'schema'>) {
   const props = normalizeProps(_props, ['schema']);
   const inputId = useUniqId(FieldTypePrefixes.Slider);
   const trackEl = ref<HTMLElement>();
   const thumbs = ref<ThumbRegistration[]>([]);
   const { direction } = useLocale();
-  const field = useFormField<Arrayable<number>>({
+  const field = useFormField<Arrayable<TValue | undefined>>({
     path: props.name,
-    initialValue: toValue(props.modelValue),
+    initialValue: (toValue(props.modelValue) ?? toValue(props.value)) as TValue,
     disabled: props.disabled,
     schema: props.schema,
   });
+
+  if (__DEV__) {
+    checkValidProps(_props);
+  }
 
   const { fieldValue, setValue, setTouched, isDisabled } = field;
   const isReadonly = () => toValue(props.readonly) ?? false;
@@ -148,14 +159,47 @@ export function useSlider(_props: Reactivify<SliderProps, 'schema'>) {
 
   function getThumbValue(idx: number) {
     if (Array.isArray(fieldValue.value)) {
-      return fieldValue.value[idx];
+      return mapStopToNumber(fieldValue.value[idx]);
     }
 
     if (idx === 0) {
-      return fieldValue.value;
+      return mapStopToNumber(fieldValue.value);
     }
 
     return undefined;
+  }
+
+  function mapNumberToStop(value: number): TValue {
+    const stops = toValue(props.stops);
+
+    return stops?.length ? stops[value] : (value as TValue);
+  }
+
+  function mapStopToNumber(stop: TValue | undefined): number | undefined {
+    if (isNullOrUndefined(stop)) {
+      return stop || undefined;
+    }
+
+    const stops = toValue(props.stops);
+    if (stops?.length) {
+      const idx = stops.findIndex(s => isEqual(s, stop));
+
+      if (__DEV__) {
+        if (idx === -1) {
+          warn(`Could not find stop for value ${stop}`);
+        }
+      }
+
+      return idx;
+    }
+
+    if (__DEV__) {
+      if (typeof stop !== 'number') {
+        warn(`Could not find stop for value ${stop}`);
+      }
+    }
+
+    return stop as number;
   }
 
   function setThumbValue(idx: number, value: number) {
@@ -164,13 +208,13 @@ export function useSlider(_props: Reactivify<SliderProps, 'schema'>) {
     }
 
     if (thumbs.value.length <= 1) {
-      setValue(value);
+      setValue(mapNumberToStop(value));
       updateValidity();
       return;
     }
 
     const nextValue = normalizeArrayable(fieldValue.value).filter(v => !isNullOrUndefined(v));
-    nextValue[idx] = value;
+    nextValue[idx] = mapNumberToStop(value);
     setValue(nextValue);
     updateValidity();
   }
@@ -235,6 +279,11 @@ export function useSlider(_props: Reactivify<SliderProps, 'schema'>) {
   }
 
   function getSliderRange() {
+    const stops = toValue(props.stops);
+    if (stops?.length) {
+      return { min: 0, max: stops.length - 1 };
+    }
+
     return { min: fromNumberish(props.min) ?? 0, max: fromNumberish(props.max) ?? 100 };
   }
 
@@ -266,10 +315,15 @@ export function useSlider(_props: Reactivify<SliderProps, 'schema'>) {
     // Each thumb range is dependent on the previous and next thumb
     // i.e it's min cannot be less than the previous thumb's value
     // and it's max cannot be more than the next thumb's value
-    const reg: SliderRegistration = {
+    const reg: SliderRegistration<TValue> = {
       getThumbRange: () => getThumbRange(ctx),
       getSliderRange,
       getSliderStep() {
+        const stops = toValue(props.stops);
+        if (stops?.length) {
+          return 1;
+        }
+
         return fromNumberish(props.step) ?? 1;
       },
       getSliderLabelProps() {
@@ -283,6 +337,9 @@ export function useSlider(_props: Reactivify<SliderProps, 'schema'>) {
         const { absoluteMin } = getThumbRange(ctx);
 
         return getThumbValue(getThumbIndex()) ?? absoluteMin;
+      },
+      getRealThumbValue() {
+        return mapNumberToStop(this.getThumbValue());
       },
       setThumbValue(value) {
         setThumbValue(getThumbIndex(), value);
@@ -341,4 +398,18 @@ export function useSlider(_props: Reactivify<SliderProps, 'schema'>) {
     ...exposeField(field),
     useThumbMetadata,
   };
+}
+
+function checkValidProps(props: Reactivify<SliderProps<unknown>, 'schema'>) {
+  const isDiscreteStepsPresent = !!props.stops;
+  const isMinMaxPresent = !!props.min || !!props.max;
+  const isStepPresent = props.step ?? false;
+
+  if (isDiscreteStepsPresent && isMinMaxPresent) {
+    warn('Cannot use discrete steps with min/max, the min/max will be ignored.');
+  }
+
+  if (isDiscreteStepsPresent && isStepPresent) {
+    warn('Cannot use discrete steps with explicit step value, the step value will be ignored.');
+  }
 }
