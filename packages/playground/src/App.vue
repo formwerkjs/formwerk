@@ -43,7 +43,7 @@ const stops: Step[] = ['One', 'Two', 'Three'];
     <Slider v-model="value" :stops="stops" />
 
     {{ value }}
-
+xx
     <button>Submit</button>
   </form>
 </template>

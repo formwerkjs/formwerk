@@ -170,7 +170,7 @@ export function useSlider<TValue>(_props: Reactivify<SliderProps<TValue>, 'schem
   }
 
   function mapNumberToStop(value: number): TValue {
-    const stops = toValue(props.stops);
+    const stops = getStops();
 
     return stops?.length ? stops[value] : (value as TValue);
   }
@@ -180,7 +180,7 @@ export function useSlider<TValue>(_props: Reactivify<SliderProps<TValue>, 'schem
       return stop || undefined;
     }
 
-    const stops = toValue(props.stops);
+    const stops = getStops();
     if (stops?.length) {
       const idx = stops.findIndex(s => isEqual(s, stop));
 
@@ -200,6 +200,10 @@ export function useSlider<TValue>(_props: Reactivify<SliderProps<TValue>, 'schem
     }
 
     return stop as number;
+  }
+
+  function getStops() {
+    return toValue(props.stops);
   }
 
   function setThumbValue(idx: number, value: number) {
@@ -273,11 +277,11 @@ export function useSlider<TValue>(_props: Reactivify<SliderProps<TValue>, 'schem
     const { min, max } = getSliderRange();
     const value = percent * (max - min) + min;
 
-    return toNearestMultipleOf(value, getSliderStep(), !!toValue(props.stops));
+    return toNearestMultipleOf(value, getSliderStep(), !!getStops());
   }
 
   function getSliderRange() {
-    const stops = toValue(props.stops);
+    const stops = getStops();
     if (stops?.length) {
       return { min: 0, max: stops.length - 1 };
     }
@@ -299,7 +303,7 @@ export function useSlider<TValue>(_props: Reactivify<SliderProps<TValue>, 'schem
   }
 
   function getSliderStep() {
-    const stops = toValue(props.stops);
+    const stops = getStops();
     if (stops?.length) {
       return 1;
     }
