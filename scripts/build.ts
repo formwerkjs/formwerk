@@ -11,7 +11,7 @@ import { generateDts } from './generate-dts';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-async function minify({ code, pkg, bundleName }) {
+async function minify({ code, pkg, bundleName }: { code: string; pkg: string; bundleName: string }) {
   const pkgout = path.join(__dirname, `../packages/${pkg}/dist`);
   const output = await Terser.minify(code, {
     compress: true,
@@ -29,7 +29,7 @@ async function minify({ code, pkg, bundleName }) {
 
 function logPkgSize(pkg: string) {
   const pkgout = path.join(__dirname, `../packages/${pkg}/dist`);
-  const fileName = pkgNameMap[pkg];
+  const fileName = pkgNameMap[pkg as keyof typeof pkgNameMap];
   const filePath = `${pkgout}/${fileName}.mjs`;
 
   const code = fs.readFileSync(filePath, 'utf-8');
@@ -38,12 +38,12 @@ function logPkgSize(pkg: string) {
   consola.info(`📊 @formwerk/${pkg}`, `${stats}`);
 }
 
-async function build(pkg) {
+async function build(pkg: string) {
   consola.start(`📦 Generating bundle for @formwerk/${pkg}`);
   const pkgout = path.join(__dirname, `../packages/${pkg}/dist`);
-  // await fs.emptyDir(pkgout);
+  await fs.emptyDir(pkgout);
   for (const format of ['esm', 'iife', 'cjs'] as ModuleFormat[]) {
-    const { input, output, bundleName } = await createConfig(pkg, format);
+    const { input, output, bundleName } = await createConfig(pkg as 'core', format);
     const bundle = await rollup(input);
     const {
       output: [{ code }],

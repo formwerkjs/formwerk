@@ -20,13 +20,19 @@ const pkgNameMap = {
 
 const formatExt: Partial<Record<ModuleFormat, string>> = {
   esm: 'mjs',
+  es: 'mjs',
   iife: 'iife.js',
   cjs: 'cjs',
 };
 
-const createPlugins = ({ version, format, pkg }) => {
-  const isEsm = format === 'esm';
+function testEsm(format: string) {
+  return ['es', 'esm'].includes(format);
+}
+
+const createPlugins = ({ version, format, pkg }: { version: string; format: ModuleFormat; pkg: string }) => {
+  const isEsm = testEsm(format);
   const tsPlugin = typescript({
+    tsconfig: normalizePath(path.resolve(__dirname, `../tsconfig.lib.json`)),
     declarationDir: normalizePath(path.resolve(__dirname, `../packages/${pkg}/dist`)),
   });
 
@@ -54,7 +60,7 @@ async function createConfig(pkg: keyof typeof pkgNameMap, format: ModuleFormat) 
 
   const { version } = info;
 
-  const isEsm = format === 'esm';
+  const isEsm = testEsm(format);
 
   const config = {
     bundleName: `${pkgNameMap[pkg]}.${formatExt[format] ?? 'js'}`,
