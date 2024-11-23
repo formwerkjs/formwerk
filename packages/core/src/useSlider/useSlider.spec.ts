@@ -21,7 +21,7 @@ function createThumbComponent(props: SliderThumbProps): Component {
   };
 }
 
-function createSliderComponent(props: SliderProps): Component {
+function createSliderComponent<TValue>(props: SliderProps<TValue>): Component {
   return {
     setup() {
       const { fieldValue, labelProps, trackProps, groupProps, outputProps, trackEl } = useSlider(props);
@@ -455,5 +455,70 @@ describe('track behavior', () => {
     await fireEvent.mouseDown(screen.getByTestId('track'), { clientX: 50, clientY: 1 });
     expect(screen.getByTestId('slider-value')).toHaveTextContent('');
     expect(screen.getByRole('slider')).toHaveAttribute('aria-valuenow', '0');
+  });
+});
+
+describe('discrete steps', () => {
+  const Thumb = createThumbComponent({});
+
+  test('maps values to provided options', async () => {
+    const DiscreteSlider = createSliderComponent({
+      label: 'Slider',
+      options: ['low', 'medium', 'high'],
+      modelValue: 'low',
+    });
+
+    await render({
+      components: { Thumb, DiscreteSlider },
+      template: `
+        <DiscreteSlider>
+          <Thumb />
+        </DiscreteSlider>
+      `,
+    });
+
+    expect(screen.getByTestId('slider-value')).toHaveTextContent('low');
+    expect(screen.getByRole('slider')).toHaveAttribute('aria-valuenow', '0');
+
+    await fireEvent.mouseDown(screen.getByTestId('track'), { clientX: 50, clientY: 1 });
+    expect(screen.getByTestId('slider-value')).toHaveTextContent('medium');
+    expect(screen.getByRole('slider')).toHaveAttribute('aria-valuenow', '1');
+
+    await fireEvent.mouseDown(screen.getByTestId('track'), { clientX: 90, clientY: 1 });
+    expect(screen.getByTestId('slider-value')).toHaveTextContent('high');
+    expect(screen.getByRole('slider')).toHaveAttribute('aria-valuenow', '2');
+  });
+
+  test('works with multiple thumbs', async () => {
+    const DiscreteMultiSlider = createSliderComponent({
+      label: 'MultiSlider',
+      options: ['low', 'medium', 'high'],
+      modelValue: ['low', 'high'],
+    });
+
+    await render({
+      components: { Thumb, DiscreteMultiSlider },
+      template: `
+        <DiscreteMultiSlider>
+          <Thumb />
+          <Thumb />
+        </DiscreteMultiSlider>
+      `,
+    });
+
+    expect(screen.getByTestId('slider-value')).toHaveTextContent('[ "low", "high" ]');
+    const sliders = screen.getAllByRole('slider');
+    expect(sliders[0]).toHaveAttribute('aria-valuenow', '0');
+    expect(sliders[1]).toHaveAttribute('aria-valuenow', '2');
+
+    await fireEvent.mouseDown(screen.getByTestId('track'), { clientX: 50, clientY: 1 });
+    expect(screen.getByTestId('slider-value')).toHaveTextContent('[ "medium", "high" ]');
+    expect(sliders[0]).toHaveAttribute('aria-valuenow', '1');
+    expect(sliders[1]).toHaveAttribute('aria-valuenow', '2');
+
+    await fireEvent.mouseDown(screen.getByTestId('track'), { clientX: 20, clientY: 1 });
+    expect(screen.getByTestId('slider-value')).toHaveTextContent('[ "low", "high" ]');
+    expect(sliders[0]).toHaveAttribute('aria-valuenow', '0');
+    expect(sliders[1]).toHaveAttribute('aria-valuenow', '2');
   });
 });
