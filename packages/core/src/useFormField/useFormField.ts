@@ -91,7 +91,7 @@ export function useFormField<TValue = unknown>(opts?: Partial<FormFieldOptions<T
 
     const result = await schema['~standard']['validate'](fieldValue.value);
     const errors = combineIssues(result.issues || []);
-    const output = result.issues ? undefined : result.value;
+    const output = 'value' in result ? result.value : undefined;
 
     if (mutate) {
       setErrors(errors.map(e => e.messages).flat());

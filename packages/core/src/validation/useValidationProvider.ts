@@ -71,7 +71,7 @@ export function useValidationProvider<
     }
 
     const allErrors = [...errors, ...fieldErrors];
-    const output = result.issues ? undefined : result.value;
+    const output = 'value' in result ? result.value : undefined;
 
     dispatchValidateDone();
 
