@@ -50,13 +50,13 @@ const formats: ModuleFormat[] = ['es', 'iife', 'cjs'];
 
   watcher.on('change', async (file, { event }) => {
     if (event === 'update') {
-      consola.info(`📦 ${file} changed, rebuilding...`);
+      info(`📦 ${file} changed, rebuilding...`);
     }
     if (event === 'create') {
-      consola.info(`📦 ${file} created, rebuilding...`);
+      info(`📦 ${file} created, rebuilding...`);
     }
     if (event === 'delete') {
-      consola.info(`📦 ${file} deleted, rebuilding...`);
+      info(`📦 ${file} deleted, rebuilding...`);
     }
 
     const pkgRE = /packages\/([^/]+)\//;
@@ -71,3 +71,10 @@ const formats: ModuleFormat[] = ['es', 'iife', 'cjs'];
     }
   });
 })();
+
+function info(message: string) {
+  consola.info({
+    message,
+    date: new Date(),
+  });
+}
