@@ -19,13 +19,8 @@
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
     "resolveJsonModule": true,
-    "paths": {
-      "@core/*": ["packages/core/src/*"],
-      "@test-utils/*": ["packages/test-utils/src/*"]
-    },
-    "types": ["vitest/globals"],
-    "typeRoots": ["node_modules/@types", "node_modules"]
+    "typeRoots": ["node_modules/@types", "node_modules/@changesets"]
   },
-  "include": ["packages/*/src", "packages/*/tests", "commitlint.config.ts", "global.d.ts", "vitest.setup.ts"],
-  "exclude": ["packages/playground"]
+  "references": [{ "path": "./tsconfig.node.json" }, { "path": "./tsconfig.lib.json" }],
+  "include": []
 }

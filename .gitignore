@@ -16,3 +16,5 @@ lerna-debug.log
 packages/*/dist/**
 packages/*/src/playground.ts
 version.output.txt
+*.tsbuildinfo
+.rollup.cache

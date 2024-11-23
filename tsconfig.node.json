@@ -1,0 +1,26 @@
+{
+  "compilerOptions": {
+    "composite": true,
+    "baseUrl": ".",
+    "rootDir": ".",
+    "moduleResolution": "Bundler",
+    "target": "es2020",
+    "module": "esnext",
+    "lib": ["esnext", "dom"],
+    "paths": {
+      "@core/*": ["packages/core/src/*"],
+      "@test-utils/*": ["packages/test-utils/src/*"]
+    },
+    "types": ["vitest/globals"],
+    "typeRoots": ["node_modules/@types", "node_modules"]
+  },
+  "include": [
+    "packages/*/src",
+    "packages/*/tests",
+    "commitlint.config.ts",
+    "global.d.ts",
+    "vitest.setup.ts",
+    "vitest.config.ts"
+  ],
+  "exclude": ["packages/playground"]
+}
