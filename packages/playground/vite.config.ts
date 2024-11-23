@@ -10,4 +10,7 @@ export default defineConfig({
     },
   },
   plugins: [vue()],
+  optimizeDeps: {
+    exclude: ['@formwerk/core'],
+  },
 });
