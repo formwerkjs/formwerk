@@ -34,6 +34,6 @@ export default tseslint.config(
     },
   },
   {
-    ignores: ['packages/**/dist/*', 'coverage/*'],
+    ignores: ['packages/**/dist/*', 'coverage/*', '.rollup.cache'],
   },
 );
