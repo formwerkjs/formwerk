@@ -33,7 +33,7 @@ export interface SliderProps<TValue = number> {
   max?: Numberish;
   step?: Numberish;
 
-  stops?: TValue[];
+  options?: TValue[];
 
   disabled?: boolean;
   readonly?: boolean;
@@ -170,7 +170,7 @@ export function useSlider<TValue>(_props: Reactivify<SliderProps<TValue>, 'schem
   }
 
   function mapNumberToStop(value: number): TValue {
-    const stops = getStops();
+    const stops = getOptions();
 
     return stops?.length ? stops[value] : (value as TValue);
   }
@@ -180,7 +180,7 @@ export function useSlider<TValue>(_props: Reactivify<SliderProps<TValue>, 'schem
       return stop || undefined;
     }
 
-    const stops = getStops();
+    const stops = getOptions();
     if (stops?.length) {
       const idx = stops.findIndex(s => isEqual(s, stop));
 
@@ -202,8 +202,8 @@ export function useSlider<TValue>(_props: Reactivify<SliderProps<TValue>, 'schem
     return stop as number;
   }
 
-  function getStops() {
-    return toValue(props.stops);
+  function getOptions() {
+    return toValue(props.options);
   }
 
   function setThumbValue(idx: number, value: number) {
@@ -277,11 +277,11 @@ export function useSlider<TValue>(_props: Reactivify<SliderProps<TValue>, 'schem
     const { min, max } = getSliderRange();
     const value = percent * (max - min) + min;
 
-    return toNearestMultipleOf(value, getSliderStep(), !!getStops());
+    return toNearestMultipleOf(value, getSliderStep(), !!getOptions());
   }
 
   function getSliderRange() {
-    const stops = getStops();
+    const stops = getOptions();
     if (stops?.length) {
       return { min: 0, max: stops.length - 1 };
     }
@@ -303,7 +303,7 @@ export function useSlider<TValue>(_props: Reactivify<SliderProps<TValue>, 'schem
   }
 
   function getSliderStep() {
-    const stops = getStops();
+    const stops = getOptions();
     if (stops?.length) {
       return 1;
     }
@@ -405,7 +405,7 @@ export function useSlider<TValue>(_props: Reactivify<SliderProps<TValue>, 'schem
 }
 
 function checkValidProps(props: Reactivify<SliderProps<unknown>, 'schema'>) {
-  const isDiscreteStepsPresent = !!props.stops;
+  const isDiscreteStepsPresent = !!props.options;
   const isMinMaxPresent = !!props.min || !!props.max;
   const isStepPresent = props.step ?? false;
 
