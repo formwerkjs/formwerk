@@ -214,6 +214,12 @@ importers:
         specifier: ^2.1.10
         version: 2.1.10(typescript@5.7.2)
 
+  packages/starter-kits:
+    dependencies:
+      '@formwerk/core':
+        specifier: workspace:*
+        version: link:../core
+
   packages/test-utils:
     devDependencies:
       '@standard-schema/spec':
