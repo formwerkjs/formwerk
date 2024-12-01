@@ -34,6 +34,7 @@ const { inputProps, labelProps, errorMessage, errorMessageProps } = useSwitch(pr
   border-width: 0;
 }
 
+/** Your styles here, feel free to override any of this */
 .switch {
   .switch-indicator {
     width: 40px;
@@ -51,6 +52,4 @@ const { inputProps, labelProps, errorMessage, errorMessageProps } = useSwitch(pr
     }
   }
 }
-
-/** Your styles here */
 </style>
