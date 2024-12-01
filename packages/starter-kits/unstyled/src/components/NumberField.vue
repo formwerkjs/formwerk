@@ -24,12 +24,14 @@ const {
       <button v-bind="incrementButtonProps">+</button>
     </div>
 
-    <p v-if="errorMessage" v-bind="errorMessageProps">{{ errorMessage }}</p>
-
+    <p v-if="errorMessage" v-bind="errorMessageProps" class="error-message">{{ errorMessage }}</p>
     <p v-else-if="description" v-bind="descriptionProps">{{ description }}</p>
   </div>
 </template>
 
 <style scoped>
-/** Your styles here */
+/** Your styles here, feel free to override any of this */
+.error-message {
+  color: red;
+}
 </style>

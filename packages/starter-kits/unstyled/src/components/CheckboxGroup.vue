@@ -8,7 +8,7 @@ interface Props extends CheckboxGroupProps<TCheckboxValue> {
 
 const props = defineProps<Props>();
 
-const { groupProps, labelProps, errorMessage, errorMessageProps } = useCheckboxGroup(props);
+const { groupProps, labelProps, errorMessage, errorMessageProps, descriptionProps } = useCheckboxGroup(props);
 </script>
 
 <template>
@@ -23,6 +23,9 @@ const { groupProps, labelProps, errorMessage, errorMessageProps } = useCheckboxG
         <Checkbox v-for="option in options" :key="option.label" :label="option.label" :value="option.value" />
       </template>
     </div>
+
+    <p v-if="errorMessage" v-bind="errorMessageProps" class="error-message">{{ errorMessage }}</p>
+    <p v-else-if="description" v-bind="descriptionProps">{{ description }}</p>
   </div>
 </template>
 
@@ -38,5 +41,9 @@ const { groupProps, labelProps, errorMessage, errorMessageProps } = useCheckboxG
   display: flex;
   flex-direction: column;
   gap: 8px;
+}
+
+.error-message {
+  color: red;
 }
 </style>

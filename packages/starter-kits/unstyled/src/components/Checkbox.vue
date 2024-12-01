@@ -3,7 +3,7 @@ import { useCheckbox, type CheckboxProps } from '@formwerk/core';
 
 const props = defineProps<CheckboxProps<TValue>>();
 
-const { inputProps, labelProps, errorMessage, errorMessageProps } = useCheckbox(props);
+const { inputProps, labelProps, errorMessage, errorMessageProps, isGrouped } = useCheckbox(props);
 </script>
 
 <template>
@@ -20,6 +20,8 @@ const { inputProps, labelProps, errorMessage, errorMessageProps } = useCheckbox(
 
       {{ label }}
     </label>
+
+    <p v-if="!isGrouped && errorMessage" v-bind="errorMessageProps" class="error-message">{{ errorMessage }}</p>
   </div>
 </template>
 
@@ -53,5 +55,9 @@ const { inputProps, labelProps, errorMessage, errorMessageProps } = useCheckbox(
       display: block;
     }
   }
+}
+
+.error-message {
+  color: red;
 }
 </style>

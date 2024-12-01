@@ -11,7 +11,7 @@ const { inputProps, labelProps, errorMessage, errorMessageProps, descriptionProp
     <label v-bind="labelProps">{{ label }}</label>
     <input v-bind="inputProps" />
 
-    <p v-if="errorMessage" v-bind="errorMessageProps">{{ errorMessage }}</p>
+    <p v-if="errorMessage" v-bind="errorMessageProps" class="error-message">{{ errorMessage }}</p>
 
     <p v-else-if="description" v-bind="descriptionProps">{{ description }}</p>
   </div>
@@ -19,4 +19,7 @@ const { inputProps, labelProps, errorMessage, errorMessageProps, descriptionProp
 
 <style scoped>
 /** Your styles here */
+.error-message {
+  color: red;
+}
 </style>

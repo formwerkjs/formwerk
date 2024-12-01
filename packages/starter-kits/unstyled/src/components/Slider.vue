@@ -14,6 +14,8 @@ const { groupProps, trackProps, outputProps, labelProps, errorMessage, errorMess
     <div v-bind="trackProps" class="slider-track">
       <SliderThumb />
     </div>
+
+    <p v-if="errorMessage" v-bind="errorMessageProps" class="error-message">{{ errorMessage }}</p>
   </div>
 </template>
 
@@ -24,5 +26,9 @@ const { groupProps, trackProps, outputProps, labelProps, errorMessage, errorMess
   border-radius: 2px;
   background-color: gray;
   width: 100%;
+}
+
+.error-message {
+  color: red;
 }
 </style>

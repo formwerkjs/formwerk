@@ -17,7 +17,7 @@ const { inputProps, labelProps, errorMessage, errorMessageProps } = useSwitch(pr
       </div>
     </label>
 
-    <p v-if="errorMessage" v-bind="errorMessageProps">{{ errorMessage }}</p>
+    <p v-if="errorMessage" v-bind="errorMessageProps" class="error-message">{{ errorMessage }}</p>
   </div>
 </template>
 
@@ -51,5 +51,9 @@ const { inputProps, labelProps, errorMessage, errorMessageProps } = useSwitch(pr
       transform: translateX(20px);
     }
   }
+}
+
+.error-message {
+  color: red;
 }
 </style>
