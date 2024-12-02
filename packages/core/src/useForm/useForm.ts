@@ -59,6 +59,11 @@ export interface FormProps<
    * Whether the form is disabled.
    */
   disabled?: MaybeRefOrGetter<boolean | undefined>;
+
+  /**
+   * Whether the form should scroll to the first invalid field on invalid submission.
+   */
+  scrollToInvalidFieldOnSubmit?: ScrollIntoViewOptions | boolean;
 }
 
 export interface FormContext<TInput extends FormObject = FormObject, TOutput extends FormObject = TInput>
@@ -132,6 +137,7 @@ export function useForm<
   const { actions, isSubmitting, ...privateActions } = useFormActions<TInput, TOutput>(ctx, {
     disabled,
     schema: props?.schema as StandardSchema<TInput, TOutput>,
+    scrollToInvalidFieldOnSubmit: props?.scrollToInvalidFieldOnSubmit ?? true,
   });
 
   function getErrors() {

@@ -2,7 +2,6 @@ import { computed, InjectionKey, provide, ref, toValue } from 'vue';
 import { useFormField, exposeField } from '../useFormField';
 import { AriaLabelableProps, Arrayable, Orientation, Reactivify, StandardSchema } from '../types';
 import {
-  createAccessibleErrorMessageProps,
   createDescribedByProps,
   isEqual,
   normalizeArrayable,
@@ -13,7 +12,7 @@ import {
 } from '../utils/common';
 import { useInputValidity } from '../validation';
 import { useListBox } from './useListBox';
-import { useLabel } from '../a11y/useLabel';
+import { useLabel, useErrorMessage } from '../a11y';
 import { FieldTypePrefixes } from '../constants';
 
 export interface SelectProps<TOption, TValue = TOption> {
@@ -128,7 +127,7 @@ export function useSelect<TOption, TValue = TOption>(_props: Reactivify<SelectPr
     inputId,
     description: props.description,
   });
-  const { accessibleErrorProps, errorMessageProps } = createAccessibleErrorMessageProps({
+  const { accessibleErrorProps, errorMessageProps } = useErrorMessage({
     inputId,
     errorMessage,
   });

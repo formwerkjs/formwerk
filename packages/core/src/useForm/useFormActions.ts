@@ -15,6 +15,7 @@ import { unsetPath } from '../utils/path';
 import { useValidationProvider } from '../validation/useValidationProvider';
 import { appendToFormData } from '../utils/formData';
 import type { Jsonify } from 'type-fest';
+import { FormIdAttr } from '../constants';
 
 export interface ResetState<TForm extends FormObject> {
   values: Partial<TForm>;
@@ -25,6 +26,7 @@ export interface ResetState<TForm extends FormObject> {
 export interface FormActionsOptions<TForm extends FormObject = FormObject, TOutput extends FormObject = TForm> {
   schema: StandardSchema<TForm, TOutput> | undefined;
   disabled: DisabledSchema<TForm>;
+  scrollToInvalidFieldOnSubmit: ScrollIntoViewOptions | boolean;
 }
 
 export type ConsumableData<TOutput extends FormObject> = {
@@ -63,7 +65,7 @@ export interface FormActions<TForm extends FormObject, TOutput extends FormObjec
 
 export function useFormActions<TForm extends FormObject = FormObject, TOutput extends FormObject = TForm>(
   form: BaseFormContext<TForm>,
-  { disabled, schema }: FormActionsOptions<TForm, TOutput>,
+  { disabled, schema, scrollToInvalidFieldOnSubmit }: FormActionsOptions<TForm, TOutput>,
 ) {
   const isSubmitting = shallowRef(false);
   const [dispatchSubmit, onSubmitAttempt] = createEventDispatcher<void>('submit');
@@ -89,6 +91,7 @@ export function useFormActions<TForm extends FormObject = FormObject, TOutput ex
       // Prevent submission if the form has errors
       if (!isValid) {
         isSubmitting.value = false;
+        scrollToFirstInvalidField(form.id, scrollToInvalidFieldOnSubmit);
 
         return;
       }
@@ -185,4 +188,20 @@ function withConsumers<TData extends FormObject>(data: TData): ConsumableData<TD
     toFormData,
     toJSON,
   };
+}
+
+function scrollToFirstInvalidField(formId: string, options: ScrollIntoViewOptions | boolean) {
+  if (!options) {
+    return;
+  }
+
+  const scrollOpts =
+    typeof options === 'object'
+      ? options
+      : ({ behavior: 'smooth', block: 'center', inline: 'start' } as ScrollIntoViewOptions);
+
+  const invalidField = document.querySelector(`[aria-invalid="true"][aria-errormessage][${FormIdAttr}="${formId}"]`);
+  if (invalidField) {
+    invalidField.scrollIntoView(scrollOpts);
+  }
 }

@@ -1,6 +1,6 @@
 import { InjectionKey, toValue, computed, onBeforeUnmount, reactive, provide, ref } from 'vue';
 import { useInputValidity } from '../validation/useInputValidity';
-import { useLabel } from '../a11y/useLabel';
+import { useLabel, useErrorMessage } from '../a11y';
 import {
   Orientation,
   AriaLabelableProps,
@@ -16,7 +16,6 @@ import {
   getNextCycleArrIdx,
   normalizeProps,
   isEmpty,
-  createAccessibleErrorMessageProps,
   removeFirst,
   hasKeyCode,
 } from '../utils/common';
@@ -159,7 +158,7 @@ export function useRadioGroup<TValue = string>(_props: Reactivify<RadioGroupProp
     description: props.description,
   });
 
-  const { accessibleErrorProps, errorMessageProps } = createAccessibleErrorMessageProps({
+  const { accessibleErrorProps, errorMessageProps } = useErrorMessage({
     inputId: groupId,
     errorMessage,
   });

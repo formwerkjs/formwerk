@@ -1,12 +1,5 @@
 import { Ref, computed, shallowRef, toValue } from 'vue';
-import {
-  createAccessibleErrorMessageProps,
-  createDescribedByProps,
-  normalizeProps,
-  propsToValues,
-  useUniqId,
-  withRefCapture,
-} from '../utils/common';
+import { createDescribedByProps, normalizeProps, propsToValues, useUniqId, withRefCapture } from '../utils/common';
 import {
   AriaDescribableProps,
   AriaLabelableProps,
@@ -17,7 +10,7 @@ import {
   Reactivify,
 } from '../types/common';
 import { useInputValidity } from '../validation/useInputValidity';
-import { useLabel } from '../a11y/useLabel';
+import { useLabel, useErrorMessage } from '../a11y';
 import { useFormField, exposeField } from '../useFormField';
 import { FieldTypePrefixes } from '../constants';
 import { StandardSchema } from '../types';
@@ -141,7 +134,7 @@ export function useTextField(
     description: props.description,
   });
 
-  const { accessibleErrorProps, errorMessageProps } = createAccessibleErrorMessageProps({
+  const { accessibleErrorProps, errorMessageProps } = useErrorMessage({
     inputId,
     errorMessage,
   });

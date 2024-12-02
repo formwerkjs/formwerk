@@ -15,18 +15,25 @@ import OptionItem from './components/OptionItem.vue';
 import FormGroup from './components/FormGroup.vue';
 import { ref } from 'vue';
 
-const value = ref(['One', 'Three']);
+const { handleSubmit } = useForm({
+  scrollToInvalidFieldOnSubmit: {
+    behavior: 'instant',
+    block: 'center',
+    inline: 'start',
+  },
+});
 
-type Step = 'One' | 'Two' | 'Three';
-
-const stops: Step[] = ['One', 'Two', 'Three'];
+const onSubmit = handleSubmit(data => {
+  console.log(data);
+});
 </script>
 
 <template>
-  <h2 class="text-2xl font-bold text-white">Registration Form</h2>
+  <div class="flex flex-col gap-[1000px]">
+    <InputText name="text" label="Text" required />
 
-  <MultiSlider v-model="value" label="Select Steps" :options="stops" />
+    <InputSearch name="search" label="Search" required />
 
-  {{ value }}
-  <button>Submit</button>
+    <button class="bg-blue-500 text-white p-2 rounded-md" @click="onSubmit">Submit</button>
+  </div>
 </template>

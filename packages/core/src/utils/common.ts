@@ -2,7 +2,6 @@ import { computed, getCurrentScope, MaybeRefOrGetter, onScopeDispose, Ref, shall
 import { klona } from 'klona/full';
 import {
   AriaDescriptionProps,
-  AriaErrorMessageProps,
   Arrayable,
   DangerousAny,
   IssueCollection,
@@ -10,10 +9,11 @@ import {
   NormalizedProps,
   Numberish,
   StandardIssue,
-  WithId,
 } from '../types';
-import { AsyncReturnType, Simplify } from 'type-fest';
+import { AsyncReturnType } from 'type-fest';
 import { getDotPath } from '@standard-schema/utils';
+
+export const isSSR = typeof window === 'undefined';
 
 export function useUniqId(prefix?: string) {
   return prefix ? `${prefix}-${useId()}` : useId() || '';
@@ -23,14 +23,6 @@ export function createDescriptionProps(inputId: string): AriaDescriptionProps {
   return {
     id: `${inputId}-d`,
   };
-}
-
-export function createErrorProps(inputId: MaybeRefOrGetter<string>): Ref<Simplify<WithId<AriaErrorMessageProps>>> {
-  return computed(() => ({
-    id: `${toValue(inputId)}-r`,
-    'aria-live': 'polite',
-    'aria-atomic': true,
-  }));
 }
 
 interface CreateDescribedByInit {
@@ -51,35 +43,6 @@ export function createDescribedByProps({ inputId, description }: CreateDescribed
   return {
     describedByProps,
     descriptionProps,
-  };
-}
-
-interface CreateAccessibleErrorMessageInit {
-  inputId: MaybeRefOrGetter<string>;
-  errorMessage: MaybeRefOrGetter<string | undefined>;
-}
-
-export interface ErrorableAttributes {
-  'aria-invalid': boolean;
-  'aria-errormessage': string | undefined;
-}
-
-export function createAccessibleErrorMessageProps({ inputId, errorMessage }: CreateAccessibleErrorMessageInit) {
-  const errorMessageRef = shallowRef<HTMLElement>();
-  const errorMessageProps = withRefCapture(createErrorProps(inputId), errorMessageRef);
-
-  const accessibleErrorProps = computed<ErrorableAttributes>(() => {
-    const isInvalid = !!toValue(errorMessage);
-
-    return {
-      'aria-invalid': isInvalid,
-      'aria-errormessage': isInvalid ? errorMessageProps.value.id : undefined,
-    };
-  });
-
-  return {
-    errorMessageProps,
-    accessibleErrorProps,
   };
 }
 
@@ -179,8 +142,6 @@ export function isNullOrUndefined(value: unknown): value is null | undefined {
 export function isEmpty(value: unknown): value is null | undefined | '' {
   return isNullOrUndefined(value) || value === '';
 }
-
-export const isSSR = typeof window === 'undefined';
 
 export function normalizeArrayable<T>(value: Arrayable<T>): T[] {
   return Array.isArray(value) ? [...value] : [value];

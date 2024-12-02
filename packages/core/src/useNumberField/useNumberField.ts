@@ -1,6 +1,5 @@
 import { Ref, computed, nextTick, shallowRef, toValue } from 'vue';
 import {
-  createAccessibleErrorMessageProps,
   createDescribedByProps,
   fromNumberish,
   isEmpty,
@@ -20,7 +19,7 @@ import {
   StandardSchema,
 } from '../types';
 import { useInputValidity } from '../validation/useInputValidity';
-import { useLabel } from '../a11y/useLabel';
+import { useLabel, useErrorMessage } from '../a11y';
 import { useNumberParser } from '../i18n/useNumberParser';
 import { useSpinButton } from '../useSpinButton';
 import { useLocale } from '../i18n';
@@ -179,7 +178,7 @@ export function useNumberField(
     description: props.description,
   });
 
-  const { accessibleErrorProps, errorMessageProps } = createAccessibleErrorMessageProps({
+  const { accessibleErrorProps, errorMessageProps } = useErrorMessage({
     inputId,
     errorMessage,
   });

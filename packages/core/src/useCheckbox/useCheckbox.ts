@@ -1,13 +1,5 @@
 import { computed, inject, nextTick, Ref, ref, toValue } from 'vue';
-import {
-  createAccessibleErrorMessageProps,
-  hasKeyCode,
-  isEqual,
-  isInputElement,
-  normalizeProps,
-  useUniqId,
-  withRefCapture,
-} from '../utils/common';
+import { hasKeyCode, isEqual, isInputElement, normalizeProps, useUniqId, withRefCapture } from '../utils/common';
 import {
   AriaLabelableProps,
   InputBaseAttributes,
@@ -16,7 +8,7 @@ import {
   RovingTabIndex,
   StandardSchema,
 } from '../types';
-import { useLabel } from '../a11y/useLabel';
+import { useLabel, useErrorMessage } from '../a11y';
 import { CheckboxGroupContext, CheckboxGroupKey } from './useCheckboxGroup';
 import { useFormField, exposeField, FormField } from '../useFormField';
 import { FieldTypePrefixes } from '../constants';
@@ -144,7 +136,7 @@ export function useCheckbox<TValue = string>(
     targetRef: inputEl,
   });
 
-  const { errorMessageProps, accessibleErrorProps } = createAccessibleErrorMessageProps({
+  const { errorMessageProps, accessibleErrorProps } = useErrorMessage({
     inputId,
     errorMessage,
   });

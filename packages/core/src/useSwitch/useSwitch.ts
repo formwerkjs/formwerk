@@ -9,16 +9,8 @@ import {
   Reactivify,
   StandardSchema,
 } from '../types';
-import {
-  createAccessibleErrorMessageProps,
-  hasKeyCode,
-  isEqual,
-  isInputElement,
-  normalizeProps,
-  useUniqId,
-  withRefCapture,
-} from '../utils/common';
-import { useLabel } from '../a11y/useLabel';
+import { hasKeyCode, isEqual, isInputElement, normalizeProps, useUniqId, withRefCapture } from '../utils/common';
+import { useLabel, useErrorMessage } from '../a11y';
 import { useFormField, exposeField } from '../useFormField';
 import { FieldTypePrefixes } from '../constants';
 import { useInputValidity } from '../validation';
@@ -122,7 +114,7 @@ export function useSwitch<TValue = boolean>(
 
   const { fieldValue, setValue, setTouched, errorMessage, isDisabled } = field;
   const isMutable = () => !toValue(props.readonly) && !isDisabled.value;
-  const { errorMessageProps, accessibleErrorProps } = createAccessibleErrorMessageProps({
+  const { errorMessageProps, accessibleErrorProps } = useErrorMessage({
     inputId,
     errorMessage,
   });

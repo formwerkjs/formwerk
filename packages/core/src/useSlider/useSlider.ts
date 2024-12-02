@@ -8,11 +8,9 @@ import {
   ref,
   toValue,
 } from 'vue';
-import { useLabel } from '../a11y/useLabel';
+import { useLabel, useErrorMessage, type ErrorableAttributes } from '../a11y';
 import { AriaLabelableProps, Arrayable, Direction, Numberish, Orientation, Reactivify, StandardSchema } from '../types';
 import {
-  createAccessibleErrorMessageProps,
-  ErrorableAttributes,
   fromNumberish,
   isEqual,
   isNullOrUndefined,
@@ -231,7 +229,7 @@ export function useSlider<TValue>(_props: Reactivify<SliderProps<TValue>, 'schem
     handleClick: () => thumbs.value[0]?.focus(),
   });
 
-  const { errorMessageProps, accessibleErrorProps } = createAccessibleErrorMessageProps({
+  const { errorMessageProps, accessibleErrorProps } = useErrorMessage({
     inputId,
     errorMessage: field.errorMessage,
   });
