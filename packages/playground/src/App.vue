@@ -1,19 +1,20 @@
 <script setup lang="ts">
-import { FormSchema, useForm } from '@formwerk/core';
-import InputText from './components/InputText.vue';
-import Switch from './components/Switch.vue';
-import MultiSlider from './components/MultiSlider.vue';
-import Radio from './components/RadioItem.vue';
-import RadioGroup from './components/RadioGroup.vue';
-import CheckboxGroup from './components/CheckboxGroup.vue';
-import CheckboxItem from './components/CheckboxItem.vue';
-import InputSearch from './components/InputSearch.vue';
-import InputNumber from './components/InputNumber.vue';
-import InputSelect from './components/InputSelect.vue';
-import OptionGroup from './components/OptionGroup.vue';
-import OptionItem from './components/OptionItem.vue';
-import FormGroup from './components/FormGroup.vue';
-import { ref } from 'vue';
+import { useForm } from '@formwerk/core';
+import {
+  TextField,
+  SearchField,
+  Checkbox,
+  RadioGroup,
+  Option,
+  FormGroup,
+  FormRepeater,
+  Slider,
+  NumberField,
+  SelectField,
+  Switch,
+  CheckboxGroup,
+  Radio,
+} from '@starter/minimal/index';
 
 const { handleSubmit } = useForm({
   scrollToInvalidFieldOnSubmit: {
@@ -29,10 +30,40 @@ const onSubmit = handleSubmit(data => {
 </script>
 
 <template>
-  <div class="flex flex-col gap-[1000px]">
-    <InputText name="text" label="Text" required />
+  <div class="flex flex-col">
+    <TextField name="text" label="Text" required />
+    <SearchField name="search" label="Search" required />
 
-    <InputSearch name="search" label="Search" required />
+    <Checkbox name="checkbox" label="Checkbox" required />
+
+    <RadioGroup name="radio" label="Radio" required>
+      <Radio name="radio" label="Radio" value="1" required />
+      <Radio name="radio" label="Radio" value="2" required />
+    </RadioGroup>
+
+    <CheckboxGroup name="checkboxGroup" label="Checkbox Group" required>
+      <Checkbox name="checkboxGroup" label="Checkbox" value="1" required />
+      <Checkbox name="checkboxGroup" label="Checkbox" value="2" required />
+    </CheckboxGroup>
+
+    <SelectField name="select" label="Select" required>
+      <Option name="select" label="Option" value="1" />
+      <Option name="select" label="Option" value="2" />
+    </SelectField>
+
+    <Switch name="switch" label="Switch" required />
+
+    <NumberField name="number" label="Number" required />
+
+    <Slider name="slider" label="Slider" required />
+
+    <FormGroup name="formGroup" label="Form Group" required>
+      <TextField name="formGroup" label="Text" required />
+    </FormGroup>
+
+    <FormRepeater name="formRepeater" label="Form Repeater" required>
+      <TextField name="formRepeater" label="Text" required />
+    </FormRepeater>
 
     <button class="bg-blue-500 text-white p-2 rounded-md" @click="onSubmit">Submit</button>
   </div>

@@ -42,7 +42,7 @@ const { items, addButtonProps, Iteration } = useFormRepeater(props);
 }
 
 .repeater-item {
-  border: 1px solid #e5e7eb;
+  border: 1px solid #000;
   border-radius: 0.375rem;
   display: flex;
   background: white;
@@ -56,49 +56,6 @@ const { items, addButtonProps, Iteration } = useFormRepeater(props);
 .repeater-controls {
   display: flex;
   flex-direction: column;
-  border-left: 1px solid #e5e7eb;
-}
-
-.control-btn {
-  padding: 0.5rem;
-  border: none;
-  background: transparent;
-  cursor: pointer;
-  color: #6b7280;
-  font-size: 0.875rem;
-}
-
-.control-btn:hover {
-  background: #f3f4f6;
-}
-
-.control-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.control-btn.remove {
-  color: #ef4444;
-}
-
-.add-btn {
-  margin-top: 0.5rem;
-  padding: 0.5rem 0.75rem;
-  border: 1px solid #e5e7eb;
-  border-radius: 0.375rem;
-  background: white;
-  color: #374151;
-  width: max-content;
-  cursor: pointer;
-}
-
-.add-btn:hover {
-  background: #f3f4f6;
-}
-
-.add-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
 }
 
 /* Transitions */

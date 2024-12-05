@@ -39,14 +39,31 @@ const { inputProps, labelProps, errorMessage, errorMessageProps } = useSwitch(pr
   .switch-indicator {
     width: 40px;
     height: 20px;
+    border: 1px solid #000;
+    border-radius: 10px;
+    background-color: gray;
+    display: flex;
+    align-items: center;
+  }
+
+  label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
   }
 
   .switch-indicator-knob {
     width: 16px;
     height: 16px;
+    background-color: #fff;
+    border-radius: 99999999px;
   }
 
   &:has(:checked) {
+    .switch-indicator {
+      background-color: #000;
+    }
+
     .switch-indicator-knob {
       transform: translateX(20px);
     }

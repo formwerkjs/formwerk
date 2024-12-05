@@ -4,7 +4,10 @@ import SliderThumb from './SliderThumb.vue';
 
 const props = defineProps<SliderProps>();
 
-const { groupProps, trackProps, outputProps, labelProps, errorMessage, errorMessageProps } = useSlider(props);
+const { groupProps, trackProps, outputProps, labelProps, errorMessage, errorMessageProps, useThumbMetadata } =
+  useSlider(props);
+
+const thumbData = useThumbMetadata(0);
 </script>
 
 <template>
@@ -26,6 +29,16 @@ const { groupProps, trackProps, outputProps, labelProps, errorMessage, errorMess
   border-radius: 2px;
   background-color: gray;
   width: 100%;
+  display: flex;
+  align-items: center;
+
+  &::before {
+    content: '';
+    width: calc(v-bind('thumbData.percent') * 100%);
+    background-color: #000;
+    border-radius: 6px;
+    height: 6px;
+  }
 }
 
 .error-message {

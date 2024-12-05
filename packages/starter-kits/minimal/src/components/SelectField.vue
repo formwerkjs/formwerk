@@ -34,7 +34,7 @@ const { triggerProps, popupProps, labelProps, errorMessage, errorMessageProps, d
       </svg>
     </button>
 
-    <div v-bind="popupProps" class="select-popup">
+    <div v-bind="popupProps" class="select-popup" popover>
       <!-- You can either pass options as a prop, groups as a prop, or use the slot and inline the OptionGroup and Option components -->
       <slot v-if="!groups && !options" />
 

@@ -7,6 +7,7 @@ export default defineConfig({
   resolve: {
     alias: {
       '@/': join(__dirname, 'src/'),
+      '@starter/minimal/': join(__dirname, '../starter-kits/minimal/src/'),
     },
   },
   plugins: [vue()],

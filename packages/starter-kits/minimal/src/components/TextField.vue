@@ -22,4 +22,8 @@ const { inputProps, labelProps, errorMessage, errorMessageProps, descriptionProp
 .error-message {
   color: red;
 }
+
+label {
+  display: block;
+}
 </style>
