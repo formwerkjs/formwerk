@@ -101,7 +101,7 @@ export function useForm<
   const isHtmlValidationDisabled = () => props?.disableHtmlValidation ?? getConfig().disableHtmlValidation;
   const values = reactive(cloneDeep(valuesSnapshot.originals.value)) as PartialDeep<TInput>;
   const touched = reactive(cloneDeep(touchedSnapshot.originals.value)) as TouchedSchema<TInput>;
-  const disabled = {} as DisabledSchema<TInput>;
+  const disabled = reactive({}) as DisabledSchema<TInput>;
   const errors = ref({}) as Ref<ErrorsSchema<TInput>>;
 
   const ctx = createFormContext<TInput, TOutput>({
@@ -145,11 +145,11 @@ export function useForm<
   }
 
   function getError<TPath extends Path<TInput>>(path: TPath): string | undefined {
-    return ctx.getFieldErrors(path)[0];
+    return ctx.isPathDisabled(path) ? undefined : ctx.getFieldErrors(path)[0];
   }
 
   function displayError(path: Path<TInput>) {
-    return ctx.isFieldTouched(path) ? getError(path) : undefined;
+    return ctx.isFieldTouched(path) && !ctx.isPathDisabled(path) ? getError(path) : undefined;
   }
 
   provide(FormKey, {

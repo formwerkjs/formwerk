@@ -70,6 +70,36 @@ export function getFromPath<TValue = unknown, TFallback = TValue>(
   return resolvedValue as TValue | undefined;
 }
 
+export function getLastReachableValue<TValue = unknown>(
+  object: NestedRecord | undefined,
+  path: string,
+): TValue | undefined {
+  if (!object) {
+    return undefined;
+  }
+
+  if (isEscapedPath(path)) {
+    return object[cleanupNonNestedPath(path)] as TValue | undefined;
+  }
+
+  const normalizedPath = normalizePath(path);
+  let resolvedValue = object as unknown;
+
+  for (const propKey of (normalizedPath || '').split('.').filter(Boolean)) {
+    if (!isContainerValue(resolvedValue)) {
+      return resolvedValue as TValue;
+    }
+
+    if (!(propKey in resolvedValue)) {
+      return resolvedValue as TValue;
+    }
+
+    resolvedValue = resolvedValue[propKey];
+  }
+
+  return resolvedValue as TValue | undefined;
+}
+
 /**
  * Sets a nested property value in a path, creates the path properties if it doesn't exist
  */
@@ -180,7 +210,7 @@ export function escapePath(path: string) {
 
 export function findLeaf(
   object: NestedRecord,
-  predicate: (value: unknown) => boolean,
+  predicate: (value: unknown, path: string) => boolean,
   acc: string = '',
 ): string | undefined {
   const entries = Object.entries(object);
@@ -194,8 +224,9 @@ export function findLeaf(
       }
     }
 
-    if (predicate(value)) {
-      return `${path}${key}`;
+    const fullPath = `${path}${key}`;
+    if (predicate(value, fullPath)) {
+      return fullPath;
     }
   }
 }
