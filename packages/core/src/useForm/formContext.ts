@@ -11,7 +11,15 @@ import {
   IssueCollection,
 } from '../types';
 import { cloneDeep, isEqual, normalizeArrayable } from '../utils/common';
-import { escapePath, findLeaf, getFromPath, isPathSet, setInPath, unsetPath as unsetInObject } from '../utils/path';
+import {
+  escapePath,
+  findLeaf,
+  getFromPath,
+  getLastReachableValue,
+  isPathSet,
+  setInPath,
+  unsetPath as unsetInObject,
+} from '../utils/path';
 import { FormSnapshot } from './formSnapshot';
 import { isObject, merge } from '../../../shared/src';
 
@@ -43,6 +51,7 @@ export interface BaseFormContext<TForm extends FormObject = FormObject> {
   setValues: (newValues: Partial<TForm>, opts?: SetValueOptions) => void;
   revertValues: () => void;
   revertTouched: () => void;
+  isPathDisabled: (path: Path<TForm>) => boolean;
 }
 
 export interface SetValueOptions {
@@ -131,7 +140,16 @@ export function createFormContext<TForm extends FormObject = FormObject, TOutput
   }
 
   function hasErrors() {
-    return !!findLeaf(errors.value, l => Array.isArray(l) && l.length > 0);
+    return !!findLeaf(
+      errors.value,
+      (l, path) => !isPathDisabled(path as Path<TForm>) && Array.isArray(l) && l.length > 0,
+    );
+  }
+
+  function isPathDisabled(path: Path<TForm>) {
+    const value = getLastReachableValue(disabled, path);
+
+    return typeof value === 'boolean' ? value : false;
   }
 
   function getErrors(): IssueCollection[] {
@@ -260,5 +278,6 @@ export function createFormContext<TForm extends FormObject = FormObject, TOutput
     getErrors,
     clearErrors,
     getValidationMode,
+    isPathDisabled,
   };
 }

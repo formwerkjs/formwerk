@@ -15,8 +15,10 @@ import {
   CheckboxGroup,
   Radio,
 } from '@starter/minimal/index';
+import { ref } from 'vue';
 
-const { handleSubmit } = useForm({
+const disabled = ref(false);
+const { handleSubmit, isValid, getError, getErrors } = useForm({
   scrollToInvalidFieldOnSubmit: {
     behavior: 'instant',
     block: 'center',
@@ -27,12 +29,22 @@ const { handleSubmit } = useForm({
 const onSubmit = handleSubmit(data => {
   console.log(data);
 });
+
+const toggleDisabled = () => {
+  disabled.value = !disabled.value;
+};
 </script>
 
 <template>
   <div class="flex flex-col">
+    <button type="button" @click="toggleDisabled">Toggle Disabled</button>
     <TextField name="text" label="Text" required />
-    <SearchField name="search" label="Search" required />
+
+    {{ isValid }}
+    {{ getError('text') }}
+    {{ getErrors() }}
+
+    <!-- <SearchField name="search" label="Search" required />
 
     <Checkbox name="checkbox" label="Checkbox" required />
 
@@ -57,13 +69,13 @@ const onSubmit = handleSubmit(data => {
 
     <Slider name="slider" label="Slider" required />
 
-    <FormGroup name="formGroup" label="Form Group" required>
-      <TextField name="formGroup" label="Text" required />
-    </FormGroup>
-
     <FormRepeater name="formRepeater" label="Form Repeater" required>
       <TextField name="formRepeater" label="Text" required />
-    </FormRepeater>
+    </FormRepeater> -->
+
+    <FormGroup name="formGroup" label="Form Group" required>
+      <TextField name="formGroup" label="Text" required :disabled="disabled" />
+    </FormGroup>
 
     <button class="bg-blue-500 text-white p-2 rounded-md" @click="onSubmit">Submit</button>
   </div>
