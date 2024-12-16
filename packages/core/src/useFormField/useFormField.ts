@@ -83,7 +83,13 @@ export function useFormField<TValue = unknown>(opts?: Partial<FormFieldOptions<T
 
   async function validate(mutate?: boolean): Promise<ValidationResult> {
     const schema = opts?.schema;
-    if (!schema) {
+    if (!schema || isDisabled.value) {
+      if (__DEV__) {
+        if (isDisabled.value) {
+          warn('Field is disabled, skipping validation call');
+        }
+      }
+
       return Promise.resolve(
         createValidationResult({ isValid: true, errors: [], output: cloneDeep(fieldValue.value) }),
       );

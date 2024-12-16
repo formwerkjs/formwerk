@@ -196,3 +196,33 @@ test('setErrors warns when trying to set errors on a disabled field', async () =
   // Clean up the mock
   consoleWarnSpy.mockRestore();
 });
+
+test('validate warns and skips validation on a disabled field', async () => {
+  const consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+  const schemaSpy = vi.fn(async () => {
+    return { issues: [{ message: 'error', path: ['field'] }] };
+  });
+
+  const { validate, errors } = await renderSetup(() => {
+    return useFormField({
+      initialValue: 'bar',
+      disabled: true,
+      schema: defineStandardSchema(schemaSpy),
+    });
+  });
+
+  // Attempt to validate the disabled field
+  await validate(true);
+
+  // Check that a warning was logged
+  expect(consoleWarnSpy).toHaveBeenCalledOnce();
+
+  // Ensure no errors were set
+  expect(errors.value).toEqual([]);
+
+  // Ensure the schema function was not called
+  expect(schemaSpy).not.toHaveBeenCalled();
+
+  // Clean up the mocks
+  consoleWarnSpy.mockRestore();
+});
