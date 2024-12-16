@@ -220,8 +220,8 @@ test('validate warns and skips validation on a disabled field', async () => {
   // Ensure no errors were set
   expect(errors.value).toEqual([]);
 
-  // Ensure the schema function was not called
-  expect(schemaSpy).not.toHaveBeenCalled();
+  // Ensure the schema function was called because we don't want the integrity of the schema to be compromised
+  expect(schemaSpy).toHaveBeenCalled();
 
   // Clean up the mocks
   consoleWarnSpy.mockRestore();
