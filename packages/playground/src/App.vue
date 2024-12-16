@@ -38,7 +38,7 @@ const toggleDisabled = () => {
 <template>
   <div class="flex flex-col">
     <button type="button" @click="toggleDisabled">Toggle Disabled</button>
-    <TextField name="text" label="Text" required :disabled="disabled" />
+    <TextField name="text" label="Text" required />
 
     {{ isValid }}
     {{ getError('text') }}
@@ -69,13 +69,13 @@ const toggleDisabled = () => {
 
     <Slider name="slider" label="Slider" required />
 
-    <FormGroup name="formGroup" label="Form Group" required>
-      <TextField name="formGroup" label="Text" required />
-    </FormGroup>
-
     <FormRepeater name="formRepeater" label="Form Repeater" required>
       <TextField name="formRepeater" label="Text" required />
     </FormRepeater> -->
+
+    <FormGroup name="formGroup" label="Form Group" required>
+      <TextField name="formGroup" label="Text" required :disabled="disabled" />
+    </FormGroup>
 
     <button class="bg-blue-500 text-white p-2 rounded-md" @click="onSubmit">Submit</button>
   </div>
