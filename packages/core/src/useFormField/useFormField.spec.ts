@@ -1,6 +1,7 @@
 import { renderSetup, defineStandardSchema } from '@test-utils/index';
-import { useFormField } from './useFormField';
+import { exposeField, useFormField } from './useFormField';
 import { useForm } from '../useForm/useForm';
+import { ref } from 'vue';
 
 test('it initializes the field value', async () => {
   const { fieldValue } = await renderSetup(() => {
@@ -130,20 +131,68 @@ test('can have a typed schema for validation', async () => {
   expect(errors.value).toEqual(['error']);
 });
 
-// test('can have a typed schema for initial value', async () => {
-//   const { fieldValue } = await renderSetup(() => {
-//     return useFormField({
-//       schema: {
-//         parse: async () => {
-//           return { errors: [] };
-//         },
-//         defaults(value) {
-//           return value || 'default';
-//         },
-//       },
-//     });
-//   });
+test('disabled fields report isValid as true and errors as empty after being invalid', async () => {
+  const disabled = ref(false);
+  const { validate, isValid, errors, errorMessage } = await renderSetup(() => {
+    return useFormField({
+      initialValue: 'bar',
+      disabled,
+      schema: defineStandardSchema(async () => {
+        return { issues: [{ message: 'error', path: ['field'] }] };
+      }),
+    });
+  });
 
-//   await nextTick();
-//   expect(fieldValue.value).toEqual('default');
-// });
+  // Initially validate to make the field invalid
+  await validate(true);
+  expect(isValid.value).toBe(false);
+  expect(errors.value).toEqual(['error']);
+  expect(errorMessage.value).toBe('error');
+
+  // Disable the field
+  disabled.value = true;
+
+  // Check the state after disabling
+  expect(isValid.value).toBe(true);
+  expect(errors.value).toEqual([]);
+  expect(errorMessage.value).toBe('');
+});
+
+test('setErrors warns when trying to set errors on a disabled field', async () => {
+  const disabled = ref(true);
+  const consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+  const { isValid, errors, errorMessage, setErrors } = await renderSetup(() => {
+    return exposeField(
+      {},
+      useFormField({
+        initialValue: 'bar',
+        disabled,
+        schema: defineStandardSchema(async () => {
+          return { issues: [{ message: 'error', path: ['field'] }] };
+        }),
+      }),
+    );
+  });
+
+  // Attempt to set errors on a disabled field
+  setErrors('error');
+
+  // Check that a warning was logged
+  expect(consoleWarnSpy).toHaveBeenCalledOnce();
+
+  // Check the state, errors should not be set
+  expect(isValid.value).toBe(true);
+  expect(errors.value).toEqual([]);
+  expect(errorMessage.value).toBe('');
+
+  // Enable the field
+  disabled.value = false;
+
+  // Check the state, errors should be set
+  expect(isValid.value).toBe(false);
+  expect(errors.value).toEqual(['error']);
+  expect(errorMessage.value).toBe('error');
+
+  // Clean up the mock
+  consoleWarnSpy.mockRestore();
+});

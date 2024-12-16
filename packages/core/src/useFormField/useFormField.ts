@@ -2,7 +2,7 @@ import { computed, inject, MaybeRefOrGetter, nextTick, readonly, Ref, shallowRef
 import { FormContext, FormKey } from '../useForm/useForm';
 import { Arrayable, Getter, StandardSchema, ValidationResult } from '../types';
 import { useSyncModel } from '../reactivity/useModelSync';
-import { cloneDeep, isEqual, normalizeArrayable, combineIssues, tryOnScopeDispose } from '../utils/common';
+import { cloneDeep, isEqual, normalizeArrayable, combineIssues, tryOnScopeDispose, warn } from '../utils/common';
 import { FormGroupKey } from '../useFormGroup';
 import { useErrorDisplay } from './useErrorDisplay';
 import { usePathPrefixer } from '../helpers/usePathPrefixer';
@@ -49,7 +49,7 @@ export function useFormField<TValue = unknown>(opts?: Partial<FormFieldOptions<T
   const initialValue = opts?.initialValue;
   const { fieldValue, pathlessValue, setValue } = useFieldValue(getPath, form, initialValue);
   const { isTouched, pathlessTouched, setTouched } = useFieldTouched(getPath, form);
-  const { errors, setErrors, isValid, errorMessage, pathlessValidity } = useFieldValidity(getPath, form);
+  const { errors, setErrors, isValid, errorMessage, pathlessValidity } = useFieldValidity(getPath, isDisabled, form);
   const { displayError } = useErrorDisplay(errorMessage, isTouched);
 
   const isDirty = computed(() => {
@@ -182,13 +182,14 @@ export function useFormField<TValue = unknown>(opts?: Partial<FormFieldOptions<T
   return field;
 }
 
-function useFieldValidity(getPath: Getter<string | undefined>, form?: FormContext | null) {
+function useFieldValidity(getPath: Getter<string | undefined>, isDisabled: Ref<boolean>, form?: FormContext | null) {
   const validity = form ? createFormValidityRef(getPath, form) : createLocalValidity();
-  const errorMessage = computed(() => validity.errors.value[0] ?? '');
-  const isValid = computed(() => validity.errors.value.length === 0);
+  const errorMessage = computed(() => (isDisabled.value ? '' : (validity.errors.value[0] ?? '')));
+  const isValid = computed(() => (isDisabled.value ? true : validity.errors.value.length === 0));
 
   return {
     ...validity,
+    errors: computed(() => (isDisabled.value ? [] : validity.errors.value)),
     isValid,
     errorMessage,
   };
@@ -420,7 +421,15 @@ export function exposeField<TReturns extends object, TValue>(
     isTouched: field.isTouched,
     isValid: field.isValid,
     isDisabled: field.isDisabled,
-    setErrors: field.setErrors,
+    setErrors: __DEV__
+      ? (messages: Arrayable<string>) => {
+          if (field.isDisabled.value) {
+            warn('This field is disabled, setting errors will not take effect until the field is enabled.');
+          }
+
+          field.setErrors(messages);
+        }
+      : field.setErrors,
     setTouched: field.setTouched,
     setValue: field.setValue,
   } satisfies ExposedField<TValue>;
