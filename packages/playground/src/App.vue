@@ -73,8 +73,8 @@ const toggleDisabled = () => {
       <TextField name="formRepeater" label="Text" required />
     </FormRepeater> -->
 
-    <FormGroup name="formGroup" label="Form Group" required>
-      <TextField name="formGroup" label="Text" required :disabled="disabled" />
+    <FormGroup name="formGroup" label="Form Group" :disabled="disabled">
+      <TextField name="formGroup" label="Text" required />
     </FormGroup>
 
     <button class="bg-blue-500 text-white p-2 rounded-md" @click="onSubmit">Submit</button>
