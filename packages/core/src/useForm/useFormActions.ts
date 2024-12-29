@@ -69,6 +69,7 @@ export function useFormActions<TForm extends FormObject = FormObject, TOutput ex
 ) {
   const isSubmitting = shallowRef(false);
   const submitAttemptsCount = shallowRef(0);
+  const isSubmitAttempt = shallowRef(false);
   const wasSubmitted = shallowRef(false);
   const [dispatchSubmit, onSubmitAttempt] = createEventDispatcher<void>('submit');
   const {
@@ -86,6 +87,7 @@ export function useFormActions<TForm extends FormObject = FormObject, TOutput ex
     return async function onSubmit(e?: Event) {
       e?.preventDefault();
       isSubmitting.value = true;
+      isSubmitAttempt.value = true;
       submitAttemptsCount.value += 1;
 
       // No need to wait for this event to propagate, it is used for non-validation stuff like setting touched state.
@@ -177,6 +179,7 @@ export function useFormActions<TForm extends FormObject = FormObject, TOutput ex
     isSubmitting,
     submitAttemptsCount,
     wasSubmitted,
+    isSubmitAttempt,
   };
 }
 

@@ -134,14 +134,12 @@ export function useForm<
   }
 
   const transactionsManager = useFormTransactions(ctx);
-  const { actions, isSubmitting, submitAttemptsCount, wasSubmitted, ...privateActions } = useFormActions<
-    TInput,
-    TOutput
-  >(ctx, {
-    disabled,
-    schema: props?.schema as StandardSchema<TInput, TOutput>,
-    scrollToInvalidFieldOnSubmit: props?.scrollToInvalidFieldOnSubmit ?? true,
-  });
+  const { actions, isSubmitting, submitAttemptsCount, wasSubmitted, isSubmitAttempt, ...privateActions } =
+    useFormActions<TInput, TOutput>(ctx, {
+      disabled,
+      schema: props?.schema as StandardSchema<TInput, TOutput>,
+      scrollToInvalidFieldOnSubmit: props?.scrollToInvalidFieldOnSubmit ?? true,
+    });
 
   function getErrors() {
     return ctx.getErrors();
@@ -224,6 +222,10 @@ export function useForm<
      * Whether the form was submitted, which is true if the form was submitted and the submission was successful.
      */
     wasSubmitted,
+    /**
+     * Whether the form was submitted, wether the validity or the submission was successful or not.
+     */
+    isSubmitAttempt,
     /**
      * Whether the specified field is dirty.
      */
