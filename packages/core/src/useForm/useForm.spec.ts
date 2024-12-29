@@ -856,6 +856,58 @@ describe('form validation', () => {
       await fireEvent.blur(screen.getByTestId('input'));
       expect(screen.getByText('Form is invalid')).toBeDefined();
     });
+
+    test('update submit errors when submitting a form', async () => {
+      const input = ref<HTMLInputElement>();
+
+      const createInputComponent = (input: Ref<HTMLInputElement | undefined>) => {
+        return {
+          setup: () => {
+            const field = useFormField({ path: 'test' });
+            useInputValidity({ inputEl: input, field });
+
+            return { input: input, errorMessage: field.errorMessage, submitErrorMessage: field.submitErrorMessage };
+          },
+          template: `
+          <input ref="input" data-testid="input" required />
+          <span data-testid="err">{{ errorMessage }}</span>
+          <span data-testid="submit-err">{{ submitErrorMessage }}</span>
+        `,
+        };
+      };
+
+      await render({
+        components: { Child: createInputComponent(input) },
+        setup() {
+          const { getSubmitErrors, handleSubmit } = useForm();
+
+          return { getSubmitErrors, onSubmit: handleSubmit(() => ({})) };
+        },
+        template: `
+      <form @submit="onSubmit" novalidate>
+        <Child />
+
+        <button type="submit">Submit</button>
+      </form>
+    `,
+      });
+
+      expect(screen.getByTestId('submit-err').textContent).toBe('');
+      await fireEvent.click(screen.getByText('Submit'));
+      await flush();
+      expect(screen.getByTestId('submit-err').textContent).toBe('Constraints not satisfied');
+      // enter a value to make the form valid and submit again
+      await fireEvent.update(screen.getByTestId('input'), 'test');
+      // update validity
+      await fireEvent.blur(screen.getByTestId('input'));
+      await flush();
+      expect(screen.getByTestId('submit-err').textContent).toBe('Constraints not satisfied');
+      expect(screen.getByTestId('err').textContent).toBe('');
+      // when submitting clearing the submit errors
+      await fireEvent.click(screen.getByText('Submit'));
+      await flush();
+      expect(screen.getByTestId('submit-err').textContent).toBe('');
+    });
   });
 
   describe('Standard Schema', () => {
