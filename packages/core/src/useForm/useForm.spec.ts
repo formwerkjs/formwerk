@@ -582,6 +582,34 @@ describe('form submit', () => {
     await reset();
     expect(submitAttemptsCount.value).toBe(0);
   });
+
+  test('Can detect wether the form was submitted or not ', async () => {
+    const { wasSubmitted, handleSubmit } = await renderSetup(() => {
+      return useForm({ initialValues: { foo: 'bar' } });
+    });
+
+    const cb = vi.fn();
+    const onSubmit = handleSubmit(v => cb(v.toObject()));
+
+    expect(wasSubmitted.value).toBe(false);
+    await onSubmit(new Event('submit'));
+    expect(wasSubmitted.value).toBe(true);
+  });
+
+  test('Can reset the was submitted state', async () => {
+    const { wasSubmitted, handleSubmit, reset } = await renderSetup(() => {
+      return useForm({ initialValues: { foo: 'bar' } });
+    });
+
+    const cb = vi.fn();
+    const onSubmit = handleSubmit(v => cb(v.toObject()));
+
+    expect(wasSubmitted.value).toBe(false);
+    await onSubmit(new Event('submit'));
+    expect(wasSubmitted.value).toBe(true);
+    await reset();
+    expect(wasSubmitted.value).toBe(false);
+  });
 });
 
 describe('form dirty state', () => {
