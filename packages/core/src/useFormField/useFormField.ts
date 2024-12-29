@@ -390,7 +390,7 @@ export type ExposedField<TValue> = {
    */
   errors: Ref<string[]>;
   /**
-   * The errors for the field when submitting.
+   * The errors for the field from the last submit attempt.
    */
   submitErrors: Ref<string[]>;
   /**
