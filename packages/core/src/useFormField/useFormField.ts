@@ -26,6 +26,8 @@ export type FormField<TValue> = {
   isDisabled: Ref<boolean>;
   errors: Ref<string[]>;
   errorMessage: Ref<string>;
+  submitErrors: Ref<string[]>;
+  submitErrorMessage: Ref<string | undefined>;
   schema: StandardSchema<TValue> | undefined;
   validate(mutate?: boolean): Promise<ValidationResult>;
   getPath: Getter<string | undefined>;
@@ -50,6 +52,11 @@ export function useFormField<TValue = unknown>(opts?: Partial<FormFieldOptions<T
   const { fieldValue, pathlessValue, setValue } = useFieldValue(getPath, form, initialValue);
   const { isTouched, pathlessTouched, setTouched } = useFieldTouched(getPath, form);
   const { errors, setErrors, isValid, errorMessage, pathlessValidity } = useFieldValidity(getPath, isDisabled, form);
+  const { submitErrors, submitErrorMessage, allowStoreSubmitErrors, onFieldSubmitted } = useFieldSubmissionErrors(
+    errors.value,
+    errorMessage.value,
+  );
+
   const { displayError } = useErrorDisplay(errorMessage, isTouched);
 
   const isDirty = computed(() => {
@@ -126,6 +133,8 @@ export function useFormField<TValue = unknown>(opts?: Partial<FormFieldOptions<T
     setTouched,
     setErrors,
     displayError,
+    submitErrors,
+    submitErrorMessage,
   };
 
   if (!form) {
@@ -136,6 +145,12 @@ export function useFormField<TValue = unknown>(opts?: Partial<FormFieldOptions<T
 
   form.onSubmitAttempt(() => {
     setTouched(true);
+
+    allowStoreSubmitErrors.value = true;
+  });
+
+  form?.onValidationDone(() => {
+    onFieldSubmitted(errors.value, errorMessage.value);
   });
 
   tryOnScopeDispose(() => {
@@ -198,6 +213,29 @@ function useFieldValidity(getPath: Getter<string | undefined>, isDisabled: Ref<b
     errors: computed(() => (isDisabled.value ? [] : validity.errors.value)),
     isValid,
     errorMessage,
+  };
+}
+
+function useFieldSubmissionErrors(errors: string[], errorMessage: string | undefined) {
+  const allowStoreSubmitErrors = shallowRef(false);
+  const submitErrors = shallowRef<string[]>(errors);
+  const submitErrorMessage = shallowRef<string | undefined>(errorMessage);
+
+  const onFieldSubmitted = (errors: string[], errorMessage: string | undefined) => {
+    if (!allowStoreSubmitErrors.value) {
+      return;
+    }
+
+    submitErrors.value = errors;
+    submitErrorMessage.value = errorMessage;
+    allowStoreSubmitErrors.value = false;
+  };
+
+  return {
+    allowStoreSubmitErrors,
+    submitErrors,
+    submitErrorMessage,
+    onFieldSubmitted,
   };
 }
 
@@ -372,7 +410,14 @@ export type ExposedField<TValue> = {
    * The errors for the field.
    */
   errors: Ref<string[]>;
-
+  /**
+   * The errors for the field when submitting.
+   */
+  submitErrors: Ref<string[]>;
+  /**
+   * The error message for the field when submitting.
+   */
+  submitErrorMessage: Ref<string | undefined>;
   /**
    * The value of the field.
    */
@@ -422,6 +467,8 @@ export function exposeField<TReturns extends object, TValue>(
     displayError: field.displayError,
     errorMessage: field.errorMessage,
     errors: field.errors,
+    submitErrors: field.submitErrors,
+    submitErrorMessage: field.submitErrorMessage,
     fieldValue: field.fieldValue as Ref<TValue>,
     isDirty: field.isDirty,
     isTouched: field.isTouched,
