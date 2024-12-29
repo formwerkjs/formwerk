@@ -146,14 +146,14 @@ export function useFormActions<TForm extends FormObject = FormObject, TOutput ex
 
     form.revertValues();
     form.revertTouched();
+    submitAttemptsCount.value = 0;
+
     if (state?.revalidate ?? true) {
       await validate();
       return;
     }
 
     form.clearErrors();
-
-    submitAttemptsCount.value = 0;
 
     return Promise.resolve();
   }

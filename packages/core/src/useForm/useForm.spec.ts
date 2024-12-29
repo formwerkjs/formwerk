@@ -565,6 +565,23 @@ describe('form submit', () => {
     await flush();
     expect(formData.get('foo')).toBe('bar');
   });
+
+  test('can compute the submit counts, attempts and resets', async () => {
+    const { submitAttemptsCount, handleSubmit, reset } = await renderSetup(() => {
+      return useForm({ initialValues: { foo: 'bar' } });
+    });
+
+    const cb = vi.fn();
+    const onSubmit = handleSubmit(v => cb(v.toObject()));
+
+    expect(submitAttemptsCount.value).toBe(0);
+    onSubmit(new Event('submit'));
+    expect(submitAttemptsCount.value).toBe(1);
+    onSubmit(new Event('submit'));
+    expect(submitAttemptsCount.value).toBe(2);
+    await reset();
+    expect(submitAttemptsCount.value).toBe(0);
+  });
 });
 
 describe('form dirty state', () => {
