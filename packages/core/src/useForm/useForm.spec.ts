@@ -667,6 +667,21 @@ describe('form submit', () => {
       expect(isSubmitAttempt.value).toBe(true);
     }
   });
+
+  test('Can reset the is submit attempt state', async () => {
+    const { isSubmitAttempt, handleSubmit, reset } = await renderSetup(() => {
+      return useForm({ initialValues: { foo: 'bar' } });
+    });
+
+    const cb = vi.fn();
+    const onSubmit = handleSubmit(v => cb(v.toObject()));
+
+    expect(isSubmitAttempt.value).toBe(false);
+    await onSubmit(new Event('submit'));
+    expect(isSubmitAttempt.value).toBe(true);
+    await reset();
+    expect(isSubmitAttempt.value).toBe(false);
+  });
 });
 
 describe('form dirty state', () => {
