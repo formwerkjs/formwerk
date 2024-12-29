@@ -153,6 +153,8 @@ export function useFormActions<TForm extends FormObject = FormObject, TOutput ex
 
     form.clearErrors();
 
+    submitAttemptsCount.value = 0;
+
     return Promise.resolve();
   }
 
