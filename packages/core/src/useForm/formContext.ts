@@ -42,10 +42,14 @@ export interface BaseFormContext<TForm extends FormObject = FormObject> {
   setInitialTouched: (newTouched: Partial<TouchedSchema<TForm>>, opts?: SetValueOptions) => void;
   setFieldDisabled<TPath extends Path<TForm>>(path: TPath, value: boolean): void;
   getFieldErrors<TPath extends Path<TForm>>(path: TPath): string[];
+  getFieldSubmitErrors<TPath extends Path<TForm>>(path: TPath): string[];
   setFieldErrors<TPath extends Path<TForm>>(path: TPath, message: Arrayable<string>): void;
+  setFieldSubmitErrors<TPath extends Path<TForm>>(path: TPath, message: Arrayable<string>): void;
   getValidationMode(): FormValidationMode;
   getErrors: () => IssueCollection[];
+  getSubmitErrors: () => IssueCollection[];
   clearErrors: (path?: string) => void;
+  clearSubmitErrors: (path?: string) => void;
   hasErrors: () => boolean;
   getValues: () => TForm;
   setValues: (newValues: Partial<TForm>, opts?: SetValueOptions) => void;
@@ -64,6 +68,7 @@ export interface FormContextCreateOptions<TForm extends FormObject = FormObject,
   touched: TouchedSchema<TForm>;
   disabled: DisabledSchema<TForm>;
   errors: Ref<ErrorsSchema<TForm>>;
+  submitErrors: Ref<ErrorsSchema<TForm>>;
   schema: StandardSchema<TForm, TOutput> | undefined;
   snapshots: {
     values: FormSnapshot<TForm>;
@@ -76,6 +81,7 @@ export function createFormContext<TForm extends FormObject = FormObject, TOutput
   values,
   disabled,
   errors,
+  submitErrors,
   schema,
   touched,
   snapshots,
@@ -158,6 +164,12 @@ export function createFormContext<TForm extends FormObject = FormObject, TOutput
       .filter(e => e.messages.length > 0);
   }
 
+  function getSubmitErrors(): IssueCollection[] {
+    return Object.entries(submitErrors.value)
+      .map<IssueCollection>(([key, value]) => ({ path: key, messages: value as string[] }))
+      .filter(e => e.messages.length > 0);
+  }
+
   function setInitialValues(newValues: Partial<TForm>, opts?: SetValueOptions) {
     if (opts?.behavior === 'merge') {
       snapshots.values.initials.value = merge(cloneDeep(snapshots.values.initials.value), cloneDeep(newValues));
@@ -208,8 +220,16 @@ export function createFormContext<TForm extends FormObject = FormObject, TOutput
     return [...(getFromPath<string[]>(errors.value, escapePath(path), []) || [])];
   }
 
+  function getFieldSubmitErrors<TPath extends Path<TForm>>(path: TPath) {
+    return [...(getFromPath<string[]>(submitErrors.value, escapePath(path), []) || [])];
+  }
+
   function setFieldErrors<TPath extends Path<TForm>>(path: TPath, message: Arrayable<string>) {
     setInPath(errors.value, escapePath(path), message ? normalizeArrayable(message) : []);
+  }
+
+  function setFieldSubmitErrors<TPath extends Path<TForm>>(path: TPath, message: Arrayable<string>) {
+    setInPath(submitErrors.value, escapePath(path), message ? normalizeArrayable(message) : []);
   }
 
   function setTouched(newTouched: Partial<TouchedSchema<TForm>>, opts?: SetValueOptions) {
@@ -236,6 +256,19 @@ export function createFormContext<TForm extends FormObject = FormObject, TOutput
     Object.keys(errors.value).forEach(key => {
       if (key === path || key.startsWith(path)) {
         delete errors.value[key as Path<TForm>];
+      }
+    });
+  }
+
+  function clearSubmitErrors(path?: string) {
+    if (!path) {
+      submitErrors.value = {} as ErrorsSchema<TForm>;
+      return;
+    }
+
+    Object.keys(submitErrors.value).forEach(key => {
+      if (key === path || key.startsWith(path)) {
+        delete submitErrors.value[key as Path<TForm>];
       }
     });
   }
@@ -273,10 +306,14 @@ export function createFormContext<TForm extends FormObject = FormObject, TOutput
     getFieldOriginalValue,
     setFieldDisabled,
     setFieldErrors,
+    setFieldSubmitErrors,
     getFieldErrors,
+    getFieldSubmitErrors,
     hasErrors,
     getErrors,
+    getSubmitErrors,
     clearErrors,
+    clearSubmitErrors,
     getValidationMode,
     isPathDisabled,
   };

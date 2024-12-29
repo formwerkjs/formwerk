@@ -103,6 +103,7 @@ export function useForm<
   const touched = reactive(cloneDeep(touchedSnapshot.originals.value)) as TouchedSchema<TInput>;
   const disabled = reactive({}) as DisabledSchema<TInput>;
   const errors = ref({}) as Ref<ErrorsSchema<TInput>>;
+  const submitErrors = ref({}) as Ref<ErrorsSchema<TInput>>;
 
   const ctx = createFormContext<TInput, TOutput>({
     id,
@@ -111,6 +112,7 @@ export function useForm<
     disabled,
     schema: props?.schema as StandardSchema<TInput, TOutput>,
     errors,
+    submitErrors,
     snapshots: {
       values: valuesSnapshot,
       touched: touchedSnapshot,
@@ -147,6 +149,14 @@ export function useForm<
 
   function getError<TPath extends Path<TInput>>(path: TPath): string | undefined {
     return ctx.isPathDisabled(path) ? undefined : ctx.getFieldErrors(path)[0];
+  }
+
+  function getSubmitErrors() {
+    return ctx.getSubmitErrors();
+  }
+
+  function getSubmitError<TPath extends Path<TInput>>(path: TPath): string | undefined {
+    return ctx.isPathDisabled(path) ? undefined : ctx.getFieldSubmitErrors(path)[0];
   }
 
   function displayError(path: Path<TInput>) {
@@ -266,6 +276,14 @@ export function useForm<
      * Gets all the errors for the form.
      */
     getErrors,
+    /**
+     * Gets the submit errors for a field.
+     */
+    getSubmitError,
+    /**
+     * Gets all the submit errors for the form.
+     */
+    getSubmitErrors,
     /**
      * Props for the form element.
      */

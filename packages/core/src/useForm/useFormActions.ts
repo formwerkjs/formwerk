@@ -92,12 +92,14 @@ export function useFormActions<TForm extends FormObject = FormObject, TOutput ex
 
       // No need to wait for this event to propagate, it is used for non-validation stuff like setting touched state.
       dispatchSubmit();
-      const { isValid, output } = await validate();
+      const { isValid, output, errors } = await validate();
+
+      updateSubmitValidationStateFromResult(errors);
+
       // Prevent submission if the form has errors
       if (!isValid) {
         isSubmitting.value = false;
         scrollToFirstInvalidField(form.id, scrollToInvalidFieldOnSubmit);
-
         return;
       }
 
@@ -118,6 +120,11 @@ export function useFormActions<TForm extends FormObject = FormObject, TOutput ex
     };
   }
 
+  function updateSubmitValidationStateFromResult(errors: IssueCollection[]) {
+    form.clearSubmitErrors();
+    applySubmitErrors(errors);
+  }
+
   function updateValidationStateFromResult(result: FormValidationResult<TOutput>) {
     form.clearErrors();
     applyErrors(result.errors);
@@ -136,6 +143,12 @@ export function useFormActions<TForm extends FormObject = FormObject, TOutput ex
   function applyErrors(errors: IssueCollection[]) {
     for (const entry of errors) {
       form.setFieldErrors(entry.path as Path<TForm>, entry.messages);
+    }
+  }
+
+  function applySubmitErrors(errors: IssueCollection[]) {
+    for (const entry of errors) {
+      form.setFieldSubmitErrors(entry.path as Path<TForm>, entry.messages);
     }
   }
 
@@ -161,6 +174,7 @@ export function useFormActions<TForm extends FormObject = FormObject, TOutput ex
     }
 
     form.clearErrors();
+    form.clearSubmitErrors();
 
     return Promise.resolve();
   }

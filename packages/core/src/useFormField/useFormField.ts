@@ -51,11 +51,8 @@ export function useFormField<TValue = unknown>(opts?: Partial<FormFieldOptions<T
   const initialValue = opts?.initialValue;
   const { fieldValue, pathlessValue, setValue } = useFieldValue(getPath, form, initialValue);
   const { isTouched, pathlessTouched, setTouched } = useFieldTouched(getPath, form);
-  const { errors, setErrors, isValid, errorMessage, pathlessValidity } = useFieldValidity(getPath, isDisabled, form);
-  const { submitErrors, submitErrorMessage, allowStoreSubmitErrors, onFieldSubmitted } = useFieldSubmissionErrors(
-    errors.value,
-    errorMessage.value,
-  );
+  const { errors, setErrors, isValid, errorMessage, pathlessValidity, submitErrors, submitErrorMessage } =
+    useFieldValidity(getPath, isDisabled, form);
 
   const { displayError } = useErrorDisplay(errorMessage, isTouched);
 
@@ -145,12 +142,6 @@ export function useFormField<TValue = unknown>(opts?: Partial<FormFieldOptions<T
 
   form.onSubmitAttempt(() => {
     setTouched(true);
-
-    allowStoreSubmitErrors.value = true;
-  });
-
-  form?.onValidationDone(() => {
-    onFieldSubmitted(errors.value, errorMessage.value);
   });
 
   tryOnScopeDispose(() => {
@@ -206,6 +197,7 @@ export function useFormField<TValue = unknown>(opts?: Partial<FormFieldOptions<T
 function useFieldValidity(getPath: Getter<string | undefined>, isDisabled: Ref<boolean>, form?: FormContext | null) {
   const validity = form ? createFormValidityRef(getPath, form) : createLocalValidity();
   const errorMessage = computed(() => (isDisabled.value ? '' : (validity.errors.value[0] ?? '')));
+  const submitErrorMessage = computed(() => (isDisabled.value ? '' : (validity.submitErrors.value[0] ?? '')));
   const isValid = computed(() => (isDisabled.value ? true : validity.errors.value.length === 0));
 
   return {
@@ -213,29 +205,7 @@ function useFieldValidity(getPath: Getter<string | undefined>, isDisabled: Ref<b
     errors: computed(() => (isDisabled.value ? [] : validity.errors.value)),
     isValid,
     errorMessage,
-  };
-}
-
-function useFieldSubmissionErrors(errors: string[], errorMessage: string | undefined) {
-  const allowStoreSubmitErrors = shallowRef(false);
-  const submitErrors = shallowRef<string[]>(errors);
-  const submitErrorMessage = shallowRef<string | undefined>(errorMessage);
-
-  const onFieldSubmitted = (errors: string[], errorMessage: string | undefined) => {
-    if (!allowStoreSubmitErrors.value) {
-      return;
-    }
-
-    submitErrors.value = errors;
-    submitErrorMessage.value = errorMessage;
-    allowStoreSubmitErrors.value = false;
-  };
-
-  return {
-    allowStoreSubmitErrors,
-    submitErrors,
     submitErrorMessage,
-    onFieldSubmitted,
   };
 }
 
@@ -364,6 +334,12 @@ function createFormValidityRef(getPath: Getter<string | undefined>, form: FormCo
     return path ? form.getFieldErrors(path) : pathlessValidity.errors.value;
   }) as Ref<string[]>;
 
+  const submitErrors = computed(() => {
+    const path = getPath();
+
+    return path ? form.getFieldSubmitErrors(path) : [];
+  });
+
   function setErrors(messages: Arrayable<string>) {
     pathlessValidity.setErrors(messages);
     const path = getPath();
@@ -376,14 +352,17 @@ function createFormValidityRef(getPath: Getter<string | undefined>, form: FormCo
     pathlessValidity,
     errors,
     setErrors,
+    submitErrors,
   };
 }
 
 function createLocalValidity() {
   const errors = shallowRef<string[]>([]);
+  const submitErrors = shallowRef<string[]>([]);
 
   const api = {
     errors,
+    submitErrors,
     setErrors(messages: Arrayable<string>) {
       errors.value = messages ? normalizeArrayable(messages) : [];
     },
