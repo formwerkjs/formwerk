@@ -610,6 +610,21 @@ describe('form submit', () => {
     await reset();
     expect(wasSubmitted.value).toBe(false);
   });
+
+  test('Can persist the was submitted state when a submission fails', async () => {
+    const { wasSubmitted, handleSubmit } = await renderSetup(() => {
+      return useForm({ initialValues: { foo: 'bar' } });
+    });
+    try {
+      const cb = vi.fn(() => Promise.reject());
+      const onSubmit = handleSubmit(() => cb());
+
+      expect(wasSubmitted.value).toBe(false);
+      await onSubmit(new Event('submit'));
+    } catch {
+      expect(wasSubmitted.value).toBe(false);
+    }
+  });
 });
 
 describe('form dirty state', () => {
