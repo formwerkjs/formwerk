@@ -146,6 +146,8 @@ export function useFormActions<TForm extends FormObject = FormObject, TOutput ex
       form.setInitialTouched(state.touched, opts);
     }
 
+    wasSubmitted.value = false;
+
     form.revertValues();
     form.revertTouched();
     submitAttemptsCount.value = 0;
