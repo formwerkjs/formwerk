@@ -627,33 +627,33 @@ describe('form submit', () => {
   });
 
   test('Can detect wether was attempted to submit or not ', async () => {
-    const { isSubmitAttempt, handleSubmit } = await renderSetup(() => {
+    const { isSubmitAttempted, handleSubmit } = await renderSetup(() => {
       return useForm({ initialValues: { foo: 'bar' } });
     });
 
     const cb = vi.fn();
     const onSubmit = handleSubmit(v => cb(v.toObject()));
 
-    expect(isSubmitAttempt.value).toBe(false);
+    expect(isSubmitAttempted.value).toBe(false);
     await onSubmit(new Event('submit'));
-    expect(isSubmitAttempt.value).toBe(true);
+    expect(isSubmitAttempted.value).toBe(true);
   });
 
   test('Can detect wether it attempt to submit even the validation fails', async () => {
-    const { isSubmitAttempt, handleSubmit } = await renderSetup(() => {
+    const { isSubmitAttempted, handleSubmit } = await renderSetup(() => {
       return useForm({ initialValues: { foo: 'bar' } });
     });
 
     const cb = vi.fn();
     const onSubmit = handleSubmit(v => cb(v.toObject()));
 
-    expect(isSubmitAttempt.value).toBe(false);
+    expect(isSubmitAttempted.value).toBe(false);
     await onSubmit(new Event('submit'));
-    expect(isSubmitAttempt.value).toBe(true);
+    expect(isSubmitAttempted.value).toBe(true);
   });
 
   test('Can detect wether it attempt to submit even the submission fails', async () => {
-    const { isSubmitAttempt, handleSubmit } = await renderSetup(() => {
+    const { isSubmitAttempted, handleSubmit } = await renderSetup(() => {
       return useForm({ initialValues: { foo: 'bar' } });
     });
 
@@ -661,26 +661,26 @@ describe('form submit', () => {
       const cb = vi.fn(() => Promise.reject());
       const onSubmit = handleSubmit(() => cb());
 
-      expect(isSubmitAttempt.value).toBe(false);
+      expect(isSubmitAttempted.value).toBe(false);
       await onSubmit(new Event('submit'));
     } catch {
-      expect(isSubmitAttempt.value).toBe(true);
+      expect(isSubmitAttempted.value).toBe(true);
     }
   });
 
   test('Can reset the is submit attempt state', async () => {
-    const { isSubmitAttempt, handleSubmit, reset } = await renderSetup(() => {
+    const { isSubmitAttempted, handleSubmit, reset } = await renderSetup(() => {
       return useForm({ initialValues: { foo: 'bar' } });
     });
 
     const cb = vi.fn();
     const onSubmit = handleSubmit(v => cb(v.toObject()));
 
-    expect(isSubmitAttempt.value).toBe(false);
+    expect(isSubmitAttempted.value).toBe(false);
     await onSubmit(new Event('submit'));
-    expect(isSubmitAttempt.value).toBe(true);
+    expect(isSubmitAttempted.value).toBe(true);
     await reset();
-    expect(isSubmitAttempt.value).toBe(false);
+    expect(isSubmitAttempted.value).toBe(false);
   });
 });
 

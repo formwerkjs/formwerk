@@ -134,7 +134,7 @@ export function useForm<
   }
 
   const transactionsManager = useFormTransactions(ctx);
-  const { actions, isSubmitting, submitAttemptsCount, wasSubmitted, isSubmitAttempt, ...privateActions } =
+  const { actions, isSubmitting, submitAttemptsCount, wasSubmitted, isSubmitAttempted, ...privateActions } =
     useFormActions<TInput, TOutput>(ctx, {
       disabled,
       schema: props?.schema as StandardSchema<TInput, TOutput>,
@@ -225,7 +225,7 @@ export function useForm<
     /**
      * Whether the form was submitted, wether the validity or the submission was successful or not.
      */
-    isSubmitAttempt,
+    isSubmitAttempted,
     /**
      * Whether the specified field is dirty.
      */

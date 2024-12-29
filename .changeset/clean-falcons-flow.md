@@ -2,4 +2,4 @@
 '@formwerk/core': minor
 ---
 
-feat: add `isSubmitAttempt` `useForm`
+feat: add `isSubmitAttempted` `useForm`
