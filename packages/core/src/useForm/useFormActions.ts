@@ -69,6 +69,7 @@ export function useFormActions<TForm extends FormObject = FormObject, TOutput ex
 ) {
   const isSubmitting = shallowRef(false);
   const submitAttemptsCount = shallowRef(0);
+  const wasSubmitted = shallowRef(false);
   const [dispatchSubmit, onSubmitAttempt] = createEventDispatcher<void>('submit');
   const {
     validate: _validate,
@@ -109,6 +110,7 @@ export function useFormActions<TForm extends FormObject = FormObject, TOutput ex
 
       const result = await onSuccess(withConsumers(output), { event: e, form: e?.target as HTMLFormElement });
       isSubmitting.value = false;
+      wasSubmitted.value = true;
 
       return result;
     };
@@ -172,6 +174,7 @@ export function useFormActions<TForm extends FormObject = FormObject, TOutput ex
     onValidationDone,
     isSubmitting,
     submitAttemptsCount,
+    wasSubmitted,
   };
 }
 

@@ -134,7 +134,10 @@ export function useForm<
   }
 
   const transactionsManager = useFormTransactions(ctx);
-  const { actions, isSubmitting, submitAttemptsCount, ...privateActions } = useFormActions<TInput, TOutput>(ctx, {
+  const { actions, isSubmitting, submitAttemptsCount, wasSubmitted, ...privateActions } = useFormActions<
+    TInput,
+    TOutput
+  >(ctx, {
     disabled,
     schema: props?.schema as StandardSchema<TInput, TOutput>,
     scrollToInvalidFieldOnSubmit: props?.scrollToInvalidFieldOnSubmit ?? true,
@@ -217,6 +220,10 @@ export function useForm<
      * The number of times the form has been submitted, regardless of the form's validity.
      */
     submitAttemptsCount,
+    /**
+     * Whether the form was submitted, which is true if the form was submitted and the submission was successful.
+     */
+    wasSubmitted,
     /**
      * Whether the specified field is dirty.
      */
