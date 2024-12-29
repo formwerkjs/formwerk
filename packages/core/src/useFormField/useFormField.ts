@@ -394,7 +394,7 @@ export type ExposedField<TValue> = {
    */
   submitErrors: Ref<string[]>;
   /**
-   * The error message for the field when submitting.
+   * The error message for the field from the last submit attempt.
    */
   submitErrorMessage: Ref<string | undefined>;
   /**
