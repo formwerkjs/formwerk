@@ -7,6 +7,7 @@ export * from './useCheckbox';
 export * from './useNumberField';
 export * from './useSelect';
 export * from './useHiddenField';
+export * from './useCustomField';
 export * from './types';
 export * from './config';
 export * from './useForm';
