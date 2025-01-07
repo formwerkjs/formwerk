@@ -1,4 +1,4 @@
-import { defineComponent } from 'vue';
+import { defineComponent, Ref } from 'vue';
 import { useSelect } from './useSelect';
 import { useOption } from './useOption';
 import { fireEvent, render, screen } from '@testing-library/vue';
@@ -41,12 +41,27 @@ function createSelect() {
     `,
   });
 
-  return defineComponent({
+  let exposedSelectedOptions: Ref<any[]>;
+  let exposedSelectedOption: Ref<any>;
+
+  const component = defineComponent({
     components: { OptionItem: Option, OptionGroup },
     setup(props, { attrs }) {
       const all = { ...attrs, ...props } as any;
-      const { labelProps, triggerProps, popupProps, errorMessageProps, descriptionProps, displayError, fieldValue } =
-        useSelect(all);
+      const {
+        labelProps,
+        triggerProps,
+        popupProps,
+        errorMessageProps,
+        descriptionProps,
+        displayError,
+        fieldValue,
+        selectedOptions,
+        selectedOption,
+      } = useSelect(all);
+
+      exposedSelectedOptions = selectedOptions;
+      exposedSelectedOption = selectedOption;
 
       const groups = all.groups || null;
       const options = all.options || null;
@@ -65,6 +80,8 @@ function createSelect() {
         getValue,
         groups,
         options,
+        selectedOptions,
+        selectedOption,
       };
     },
     template: `
@@ -115,6 +132,13 @@ function createSelect() {
         </div>
     `,
   });
+
+  component.getExposedState = () => ({
+    selectedOptions: exposedSelectedOptions.value,
+    selectedOption: exposedSelectedOption.value,
+  });
+
+  return component;
 }
 
 function getSelect() {
@@ -512,5 +536,65 @@ describe('keyboard features for a multi select', () => {
     expect(options[2]).toBeChecked();
     expect(options[3]).toBeChecked();
     expect(options[4]).toBeChecked();
+  });
+});
+
+describe('selection state', () => {
+  async function renderSelect(select: any, opts?: { label: string; disabled?: boolean }[]) {
+    await render({
+      components: {
+        MySelect: select,
+      },
+      setup() {
+        const options = opts || [{ label: 'One' }, { label: 'Two' }, { label: 'Three' }];
+
+        return { options };
+      },
+      template: `
+        <div data-testid="fixture">
+          <MySelect label="Field" :multiple="true" :options="options" />
+        </div>
+      `,
+    });
+  }
+
+  test('selectedOption should reflect the currently selected option in single select', async () => {
+    const MySelect = createSelect();
+    const options = [{ label: 'One' }, { label: 'Two' }, { label: 'Three' }];
+
+    await renderSelect(MySelect, options);
+    await fireEvent.click(screen.getAllByRole('option')[1]);
+    await flush();
+
+    expect(MySelect.getExposedState().selectedOption).toEqual({
+      id: expect.any(String),
+      label: 'Two',
+      value: { label: 'Two' },
+    });
+  });
+
+  test('selectedOptions should reflect all selected options in multi select', async () => {
+    const MySelect = createSelect();
+    const options = [{ label: 'One' }, { label: 'Two' }, { label: 'Three' }];
+
+    await renderSelect(MySelect, options);
+
+    // Select first and third options
+    await fireEvent.click(screen.getAllByRole('option')[0]);
+    await fireEvent.click(screen.getAllByRole('option')[2]);
+    await flush();
+
+    expect(MySelect.getExposedState().selectedOptions).toEqual([
+      {
+        id: expect.any(String),
+        label: 'One',
+        value: { label: 'One' },
+      },
+      {
+        id: expect.any(String),
+        label: 'Three',
+        value: { label: 'Three' },
+      },
+    ]);
   });
 });
