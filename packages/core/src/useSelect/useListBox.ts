@@ -1,5 +1,5 @@
 import { AriaLabelableProps, Maybe, Orientation, Reactivify } from '../types';
-import { computed, InjectionKey, nextTick, onBeforeUnmount, provide, ref, Ref, shallowRef, toValue, watch } from 'vue';
+import { computed, InjectionKey, nextTick, onBeforeUnmount, provide, ref, Ref, toValue, watch } from 'vue';
 import { hasKeyCode, normalizeProps, removeFirst, withRefCapture } from '../utils/common';
 import { useKeyPressed } from '../helpers/useKeyPressed';
 import { isMac } from '../utils/platform';
@@ -53,7 +53,7 @@ export function useListBox<TOption, TValue = TOption>(
 ) {
   const props = normalizeProps(_props);
   const listBoxEl = elementRef || ref<HTMLElement>();
-  const options = shallowRef<OptionRegistrationWithId<TValue>[]>([]);
+  const options = ref<OptionRegistrationWithId<TValue>[]>([]);
   // Initialize popover controller, NO-OP if the element is not a popover-enabled element.
   const { isOpen } = usePopoverController(listBoxEl, { disabled: props.disabled });
   const finder = useOptionFinder(options);
