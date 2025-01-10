@@ -1,9 +1,10 @@
 import { computed, InjectionKey, nextTick, onBeforeUnmount, provide, ref, Ref, toValue, watch } from 'vue';
 import { AriaLabelableProps, Maybe, Orientation, Reactivify } from '../types';
-import { hasKeyCode, normalizeProps, removeFirst, withRefCapture } from '../utils/common';
+import { hasKeyCode, normalizeProps, removeFirst, useUniqId, withRefCapture } from '../utils/common';
 import { useKeyPressed } from '../helpers/useKeyPressed';
 import { isMac } from '../utils/platform';
 import { usePopoverController } from '../helpers/usePopoverController';
+import { FieldTypePrefixes } from '../constants';
 
 const SEARCH_CLEAR_TIMEOUT = 500;
 
@@ -23,7 +24,6 @@ export interface ListBoxProps {
 export interface ListBoxDomProps extends AriaLabelableProps {
   role: 'listbox';
   'aria-multiselectable'?: boolean;
-  'aria-activedescendant'?: string;
 }
 
 export interface OptionRegistration<TValue> {
@@ -52,6 +52,7 @@ export function useListBox<TOption, TValue = TOption>(
   elementRef?: Ref<Maybe<HTMLElement>>,
 ) {
   const props = normalizeProps(_props);
+  const listBoxId = useUniqId(FieldTypePrefixes.ListBox);
   const listBoxEl = elementRef || ref<HTMLElement>();
   const options = ref<OptionRegistrationWithId<TValue>[]>([]);
   // Initialize popover controller, NO-OP if the element is not a popover-enabled element.
@@ -171,16 +172,15 @@ export function useListBox<TOption, TValue = TOption>(
 
   const listBoxProps = computed<ListBoxDomProps>(() => {
     const isMultiple = toValue(props.multiple);
-    const option = !isMultiple && isOpen.value ? options.value.find(o => o.isFocused()) : undefined;
     const labeledBy = toValue(props.labeledBy);
 
     return withRefCapture(
       {
+        id: listBoxId,
         role: 'listbox',
         'aria-label': labeledBy ? undefined : toValue(props.label),
         'aria-labelledby': labeledBy ?? undefined,
         'aria-multiselectable': isMultiple ?? undefined,
-        'aria-activedescendant': option?.id ?? undefined,
         ...handlers,
       },
       listBoxEl,
@@ -222,6 +222,7 @@ export function useListBox<TOption, TValue = TOption>(
   });
 
   return {
+    listBoxId,
     listBoxProps,
     isPopupOpen: isOpen,
     options,
