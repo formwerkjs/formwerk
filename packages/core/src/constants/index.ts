@@ -16,6 +16,8 @@ export const FieldTypePrefixes = {
   SliderThumb: 'st',
   FormRepeater: 'fr',
   CustomField: 'cf',
+  ComboBox: 'cbx',
+  ListBox: 'lb',
 } as const;
 
 export const NOOP = () => {};
