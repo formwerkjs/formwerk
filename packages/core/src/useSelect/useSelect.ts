@@ -78,6 +78,7 @@ export interface SelectTriggerDomProps extends AriaLabelableProps {
   'aria-haspopup': 'listbox';
   'aria-disabled'?: boolean;
   'aria-expanded': boolean;
+  'aria-activedescendant'?: string;
 }
 
 const MENU_OPEN_KEYS = ['Enter', 'Space', 'ArrowDown', 'ArrowUp'];
@@ -100,19 +101,17 @@ export function useSelect<TOption, TValue = TOption>(_props: Reactivify<SelectPr
   });
 
   let lastRecentlySelectedOption: TValue | undefined;
-  const { listBoxProps, isPopupOpen, options, isShiftPressed, listBoxEl, selectedOption, selectedOptions } = useListBox<
-    TOption,
-    TValue
-  >({
-    labeledBy: () => labelledByProps.value['aria-labelledby'],
-    disabled: isDisabled,
-    label: props.label,
-    multiple: props.multiple,
-    orientation: props.orientation,
-    onToggleAll: toggleAll,
-    onToggleBefore: toggleBefore,
-    onToggleAfter: toggleAfter,
-  });
+  const { listBoxProps, isPopupOpen, options, isShiftPressed, listBoxEl, selectedOption, selectedOptions, listBoxId } =
+    useListBox<TOption, TValue>({
+      labeledBy: () => labelledByProps.value['aria-labelledby'],
+      disabled: isDisabled,
+      label: props.label,
+      multiple: props.multiple,
+      orientation: props.orientation,
+      onToggleAll: toggleAll,
+      onToggleBefore: toggleBefore,
+      onToggleAfter: toggleAfter,
+    });
 
   const { updateValidity } = useInputValidity({ field });
   const { descriptionProps, describedByProps } = createDescribedByProps({
@@ -258,6 +257,8 @@ export function useSelect<TOption, TValue = TOption>(_props: Reactivify<SelectPr
         'aria-haspopup': 'listbox',
         'aria-expanded': isPopupOpen.value,
         'aria-disabled': isDisabled.value || undefined,
+        'aria-activedescendant': selectedOption.value?.id,
+        'aria-controls': listBoxId,
         ...handlers,
       },
       triggerEl,
