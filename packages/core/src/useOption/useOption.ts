@@ -1,8 +1,8 @@
 import { Maybe, Reactivify, RovingTabIndex } from '../types';
 import { computed, inject, nextTick, ref, Ref, shallowRef, toValue } from 'vue';
-import { SelectionContextKey } from './useSelect';
+import { SelectionContextKey } from '../useListBox/state';
 import { hasKeyCode, normalizeProps, useUniqId, warn, withRefCapture } from '../utils/common';
-import { ListManagerKey } from './useListBox';
+import { ListManagerKey } from '../useListBox/useListBox';
 import { FieldTypePrefixes } from '../constants';
 import { createDisabledContext } from '../helpers/createDisabledContext';
 
@@ -44,6 +44,7 @@ export function useOption<TOption>(_props: Reactivify<OptionProps<TOption>>, ele
   const selectionCtx = inject(SelectionContextKey, null);
   const listManager = inject(ListManagerKey, null);
   const isSelected = computed(() => selectionCtx?.isValueSelected(getValue()) ?? false);
+
   if (!selectionCtx) {
     warn(
       'An option component must exist within a Selection Context. Did you forget to call `useSelect` in a parent component?',

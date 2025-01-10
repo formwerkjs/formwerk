@@ -2,7 +2,7 @@ import { flush } from '@test-utils/index';
 import { render, screen } from '@testing-library/vue';
 import { axe } from 'vitest-axe';
 import { useOptionGroup } from './useOptionGroup';
-import { useOption } from './useOption';
+import { useOption } from '../useOption';
 import { defineComponent } from 'vue';
 
 test('should not have a11y errors', async () => {
