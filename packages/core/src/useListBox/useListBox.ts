@@ -8,13 +8,16 @@ import { FieldTypePrefixes } from '../constants';
 
 const SEARCH_CLEAR_TIMEOUT = 500;
 
-export interface ListBoxProps {
+export interface ListBoxProps<TOption, TValue = TOption> {
   label: string;
+  isValueSelected(value: TValue): boolean;
+  handleToggleValue(value: TValue): void;
 
   labeledBy?: string;
   multiple?: boolean;
   orientation?: Orientation;
   disabled?: boolean;
+  autofocusOnOpen?: boolean;
 
   onToggleAll?(): void;
   onToggleBefore?(): void;
@@ -41,17 +44,21 @@ export interface OptionRegistrationWithId<TValue> extends OptionRegistration<TVa
   id: string;
 }
 
-export interface ListManagerCtx<TOption = unknown> {
-  useOptionRegistration(init: OptionRegistration<TOption>): void;
+export interface ListManagerCtx<TValue = unknown> {
+  useOptionRegistration(init: OptionRegistration<TValue>): void;
+  isValueSelected(value: TValue): boolean;
+  isMultiple(): boolean;
+  toggleValue(value: TValue, force?: boolean): void;
 }
 
-export const ListManagerKey: InjectionKey<ListManagerCtx> = Symbol('ListManagerKey');
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const ListManagerKey: InjectionKey<ListManagerCtx<any>> = Symbol('ListManagerKey');
 
 export function useListBox<TOption, TValue = TOption>(
-  _props: Reactivify<ListBoxProps>,
+  _props: Reactivify<ListBoxProps<TOption, TValue>, 'isValueSelected' | 'handleToggleValue'>,
   elementRef?: Ref<Maybe<HTMLElement>>,
 ) {
-  const props = normalizeProps(_props);
+  const props = normalizeProps(_props, ['isValueSelected', 'handleToggleValue']);
   const listBoxId = useUniqId(FieldTypePrefixes.ListBox);
   const listBoxEl = elementRef || ref<HTMLElement>();
   const options = ref<OptionRegistrationWithId<TValue>[]>([]);
@@ -64,7 +71,7 @@ export function useListBox<TOption, TValue = TOption>(
     () => !isOpen.value,
   );
 
-  const listManager: ListManagerCtx = {
+  const listManager: ListManagerCtx<TValue> = {
     useOptionRegistration(init: OptionRegistration<TValue>) {
       const id = init.id;
       options.value.push(init);
@@ -72,6 +79,11 @@ export function useListBox<TOption, TValue = TOption>(
         removeFirst(options.value, reg => reg.id === id);
       });
     },
+    isMultiple() {
+      return toValue(props.multiple) ?? false;
+    },
+    isValueSelected: props.isValueSelected,
+    toggleValue: props.handleToggleValue,
   };
 
   provide(ListManagerKey, listManager);
@@ -189,7 +201,7 @@ export function useListBox<TOption, TValue = TOption>(
   });
 
   watch(isOpen, async value => {
-    if (!value || toValue(props.disabled)) {
+    if (!value || toValue(props.disabled) || !toValue(props.autofocusOnOpen)) {
       return;
     }
 

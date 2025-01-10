@@ -1,4 +1,4 @@
-import { computed, provide, ref, toValue } from 'vue';
+import { computed, ref, toValue } from 'vue';
 import { useFormField, exposeField } from '../useFormField';
 import { AriaLabelableProps, Arrayable, Orientation, Reactivify, StandardSchema } from '../types';
 import {
@@ -11,7 +11,7 @@ import {
   withRefCapture,
 } from '../utils/common';
 import { useInputValidity } from '../validation';
-import { SelectionContextKey, useListBox, type SelectionContext } from '../useListBox';
+import { useListBox } from '../useListBox';
 import { useLabel, useErrorMessage } from '../a11y';
 import { FieldTypePrefixes } from '../constants';
 
@@ -105,6 +105,9 @@ export function useSelect<TOption, TValue = TOption>(_props: Reactivify<SelectPr
     useListBox<TOption, TValue>({
       labeledBy: () => labelledByProps.value['aria-labelledby'],
       disabled: isDisabled,
+      autofocusOnOpen: true,
+      isValueSelected,
+      handleToggleValue: toggleValue,
       label: props.label,
       multiple: props.multiple,
       orientation: props.orientation,
@@ -129,47 +132,45 @@ export function useSelect<TOption, TValue = TOption>(_props: Reactivify<SelectPr
     return !isMultiple;
   }
 
-  const selectionCtx: SelectionContext<TOption, TValue> = {
-    isMultiple: () => toValue(props.multiple) ?? false,
-    isValueSelected(value): boolean {
-      const values = normalizeArrayable(fieldValue.value ?? []);
+  function isValueSelected(value: TValue): boolean {
+    const values = normalizeArrayable(fieldValue.value ?? []);
 
-      return values.some(item => isEqual(item, value));
-    },
-    toggleValue(optionValue, force) {
-      if (!isMutable()) {
-        return;
-      }
+    return values.some(item => isEqual(item, value));
+  }
 
-      if (isSingle()) {
-        lastRecentlySelectedOption = optionValue;
-        setValue(optionValue);
-        updateValidity();
-        isPopupOpen.value = false;
-        return;
-      }
+  function toggleValue(optionValue: TValue, force?: boolean) {
+    if (!isMutable()) {
+      return;
+    }
 
-      if (!isShiftPressed.value) {
-        lastRecentlySelectedOption = optionValue;
-        const nextValue = toggleValueSelection<TValue>(fieldValue.value ?? [], optionValue, force);
-        setValue(nextValue);
-        updateValidity();
-        return;
-      }
+    if (isSingle()) {
+      lastRecentlySelectedOption = optionValue;
+      setValue(optionValue);
+      updateValidity();
+      isPopupOpen.value = false;
+      return;
+    }
 
-      // Handles contiguous selection when shift key is pressed, aka select all options between the two ranges.
-      let lastRecentIdx = options.value.findIndex(opt => isEqual(opt.getValue(), lastRecentlySelectedOption));
-      const targetIdx = options.value.findIndex(opt => isEqual(opt.getValue(), optionValue));
-      if (targetIdx === -1) {
-        return;
-      }
+    if (!isShiftPressed.value) {
+      lastRecentlySelectedOption = optionValue;
+      const nextValue = toggleValueSelection<TValue>(fieldValue.value ?? [], optionValue, force);
+      setValue(nextValue);
+      updateValidity();
+      return;
+    }
 
-      lastRecentIdx = lastRecentIdx === -1 ? 0 : lastRecentIdx;
-      const startIdx = Math.min(lastRecentIdx, targetIdx);
-      const endIdx = Math.min(Math.max(lastRecentIdx, targetIdx), options.value.length - 1);
-      selectRange(startIdx, endIdx);
-    },
-  };
+    // Handles contiguous selection when shift key is pressed, aka select all options between the two ranges.
+    let lastRecentIdx = options.value.findIndex(opt => isEqual(opt.getValue(), lastRecentlySelectedOption));
+    const targetIdx = options.value.findIndex(opt => isEqual(opt.getValue(), optionValue));
+    if (targetIdx === -1) {
+      return;
+    }
+
+    lastRecentIdx = lastRecentIdx === -1 ? 0 : lastRecentIdx;
+    const startIdx = Math.min(lastRecentIdx, targetIdx);
+    const endIdx = Math.min(Math.max(lastRecentIdx, targetIdx), options.value.length - 1);
+    selectRange(startIdx, endIdx);
+  }
 
   function selectRange(start: number, end: number) {
     const nextValue = options.value.slice(start, end + 1).map(opt => opt.getValue());
@@ -218,8 +219,6 @@ export function useSelect<TOption, TValue = TOption>(_props: Reactivify<SelectPr
     setValue(options.value.map(opt => opt.getValue()));
     updateValidity();
   }
-
-  provide(SelectionContextKey, selectionCtx);
 
   const handlers = {
     onClick() {

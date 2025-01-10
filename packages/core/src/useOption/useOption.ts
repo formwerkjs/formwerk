@@ -1,6 +1,5 @@
 import { Maybe, Reactivify, RovingTabIndex } from '../types';
 import { computed, inject, nextTick, ref, Ref, shallowRef, toValue } from 'vue';
-import { SelectionContextKey } from '../useListBox/state';
 import { hasKeyCode, normalizeProps, useUniqId, warn, withRefCapture } from '../utils/common';
 import { ListManagerKey } from '../useListBox/useListBox';
 import { FieldTypePrefixes } from '../constants';
@@ -41,19 +40,11 @@ export function useOption<TOption>(_props: Reactivify<OptionProps<TOption>>, ele
   const optionEl = elementRef || ref<HTMLElement>();
   const isFocused = shallowRef(false);
   const isDisabled = createDisabledContext(props.disabled);
-  const selectionCtx = inject(SelectionContextKey, null);
   const listManager = inject(ListManagerKey, null);
-  const isSelected = computed(() => selectionCtx?.isValueSelected(getValue()) ?? false);
-
-  if (!selectionCtx) {
-    warn(
-      'An option component must exist within a Selection Context. Did you forget to call `useSelect` in a parent component?',
-    );
-  }
 
   if (!listManager) {
     warn(
-      'An option component must exist within a ListBox Context. Did you forget to call `useSelect` or `useListBox` in a parent component?',
+      'An option component must exist within a ListBox Context. Did you forget to call `useSelect` / `useListBox` / `useComboBox` in a parent component?',
     );
   }
 
@@ -61,6 +52,7 @@ export function useOption<TOption>(_props: Reactivify<OptionProps<TOption>>, ele
     return toValue(props.value);
   }
 
+  const isSelected = computed(() => listManager?.isValueSelected(getValue()) ?? false);
   const optionId = useUniqId(FieldTypePrefixes.Option);
 
   listManager?.useOptionRegistration({
@@ -80,7 +72,7 @@ export function useOption<TOption>(_props: Reactivify<OptionProps<TOption>>, ele
   });
 
   function toggleSelected() {
-    selectionCtx?.toggleValue(getValue());
+    listManager?.toggleValue(getValue());
   }
 
   const handlers = {
@@ -89,7 +81,7 @@ export function useOption<TOption>(_props: Reactivify<OptionProps<TOption>>, ele
         return;
       }
 
-      selectionCtx?.toggleValue(getValue());
+      listManager?.toggleValue(getValue());
     },
     onKeydown(e: KeyboardEvent) {
       if (isDisabled.value) {
@@ -108,7 +100,7 @@ export function useOption<TOption>(_props: Reactivify<OptionProps<TOption>>, ele
   };
 
   const optionProps = computed<OptionDomProps>(() => {
-    const isMultiple = selectionCtx?.isMultiple() ?? false;
+    const isMultiple = listManager?.isMultiple() ?? false;
 
     return withRefCapture(
       {
