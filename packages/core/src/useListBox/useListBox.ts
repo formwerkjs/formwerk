@@ -1,5 +1,5 @@
-import { AriaLabelableProps, Maybe, Orientation, Reactivify } from '../types';
 import { computed, InjectionKey, nextTick, onBeforeUnmount, provide, ref, Ref, toValue, watch } from 'vue';
+import { AriaLabelableProps, Maybe, Orientation, Reactivify } from '../types';
 import { hasKeyCode, normalizeProps, removeFirst, withRefCapture } from '../utils/common';
 import { useKeyPressed } from '../helpers/useKeyPressed';
 import { isMac } from '../utils/platform';

@@ -1,4 +1,4 @@
-import { computed, InjectionKey, provide, ref, toValue } from 'vue';
+import { computed, provide, ref, toValue } from 'vue';
 import { useFormField, exposeField } from '../useFormField';
 import { AriaLabelableProps, Arrayable, Orientation, Reactivify, StandardSchema } from '../types';
 import {
@@ -11,7 +11,7 @@ import {
   withRefCapture,
 } from '../utils/common';
 import { useInputValidity } from '../validation';
-import { useListBox } from './useListBox';
+import { SelectionContextKey, useListBox, type SelectionContext } from '../useListBox';
 import { useLabel, useErrorMessage } from '../a11y';
 import { FieldTypePrefixes } from '../constants';
 
@@ -79,14 +79,6 @@ export interface SelectTriggerDomProps extends AriaLabelableProps {
   'aria-disabled'?: boolean;
   'aria-expanded': boolean;
 }
-
-export interface SelectionContext<TOption, TValue = TOption> {
-  isValueSelected(value: TValue): boolean;
-  isMultiple(): boolean;
-  toggleValue(value: TValue, force?: boolean): void;
-}
-
-export const SelectionContextKey: InjectionKey<SelectionContext<unknown>> = Symbol('SelectionContextKey');
 
 const MENU_OPEN_KEYS = ['Enter', 'Space', 'ArrowDown', 'ArrowUp'];
 

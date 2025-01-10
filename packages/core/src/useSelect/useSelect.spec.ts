@@ -1,10 +1,10 @@
 import { defineComponent, Ref } from 'vue';
 import { useSelect } from './useSelect';
-import { useOption } from './useOption';
+import { useOption } from '../useListBox';
 import { fireEvent, render, screen } from '@testing-library/vue';
 import { axe } from 'vitest-axe';
 import { flush } from '@test-utils/index';
-import { useOptionGroup } from './useOptionGroup';
+import { useOptionGroup } from '../useOptionGroup/useOptionGroup';
 
 function createSelect() {
   const Option = defineComponent({
