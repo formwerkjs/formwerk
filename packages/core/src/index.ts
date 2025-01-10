@@ -9,7 +9,7 @@ export * from './useOption';
 export * from './useOptionGroup';
 export * from './useListBox';
 export * from './useSelect';
-export * from './useComboBoxField';
+export * from './useComboBox';
 export * from './useHiddenField';
 export * from './useCustomField';
 export * from './types';
