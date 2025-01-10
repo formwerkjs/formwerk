@@ -116,9 +116,15 @@ export function useComboBox(_props: Reactivify<ComboBoxProps, 'schema' | 'filter
     label: props.label,
     multiple: false,
     orientation: props.orientation,
+    isValueSelected: value => {
+      return fieldValue.value === value;
+    },
+    handleToggleValue: value => {
+      setValue(value);
+    },
   });
 
-  const handlers: InputEvents & { onKeyDown(evt: KeyboardEvent): void } = {
+  const handlers: InputEvents & { onKeydown(evt: KeyboardEvent): void } = {
     onInput(evt) {
       setValue((evt.target as HTMLInputElement).value);
     },
@@ -128,7 +134,7 @@ export function useComboBox(_props: Reactivify<ComboBoxProps, 'schema' | 'filter
     onBlur() {
       setTouched(true);
     },
-    onKeyDown(evt: KeyboardEvent) {
+    onKeydown(evt: KeyboardEvent) {
       if (isDisabled.value) {
         return;
       }
@@ -155,6 +161,10 @@ export function useComboBox(_props: Reactivify<ComboBoxProps, 'schema' | 'filter
         setValue('');
         return;
       }
+
+      if (!isPopupOpen.value) {
+        isPopupOpen.value = true;
+      }
     },
   };
 
@@ -178,7 +188,8 @@ export function useComboBox(_props: Reactivify<ComboBoxProps, 'schema' | 'filter
         role: isButton ? undefined : 'button',
         [isButton ? 'disabled' : 'aria-disabled']: isDisabled.value || undefined,
         tabindex: '-1',
-        'aria-haspopup': 'listbox',
+        type: 'button' as const,
+        'aria-haspopup': 'listbox' as const,
         'aria-expanded': isPopupOpen.value,
         'aria-activedescendant': selectedOption.value?.id,
         'aria-controls': listBoxId,
@@ -195,6 +206,7 @@ export function useComboBox(_props: Reactivify<ComboBoxProps, 'schema' | 'filter
         id: inputId,
         type: 'text' as const,
         role: 'combobox' as const,
+        'aria-haspopup': 'listbox' as const,
         'aria-controls': listBoxId,
         'aria-expanded': isPopupOpen.value ? ('true' as const) : ('false' as const),
         'aria-activedescendant': selectedOption.value?.id,

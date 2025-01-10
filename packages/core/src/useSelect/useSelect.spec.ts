@@ -1,10 +1,10 @@
 import { defineComponent, Ref } from 'vue';
 import { useSelect } from './useSelect';
-import { useOption } from '../useListBox';
+import { useOption } from '../useOption';
 import { fireEvent, render, screen } from '@testing-library/vue';
 import { axe } from 'vitest-axe';
 import { flush } from '@test-utils/index';
-import { useOptionGroup } from '../useOptionGroup/useOptionGroup';
+import { useOptionGroup } from '../useOptionGroup';
 
 function createSelect() {
   const Option = defineComponent({
@@ -556,14 +556,26 @@ describe('selection state', () => {
         </div>
       `,
     });
+
+    return {
+      async open() {
+        await fireEvent.keyDown(getSelect(), { code: 'Space' });
+        await flush();
+      },
+      async select(index: number) {
+        await fireEvent.click(screen.getAllByRole('option')[index]);
+        await flush();
+      },
+    };
   }
 
   test('selectedOption should reflect the currently selected option in single select', async () => {
     const MySelect = createSelect();
     const options = [{ label: 'One' }, { label: 'Two' }, { label: 'Three' }];
 
-    await renderSelect(MySelect, options);
-    await fireEvent.click(screen.getAllByRole('option')[1]);
+    const sl = await renderSelect(MySelect, options);
+    await sl.open();
+    await sl.select(1);
     await flush();
 
     expect(MySelect.getExposedState().selectedOption).toEqual({
@@ -577,11 +589,12 @@ describe('selection state', () => {
     const MySelect = createSelect();
     const options = [{ label: 'One' }, { label: 'Two' }, { label: 'Three' }];
 
-    await renderSelect(MySelect, options);
+    const sl = await renderSelect(MySelect, options);
 
     // Select first and third options
-    await fireEvent.click(screen.getAllByRole('option')[0]);
-    await fireEvent.click(screen.getAllByRole('option')[2]);
+    await sl.open();
+    await sl.select(0);
+    await sl.select(2);
     await flush();
 
     expect(MySelect.getExposedState().selectedOptions).toEqual([

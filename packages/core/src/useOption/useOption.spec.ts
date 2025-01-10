@@ -4,13 +4,13 @@ import { flush } from '@test-utils/index';
 import { render, screen } from '@testing-library/vue';
 import { axe } from 'vitest-axe';
 
-test('warns if no Selection or ListBox Context is provided', async () => {
+test('warns if no ListBox Context is provided', async () => {
   const warn = vi.spyOn(console, 'warn');
   await renderSetup(() => {
     return useOption({ label: 'Ayooo', value: '' });
   });
 
-  expect(warn).toHaveBeenCalledTimes(2);
+  expect(warn).toHaveBeenCalledTimes(1);
 
   warn.mockRestore();
 });
