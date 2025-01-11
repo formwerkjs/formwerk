@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { useForm } from '@formwerk/core';
-import { ref } from 'vue';
-import CustomField from './components/CustomField.vue';
+import ComboBox from './components/ComboBox.vue';
+import Select from './components/InputSelect.vue';
 
 const { handleSubmit, values } = useForm({
   scrollToInvalidFieldOnSubmit: {
@@ -18,9 +18,17 @@ const onSubmit = handleSubmit(data => {
 
 <template>
   <div class="flex flex-col">
-    <CustomField name="custom" label="Custom Field" />
-
-    <pre>{{ values }}</pre>
+    <Select
+      name="select"
+      label="Select"
+      multiple
+      :options="[
+        { label: 'Option 1', value: 'Option 1' },
+        { label: 'Option 2', value: 'Option 2' },
+        { label: 'Option 3', value: 'Option 3' },
+      ]"
+    />
+    <ComboBox name="combo" label="Combo" :options="['Option 1', 'Option 2', 'Option 3']" />
 
     <button class="bg-blue-500 text-white p-2 rounded-md" @click="onSubmit">Submit</button>
   </div>
