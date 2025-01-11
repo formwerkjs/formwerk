@@ -51,7 +51,7 @@ function createSelect() {
       const {
         labelProps,
         triggerProps,
-        popupProps,
+        listBoxProps,
         errorMessageProps,
         descriptionProps,
         displayError,
@@ -73,7 +73,7 @@ function createSelect() {
         fieldValue,
         labelProps,
         triggerProps,
-        popupProps,
+        listBoxProps,
         errorMessageProps,
         descriptionProps,
         displayError,
@@ -92,7 +92,7 @@ function createSelect() {
             {{ fieldValue || 'Select here' }}
           </div>
 
-          <div v-bind="popupProps" popover>
+          <div v-bind="listBoxProps" popover>
             <slot>
               <template v-if="groups">
                 <OptionGroup v-for="group in groups" :key="group.label" :label="group.label">

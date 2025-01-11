@@ -275,7 +275,7 @@ export function useComboBox<TOption, TValue = TOption>(_props: Reactivify<ComboB
        */
       errorMessageProps,
       /**
-       * Props for the listbox element.
+       * Props for the listbox/popup element.
        */
       listBoxProps,
       /**
