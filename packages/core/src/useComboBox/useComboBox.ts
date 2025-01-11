@@ -121,6 +121,7 @@ export function useComboBox(_props: Reactivify<ComboBoxProps, 'schema' | 'filter
     },
     handleToggleValue: value => {
       setValue(value);
+      isPopupOpen.value = false;
     },
   });
 
