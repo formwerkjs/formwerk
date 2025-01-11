@@ -279,9 +279,9 @@ export function useSelect<TOption, TValue = TOption>(_props: Reactivify<SelectPr
        */
       labelProps,
       /**
-       * Props for the popup element.
+       * Props for the listbox/popup element.
        */
-      popupProps: listBoxProps,
+      listBoxProps,
       /**
        * Props for the error message element.
        */
