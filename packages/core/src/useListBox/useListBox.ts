@@ -5,8 +5,7 @@ import { useKeyPressed } from '../helpers/useKeyPressed';
 import { isMac } from '../utils/platform';
 import { usePopoverController } from '../helpers/usePopoverController';
 import { FieldTypePrefixes } from '../constants';
-
-const SEARCH_CLEAR_TIMEOUT = 500;
+import { useBasicOptionFinder } from './basicOptionFinder';
 
 export interface ListBoxProps<TOption, TValue = TOption> {
   label: string;
@@ -62,9 +61,10 @@ export function useListBox<TOption, TValue = TOption>(
   const listBoxId = useUniqId(FieldTypePrefixes.ListBox);
   const listBoxEl = elementRef || ref<HTMLElement>();
   const options = ref<OptionRegistrationWithId<TValue>[]>([]);
+  const finder = useBasicOptionFinder(options);
+
   // Initialize popover controller, NO-OP if the element is not a popover-enabled element.
   const { isOpen } = usePopoverController(listBoxEl, { disabled: props.disabled });
-  const finder = useOptionFinder(options);
   const isShiftPressed = useKeyPressed(['ShiftLeft', 'ShiftRight'], () => !isOpen.value);
   const isMetaPressed = useKeyPressed(
     isMac() ? ['MetaLeft', 'MetaRight'] : ['ControlLeft', 'ControlRight'],
@@ -242,70 +242,5 @@ export function useListBox<TOption, TValue = TOption>(
     listBoxEl,
     selectedOption,
     selectedOptions,
-  };
-}
-
-function useOptionFinder(options: Ref<OptionRegistrationWithId<unknown>[]>) {
-  let keysSoFar: string = '';
-  let clearKeysTimeout: number | null = null;
-
-  function findOption(key: string) {
-    const lowerKey = key.toLowerCase();
-    let startIdx = 0;
-    if (!keysSoFar) {
-      const focusedIdx = options.value.findIndex(o => o.isFocused());
-      startIdx = focusedIdx === -1 ? 0 : focusedIdx;
-    }
-
-    // Append the key to the keysSoFar
-    keysSoFar += lowerKey;
-    // Clear the keys after a timeout so that the next key press starts a new search
-    scheduleClearKeys();
-
-    // +1 to skip the currently focused one
-    let match = findWithinRange(startIdx + 1, options.value.length);
-    if (!match) {
-      // Flip the search range and try again if not found in the first pass
-      match = findWithinRange(0, startIdx);
-    }
-
-    return match;
-  }
-
-  function findWithinRange(startIdx: number, endIdx: number) {
-    // Better than slice because we don't have to worry about inclusive/exclusive.
-    for (let i = startIdx; i < endIdx; i++) {
-      const option = options.value[i];
-      if (option.getLabel().toLowerCase().startsWith(keysSoFar)) {
-        return option;
-      }
-    }
-
-    return null;
-  }
-
-  function handleKeydown(e: KeyboardEvent) {
-    if (e.key.length === 1) {
-      findOption(e.key)?.focus();
-    }
-  }
-
-  function scheduleClearKeys() {
-    if (clearKeysTimeout) {
-      clearTimeout(clearKeysTimeout);
-    }
-
-    clearKeysTimeout = window.setTimeout(clearKeys, SEARCH_CLEAR_TIMEOUT);
-  }
-
-  function clearKeys() {
-    keysSoFar = '';
-    clearKeysTimeout = null;
-  }
-
-  return {
-    keysSoFar,
-    handleKeydown,
-    clearKeys,
   };
 }
