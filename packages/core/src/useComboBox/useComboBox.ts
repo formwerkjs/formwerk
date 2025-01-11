@@ -1,7 +1,15 @@
 import { computed, ref, toValue } from 'vue';
 import { InputEvents, Reactivify, StandardSchema } from '../types';
 import { Orientation } from '../types';
-import { createDescribedByProps, normalizeProps, propsToValues, useUniqId, withRefCapture } from '../utils/common';
+import {
+  createDescribedByProps,
+  hasKeyCode,
+  isEqual,
+  normalizeProps,
+  propsToValues,
+  useUniqId,
+  withRefCapture,
+} from '../utils/common';
 import { exposeField, useFormField } from '../useFormField';
 import { FieldTypePrefixes } from '../constants';
 import { useLabel } from '../a11y/useLabel';
@@ -9,7 +17,7 @@ import { useListBox } from '../useListBox';
 import { useErrorMessage } from '../a11y/useErrorMessage';
 import { useInputValidity } from '../validation';
 
-export interface ComboBoxProps {
+export interface ComboBoxProps<TOption, TValue = TOption> {
   /**
    * The label text for the select field.
    */
@@ -33,7 +41,7 @@ export interface ComboBoxProps {
   /**
    * The controlled value of the select field.
    */
-  value?: string;
+  value?: TValue;
 
   /**
    * Whether the select field is required.
@@ -43,7 +51,7 @@ export interface ComboBoxProps {
   /**
    * The v-model value of the select field.
    */
-  modelValue?: string;
+  modelValue?: TValue;
 
   /**
    * Whether the select field is disabled.
@@ -68,7 +76,7 @@ export interface ComboBoxProps {
   /**
    * Schema for validating the select field value.
    */
-  schema?: StandardSchema<string>;
+  schema?: StandardSchema<TValue>;
 
   /**
    * Whether to disable HTML5 validation.
@@ -76,19 +84,20 @@ export interface ComboBoxProps {
   disableHtmlValidation?: boolean;
 
   /**
-   * A function that filters the options based on the input value.
+   * Whether to allow custom values, false by default. When the user blurs the input the value is reset to the selected option or blank if no option is selected.
    */
-  filter?: (inputValue: string, label: string) => boolean | Promise<boolean>;
+  allowCustomValue?: boolean;
 }
 
-export function useComboBox(_props: Reactivify<ComboBoxProps, 'schema' | 'filter'>) {
-  const props = normalizeProps(_props, ['schema', 'filter']);
+export function useComboBox<TOption, TValue = TOption>(_props: Reactivify<ComboBoxProps<TOption, TValue>, 'schema'>) {
+  const props = normalizeProps(_props, ['schema']);
   const inputEl = ref<HTMLElement>();
   const buttonEl = ref<HTMLElement>();
+  const inputValue = ref('');
   const inputId = useUniqId(FieldTypePrefixes.ComboBox);
-  const field = useFormField<string>({
+  const field = useFormField<TValue>({
     path: props.name,
-    initialValue: toValue(props.modelValue) ?? toValue(props.value),
+    initialValue: (toValue(props.modelValue) ?? toValue(props.value)) as TValue,
     disabled: props.disabled,
     schema: props.schema,
   });
@@ -111,7 +120,7 @@ export function useComboBox(_props: Reactivify<ComboBoxProps, 'schema' | 'filter
   });
 
   const { listBoxId, listBoxProps, isPopupOpen, listBoxEl, selectedOption, focusNext, focusPrev, findFocusedOption } =
-    useListBox<string>({
+    useListBox<TOption, TValue>({
       labeledBy: () => labelledByProps.value['aria-labelledby'],
       focusStrategy: 'VIRTUAL_WITH_SELECTED',
       disabled: isDisabled,
@@ -119,23 +128,29 @@ export function useComboBox(_props: Reactivify<ComboBoxProps, 'schema' | 'filter
       multiple: false,
       orientation: props.orientation,
       isValueSelected: value => {
-        return fieldValue.value === value;
+        return isEqual(fieldValue.value, value);
       },
       handleToggleValue: value => {
         setValue(value);
+        inputValue.value = selectedOption.value?.label ?? '';
         isPopupOpen.value = false;
       },
     });
 
   const handlers: InputEvents & { onKeydown(evt: KeyboardEvent): void } = {
     onInput(evt) {
-      setValue((evt.target as HTMLInputElement).value);
+      inputValue.value = (evt.target as HTMLInputElement).value;
     },
     onChange(evt) {
-      setValue((evt.target as HTMLInputElement).value);
+      inputValue.value = (evt.target as HTMLInputElement).value;
     },
     onBlur() {
       setTouched(true);
+      if (toValue(props.allowCustomValue)) {
+        return;
+      }
+
+      inputValue.value = selectedOption.value?.label ?? '';
     },
     onKeydown(evt: KeyboardEvent) {
       if (isDisabled.value) {
@@ -143,10 +158,10 @@ export function useComboBox(_props: Reactivify<ComboBoxProps, 'schema' | 'filter
       }
 
       // Clear the input value when Escape is pressed if the popup is not open.
-      if (evt.code === 'Escape') {
+      if (hasKeyCode(evt, 'Escape')) {
         evt.preventDefault();
         if (!isPopupOpen.value) {
-          setValue('');
+          inputValue.value = '';
         } else {
           isPopupOpen.value = false;
         }
@@ -154,7 +169,7 @@ export function useComboBox(_props: Reactivify<ComboBoxProps, 'schema' | 'filter
         return;
       }
 
-      if (evt.code === 'Enter') {
+      if (hasKeyCode(evt, 'Enter')) {
         if (isPopupOpen.value) {
           findFocusedOption()?.toggleSelected();
         }
@@ -172,8 +187,13 @@ export function useComboBox(_props: Reactivify<ComboBoxProps, 'schema' | 'filter
         }
 
         // eslint-disable-next-line @typescript-eslint/no-unused-expressions
-        evt.code === 'ArrowDown' ? focusNext() : focusPrev();
+        hasKeyCode(evt, 'ArrowDown') ? focusNext() : focusPrev();
 
+        return;
+      }
+
+      if (hasKeyCode(evt, 'Tab')) {
+        isPopupOpen.value = false;
         return;
       }
 
@@ -226,7 +246,7 @@ export function useComboBox(_props: Reactivify<ComboBoxProps, 'schema' | 'filter
         'aria-expanded': isPopupOpen.value ? ('true' as const) : ('false' as const),
         'aria-activedescendant': selectedOption.value?.id,
         disabled: isDisabled.value ? true : undefined,
-        value: fieldValue.value,
+        value: inputValue.value,
         ...propsToValues(props, ['name', 'placeholder', 'required', 'readonly']),
         ...accessibleErrorProps.value,
         ...describedByProps.value,

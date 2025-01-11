@@ -1,10 +1,10 @@
-<script setup lang="ts">
+<script setup lang="ts" generic="TOption extends { label: string }, TValue">
 import { useComboBox, ComboBoxProps } from '@formwerk/core';
 import OptionGroup from './OptionGroup.vue';
 import Option from './OptionItem.vue';
 
-interface Props extends ComboBoxProps {
-  options?: string[];
+interface Props extends ComboBoxProps<TOption, TValue> {
+  options?: TOption[];
 }
 
 const props = defineProps<Props>();
@@ -29,9 +29,11 @@ const { inputProps, listBoxProps, labelProps, buttonProps, errorMessageProps, er
       </button>
     </div>
 
-    <div v-bind="listBoxProps" popover>
-      <Option v-for="option in options" :key="option" :label="option" :value="option" />
-    </div>
+    <KeepAlive>
+      <div v-bind="listBoxProps" popover>
+        <Option v-for="option in options" :key="option.label" :label="option.label" :value="option" />
+      </div>
+    </KeepAlive>
 
     <p v-if="errorMessage" v-bind="errorMessageProps" class="error-message">{{ errorMessage }}</p>
     <p v-else-if="description" v-bind="descriptionProps">{{ description }}</p>
