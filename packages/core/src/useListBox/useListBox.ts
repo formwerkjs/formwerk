@@ -7,11 +7,14 @@ import { usePopoverController } from '../helpers/usePopoverController';
 import { FieldTypePrefixes } from '../constants';
 import { useBasicOptionFinder } from './basicOptionFinder';
 
+export type FocusStrategy = 'DOM_FOCUS' | 'VIRTUAL_WITH_SELECTED';
+
 export interface ListBoxProps<TOption, TValue = TOption> {
   label: string;
   isValueSelected(value: TValue): boolean;
   handleToggleValue(value: TValue): void;
 
+  focusStrategy?: FocusStrategy;
   labeledBy?: string;
   multiple?: boolean;
   orientation?: Orientation;
@@ -36,6 +39,7 @@ export interface OptionRegistration<TValue> {
   isDisabled(): boolean;
   getValue(): TValue;
   focus(): void;
+  unfocus(): void;
   toggleSelected(): void;
 }
 
@@ -48,6 +52,8 @@ export interface ListManagerCtx<TValue = unknown> {
   isValueSelected(value: TValue): boolean;
   isMultiple(): boolean;
   toggleValue(value: TValue, force?: boolean): void;
+  getFocusStrategy(): FocusStrategy;
+  isPopupOpen(): boolean;
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -84,6 +90,8 @@ export function useListBox<TOption, TValue = TOption>(
     },
     isValueSelected: props.isValueSelected,
     toggleValue: props.handleToggleValue,
+    getFocusStrategy: () => toValue(props.focusStrategy) ?? 'DOM_FOCUS',
+    isPopupOpen: () => isOpen.value,
   };
 
   provide(ListManagerKey, listManager);
@@ -147,18 +155,26 @@ export function useListBox<TOption, TValue = TOption>(
   };
 
   function focusAndToggleIfShiftPressed(idx: number) {
+    if (listManager.getFocusStrategy() !== 'DOM_FOCUS') {
+      findFocusedOption()?.unfocus();
+    }
+
     options.value[idx]?.focus();
     if (isShiftPressed.value) {
       options.value[idx]?.toggleSelected();
     }
   }
 
-  function findFocused() {
+  function findFocusedIdx() {
     return options.value.findIndex(o => o.isFocused());
   }
 
+  function findFocusedOption() {
+    return options.value.find(o => o.isFocused());
+  }
+
   function focusNext() {
-    const currentlyFocusedIdx = findFocused();
+    const currentlyFocusedIdx = findFocusedIdx();
     for (let i = currentlyFocusedIdx + 1; i < options.value.length; i++) {
       if (!options.value[i].isDisabled()) {
         focusAndToggleIfShiftPressed(i);
@@ -168,7 +184,7 @@ export function useListBox<TOption, TValue = TOption>(
   }
 
   function focusPrev() {
-    const currentlyFocusedIdx = findFocused();
+    const currentlyFocusedIdx = findFocusedIdx();
     if (currentlyFocusedIdx === -1) {
       focusNext();
       return;
@@ -242,5 +258,8 @@ export function useListBox<TOption, TValue = TOption>(
     listBoxEl,
     selectedOption,
     selectedOptions,
+    focusNext,
+    focusPrev,
+    findFocusedOption,
   };
 }

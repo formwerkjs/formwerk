@@ -18,7 +18,16 @@ interface Props extends SelectProps<TValue> {
 
 const props = defineProps<Props>();
 
-const { triggerProps, popupProps, labelProps, errorMessage, errorMessageProps, descriptionProps } = useSelect(props);
+const {
+  triggerProps,
+  popupProps,
+  labelProps,
+  errorMessage,
+  errorMessageProps,
+  descriptionProps,
+  selectedOptions,
+  selectedOption,
+} = useSelect(props);
 </script>
 
 <template>

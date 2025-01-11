@@ -110,20 +110,22 @@ export function useComboBox(_props: Reactivify<ComboBoxProps, 'schema' | 'filter
     errorMessage,
   });
 
-  const { listBoxId, listBoxProps, isPopupOpen, listBoxEl, selectedOption } = useListBox<string>({
-    labeledBy: () => labelledByProps.value['aria-labelledby'],
-    disabled: isDisabled,
-    label: props.label,
-    multiple: false,
-    orientation: props.orientation,
-    isValueSelected: value => {
-      return fieldValue.value === value;
-    },
-    handleToggleValue: value => {
-      setValue(value);
-      isPopupOpen.value = false;
-    },
-  });
+  const { listBoxId, listBoxProps, isPopupOpen, listBoxEl, selectedOption, focusNext, focusPrev, findFocusedOption } =
+    useListBox<string>({
+      labeledBy: () => labelledByProps.value['aria-labelledby'],
+      focusStrategy: 'VIRTUAL_WITH_SELECTED',
+      disabled: isDisabled,
+      label: props.label,
+      multiple: false,
+      orientation: props.orientation,
+      isValueSelected: value => {
+        return fieldValue.value === value;
+      },
+      handleToggleValue: value => {
+        setValue(value);
+        isPopupOpen.value = false;
+      },
+    });
 
   const handlers: InputEvents & { onKeydown(evt: KeyboardEvent): void } = {
     onInput(evt) {
@@ -140,26 +142,38 @@ export function useComboBox(_props: Reactivify<ComboBoxProps, 'schema' | 'filter
         return;
       }
 
-      // Close the popup when either Enter or Escape is pressed if it is open.
-      if (['Enter', 'Escape'].includes(evt.code) && isPopupOpen.value) {
+      // Clear the input value when Escape is pressed if the popup is not open.
+      if (evt.code === 'Escape') {
         evt.preventDefault();
-        isPopupOpen.value = false;
+        if (!isPopupOpen.value) {
+          setValue('');
+        } else {
+          isPopupOpen.value = false;
+        }
+
+        return;
+      }
+
+      if (evt.code === 'Enter') {
+        if (isPopupOpen.value) {
+          findFocusedOption()?.toggleSelected();
+        }
 
         return;
       }
 
       // Open the popup when vertical arrow keys are pressed and the popup is not open.
-      if (['ArrowDown', 'ArrowUp'].includes(evt.code) && !isPopupOpen.value) {
+      if (['ArrowDown', 'ArrowUp'].includes(evt.code)) {
         evt.preventDefault();
-        isPopupOpen.value = true;
 
-        return;
-      }
+        if (!isPopupOpen.value) {
+          isPopupOpen.value = true;
+          return;
+        }
 
-      // Clear the input value when Escape is pressed if the popup is not open.
-      if (evt.code === 'Escape' && !isPopupOpen.value) {
-        evt.preventDefault();
-        setValue('');
+        // eslint-disable-next-line @typescript-eslint/no-unused-expressions
+        evt.code === 'ArrowDown' ? focusNext() : focusPrev();
+
         return;
       }
 
