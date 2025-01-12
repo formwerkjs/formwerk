@@ -8,6 +8,7 @@ export * from './useNumberField';
 export * from './useOption';
 export * from './useOptionGroup';
 export * from './useListBox';
+export * from './collections';
 export * from './useSelect';
 export * from './useComboBox';
 export * from './useHiddenField';
