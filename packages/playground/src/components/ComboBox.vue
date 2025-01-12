@@ -1,16 +1,25 @@
 <script setup lang="ts" generic="TOption extends { label: string }, TValue">
-import { useComboBox, ComboBoxProps } from '@formwerk/core';
+import { useComboBox, ComboBoxProps, defineCollection, defineCollectionFilter } from '@formwerk/core';
 import OptionGroup from './OptionGroup.vue';
 import Option from './OptionItem.vue';
 
 interface Props extends ComboBoxProps<TOption, TValue> {
-  options?: TOption[];
+  options: TOption[];
 }
 
 const props = defineProps<Props>();
 
-const { inputProps, listBoxProps, labelProps, buttonProps, errorMessageProps, errorMessage, descriptionProps } =
-  useComboBox(props);
+const { contains } = defineCollectionFilter<TOption>({
+  caseSensitive: false,
+});
+
+const collection = defineCollection({
+  items: props.options ?? [],
+  filter: contains,
+});
+
+const { inputProps, listBoxProps, labelProps, buttonProps, errorMessageProps, errorMessage, descriptionProps, items } =
+  useComboBox(props, collection);
 </script>
 
 <template>
@@ -29,11 +38,9 @@ const { inputProps, listBoxProps, labelProps, buttonProps, errorMessageProps, er
       </button>
     </div>
 
-    <KeepAlive>
-      <div v-bind="listBoxProps" popover>
-        <Option v-for="option in options" :key="option.label" :label="option.label" :value="option" />
-      </div>
-    </KeepAlive>
+    <div v-bind="listBoxProps" popover>
+      <Option v-for="option in items" :key="option.label" :label="option.label" :value="option" />
+    </div>
 
     <p v-if="errorMessage" v-bind="errorMessageProps" class="error-message">{{ errorMessage }}</p>
     <p v-else-if="description" v-bind="descriptionProps">{{ description }}</p>

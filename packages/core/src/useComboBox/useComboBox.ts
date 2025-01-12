@@ -16,6 +16,7 @@ import { useLabel } from '../a11y/useLabel';
 import { useListBox } from '../useListBox';
 import { useErrorMessage } from '../a11y/useErrorMessage';
 import { useInputValidity } from '../validation';
+import { CollectionFactory, CollectionManager } from '../collections';
 
 export interface ComboBoxProps<TOption, TValue = TOption> {
   /**
@@ -89,7 +90,10 @@ export interface ComboBoxProps<TOption, TValue = TOption> {
   allowCustomValue?: boolean;
 }
 
-export function useComboBox<TOption, TValue = TOption>(_props: Reactivify<ComboBoxProps<TOption, TValue>, 'schema'>) {
+export function useComboBox<TOption, TValue = TOption>(
+  _props: Reactivify<ComboBoxProps<TOption, TValue>, 'schema'>,
+  collection?: CollectionFactory<TOption>,
+) {
   const props = normalizeProps(_props, ['schema']);
   const inputEl = ref<HTMLElement>();
   const buttonEl = ref<HTMLElement>();
@@ -119,23 +123,32 @@ export function useComboBox<TOption, TValue = TOption>(_props: Reactivify<ComboB
     errorMessage,
   });
 
-  const { listBoxId, listBoxProps, isPopupOpen, listBoxEl, selectedOption, focusNext, focusPrev, findFocusedOption } =
-    useListBox<TOption, TValue>({
-      labeledBy: () => labelledByProps.value['aria-labelledby'],
-      focusStrategy: 'VIRTUAL_WITH_SELECTED',
-      disabled: isDisabled,
-      label: props.label,
-      multiple: false,
-      orientation: props.orientation,
-      isValueSelected: value => {
-        return isEqual(fieldValue.value, value);
-      },
-      handleToggleValue: value => {
-        setValue(value);
-        inputValue.value = selectedOption.value?.label ?? '';
-        isPopupOpen.value = false;
-      },
-    });
+  const {
+    listBoxId,
+    listBoxProps,
+    isPopupOpen,
+    listBoxEl,
+    selectedOption,
+    focusNext,
+    focusPrev,
+    findFocusedOption,
+    options,
+  } = useListBox<TOption, TValue>({
+    labeledBy: () => labelledByProps.value['aria-labelledby'],
+    focusStrategy: 'VIRTUAL_WITH_SELECTED',
+    disabled: isDisabled,
+    label: props.label,
+    multiple: false,
+    orientation: props.orientation,
+    isValueSelected: value => {
+      return isEqual(fieldValue.value, value);
+    },
+    handleToggleValue: value => {
+      setValue(value);
+      inputValue.value = selectedOption.value?.label ?? '';
+      isPopupOpen.value = false;
+    },
+  });
 
   const handlers: InputEvents & { onKeydown(evt: KeyboardEvent): void } = {
     onInput(evt) {
@@ -256,6 +269,8 @@ export function useComboBox<TOption, TValue = TOption>(_props: Reactivify<ComboB
     );
   });
 
+  const { items } = collection?.(inputValue) ?? ({ items: options } as CollectionManager<TOption>);
+
   return exposeField(
     {
       /**
@@ -302,6 +317,10 @@ export function useComboBox<TOption, TValue = TOption>(_props: Reactivify<ComboB
        * Props for the button element that toggles the popup.
        */
       buttonProps,
+      /**
+       * The items in the collection.
+       */
+      items,
     },
     field,
   );
