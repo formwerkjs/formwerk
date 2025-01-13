@@ -175,7 +175,16 @@ export function useComboBox<TOption, TValue = TOption>(
         return;
       }
 
-      inputValue.value = selectedOption.value?.label ?? '';
+      if (!items.value) {
+        inputValue.value = selectedOption.value?.label ?? '';
+        return;
+      }
+
+      const item = items.value?.find(item =>
+        isEqual(collectionOptions?.collection?.trackBy(item.option), fieldValue.value),
+      );
+
+      inputValue.value = item?.registration?.getLabel() ?? '';
     },
     onKeydown(evt: KeyboardEvent) {
       if (isDisabled.value) {
