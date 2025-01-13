@@ -1,11 +1,12 @@
 import { computed, InjectionKey, nextTick, onBeforeUnmount, provide, ref, Ref, toValue, watch } from 'vue';
 import { AriaLabelableProps, Maybe, Orientation, Reactivify } from '../types';
-import { hasKeyCode, normalizeProps, removeFirst, useUniqId, withRefCapture } from '../utils/common';
+import { hasKeyCode, isEqual, normalizeProps, removeFirst, useUniqId, withRefCapture } from '../utils/common';
 import { useKeyPressed } from '../helpers/useKeyPressed';
 import { isMac } from '../utils/platform';
 import { usePopoverController } from '../helpers/usePopoverController';
 import { FieldTypePrefixes } from '../constants';
 import { useBasicOptionFinder } from './basicOptionFinder';
+import { CollectionManager } from '../collections';
 
 export type FocusStrategy = 'DOM_FOCUS' | 'VIRTUAL_WITH_SELECTED';
 
@@ -14,6 +15,7 @@ export interface ListBoxProps<TOption, TValue = TOption> {
   isValueSelected(value: TValue): boolean;
   handleToggleValue(value: TValue): void;
 
+  collection?: CollectionManager<TOption>;
   focusStrategy?: FocusStrategy;
   labeledBy?: string;
   multiple?: boolean;
@@ -41,6 +43,7 @@ export interface OptionRegistration<TValue> {
   focus(): void;
   unfocus(): void;
   toggleSelected(): void;
+  getIndex(): number;
 }
 
 export interface OptionRegistrationWithId<TValue> extends OptionRegistration<TValue> {
@@ -60,14 +63,17 @@ export interface ListManagerCtx<TValue = unknown> {
 export const ListManagerKey: InjectionKey<ListManagerCtx<any>> = Symbol('ListManagerKey');
 
 export function useListBox<TOption, TValue = TOption>(
-  _props: Reactivify<ListBoxProps<TOption, TValue>, 'isValueSelected' | 'handleToggleValue'>,
+  _props: Reactivify<ListBoxProps<TOption, TValue>, 'isValueSelected' | 'handleToggleValue' | 'collection'>,
   elementRef?: Ref<Maybe<HTMLElement>>,
 ) {
-  const props = normalizeProps(_props, ['isValueSelected', 'handleToggleValue']);
+  const itemAssociations = ref<Map<TOption, OptionRegistrationWithId<TValue>>>(new Map());
+  const props = normalizeProps(_props, ['isValueSelected', 'handleToggleValue', 'collection']);
   const listBoxId = useUniqId(FieldTypePrefixes.ListBox);
   const listBoxEl = elementRef || ref<HTMLElement>();
-  const options = ref<OptionRegistrationWithId<TValue>[]>([]);
-  const finder = useBasicOptionFinder(options);
+  const renderedOptions = ref<OptionRegistrationWithId<TValue>[]>([]);
+  const sortedOptions = computed(() => [...renderedOptions.value].sort((a, b) => a.getIndex() - b.getIndex()));
+  const finder = useBasicOptionFinder(renderedOptions);
+  const collection = props.collection;
 
   // Initialize popover controller, NO-OP if the element is not a popover-enabled element.
   const { isOpen } = usePopoverController(listBoxEl, { disabled: props.disabled });
@@ -77,12 +83,22 @@ export function useListBox<TOption, TValue = TOption>(
     () => !isOpen.value,
   );
 
+  function associateOption(registration: OptionRegistration<TValue>) {
+    const item = collection?.items.value.find(item => isEqual(collection?.trackBy(item), registration.getValue()));
+    if (!item) {
+      return;
+    }
+
+    itemAssociations.value.set(item, registration);
+  }
+
   const listManager: ListManagerCtx<TValue> = {
     useOptionRegistration(init: OptionRegistration<TValue>) {
       const id = init.id;
-      options.value.push(init);
+      renderedOptions.value.push(init);
+      associateOption(init);
       onBeforeUnmount(() => {
-        removeFirst(options.value, reg => reg.id === id);
+        removeFirst(renderedOptions.value, reg => reg.id === id);
       });
     },
     isMultiple() {
@@ -130,7 +146,7 @@ export function useListBox<TOption, TValue = TOption>(
           props.onToggleBefore?.();
         }
 
-        options.value.at(0)?.focus();
+        sortedOptions.value.at(0)?.focus();
         return;
       }
 
@@ -141,7 +157,7 @@ export function useListBox<TOption, TValue = TOption>(
           props.onToggleAfter?.();
         }
 
-        options.value.at(-1)?.focus();
+        sortedOptions.value.at(-1)?.focus();
         return;
       }
 
@@ -154,30 +170,32 @@ export function useListBox<TOption, TValue = TOption>(
     },
   };
 
-  function focusAndToggleIfShiftPressed(idx: number) {
+  function focusAndToggleIfShiftPressed(option: OptionRegistration<TValue>) {
     if (listManager.getFocusStrategy() !== 'DOM_FOCUS') {
       findFocusedOption()?.unfocus();
     }
 
-    options.value[idx]?.focus();
+    option.focus();
     if (isShiftPressed.value) {
-      options.value[idx]?.toggleSelected();
+      option.toggleSelected();
     }
   }
 
-  function findFocusedIdx() {
-    return options.value.findIndex(o => o.isFocused());
+  function findFocusedOption() {
+    return renderedOptions.value.find(o => o.isFocused());
   }
 
-  function findFocusedOption() {
-    return options.value.find(o => o.isFocused());
+  function findFocusedIdx() {
+    return sortedOptions.value.findIndex(o => o.isFocused());
   }
 
   function focusNext() {
     const currentlyFocusedIdx = findFocusedIdx();
-    for (let i = currentlyFocusedIdx + 1; i < options.value.length; i++) {
-      if (!options.value[i].isDisabled()) {
-        focusAndToggleIfShiftPressed(i);
+    for (let i = currentlyFocusedIdx + 1; i < sortedOptions.value.length; i++) {
+      const option = sortedOptions.value[i];
+
+      if (option && !option.isDisabled()) {
+        focusAndToggleIfShiftPressed(option);
         return;
       }
     }
@@ -191,8 +209,9 @@ export function useListBox<TOption, TValue = TOption>(
     }
 
     for (let i = currentlyFocusedIdx - 1; i >= 0; i--) {
-      if (!options.value[i].isDisabled()) {
-        focusAndToggleIfShiftPressed(i);
+      const option = sortedOptions.value[i];
+      if (option && !option.isDisabled()) {
+        focusAndToggleIfShiftPressed(option);
         return;
       }
     }
@@ -222,7 +241,7 @@ export function useListBox<TOption, TValue = TOption>(
     }
 
     await nextTick();
-    const currentlySelected = options.value.find(o => o.isSelected());
+    const currentlySelected = renderedOptions.value.find(o => o.isSelected());
     if (currentlySelected && !currentlySelected?.isDisabled()) {
       currentlySelected.focus();
       return;
@@ -240,24 +259,32 @@ export function useListBox<TOption, TValue = TOption>(
   }
 
   const selectedOption = computed(() => {
-    const opt = options.value.find(opt => opt.isSelected());
+    const opt = renderedOptions.value.find(opt => opt.isSelected());
 
     return opt ? mapOption(opt) : undefined;
   });
 
   const selectedOptions = computed(() => {
-    return options.value.filter(opt => opt.isSelected()).map(opt => mapOption(opt));
+    return renderedOptions.value.filter(opt => opt.isSelected()).map(opt => mapOption(opt));
+  });
+
+  const items = computed(() => {
+    return collection?.items.value.map(item => ({
+      option: item,
+      registration: itemAssociations.value.get(item),
+    }));
   });
 
   return {
     listBoxId,
     listBoxProps,
     isPopupOpen: isOpen,
-    options,
+    renderedOptions,
     isShiftPressed,
     listBoxEl,
     selectedOption,
     selectedOptions,
+    items,
     focusNext,
     focusPrev,
     findFocusedOption,
