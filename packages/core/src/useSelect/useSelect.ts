@@ -101,20 +101,28 @@ export function useSelect<TOption, TValue = TOption>(_props: Reactivify<SelectPr
   });
 
   let lastRecentlySelectedOption: TValue | undefined;
-  const { listBoxProps, isPopupOpen, options, isShiftPressed, listBoxEl, selectedOption, selectedOptions, listBoxId } =
-    useListBox<TOption, TValue>({
-      labeledBy: () => labelledByProps.value['aria-labelledby'],
-      disabled: isDisabled,
-      autofocusOnOpen: true,
-      isValueSelected,
-      handleToggleValue: toggleValue,
-      label: props.label,
-      multiple: props.multiple,
-      orientation: props.orientation,
-      onToggleAll: toggleAll,
-      onToggleBefore: toggleBefore,
-      onToggleAfter: toggleAfter,
-    });
+  const {
+    listBoxProps,
+    isPopupOpen,
+    renderedOptions,
+    isShiftPressed,
+    listBoxEl,
+    selectedOption,
+    selectedOptions,
+    listBoxId,
+  } = useListBox<TOption, TValue>({
+    labeledBy: () => labelledByProps.value['aria-labelledby'],
+    disabled: isDisabled,
+    autofocusOnOpen: true,
+    isValueSelected,
+    handleToggleValue: toggleValue,
+    label: props.label,
+    multiple: props.multiple,
+    orientation: props.orientation,
+    onToggleAll: toggleAll,
+    onToggleBefore: toggleBefore,
+    onToggleAfter: toggleAfter,
+  });
 
   const { updateValidity } = useInputValidity({ field });
   const { descriptionProps, describedByProps } = createDescribedByProps({
@@ -160,20 +168,20 @@ export function useSelect<TOption, TValue = TOption>(_props: Reactivify<SelectPr
     }
 
     // Handles contiguous selection when shift key is pressed, aka select all options between the two ranges.
-    let lastRecentIdx = options.value.findIndex(opt => isEqual(opt.getValue(), lastRecentlySelectedOption));
-    const targetIdx = options.value.findIndex(opt => isEqual(opt.getValue(), optionValue));
+    let lastRecentIdx = renderedOptions.value.findIndex(opt => isEqual(opt.getValue(), lastRecentlySelectedOption));
+    const targetIdx = renderedOptions.value.findIndex(opt => isEqual(opt.getValue(), optionValue));
     if (targetIdx === -1) {
       return;
     }
 
     lastRecentIdx = lastRecentIdx === -1 ? 0 : lastRecentIdx;
     const startIdx = Math.min(lastRecentIdx, targetIdx);
-    const endIdx = Math.min(Math.max(lastRecentIdx, targetIdx), options.value.length - 1);
+    const endIdx = Math.min(Math.max(lastRecentIdx, targetIdx), renderedOptions.value.length - 1);
     selectRange(startIdx, endIdx);
   }
 
   function selectRange(start: number, end: number) {
-    const nextValue = options.value.slice(start, end + 1).map(opt => opt.getValue());
+    const nextValue = renderedOptions.value.slice(start, end + 1).map(opt => opt.getValue());
     setValue(nextValue);
     updateValidity();
   }
@@ -183,13 +191,13 @@ export function useSelect<TOption, TValue = TOption>(_props: Reactivify<SelectPr
       return;
     }
 
-    const focusedIdx = options.value.findIndex(opt => opt.isFocused());
+    const focusedIdx = renderedOptions.value.findIndex(opt => opt.isFocused());
     if (focusedIdx < 0) {
       return;
     }
 
     const startIdx = 0;
-    const endIdx = Math.min(focusedIdx, options.value.length - 1);
+    const endIdx = Math.min(focusedIdx, renderedOptions.value.length - 1);
     selectRange(startIdx, endIdx);
   }
 
@@ -198,9 +206,9 @@ export function useSelect<TOption, TValue = TOption>(_props: Reactivify<SelectPr
       return;
     }
 
-    const focusedIdx = options.value.findIndex(opt => opt.isFocused());
+    const focusedIdx = renderedOptions.value.findIndex(opt => opt.isFocused());
     const startIdx = Math.max(0, focusedIdx);
-    const endIdx = options.value.length - 1;
+    const endIdx = renderedOptions.value.length - 1;
     selectRange(startIdx, endIdx);
   }
 
@@ -209,14 +217,14 @@ export function useSelect<TOption, TValue = TOption>(_props: Reactivify<SelectPr
       return;
     }
 
-    const isAllSelected = options.value.every(opt => opt.isSelected());
+    const isAllSelected = renderedOptions.value.every(opt => opt.isSelected());
     if (isAllSelected) {
       setValue([]);
       updateValidity();
       return;
     }
 
-    setValue(options.value.map(opt => opt.getValue()));
+    setValue(renderedOptions.value.map(opt => opt.getValue()));
     updateValidity();
   }
 

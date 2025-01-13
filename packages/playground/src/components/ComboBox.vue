@@ -1,6 +1,5 @@
 <script setup lang="ts" generic="TOption extends { label: string }, TValue">
-import { useComboBox, ComboBoxProps, defineCollection, defineCollectionFilter } from '@formwerk/core';
-import OptionGroup from './OptionGroup.vue';
+import { useComboBox, ComboBoxProps, defineCollection } from '@formwerk/core';
 import Option from './OptionItem.vue';
 
 interface Props extends ComboBoxProps<TOption, TValue> {
@@ -9,17 +8,12 @@ interface Props extends ComboBoxProps<TOption, TValue> {
 
 const props = defineProps<Props>();
 
-const { contains } = defineCollectionFilter<TOption>({
-  caseSensitive: false,
-});
-
 const collection = defineCollection({
-  items: props.options ?? [],
-  filter: contains,
+  items: props.options,
 });
 
 const { inputProps, listBoxProps, labelProps, buttonProps, errorMessageProps, errorMessage, descriptionProps, items } =
-  useComboBox(props, collection);
+  useComboBox(props, { collection });
 </script>
 
 <template>
@@ -39,7 +33,9 @@ const { inputProps, listBoxProps, labelProps, buttonProps, errorMessageProps, er
     </div>
 
     <div v-bind="listBoxProps" popover>
-      <Option v-for="option in items" :key="option.label" :label="option.label" :value="option" />
+      <slot>
+        <Option v-for="(option, idx) in items" :key="option.label" :label="option.label" :value="option" :index="idx" />
+      </slot>
     </div>
 
     <p v-if="errorMessage" v-bind="errorMessageProps" class="error-message">{{ errorMessage }}</p>

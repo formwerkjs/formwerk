@@ -1,8 +1,6 @@
 <template>
   <div v-bind="optionProps" class="option px-2 rounded py-1 border">
-    <slot>
-      {{ label }}
-    </slot>
+    <slot> {{ index }} {{ label }} </slot>
   </div>
 </template>
 

@@ -16,7 +16,7 @@ import { useLabel } from '../a11y/useLabel';
 import { useListBox } from '../useListBox';
 import { useErrorMessage } from '../a11y/useErrorMessage';
 import { useInputValidity } from '../validation';
-import { CollectionFactory, CollectionManager } from '../collections';
+import { CollectionManager, defineCollectionFilter, FilterFn } from '../collections';
 
 export interface ComboBoxProps<TOption, TValue = TOption> {
   /**
@@ -90,9 +90,20 @@ export interface ComboBoxProps<TOption, TValue = TOption> {
   allowCustomValue?: boolean;
 }
 
+export interface ComboBoxCollectionOptions<TOption> {
+  filter: FilterFn;
+  collection?: CollectionManager<TOption>;
+}
+
+const defaultFilter = defineCollectionFilter({ caseSensitive: false });
+
+const defaultCollectionOptions: ComboBoxCollectionOptions<unknown> = {
+  filter: defaultFilter.contains,
+};
+
 export function useComboBox<TOption, TValue = TOption>(
   _props: Reactivify<ComboBoxProps<TOption, TValue>, 'schema'>,
-  collection?: CollectionFactory<TOption>,
+  collectionOptions?: Partial<ComboBoxCollectionOptions<TOption>>,
 ) {
   const props = normalizeProps(_props, ['schema']);
   const inputEl = ref<HTMLElement>();
@@ -132,10 +143,11 @@ export function useComboBox<TOption, TValue = TOption>(
     focusNext,
     focusPrev,
     findFocusedOption,
-    options,
+    items,
   } = useListBox<TOption, TValue>({
     labeledBy: () => labelledByProps.value['aria-labelledby'],
     focusStrategy: 'VIRTUAL_WITH_SELECTED',
+    collection: collectionOptions?.collection,
     disabled: isDisabled,
     label: props.label,
     multiple: false,
@@ -269,7 +281,14 @@ export function useComboBox<TOption, TValue = TOption>(
     );
   });
 
-  const { items } = collection?.(inputValue) ?? ({ items: options } as CollectionManager<TOption>);
+  const filter = collectionOptions?.filter ?? defaultCollectionOptions.filter;
+  const filteredItems = computed(() => {
+    return (
+      items.value?.filter(({ registration }) => {
+        return registration ? filter(registration, inputValue.value) : true;
+      }) ?? []
+    ).map(({ option }) => option);
+  });
 
   return exposeField(
     {
@@ -320,7 +339,7 @@ export function useComboBox<TOption, TValue = TOption>(
       /**
        * The items in the collection.
        */
-      items,
+      items: filteredItems,
     },
     field,
   );

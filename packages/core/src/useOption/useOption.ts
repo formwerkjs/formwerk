@@ -30,6 +30,11 @@ export interface OptionProps<TValue> {
   value: TValue;
 
   /**
+   * The index of the option in the list.
+   */
+  index: number;
+
+  /**
    * Whether the option is disabled.
    */
   disabled?: boolean;
@@ -78,6 +83,7 @@ export function useOption<TOption>(_props: Reactivify<OptionProps<TOption>>, ele
         optionEl.value?.scrollIntoView();
       });
     },
+    getIndex: () => toValue(props.index),
   });
 
   function toggleSelected() {
