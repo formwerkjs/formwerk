@@ -1,8 +1,6 @@
 <template>
   <div v-bind="optionProps" class="option px-2 rounded py-1 border">
-    <slot>
-      {{ label }}
-    </slot>
+    <slot> {{ index }} {{ label }} </slot>
   </div>
 </template>
 
@@ -22,9 +20,12 @@ const { optionProps } = useOption(props);
     @apply border-emerald-500 outline-none;
   }
 
-  &[aria-selected='true'],
-  &[aria-checked='true'] {
+  &[aria-selected='true'] {
     @apply bg-emerald-500 text-white;
+  }
+
+  &[aria-checked='true'] {
+    @apply bg-purple-500 text-white;
   }
 }
 </style>
