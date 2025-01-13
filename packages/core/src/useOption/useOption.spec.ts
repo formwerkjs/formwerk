@@ -4,13 +4,13 @@ import { flush } from '@test-utils/index';
 import { render, screen } from '@testing-library/vue';
 import { axe } from 'vitest-axe';
 
-test('warns if no Selection or ListBox Context is provided', async () => {
+test('warns if no ListBox Context is provided', async () => {
   const warn = vi.spyOn(console, 'warn');
   await renderSetup(() => {
-    return useOption({ label: 'Ayooo', value: '' });
+    return useOption({ label: 'Ayooo', value: '', index: 0 });
   });
 
-  expect(warn).toHaveBeenCalledTimes(2);
+  expect(warn).toHaveBeenCalledTimes(1);
 
   warn.mockRestore();
 });
@@ -19,7 +19,7 @@ test('should not have a11y errors', async () => {
   await render({
     setup() {
       const label = 'Field';
-      const { optionProps } = useOption({ label, value: '' });
+      const { optionProps } = useOption({ label, value: '', index: 0 });
 
       return {
         optionProps,

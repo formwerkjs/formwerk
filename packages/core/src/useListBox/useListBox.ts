@@ -1,19 +1,27 @@
-import { AriaLabelableProps, Maybe, Orientation, Reactivify } from '../types';
 import { computed, InjectionKey, nextTick, onBeforeUnmount, provide, ref, Ref, toValue, watch } from 'vue';
-import { hasKeyCode, normalizeProps, removeFirst, withRefCapture } from '../utils/common';
+import { AriaLabelableProps, Maybe, Orientation, Reactivify } from '../types';
+import { hasKeyCode, isEqual, normalizeProps, removeFirst, useUniqId, withRefCapture } from '../utils/common';
 import { useKeyPressed } from '../helpers/useKeyPressed';
 import { isMac } from '../utils/platform';
 import { usePopoverController } from '../helpers/usePopoverController';
+import { FieldTypePrefixes } from '../constants';
+import { useBasicOptionFinder } from './basicOptionFinder';
+import { CollectionManager } from '../collections';
 
-const SEARCH_CLEAR_TIMEOUT = 500;
+export type FocusStrategy = 'DOM_FOCUS' | 'VIRTUAL_WITH_SELECTED';
 
-export interface ListBoxProps {
+export interface ListBoxProps<TOption, TValue = TOption> {
   label: string;
+  isValueSelected(value: TValue): boolean;
+  handleToggleValue(value: TValue): void;
 
+  collection?: CollectionManager<TOption>;
+  focusStrategy?: FocusStrategy;
   labeledBy?: string;
   multiple?: boolean;
   orientation?: Orientation;
   disabled?: boolean;
+  autofocusOnOpen?: boolean;
 
   onToggleAll?(): void;
   onToggleBefore?(): void;
@@ -23,7 +31,6 @@ export interface ListBoxProps {
 export interface ListBoxDomProps extends AriaLabelableProps {
   role: 'listbox';
   'aria-multiselectable'?: boolean;
-  'aria-activedescendant'?: string;
 }
 
 export interface OptionRegistration<TValue> {
@@ -34,43 +41,73 @@ export interface OptionRegistration<TValue> {
   isDisabled(): boolean;
   getValue(): TValue;
   focus(): void;
+  unfocus(): void;
   toggleSelected(): void;
+  getIndex(): number;
 }
 
 export interface OptionRegistrationWithId<TValue> extends OptionRegistration<TValue> {
   id: string;
 }
 
-export interface ListManagerCtx<TOption = unknown> {
-  useOptionRegistration(init: OptionRegistration<TOption>): void;
+export interface ListManagerCtx<TValue = unknown> {
+  useOptionRegistration(init: OptionRegistration<TValue>): void;
+  isValueSelected(value: TValue): boolean;
+  isMultiple(): boolean;
+  toggleValue(value: TValue, force?: boolean): void;
+  getFocusStrategy(): FocusStrategy;
+  isPopupOpen(): boolean;
 }
 
-export const ListManagerKey: InjectionKey<ListManagerCtx> = Symbol('ListManagerKey');
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const ListManagerKey: InjectionKey<ListManagerCtx<any>> = Symbol('ListManagerKey');
 
 export function useListBox<TOption, TValue = TOption>(
-  _props: Reactivify<ListBoxProps>,
+  _props: Reactivify<ListBoxProps<TOption, TValue>, 'isValueSelected' | 'handleToggleValue' | 'collection'>,
   elementRef?: Ref<Maybe<HTMLElement>>,
 ) {
-  const props = normalizeProps(_props);
+  const itemAssociations = ref<Map<TOption, OptionRegistrationWithId<TValue>>>(new Map());
+  const props = normalizeProps(_props, ['isValueSelected', 'handleToggleValue', 'collection']);
+  const listBoxId = useUniqId(FieldTypePrefixes.ListBox);
   const listBoxEl = elementRef || ref<HTMLElement>();
-  const options = ref<OptionRegistrationWithId<TValue>[]>([]);
+  const renderedOptions = ref<OptionRegistrationWithId<TValue>[]>([]);
+  const sortedOptions = computed(() => [...renderedOptions.value].sort((a, b) => a.getIndex() - b.getIndex()));
+  const finder = useBasicOptionFinder(renderedOptions);
+  const collection = props.collection;
+
   // Initialize popover controller, NO-OP if the element is not a popover-enabled element.
   const { isOpen } = usePopoverController(listBoxEl, { disabled: props.disabled });
-  const finder = useOptionFinder(options);
   const isShiftPressed = useKeyPressed(['ShiftLeft', 'ShiftRight'], () => !isOpen.value);
   const isMetaPressed = useKeyPressed(
     isMac() ? ['MetaLeft', 'MetaRight'] : ['ControlLeft', 'ControlRight'],
     () => !isOpen.value,
   );
 
-  const listManager: ListManagerCtx = {
+  function associateOption(registration: OptionRegistration<TValue>) {
+    const item = collection?.items.value.find(item => isEqual(collection?.trackBy(item), registration.getValue()));
+    if (!item) {
+      return;
+    }
+
+    itemAssociations.value.set(item, registration);
+  }
+
+  const listManager: ListManagerCtx<TValue> = {
     useOptionRegistration(init: OptionRegistration<TValue>) {
       const id = init.id;
-      options.value.push(init);
+      renderedOptions.value.push(init);
+      associateOption(init);
       onBeforeUnmount(() => {
-        removeFirst(options.value, reg => reg.id === id);
+        removeFirst(renderedOptions.value, reg => reg.id === id);
       });
     },
+    isMultiple() {
+      return toValue(props.multiple) ?? false;
+    },
+    isValueSelected: props.isValueSelected,
+    toggleValue: props.handleToggleValue,
+    getFocusStrategy: () => toValue(props.focusStrategy) ?? 'DOM_FOCUS',
+    isPopupOpen: () => isOpen.value,
   };
 
   provide(ListManagerKey, listManager);
@@ -109,7 +146,7 @@ export function useListBox<TOption, TValue = TOption>(
           props.onToggleBefore?.();
         }
 
-        options.value.at(0)?.focus();
+        sortedOptions.value.at(0)?.focus();
         return;
       }
 
@@ -120,7 +157,7 @@ export function useListBox<TOption, TValue = TOption>(
           props.onToggleAfter?.();
         }
 
-        options.value.at(-1)?.focus();
+        sortedOptions.value.at(-1)?.focus();
         return;
       }
 
@@ -133,37 +170,48 @@ export function useListBox<TOption, TValue = TOption>(
     },
   };
 
-  function focusAndToggleIfShiftPressed(idx: number) {
-    options.value[idx]?.focus();
+  function focusAndToggleIfShiftPressed(option: OptionRegistration<TValue>) {
+    if (listManager.getFocusStrategy() !== 'DOM_FOCUS') {
+      findFocusedOption()?.unfocus();
+    }
+
+    option.focus();
     if (isShiftPressed.value) {
-      options.value[idx]?.toggleSelected();
+      option.toggleSelected();
     }
   }
 
-  function findFocused() {
-    return options.value.findIndex(o => o.isFocused());
+  function findFocusedOption() {
+    return renderedOptions.value.find(o => o.isFocused());
+  }
+
+  function findFocusedIdx() {
+    return sortedOptions.value.findIndex(o => o.isFocused());
   }
 
   function focusNext() {
-    const currentlyFocusedIdx = findFocused();
-    for (let i = currentlyFocusedIdx + 1; i < options.value.length; i++) {
-      if (!options.value[i].isDisabled()) {
-        focusAndToggleIfShiftPressed(i);
+    const currentlyFocusedIdx = findFocusedIdx();
+    for (let i = currentlyFocusedIdx + 1; i < sortedOptions.value.length; i++) {
+      const option = sortedOptions.value[i];
+
+      if (option && !option.isDisabled()) {
+        focusAndToggleIfShiftPressed(option);
         return;
       }
     }
   }
 
   function focusPrev() {
-    const currentlyFocusedIdx = findFocused();
+    const currentlyFocusedIdx = findFocusedIdx();
     if (currentlyFocusedIdx === -1) {
       focusNext();
       return;
     }
 
     for (let i = currentlyFocusedIdx - 1; i >= 0; i--) {
-      if (!options.value[i].isDisabled()) {
-        focusAndToggleIfShiftPressed(i);
+      const option = sortedOptions.value[i];
+      if (option && !option.isDisabled()) {
+        focusAndToggleIfShiftPressed(option);
         return;
       }
     }
@@ -171,16 +219,15 @@ export function useListBox<TOption, TValue = TOption>(
 
   const listBoxProps = computed<ListBoxDomProps>(() => {
     const isMultiple = toValue(props.multiple);
-    const option = !isMultiple && isOpen.value ? options.value.find(o => o.isFocused()) : undefined;
     const labeledBy = toValue(props.labeledBy);
 
     return withRefCapture(
       {
+        id: listBoxId,
         role: 'listbox',
         'aria-label': labeledBy ? undefined : toValue(props.label),
         'aria-labelledby': labeledBy ?? undefined,
         'aria-multiselectable': isMultiple ?? undefined,
-        'aria-activedescendant': option?.id ?? undefined,
         ...handlers,
       },
       listBoxEl,
@@ -189,12 +236,12 @@ export function useListBox<TOption, TValue = TOption>(
   });
 
   watch(isOpen, async value => {
-    if (!value || toValue(props.disabled)) {
+    if (!value || toValue(props.disabled) || !toValue(props.autofocusOnOpen)) {
       return;
     }
 
     await nextTick();
-    const currentlySelected = options.value.find(o => o.isSelected());
+    const currentlySelected = renderedOptions.value.find(o => o.isSelected());
     if (currentlySelected && !currentlySelected?.isDisabled()) {
       currentlySelected.focus();
       return;
@@ -212,87 +259,34 @@ export function useListBox<TOption, TValue = TOption>(
   }
 
   const selectedOption = computed(() => {
-    const opt = options.value.find(opt => opt.isSelected());
+    const opt = renderedOptions.value.find(opt => opt.isSelected());
 
     return opt ? mapOption(opt) : undefined;
   });
 
   const selectedOptions = computed(() => {
-    return options.value.filter(opt => opt.isSelected()).map(opt => mapOption(opt));
+    return renderedOptions.value.filter(opt => opt.isSelected()).map(opt => mapOption(opt));
+  });
+
+  const items = computed(() => {
+    return collection?.items.value.map(item => ({
+      option: item,
+      registration: itemAssociations.value.get(item),
+    }));
   });
 
   return {
+    listBoxId,
     listBoxProps,
     isPopupOpen: isOpen,
-    options,
+    renderedOptions,
     isShiftPressed,
     listBoxEl,
     selectedOption,
     selectedOptions,
-  };
-}
-
-function useOptionFinder(options: Ref<OptionRegistrationWithId<unknown>[]>) {
-  let keysSoFar: string = '';
-  let clearKeysTimeout: number | null = null;
-
-  function findOption(key: string) {
-    const lowerKey = key.toLowerCase();
-    let startIdx = 0;
-    if (!keysSoFar) {
-      const focusedIdx = options.value.findIndex(o => o.isFocused());
-      startIdx = focusedIdx === -1 ? 0 : focusedIdx;
-    }
-
-    // Append the key to the keysSoFar
-    keysSoFar += lowerKey;
-    // Clear the keys after a timeout so that the next key press starts a new search
-    scheduleClearKeys();
-
-    // +1 to skip the currently focused one
-    let match = findWithinRange(startIdx + 1, options.value.length);
-    if (!match) {
-      // Flip the search range and try again if not found in the first pass
-      match = findWithinRange(0, startIdx);
-    }
-
-    return match;
-  }
-
-  function findWithinRange(startIdx: number, endIdx: number) {
-    // Better than slice because we don't have to worry about inclusive/exclusive.
-    for (let i = startIdx; i < endIdx; i++) {
-      const option = options.value[i];
-      if (option.getLabel().toLowerCase().startsWith(keysSoFar)) {
-        return option;
-      }
-    }
-
-    return null;
-  }
-
-  function handleKeydown(e: KeyboardEvent) {
-    if (e.key.length === 1) {
-      findOption(e.key)?.focus();
-    }
-  }
-
-  function scheduleClearKeys() {
-    if (clearKeysTimeout) {
-      clearTimeout(clearKeysTimeout);
-    }
-
-    clearKeysTimeout = window.setTimeout(clearKeys, SEARCH_CLEAR_TIMEOUT);
-  }
-
-  function clearKeys() {
-    keysSoFar = '';
-    clearKeysTimeout = null;
-  }
-
-  return {
-    keysSoFar,
-    handleKeydown,
-    clearKeys,
+    items,
+    focusNext,
+    focusPrev,
+    findFocusedOption,
   };
 }

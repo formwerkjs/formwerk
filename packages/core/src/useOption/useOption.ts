@@ -1,8 +1,7 @@
 import { Maybe, Reactivify, RovingTabIndex } from '../types';
 import { computed, inject, nextTick, ref, Ref, shallowRef, toValue } from 'vue';
-import { SelectionContextKey } from './useSelect';
 import { hasKeyCode, normalizeProps, useUniqId, warn, withRefCapture } from '../utils/common';
-import { ListManagerKey } from './useListBox';
+import { ListManagerKey } from '../useListBox';
 import { FieldTypePrefixes } from '../constants';
 import { createDisabledContext } from '../helpers/createDisabledContext';
 
@@ -31,6 +30,11 @@ export interface OptionProps<TValue> {
   value: TValue;
 
   /**
+   * The index of the option in the list.
+   */
+  index: number;
+
+  /**
    * Whether the option is disabled.
    */
   disabled?: boolean;
@@ -41,18 +45,11 @@ export function useOption<TOption>(_props: Reactivify<OptionProps<TOption>>, ele
   const optionEl = elementRef || ref<HTMLElement>();
   const isFocused = shallowRef(false);
   const isDisabled = createDisabledContext(props.disabled);
-  const selectionCtx = inject(SelectionContextKey, null);
   const listManager = inject(ListManagerKey, null);
-  const isSelected = computed(() => selectionCtx?.isValueSelected(getValue()) ?? false);
-  if (!selectionCtx) {
-    warn(
-      'An option component must exist within a Selection Context. Did you forget to call `useSelect` in a parent component?',
-    );
-  }
 
   if (!listManager) {
     warn(
-      'An option component must exist within a ListBox Context. Did you forget to call `useSelect` or `useListBox` in a parent component?',
+      'An option component must exist within a ListBox Context. Did you forget to call `useSelect` / `useListBox` / `useComboBox` in a parent component?',
     );
   }
 
@@ -60,6 +57,7 @@ export function useOption<TOption>(_props: Reactivify<OptionProps<TOption>>, ele
     return toValue(props.value);
   }
 
+  const isSelected = computed(() => listManager?.isValueSelected(getValue()) ?? false);
   const optionId = useUniqId(FieldTypePrefixes.Option);
 
   listManager?.useOptionRegistration({
@@ -70,16 +68,26 @@ export function useOption<TOption>(_props: Reactivify<OptionProps<TOption>>, ele
     isFocused: () => isFocused.value,
     getLabel: () => toValue(props.label) ?? '',
     getValue,
+    unfocus: () => {
+      // Doesn't actually unfocus the option, just sets the focus state to false.
+      isFocused.value = false;
+    },
     focus: () => {
       isFocused.value = true;
       nextTick(() => {
-        optionEl.value?.focus();
+        if (listManager?.getFocusStrategy() === 'DOM_FOCUS') {
+          optionEl.value?.focus();
+          return;
+        }
+
+        optionEl.value?.scrollIntoView();
       });
     },
+    getIndex: () => toValue(props.index),
   });
 
   function toggleSelected() {
-    selectionCtx?.toggleValue(getValue());
+    listManager?.toggleValue(getValue());
   }
 
   const handlers = {
@@ -88,7 +96,7 @@ export function useOption<TOption>(_props: Reactivify<OptionProps<TOption>>, ele
         return;
       }
 
-      selectionCtx?.toggleValue(getValue());
+      listManager?.toggleValue(getValue());
     },
     onKeydown(e: KeyboardEvent) {
       if (isDisabled.value) {
@@ -107,15 +115,20 @@ export function useOption<TOption>(_props: Reactivify<OptionProps<TOption>>, ele
   };
 
   const optionProps = computed<OptionDomProps>(() => {
-    const isMultiple = selectionCtx?.isMultiple() ?? false;
+    const isMultiple = listManager?.isMultiple() ?? false;
+    const focusStrategy = listManager?.getFocusStrategy();
+    const isVirtuallyFocused =
+      focusStrategy === 'VIRTUAL_WITH_SELECTED' && isFocused.value && listManager?.isPopupOpen();
 
     return withRefCapture(
       {
         id: optionId,
         role: 'option',
-        tabindex: isFocused.value ? '0' : '-1',
-        'aria-selected': isMultiple ? undefined : isSelected.value,
-        'aria-checked': isMultiple ? isSelected.value : undefined,
+        tabindex: isFocused.value && focusStrategy === 'DOM_FOCUS' ? '0' : '-1',
+        'aria-selected':
+          isVirtuallyFocused || (isMultiple ? undefined : isSelected.value && focusStrategy === 'DOM_FOCUS'),
+        'aria-checked':
+          isMultiple || focusStrategy === 'VIRTUAL_WITH_SELECTED' ? isSelected.value || undefined : undefined,
         'aria-disabled': isDisabled.value || undefined,
         ...handlers,
       },

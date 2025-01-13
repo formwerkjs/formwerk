@@ -2,7 +2,7 @@ import { flush } from '@test-utils/index';
 import { render, screen } from '@testing-library/vue';
 import { axe } from 'vitest-axe';
 import { useOptionGroup } from './useOptionGroup';
-import { useOption } from './useOption';
+import { useOption } from '../useOption';
 import { defineComponent } from 'vue';
 
 test('should not have a11y errors', async () => {
@@ -35,7 +35,7 @@ test('should not have a11y errors', async () => {
 test('disabling a group disables all options', async () => {
   const Option = defineComponent({
     setup() {
-      const { optionProps } = useOption({ label: 'Option', value: '' });
+      const { optionProps } = useOption({ label: 'Option', value: '', index: 0 });
 
       return {
         optionProps,
