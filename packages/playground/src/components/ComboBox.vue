@@ -1,6 +1,7 @@
 <script setup lang="ts" generic="TOption extends { label: string }, TValue">
-import { useComboBox, ComboBoxProps, defineCollection } from '@formwerk/core';
+import { useComboBox, ComboBoxProps, defineCollection, useDefaultFilter } from '@formwerk/core';
 import Option from './OptionItem.vue';
+import { useFuzzyList } from '../composables/useFuzzyFilter';
 
 interface Props extends ComboBoxProps<TOption, TValue> {
   options: TOption[];
@@ -12,8 +13,20 @@ const collection = defineCollection({
   items: props.options,
 });
 
-const { inputProps, listBoxProps, labelProps, buttonProps, errorMessageProps, errorMessage, descriptionProps, items } =
-  useComboBox(props, { collection });
+const {
+  inputProps,
+  listBoxProps,
+  labelProps,
+  buttonProps,
+  errorMessageProps,
+  errorMessage,
+  descriptionProps,
+  inputValue,
+} = useComboBox(props, {
+  collection,
+});
+
+const results = useFuzzyList(props.options, ['label'], inputValue);
 </script>
 
 <template>
@@ -34,7 +47,13 @@ const { inputProps, listBoxProps, labelProps, buttonProps, errorMessageProps, er
 
     <div v-bind="listBoxProps" popover>
       <slot>
-        <Option v-for="(option, idx) in items" :key="option.label" :label="option.label" :value="option" :index="idx" />
+        <Option
+          v-for="(option, idx) in results"
+          :key="option.label"
+          :label="option.label"
+          :value="option"
+          :index="idx"
+        />
       </slot>
     </div>
 

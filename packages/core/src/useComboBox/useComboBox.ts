@@ -16,7 +16,7 @@ import { useLabel } from '../a11y/useLabel';
 import { useListBox } from '../useListBox';
 import { useErrorMessage } from '../a11y/useErrorMessage';
 import { useInputValidity } from '../validation';
-import { CollectionManager, defineCollectionFilter, FilterFn } from '../collections';
+import { CollectionManager, FilterFn } from '../collections';
 
 export interface ComboBoxProps<TOption, TValue = TOption> {
   /**
@@ -94,12 +94,6 @@ export interface ComboBoxCollectionOptions<TOption> {
   filter: FilterFn;
   collection?: CollectionManager<TOption>;
 }
-
-const defaultFilter = defineCollectionFilter({ caseSensitive: false });
-
-const defaultCollectionOptions: ComboBoxCollectionOptions<unknown> = {
-  filter: defaultFilter.contains,
-};
 
 export function useComboBox<TOption, TValue = TOption>(
   _props: Reactivify<ComboBoxProps<TOption, TValue>, 'schema'>,
@@ -290,11 +284,18 @@ export function useComboBox<TOption, TValue = TOption>(
     );
   });
 
-  const filter = collectionOptions?.filter ?? defaultCollectionOptions.filter;
+  const filter = collectionOptions?.filter;
+
   const filteredItems = computed(() => {
+    if (!filter) {
+      return items.value?.map(({ option }) => option) ?? [];
+    }
+
     return (
-      items.value?.filter(({ registration }) => {
-        return registration ? filter(registration, inputValue.value) : true;
+      items.value?.filter(({ registration, option }) => {
+        return registration
+          ? filter({ option: { item: option, label: registration.getLabel() }, search: inputValue.value })
+          : true;
       }) ?? []
     ).map(({ option }) => option);
   });
@@ -349,6 +350,10 @@ export function useComboBox<TOption, TValue = TOption>(
        * The items in the collection.
        */
       items: filteredItems,
+      /**
+       * The value of the text field, will contain the label of the selected option or the user input if they are currently typing.
+       */
+      inputValue,
     },
     field,
   );
