@@ -112,22 +112,25 @@ export function useOption<TOption>(_props: Reactivify<OptionProps<TOption>>, ele
     const isMultiple = listManager?.isMultiple() ?? false;
     const focusStrategy = listManager?.getFocusStrategy();
     const isVirtuallyFocused = focusStrategy === 'FOCUS_ATTR_SELECTED' && isFocused.value && listManager?.isPopupOpen();
+    const focusAttr = focusStrategy === 'FOCUS_ATTR_SELECTED' ? 'aria-selected' : undefined;
+    let selectedAttr = isMultiple ? ('aria-checked' as const) : ('aria-selected' as const);
 
-    return withRefCapture(
-      {
-        id: optionId,
-        role: 'option',
-        tabindex: isFocused.value && focusStrategy === 'FOCUS_DOM' ? '0' : '-1',
-        'aria-selected':
-          isVirtuallyFocused || (isMultiple ? undefined : isSelected.value && focusStrategy === 'FOCUS_DOM'),
-        'aria-checked':
-          isMultiple || focusStrategy === 'FOCUS_ATTR_SELECTED' ? isSelected.value || undefined : undefined,
-        'aria-disabled': isDisabled.value || undefined,
-        ...handlers,
-      },
-      optionEl,
-      elementRef,
-    );
+    const domProps: OptionDomProps = {
+      id: optionId,
+      role: 'option',
+      tabindex: isFocused.value && focusStrategy === 'FOCUS_DOM' ? '0' : '-1',
+      'aria-disabled': isDisabled.value || undefined,
+      ...handlers,
+    };
+
+    if (focusAttr) {
+      domProps[focusAttr] = isVirtuallyFocused;
+      selectedAttr = 'aria-checked';
+    }
+
+    domProps[selectedAttr] = isSelected.value;
+
+    return withRefCapture(domProps, optionEl, elementRef);
   });
 
   watch(optionEl, () => {
