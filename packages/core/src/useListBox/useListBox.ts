@@ -84,7 +84,7 @@ export function useListBox<TOption, TValue = TOption>(
   );
 
   function associateOption(registration: OptionRegistration<TValue>) {
-    const item = collection?.items.value.find(item => isEqual(collection?.trackBy(item), registration.getValue()));
+    const item = collection?.items.value.find(item => isEqual(collection?.key(item), registration.getValue()));
     if (!item) {
       return;
     }

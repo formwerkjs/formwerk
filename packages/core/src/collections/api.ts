@@ -10,26 +10,26 @@ export interface CollectionInit<TItem> {
   /**
    * The property to track by, it can be a function that extracts the value from the item. Should be the same as the "value" prop of the option.
    */
-  trackBy?: string | ((item: TItem) => unknown);
+  key?: string | ((item: TItem) => unknown);
 }
 
 export interface CollectionManager<TItem> {
   items: ComputedRef<TItem[]>;
-  trackBy: (item: TItem) => unknown;
+  key: (item: TItem) => unknown;
 }
 
 // TODO: Implement fetching, loading, pagination, adding a new item, etc...
 export function defineCollection<TItem>(init: CollectionInit<TItem>): CollectionManager<TItem> {
-  const { items, trackBy } = init;
+  const { items, key } = init;
 
   return {
     items: computed(() => toValue(items)),
-    trackBy:
-      typeof trackBy === 'function'
-        ? trackBy
+    key:
+      typeof key === 'function'
+        ? key
         : item => {
-            if (trackBy && isObject(item)) {
-              return getFromPath(item, trackBy, item);
+            if (key && isObject(item)) {
+              return getFromPath(item, key, item);
             }
 
             return item;

@@ -134,10 +134,12 @@ export function useComboBox<TOption, TValue = TOption>(
     isPopupOpen,
     listBoxEl,
     selectedOption,
+    selectedOptions,
     focusNext,
     focusPrev,
     findFocusedOption,
     items,
+    renderedOptions,
   } = useListBox<TOption, TValue>({
     labeledBy: () => labelledByProps.value['aria-labelledby'],
     focusStrategy: 'VIRTUAL_WITH_SELECTED',
@@ -163,7 +165,20 @@ export function useComboBox<TOption, TValue = TOption>(
     onChange(evt) {
       inputValue.value = (evt.target as HTMLInputElement).value;
     },
-    onBlur() {
+    onBlur(evt) {
+      let relatedTarget = (evt as any).relatedTarget as HTMLElement | null;
+      if (relatedTarget) {
+        relatedTarget = relatedTarget.closest('[role="option"]') as HTMLElement | null;
+        const opt = renderedOptions.value.find(opt => opt.id === relatedTarget?.id);
+        if (opt) {
+          setValue(opt.getValue());
+          inputValue.value = opt.getLabel() ?? '';
+          isPopupOpen.value = false;
+        }
+
+        return;
+      }
+
       setTouched(true);
       if (toValue(props.allowCustomValue)) {
         return;
@@ -175,7 +190,7 @@ export function useComboBox<TOption, TValue = TOption>(
       }
 
       const item = items.value?.find(item =>
-        isEqual(collectionOptions?.collection?.trackBy(item.option), fieldValue.value),
+        isEqual(collectionOptions?.collection?.key(item.option), fieldValue.value),
       );
 
       inputValue.value = item?.registration?.getLabel() ?? '';
@@ -347,13 +362,21 @@ export function useComboBox<TOption, TValue = TOption>(
        */
       buttonProps,
       /**
-       * The items in the collection.
+       * The options in the collection.
        */
-      items: filteredItems,
+      options: filteredItems,
       /**
        * The value of the text field, will contain the label of the selected option or the user input if they are currently typing.
        */
       inputValue,
+      /**
+       * The selected options if multiple is true.
+       */
+      selectedOptions,
+      /**
+       * The selected option if multiple is false.
+       */
+      selectedOption,
     },
     field,
   );

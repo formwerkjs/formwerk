@@ -1,4 +1,4 @@
-<script setup lang="ts" generic="TOption extends { label: string }, TValue">
+<script setup lang="ts" generic="TOption extends { label: string; value: string }, TValue">
 import { useComboBox, ComboBoxProps, defineCollection, useDefaultFilter } from '@formwerk/core';
 import Option from './OptionItem.vue';
 import { useFuzzyList } from '../composables/useFuzzyFilter';
@@ -9,8 +9,13 @@ interface Props extends ComboBoxProps<TOption, TValue> {
 
 const props = defineProps<Props>();
 
+const { contains } = useDefaultFilter({
+  caseSensitive: false,
+});
+
 const collection = defineCollection({
-  items: props.options,
+  items: () => props.options,
+  key: 'value',
 });
 
 const {
@@ -21,12 +26,12 @@ const {
   errorMessageProps,
   errorMessage,
   descriptionProps,
-  inputValue,
+  options,
+  selectedOptions,
 } = useComboBox(props, {
   collection,
+  filter: contains,
 });
-
-const results = useFuzzyList(props.options, ['label'], inputValue);
 </script>
 
 <template>
@@ -34,7 +39,11 @@ const results = useFuzzyList(props.options, ['label'], inputValue);
     <p v-bind="labelProps">{{ label }}</p>
 
     <div class="flex items-center gap-2">
-      <input v-bind="inputProps" type="text" />
+      <div>
+        <!-- <span v-for="item in selectedOptions" :key="item.label">{{ item.label }}</span> -->
+
+        <input v-bind="inputProps" type="text" />
+      </div>
 
       <button v-bind="buttonProps">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256">
@@ -48,10 +57,10 @@ const results = useFuzzyList(props.options, ['label'], inputValue);
     <div v-bind="listBoxProps" popover>
       <slot>
         <Option
-          v-for="(option, idx) in results"
+          v-for="(option, idx) in options"
           :key="option.label"
           :label="option.label"
-          :value="option"
+          :value="option.value"
           :index="idx"
         />
       </slot>
