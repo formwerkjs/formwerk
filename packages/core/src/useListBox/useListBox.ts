@@ -58,6 +58,10 @@ export interface ListManagerCtx<TValue = unknown> {
   isPopupOpen(): boolean;
 }
 
+export interface OptionElement<TValue = unknown> extends HTMLElement {
+  _fwOption?: OptionRegistration<TValue>;
+}
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const ListManagerKey: InjectionKey<ListManagerCtx<any>> = Symbol('ListManagerKey');
 
@@ -192,9 +196,7 @@ export function useListBox<TOption, TValue = TOption>(
   }
 
   function getDomOptions() {
-    return Array.from(listBoxEl.value?.querySelectorAll('[role="option"]') || []) as (HTMLElement & {
-      _fwOption?: OptionRegistration<TValue>;
-    })[];
+    return Array.from(listBoxEl.value?.querySelectorAll('[role="option"]') || []) as OptionElement<TValue>[];
   }
 
   function findFocusedIdx() {

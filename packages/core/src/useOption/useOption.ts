@@ -1,7 +1,7 @@
 import { Maybe, Reactivify, RovingTabIndex } from '../types';
 import { computed, inject, nextTick, ref, Ref, shallowRef, toValue, watch } from 'vue';
 import { hasKeyCode, normalizeProps, useUniqId, warn, withRefCapture } from '../utils/common';
-import { ListManagerKey } from '../useListBox';
+import { ListManagerKey, OptionElement } from '../useListBox';
 import { FieldTypePrefixes } from '../constants';
 import { createDisabledContext } from '../helpers/createDisabledContext';
 
@@ -35,9 +35,9 @@ export interface OptionProps<TValue> {
   disabled?: boolean;
 }
 
-export function useOption<TOption>(_props: Reactivify<OptionProps<TOption>>, elementRef?: Ref<Maybe<HTMLElement>>) {
+export function useOption<TOption>(_props: Reactivify<OptionProps<TOption>>, elementRef?: Ref<Maybe<OptionElement>>) {
   const props = normalizeProps(_props);
-  const optionEl = elementRef || ref<HTMLElement>();
+  const optionEl = elementRef || ref<OptionElement>();
   const isFocused = shallowRef(false);
   const isDisabled = createDisabledContext(props.disabled);
   const listManager = inject(ListManagerKey, null);
@@ -135,7 +135,7 @@ export function useOption<TOption>(_props: Reactivify<OptionProps<TOption>>, ele
 
   watch(optionEl, () => {
     if (optionEl.value) {
-      (optionEl.value as any)._fwOption = reg;
+      optionEl.value._fwOption = reg;
     }
   });
 
