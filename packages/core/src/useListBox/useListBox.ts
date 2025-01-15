@@ -200,6 +200,7 @@ export function useListBox<TOption, TValue = TOption>(
   function findFocusedIdx() {
     const focusStrategy = listManager.getFocusStrategy();
     const domOptions = getDomOptions();
+
     const focusedOptionIdx =
       focusStrategy === 'DOM_FOCUS'
         ? domOptions.findIndex(opt => opt.tabIndex === 0)
@@ -210,8 +211,14 @@ export function useListBox<TOption, TValue = TOption>(
 
   function focusNext() {
     const currentlyFocusedIdx = findFocusedIdx();
-    for (let i = currentlyFocusedIdx + 1; i < getSortedOptions().length; i++) {
-      const option = getSortedOptions()[i];
+    if (currentlyFocusedIdx === -1) {
+      getSortedOptions().at(0)?.focus();
+      return;
+    }
+
+    const sortedOptions = getSortedOptions();
+    for (let i = currentlyFocusedIdx + 1; i < sortedOptions.length; i++) {
+      const option = sortedOptions[i];
 
       if (option && !option.isDisabled()) {
         focusAndToggleIfShiftPressed(option);
@@ -222,13 +229,14 @@ export function useListBox<TOption, TValue = TOption>(
 
   function focusPrev() {
     const currentlyFocusedIdx = findFocusedIdx();
+    const sortedOptions = getSortedOptions();
     if (currentlyFocusedIdx === -1) {
-      focusNext();
+      sortedOptions.at(0)?.focus();
       return;
     }
 
     for (let i = currentlyFocusedIdx - 1; i >= 0; i--) {
-      const option = getSortedOptions()[i];
+      const option = sortedOptions[i];
       if (option && !option.isDisabled()) {
         focusAndToggleIfShiftPressed(option);
         return;

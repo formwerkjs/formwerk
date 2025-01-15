@@ -35,7 +35,7 @@ test('should not have a11y errors', async () => {
 test('disabling a group disables all options', async () => {
   const Option = defineComponent({
     setup() {
-      const { optionProps } = useOption({ label: 'Option', value: '', index: 0 });
+      const { optionProps } = useOption({ label: 'Option', value: '' });
 
       return {
         optionProps,
