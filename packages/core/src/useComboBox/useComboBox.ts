@@ -142,7 +142,7 @@ export function useComboBox<TOption, TValue = TOption>(
     renderedOptions,
   } = useListBox<TOption, TValue>({
     labeledBy: () => labelledByProps.value['aria-labelledby'],
-    focusStrategy: 'VIRTUAL_WITH_SELECTED',
+    focusStrategy: 'FOCUS_ATTR_SELECTED',
     collection: collectionOptions?.collection,
     disabled: isDisabled,
     label: props.label,

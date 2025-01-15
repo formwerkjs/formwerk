@@ -8,7 +8,7 @@ import { FieldTypePrefixes } from '../constants';
 import { useBasicOptionFinder } from './basicOptionFinder';
 import { CollectionManager } from '../collections';
 
-export type FocusStrategy = 'DOM_FOCUS' | 'VIRTUAL_WITH_SELECTED';
+export type FocusStrategy = 'FOCUS_DOM' | 'FOCUS_ATTR_SELECTED';
 
 export interface ListBoxProps<TOption, TValue = TOption> {
   label: string;
@@ -106,7 +106,7 @@ export function useListBox<TOption, TValue = TOption>(
     },
     isValueSelected: props.isValueSelected,
     toggleValue: props.handleToggleValue,
-    getFocusStrategy: () => toValue(props.focusStrategy) ?? 'DOM_FOCUS',
+    getFocusStrategy: () => toValue(props.focusStrategy) ?? 'FOCUS_DOM',
     isPopupOpen: () => isOpen.value,
   };
 
@@ -171,7 +171,7 @@ export function useListBox<TOption, TValue = TOption>(
   };
 
   function focusAndToggleIfShiftPressed(option: OptionRegistration<TValue>) {
-    if (listManager.getFocusStrategy() !== 'DOM_FOCUS') {
+    if (listManager.getFocusStrategy() !== 'FOCUS_DOM') {
       findFocusedOption()?.unfocus();
     }
 
@@ -202,7 +202,7 @@ export function useListBox<TOption, TValue = TOption>(
     const domOptions = getDomOptions();
 
     const focusedOptionIdx =
-      focusStrategy === 'DOM_FOCUS'
+      focusStrategy === 'FOCUS_DOM'
         ? domOptions.findIndex(opt => opt.tabIndex === 0)
         : domOptions.findIndex(opt => opt.ariaSelected === 'true');
 
