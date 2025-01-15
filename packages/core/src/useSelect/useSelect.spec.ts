@@ -8,6 +8,7 @@ import { useOptionGroup } from '../useOptionGroup';
 
 function createSelect() {
   const Option = defineComponent({
+    props: ['label', 'value', 'disabled'],
     setup(props, { attrs }) {
       const all = { ...attrs, ...props } as any;
       const { optionProps } = useOption(all);
@@ -317,6 +318,7 @@ describe('keyboard features for a single select', () => {
     const listbox = screen.getByRole('listbox');
 
     await fireEvent.keyDown(listbox, { code: 'End' });
+    await flush();
     await fireEvent.keyDown(listbox, { code: 'ArrowUp' });
     await flush();
     expect(screen.getAllByRole('option')[1]).toHaveFocus();

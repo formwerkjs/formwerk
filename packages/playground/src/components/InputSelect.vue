@@ -19,15 +19,10 @@ const {
   isTouched,
   displayError,
   fieldValue,
-  popupProps,
+  listBoxProps,
   selectedOptions,
   selectedOption,
 } = useSelect(props);
-
-watchEffect(() => {
-  console.log(selectedOptions.value);
-  console.log(selectedOption.value);
-});
 </script>
 
 <template>
@@ -46,7 +41,7 @@ watchEffect(() => {
       </span>
     </div>
 
-    <div v-bind="popupProps" popover class="listbox">
+    <div v-bind="listBoxProps" popover class="listbox">
       <slot>
         <template v-if="groups">
           <OptionGroup v-for="group in groups" :key="group.label" :label="group.label">

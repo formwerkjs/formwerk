@@ -18,6 +18,24 @@ const onSubmit = handleSubmit(data => {
 
 <template>
   <div class="flex flex-col">
+    <Select
+      name="select"
+      label="Select"
+      :options="[
+        { label: 'United States', value: 'us' },
+        { label: 'Canada', value: 'ca' },
+        { label: 'Mexico', value: 'mx' },
+        { label: 'Brazil', value: 'br' },
+        { label: 'Argentina', value: 'ar' },
+        { label: 'United Kingdom', value: 'uk' },
+        { label: 'France', value: 'fr' },
+        { label: 'Germany', value: 'de' },
+        { label: 'Italy', value: 'it' },
+        { label: 'Spain', value: 'es' },
+        { label: 'Portugal', value: 'pt' },
+      ]"
+    />
+
     <ComboBox
       name="combo"
       label="Combo"

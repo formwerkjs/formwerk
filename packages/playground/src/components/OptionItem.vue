@@ -17,7 +17,7 @@ const { optionProps } = useOption(props);
   @apply border border-transparent select-none text-white font-normal cursor-pointer;
 
   &:focus {
-    @apply border-emerald-500 outline-none;
+    @apply bg-emerald-500 outline-none text-red-500;
   }
 
   &[aria-selected='true'] {
