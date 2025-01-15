@@ -189,10 +189,7 @@ export function useComboBox<TOption, TValue = TOption>(
         return;
       }
 
-      const item = items.value?.find(item =>
-        isEqual(collectionOptions?.collection?.key(item.option), fieldValue.value),
-      );
-
+      const item = items.value.find(i => isEqual(collectionOptions?.collection?.key(i.option), fieldValue.value));
       inputValue.value = item?.registration?.getLabel() ?? '';
     },
     onKeydown(evt: KeyboardEvent) {

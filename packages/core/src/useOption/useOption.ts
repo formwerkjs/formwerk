@@ -1,5 +1,5 @@
 import { Maybe, Reactivify, RovingTabIndex } from '../types';
-import { computed, inject, nextTick, ref, Ref, shallowRef, toValue } from 'vue';
+import { computed, inject, nextTick, ref, Ref, shallowRef, toValue, watch } from 'vue';
 import { hasKeyCode, normalizeProps, useUniqId, warn, withRefCapture } from '../utils/common';
 import { ListManagerKey } from '../useListBox';
 import { FieldTypePrefixes } from '../constants';
@@ -30,11 +30,6 @@ export interface OptionProps<TValue> {
   value: TValue;
 
   /**
-   * The index of the option in the list.
-   */
-  index: number;
-
-  /**
    * Whether the option is disabled.
    */
   disabled?: boolean;
@@ -60,7 +55,7 @@ export function useOption<TOption>(_props: Reactivify<OptionProps<TOption>>, ele
   const isSelected = computed(() => listManager?.isValueSelected(getValue()) ?? false);
   const optionId = useUniqId(FieldTypePrefixes.Option);
 
-  listManager?.useOptionRegistration({
+  const reg = listManager?.useOptionRegistration({
     id: optionId,
     toggleSelected,
     isDisabled: () => isDisabled.value,
@@ -83,7 +78,6 @@ export function useOption<TOption>(_props: Reactivify<OptionProps<TOption>>, ele
         optionEl.value?.scrollIntoView();
       });
     },
-    getIndex: () => toValue(props.index),
   });
 
   function toggleSelected() {
@@ -135,6 +129,12 @@ export function useOption<TOption>(_props: Reactivify<OptionProps<TOption>>, ele
       optionEl,
       elementRef,
     );
+  });
+
+  watch(optionEl, () => {
+    if (optionEl.value) {
+      (optionEl.value as any)._fwOption = reg;
+    }
   });
 
   return {

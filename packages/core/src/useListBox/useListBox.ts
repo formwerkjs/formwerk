@@ -43,7 +43,6 @@ export interface OptionRegistration<TValue> {
   focus(): void;
   unfocus(): void;
   toggleSelected(): void;
-  getIndex(): number;
 }
 
 export interface OptionRegistrationWithId<TValue> extends OptionRegistration<TValue> {
@@ -51,7 +50,7 @@ export interface OptionRegistrationWithId<TValue> extends OptionRegistration<TVa
 }
 
 export interface ListManagerCtx<TValue = unknown> {
-  useOptionRegistration(init: OptionRegistration<TValue>): void;
+  useOptionRegistration(init: OptionRegistration<TValue>): OptionRegistration<TValue>;
   isValueSelected(value: TValue): boolean;
   isMultiple(): boolean;
   toggleValue(value: TValue, force?: boolean): void;
@@ -71,7 +70,6 @@ export function useListBox<TOption, TValue = TOption>(
   const listBoxId = useUniqId(FieldTypePrefixes.ListBox);
   const listBoxEl = elementRef || ref<HTMLElement>();
   const renderedOptions = ref<OptionRegistrationWithId<TValue>[]>([]);
-  const sortedOptions = computed(() => [...renderedOptions.value].sort((a, b) => a.getIndex() - b.getIndex()));
   const finder = useBasicOptionFinder(renderedOptions);
   const collection = props.collection;
 
@@ -100,6 +98,8 @@ export function useListBox<TOption, TValue = TOption>(
       onBeforeUnmount(() => {
         removeFirst(renderedOptions.value, reg => reg.id === id);
       });
+
+      return init;
     },
     isMultiple() {
       return toValue(props.multiple) ?? false;
@@ -146,7 +146,7 @@ export function useListBox<TOption, TValue = TOption>(
           props.onToggleBefore?.();
         }
 
-        sortedOptions.value.at(0)?.focus();
+        getSortedOptions().at(0)?.focus();
         return;
       }
 
@@ -157,7 +157,7 @@ export function useListBox<TOption, TValue = TOption>(
           props.onToggleAfter?.();
         }
 
-        sortedOptions.value.at(-1)?.focus();
+        getSortedOptions().at(-1)?.focus();
         return;
       }
 
@@ -185,14 +185,33 @@ export function useListBox<TOption, TValue = TOption>(
     return renderedOptions.value.find(o => o.isFocused());
   }
 
+  function getSortedOptions() {
+    const domOptions = getDomOptions();
+
+    return domOptions.map(opt => opt._fwOption);
+  }
+
+  function getDomOptions() {
+    return Array.from(listBoxEl.value?.querySelectorAll('[role="option"]') || []) as (HTMLElement & {
+      _fwOption?: OptionRegistration<TValue>;
+    })[];
+  }
+
   function findFocusedIdx() {
-    return sortedOptions.value.findIndex(o => o.isFocused());
+    const focusStrategy = listManager.getFocusStrategy();
+    const domOptions = getDomOptions();
+    const focusedOptionIdx =
+      focusStrategy === 'DOM_FOCUS'
+        ? domOptions.findIndex(opt => opt.tabIndex === 0)
+        : domOptions.findIndex(opt => opt.ariaSelected === 'true');
+
+    return focusedOptionIdx;
   }
 
   function focusNext() {
     const currentlyFocusedIdx = findFocusedIdx();
-    for (let i = currentlyFocusedIdx + 1; i < sortedOptions.value.length; i++) {
-      const option = sortedOptions.value[i];
+    for (let i = currentlyFocusedIdx + 1; i < getSortedOptions().length; i++) {
+      const option = getSortedOptions()[i];
 
       if (option && !option.isDisabled()) {
         focusAndToggleIfShiftPressed(option);
@@ -209,7 +228,7 @@ export function useListBox<TOption, TValue = TOption>(
     }
 
     for (let i = currentlyFocusedIdx - 1; i >= 0; i--) {
-      const option = sortedOptions.value[i];
+      const option = getSortedOptions()[i];
       if (option && !option.isDisabled()) {
         focusAndToggleIfShiftPressed(option);
         return;
