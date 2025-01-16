@@ -256,6 +256,11 @@ export function useListBox<TOption, TValue = TOption>(
 
   watch(isOpen, async value => {
     if (!value || toValue(props.disabled) || !toValue(props.autofocusOnOpen)) {
+      // If the focus strategy is not FOCUS_ATTR_SELECTED, we need to unfocus the currently focused option when the popup is closed.
+      if (listManager.getFocusStrategy() !== 'FOCUS_ATTR_SELECTED') {
+        findFocusedOption()?.unfocus();
+      }
+
       return;
     }
 

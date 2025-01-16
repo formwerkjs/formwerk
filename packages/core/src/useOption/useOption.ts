@@ -58,6 +58,10 @@ export function useOption<TOption>(_props: Reactivify<OptionProps<TOption>>, ele
   const isSelected = computed(() => listManager?.isValueSelected(getValue()) ?? false);
   const optionId = useUniqId(FieldTypePrefixes.Option);
 
+  function unfocus() {
+    isFocused.value = false;
+  }
+
   const reg = listManager?.useOptionRegistration({
     id: optionId,
     toggleSelected,
@@ -69,11 +73,11 @@ export function useOption<TOption>(_props: Reactivify<OptionProps<TOption>>, ele
     isHidden: () => isHidden.value,
     setHidden: value => {
       isHidden.value = value;
+      if (value) {
+        unfocus();
+      }
     },
-    unfocus: () => {
-      // Doesn't actually unfocus the option, just sets the focus state to false.
-      isFocused.value = false;
-    },
+    unfocus,
     focus: () => {
       isFocused.value = true;
       nextTick(() => {
