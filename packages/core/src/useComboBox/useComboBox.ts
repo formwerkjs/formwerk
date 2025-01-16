@@ -3,6 +3,7 @@ import { InputEvents, Reactivify, StandardSchema } from '../types';
 import { Orientation } from '../types';
 import {
   createDescribedByProps,
+  debounce,
   hasKeyCode,
   isEqual,
   normalizeProps,
@@ -91,8 +92,15 @@ export interface ComboBoxProps<TOption, TValue = TOption> {
 }
 
 export interface ComboBoxCollectionOptions {
+  /**
+   * The filter function to use.
+   */
   filter: FilterFn;
-  // collection?: CollectionManager<TOption>;
+
+  /**
+   * The debounce time in milliseconds for the filter function.
+   */
+  debounceMs?: number;
 }
 
 export function useComboBox<TOption, TValue = TOption>(
@@ -313,7 +321,11 @@ export function useComboBox<TOption, TValue = TOption>(
 
   const filter = collectionOptions?.filter;
   if (filter) {
-    watch(inputValue, textValue => {
+    function updateHiddenState(textValue: string) {
+      if (!filter) {
+        return;
+      }
+
       renderedOptions.value.forEach(opt => {
         opt.setHidden(
           !filter({
@@ -322,7 +334,9 @@ export function useComboBox<TOption, TValue = TOption>(
           }),
         );
       });
-    });
+    }
+
+    watch(inputValue, debounce(collectionOptions?.debounceMs ?? 100, updateHiddenState));
   }
 
   return exposeField(
