@@ -143,7 +143,7 @@ export function useOption<TOption>(_props: Reactivify<OptionProps<TOption>>, ele
       };
     }
 
-    domProps[selectedAttr] = isSelected.value || undefined;
+    domProps[selectedAttr] = isSelected.value;
 
     return withRefCapture(domProps, optionEl, elementRef);
   });
