@@ -1,9 +1,9 @@
 <script setup lang="ts" generic="TOption extends { label: string; value: string }, TValue">
-import { useComboBox, ComboBoxProps, defineCollection, useDefaultFilter } from '@formwerk/core';
+import { useComboBox, ComboBoxProps, useDefaultFilter } from '@formwerk/core';
 import Option from './OptionItem.vue';
 
 interface Props extends ComboBoxProps<TOption, TValue> {
-  options: TOption[];
+  options?: TOption[];
 }
 
 const props = defineProps<Props>();
@@ -12,24 +12,10 @@ const { contains } = useDefaultFilter({
   caseSensitive: false,
 });
 
-const collection = defineCollection({
-  items: () => props.options,
-});
-
-const {
-  inputProps,
-  listBoxProps,
-  labelProps,
-  buttonProps,
-  errorMessageProps,
-  errorMessage,
-  descriptionProps,
-  options,
-  selectedOptions,
-} = useComboBox(props, {
-  collection,
-  filter: contains,
-});
+const { inputProps, listBoxProps, labelProps, buttonProps, errorMessageProps, errorMessage, descriptionProps } =
+  useComboBox(props, {
+    filter: contains,
+  });
 </script>
 
 <template>
@@ -37,9 +23,7 @@ const {
     <p v-bind="labelProps">{{ label }}</p>
 
     <div class="flex items-center gap-2">
-      <div>
-        <!-- <span v-for="item in selectedOptions" :key="item.label">{{ item.label }}</span> -->
-
+      <div class="flex items-center gap-1">
         <input v-bind="inputProps" type="text" />
       </div>
 

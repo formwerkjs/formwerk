@@ -1,12 +1,11 @@
 import { computed, InjectionKey, nextTick, onBeforeUnmount, provide, ref, Ref, toValue, watch } from 'vue';
 import { AriaLabelableProps, Maybe, Orientation, Reactivify } from '../types';
-import { hasKeyCode, isEqual, normalizeProps, removeFirst, useUniqId, withRefCapture } from '../utils/common';
+import { hasKeyCode, normalizeProps, removeFirst, useUniqId, withRefCapture } from '../utils/common';
 import { useKeyPressed } from '../helpers/useKeyPressed';
 import { isMac } from '../utils/platform';
 import { usePopoverController } from '../helpers/usePopoverController';
 import { FieldTypePrefixes } from '../constants';
 import { useBasicOptionFinder } from './basicOptionFinder';
-import { CollectionManager } from '../collections';
 
 export type FocusStrategy = 'FOCUS_DOM' | 'FOCUS_ATTR_SELECTED';
 
@@ -15,7 +14,6 @@ export interface ListBoxProps<TOption, TValue = TOption> {
   isValueSelected(value: TValue): boolean;
   handleToggleValue(value: TValue): void;
 
-  collection?: CollectionManager<TOption>;
   focusStrategy?: FocusStrategy;
   labeledBy?: string;
   multiple?: boolean;
@@ -43,6 +41,7 @@ export interface OptionRegistration<TValue> {
   focus(): void;
   unfocus(): void;
   toggleSelected(): void;
+  setHidden(value: boolean): void;
 }
 
 export interface OptionRegistrationWithId<TValue> extends OptionRegistration<TValue> {
@@ -66,16 +65,14 @@ export interface OptionElement<TValue = unknown> extends HTMLElement {
 export const ListManagerKey: InjectionKey<ListManagerCtx<any>> = Symbol('ListManagerKey');
 
 export function useListBox<TOption, TValue = TOption>(
-  _props: Reactivify<ListBoxProps<TOption, TValue>, 'isValueSelected' | 'handleToggleValue' | 'collection'>,
+  _props: Reactivify<ListBoxProps<TOption, TValue>, 'isValueSelected' | 'handleToggleValue'>,
   elementRef?: Ref<Maybe<HTMLElement>>,
 ) {
-  const itemAssociations = ref<Map<TOption, OptionRegistrationWithId<TValue>>>(new Map());
-  const props = normalizeProps(_props, ['isValueSelected', 'handleToggleValue', 'collection']);
+  const props = normalizeProps(_props, ['isValueSelected', 'handleToggleValue']);
   const listBoxId = useUniqId(FieldTypePrefixes.ListBox);
   const listBoxEl = elementRef || ref<HTMLElement>();
   const renderedOptions = ref<OptionRegistrationWithId<TValue>[]>([]);
   const finder = useBasicOptionFinder(renderedOptions);
-  const collection = props.collection;
 
   // Initialize popover controller, NO-OP if the element is not a popover-enabled element.
   const { isOpen } = usePopoverController(listBoxEl, { disabled: props.disabled });
@@ -85,20 +82,10 @@ export function useListBox<TOption, TValue = TOption>(
     () => !isOpen.value,
   );
 
-  function associateOption(registration: OptionRegistration<TValue>) {
-    const item = collection?.items.value.find(item => isEqual(collection?.key(item), registration.getValue()));
-    if (!item) {
-      return;
-    }
-
-    itemAssociations.value.set(item, registration);
-  }
-
   const listManager: ListManagerCtx<TValue> = {
     useOptionRegistration(init: OptionRegistration<TValue>) {
       const id = init.id;
       renderedOptions.value.push(init);
-      associateOption(init);
       onBeforeUnmount(() => {
         removeFirst(renderedOptions.value, reg => reg.id === id);
       });
@@ -196,7 +183,9 @@ export function useListBox<TOption, TValue = TOption>(
   }
 
   function getDomOptions() {
-    return Array.from(listBoxEl.value?.querySelectorAll('[role="option"]') || []) as OptionElement<TValue>[];
+    return Array.from(
+      listBoxEl.value?.querySelectorAll('[role="option"]:not([hidden])') || [],
+    ) as OptionElement<TValue>[];
   }
 
   function findFocusedIdx() {
@@ -297,13 +286,6 @@ export function useListBox<TOption, TValue = TOption>(
     return renderedOptions.value.filter(opt => opt.isSelected()).map(opt => mapOption(opt));
   });
 
-  const items = computed(() => {
-    return collection?.items.value.map(item => ({
-      option: item,
-      registration: itemAssociations.value.get(item),
-    }));
-  });
-
   return {
     listBoxId,
     listBoxProps,
@@ -313,7 +295,6 @@ export function useListBox<TOption, TValue = TOption>(
     listBoxEl,
     selectedOption,
     selectedOptions,
-    items,
     focusNext,
     focusPrev,
     findFocusedOption,

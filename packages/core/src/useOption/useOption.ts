@@ -1,5 +1,5 @@
 import { Maybe, Reactivify, RovingTabIndex } from '../types';
-import { computed, inject, nextTick, ref, Ref, shallowRef, toValue, watch } from 'vue';
+import { computed, CSSProperties, inject, nextTick, ref, Ref, shallowRef, toValue, watch } from 'vue';
 import { hasKeyCode, normalizeProps, useUniqId, warn, withRefCapture } from '../utils/common';
 import { ListManagerKey, OptionElement } from '../useListBox';
 import { FieldTypePrefixes } from '../constants';
@@ -16,6 +16,9 @@ interface OptionDomProps {
   // Used when the listbox allows multiple selections
   'aria-checked'?: boolean;
   'aria-disabled'?: boolean;
+  hidden?: boolean;
+
+  style?: CSSProperties;
 }
 
 export interface OptionProps<TValue> {
@@ -40,6 +43,8 @@ export function useOption<TOption>(_props: Reactivify<OptionProps<TOption>>, ele
   const optionEl = elementRef || ref<OptionElement>();
   const isFocused = shallowRef(false);
   const isDisabled = createDisabledContext(props.disabled);
+  // Used to hide the option when a filter is applied and doesn't match the item.
+  const isHidden = shallowRef(false);
   const listManager = inject(ListManagerKey, null);
 
   if (!listManager) {
@@ -63,6 +68,9 @@ export function useOption<TOption>(_props: Reactivify<OptionProps<TOption>>, ele
     isFocused: () => isFocused.value,
     getLabel: () => toValue(props.label) ?? '',
     getValue,
+    setHidden: value => {
+      isHidden.value = value;
+    },
     unfocus: () => {
       // Doesn't actually unfocus the option, just sets the focus state to false.
       isFocused.value = false;
@@ -126,6 +134,13 @@ export function useOption<TOption>(_props: Reactivify<OptionProps<TOption>>, ele
     if (focusAttr) {
       domProps[focusAttr] = isVirtuallyFocused;
       selectedAttr = 'aria-checked';
+    }
+
+    if (isHidden.value) {
+      domProps.hidden = true;
+      domProps.style = {
+        display: 'none',
+      };
     }
 
     domProps[selectedAttr] = isSelected.value;

@@ -1,4 +1,4 @@
-import { computed, ref, toValue } from 'vue';
+import { computed, ref, toValue, watch } from 'vue';
 import { InputEvents, Reactivify, StandardSchema } from '../types';
 import { Orientation } from '../types';
 import {
@@ -16,7 +16,7 @@ import { useLabel } from '../a11y/useLabel';
 import { useListBox } from '../useListBox';
 import { useErrorMessage } from '../a11y/useErrorMessage';
 import { useInputValidity } from '../validation';
-import { CollectionManager, FilterFn } from '../collections';
+import { FilterFn } from '../collections';
 
 export interface ComboBoxProps<TOption, TValue = TOption> {
   /**
@@ -65,11 +65,6 @@ export interface ComboBoxProps<TOption, TValue = TOption> {
   readonly?: boolean;
 
   /**
-   * Whether multiple options can be selected.
-   */
-  multiple?: boolean;
-
-  /**
    * The orientation of the listbox popup (vertical or horizontal).
    */
   orientation?: Orientation;
@@ -88,16 +83,21 @@ export interface ComboBoxProps<TOption, TValue = TOption> {
    * Whether to allow custom values, false by default. When the user blurs the input the value is reset to the selected option or blank if no option is selected.
    */
   allowCustomValue?: boolean;
+
+  /**
+   * Whether multiple options can be selected.
+   */
+  onNewValue?(value: TValue): TOption | Promise<TOption>;
 }
 
-export interface ComboBoxCollectionOptions<TOption> {
+export interface ComboBoxCollectionOptions {
   filter: FilterFn;
-  collection?: CollectionManager<TOption>;
+  // collection?: CollectionManager<TOption>;
 }
 
 export function useComboBox<TOption, TValue = TOption>(
-  _props: Reactivify<ComboBoxProps<TOption, TValue>, 'schema'>,
-  collectionOptions?: Partial<ComboBoxCollectionOptions<TOption>>,
+  _props: Reactivify<ComboBoxProps<TOption, TValue>, 'schema' | 'onNewValue'>,
+  collectionOptions?: Partial<ComboBoxCollectionOptions>,
 ) {
   const props = normalizeProps(_props, ['schema']);
   const inputEl = ref<HTMLElement>();
@@ -134,16 +134,13 @@ export function useComboBox<TOption, TValue = TOption>(
     isPopupOpen,
     listBoxEl,
     selectedOption,
-    selectedOptions,
     focusNext,
     focusPrev,
     findFocusedOption,
-    items,
     renderedOptions,
   } = useListBox<TOption, TValue>({
     labeledBy: () => labelledByProps.value['aria-labelledby'],
     focusStrategy: 'FOCUS_ATTR_SELECTED',
-    collection: collectionOptions?.collection,
     disabled: isDisabled,
     label: props.label,
     multiple: false,
@@ -165,7 +162,9 @@ export function useComboBox<TOption, TValue = TOption>(
     onChange(evt) {
       inputValue.value = (evt.target as HTMLInputElement).value;
     },
-    onBlur(evt) {
+    async onBlur(evt) {
+      setTouched(true);
+      // If an option was clicked, then it would blur the field and so we want to select the clicked option via the `relatedTarget` property.
       let relatedTarget = (evt as any).relatedTarget as HTMLElement | null;
       if (relatedTarget) {
         relatedTarget = relatedTarget.closest('[role="option"]') as HTMLElement | null;
@@ -179,18 +178,7 @@ export function useComboBox<TOption, TValue = TOption>(
         return;
       }
 
-      setTouched(true);
-      if (toValue(props.allowCustomValue)) {
-        return;
-      }
-
-      if (!items.value) {
-        inputValue.value = selectedOption.value?.label ?? '';
-        return;
-      }
-
-      const item = items.value.find(i => isEqual(collectionOptions?.collection?.key(i.option), fieldValue.value));
-      inputValue.value = item?.registration?.getLabel() ?? '';
+      findClosestOptionAndSetValue(inputValue.value);
     },
     onKeydown(evt: KeyboardEvent) {
       if (isDisabled.value) {
@@ -234,6 +222,8 @@ export function useComboBox<TOption, TValue = TOption>(
 
       if (hasKeyCode(evt, 'Tab')) {
         isPopupOpen.value = false;
+        findClosestOptionAndSetValue(inputValue.value);
+
         return;
       }
 
@@ -242,6 +232,31 @@ export function useComboBox<TOption, TValue = TOption>(
       }
     },
   };
+
+  function findClosestOptionAndSetValue(search: string) {
+    if (!renderedOptions.value) {
+      inputValue.value = selectedOption.value?.label ?? '';
+      return;
+    }
+
+    // Try to find if the search matches an option's label.
+    let item = renderedOptions.value.find(i => i?.getLabel() === search);
+
+    // Try to find if the search matches an option's label after trimming it.
+    if (!item) {
+      item = renderedOptions.value.find(i => i?.getLabel() === search.trim());
+    }
+
+    // Find an option with a matching value to the last one selected.
+    if (!item) {
+      item = renderedOptions.value.find(i => isEqual(i?.getValue(), fieldValue.value));
+    }
+
+    if (item) {
+      inputValue.value = item?.getLabel() ?? '';
+      setValue(item?.getValue());
+    }
+  }
 
   /**
    * Handles the click event on the button element.
@@ -298,18 +313,12 @@ export function useComboBox<TOption, TValue = TOption>(
 
   const filter = collectionOptions?.filter;
 
-  const filteredItems = computed(() => {
-    if (!filter) {
-      return items.value?.map(({ option }) => option) ?? [];
-    }
-
-    return (
-      items.value?.filter(({ registration, option }) => {
-        return registration
-          ? filter({ option: { item: option, label: registration.getLabel() }, search: inputValue.value })
-          : true;
-      }) ?? []
-    ).map(({ option }) => option);
+  watch(inputValue, textValue => {
+    renderedOptions.value.forEach(opt => {
+      opt.setHidden(
+        filter ? !filter({ option: { item: opt.getValue(), label: opt.getLabel() }, search: textValue }) : false,
+      );
+    });
   });
 
   return exposeField(
@@ -359,19 +368,11 @@ export function useComboBox<TOption, TValue = TOption>(
        */
       buttonProps,
       /**
-       * The options in the collection.
-       */
-      options: filteredItems,
-      /**
        * The value of the text field, will contain the label of the selected option or the user input if they are currently typing.
        */
       inputValue,
       /**
-       * The selected options if multiple is true.
-       */
-      selectedOptions,
-      /**
-       * The selected option if multiple is false.
+       * The selected option.
        */
       selectedOption,
     },
