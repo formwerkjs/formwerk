@@ -17,7 +17,7 @@ export interface FilterOptions {
 }
 
 export function useDefaultFilter(options: FilterOptions = {}) {
-  const { caseSensitive = false, debounceMs = 100 } = options;
+  const { caseSensitive = false, debounceMs = 0 } = options;
 
   const withCaseSensitive = caseSensitive ? (value: string) => value : (value: string) => value.toLowerCase();
 

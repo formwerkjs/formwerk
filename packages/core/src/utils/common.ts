@@ -401,6 +401,10 @@ export function fromNumberish(value: MaybeRefOrGetter<Numberish | undefined>): n
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function debounce<TFunction extends (...args: any[]) => any>(ms: number, fn: TFunction) {
+  if (ms <= 0) {
+    return fn;
+  }
+
   let timer: number | null = null;
 
   return function (...args: Parameters<TFunction>) {
