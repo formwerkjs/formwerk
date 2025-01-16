@@ -312,14 +312,18 @@ export function useComboBox<TOption, TValue = TOption>(
   });
 
   const filter = collectionOptions?.filter;
-
-  watch(inputValue, textValue => {
-    renderedOptions.value.forEach(opt => {
-      opt.setHidden(
-        filter ? !filter({ option: { item: opt.getValue(), label: opt.getLabel() }, search: textValue }) : false,
-      );
+  if (filter) {
+    watch(inputValue, textValue => {
+      renderedOptions.value.forEach(opt => {
+        opt.setHidden(
+          !filter({
+            option: { value: opt.getValue(), label: opt.getLabel() },
+            search: textValue,
+          }),
+        );
+      });
     });
-  });
+  }
 
   return exposeField(
     {

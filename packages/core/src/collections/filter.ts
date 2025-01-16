@@ -1,8 +1,8 @@
-export interface FilterContext<TItem> {
+export interface FilterContext<TValue> {
   search: string;
   option: {
     label: string;
-    item: TItem;
+    value: TValue;
   };
 }
 
