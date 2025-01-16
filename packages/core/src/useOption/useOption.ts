@@ -17,6 +17,7 @@ interface OptionDomProps {
   'aria-checked'?: boolean;
   'aria-disabled'?: boolean;
   hidden?: boolean;
+  'aria-hidden'?: boolean;
 
   style?: CSSProperties;
 }
@@ -138,6 +139,7 @@ export function useOption<TOption>(_props: Reactivify<OptionProps<TOption>>, ele
 
     if (isHidden.value) {
       domProps.hidden = true;
+      domProps['aria-hidden'] = true;
       domProps.style = {
         display: 'none',
       };
