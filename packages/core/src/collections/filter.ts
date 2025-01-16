@@ -8,14 +8,16 @@ export interface FilterContext<TValue> {
 
 export interface FilterFn {
   (context: FilterContext<unknown>): boolean;
+  debounceMs: number;
 }
 
 export interface FilterOptions {
   caseSensitive?: boolean;
+  debounceMs?: number;
 }
 
 export function useDefaultFilter(options: FilterOptions = {}) {
-  const { caseSensitive = false } = options;
+  const { caseSensitive = false, debounceMs = 100 } = options;
 
   const withCaseSensitive = caseSensitive ? (value: string) => value : (value: string) => value.toLowerCase();
 
@@ -34,6 +36,11 @@ export function useDefaultFilter(options: FilterOptions = {}) {
   const equals: FilterFn = ({ search, option }) => {
     return withCaseSensitive(option.label) === withCaseSensitive(search);
   };
+
+  contains.debounceMs = debounceMs;
+  startsWith.debounceMs = debounceMs;
+  endsWith.debounceMs = debounceMs;
+  equals.debounceMs = debounceMs;
 
   return {
     contains,

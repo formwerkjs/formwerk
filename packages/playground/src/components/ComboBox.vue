@@ -10,6 +10,7 @@ const props = defineProps<Props>();
 
 const { contains } = useDefaultFilter({
   caseSensitive: false,
+  debounceMs: 200,
 });
 
 const { inputProps, listBoxProps, labelProps, buttonProps, errorMessageProps, errorMessage, descriptionProps } =

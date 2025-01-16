@@ -96,11 +96,6 @@ export interface ComboBoxCollectionOptions {
    * The filter function to use.
    */
   filter: FilterFn;
-
-  /**
-   * The debounce time in milliseconds for the filter function.
-   */
-  debounceMs?: number;
 }
 
 export function useComboBox<TOption, TValue = TOption>(
@@ -336,7 +331,7 @@ export function useComboBox<TOption, TValue = TOption>(
       });
     }
 
-    watch(inputValue, debounce(collectionOptions?.debounceMs ?? 100, updateHiddenState));
+    watch(inputValue, debounce(filter.debounceMs, updateHiddenState));
   }
 
   return exposeField(
