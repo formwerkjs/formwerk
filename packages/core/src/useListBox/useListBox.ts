@@ -42,6 +42,7 @@ export interface OptionRegistration<TValue> {
   unfocus(): void;
   toggleSelected(): void;
   setHidden(value: boolean): void;
+  isHidden(): boolean;
 }
 
 export interface OptionRegistrationWithId<TValue> extends OptionRegistration<TValue> {
@@ -286,6 +287,10 @@ export function useListBox<TOption, TValue = TOption>(
     return renderedOptions.value.filter(opt => opt.isSelected()).map(opt => mapOption(opt));
   });
 
+  const isEmpty = computed(() => {
+    return !renderedOptions.value.length || renderedOptions.value.every(opt => opt.isHidden());
+  });
+
   return {
     listBoxId,
     listBoxProps,
@@ -295,6 +300,7 @@ export function useListBox<TOption, TValue = TOption>(
     listBoxEl,
     selectedOption,
     selectedOptions,
+    isEmpty,
     focusNext,
     focusPrev,
     findFocusedOption,

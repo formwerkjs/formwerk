@@ -10,18 +10,26 @@ const props = defineProps<Props>();
 
 const { contains } = useDefaultFilter({
   caseSensitive: false,
-  debounceMs: 300,
 });
 
-const { inputProps, listBoxProps, labelProps, buttonProps, errorMessageProps, errorMessage, descriptionProps } =
-  useComboBox(props, {
-    filter: contains,
-  });
+const {
+  inputProps,
+  listBoxProps,
+  labelProps,
+  buttonProps,
+  errorMessageProps,
+  errorMessage,
+  descriptionProps,
+  isEmpty,
+} = useComboBox(props, {
+  filter: contains,
+});
 </script>
 
 <template>
   <div class="select-field">
     <p v-bind="labelProps">{{ label }}</p>
+    {{ isEmpty }}
 
     <div class="flex items-center gap-2">
       <div class="flex items-center gap-1">
@@ -41,6 +49,8 @@ const { inputProps, listBoxProps, labelProps, buttonProps, errorMessageProps, er
       <slot>
         <Option v-for="option in options" :key="option.label" :label="option.label" :value="option" />
       </slot>
+
+      <div v-if="isEmpty" class="text-white text-gray-400">No options found</div>
     </div>
 
     <p v-if="errorMessage" v-bind="errorMessageProps" class="error-message">{{ errorMessage }}</p>

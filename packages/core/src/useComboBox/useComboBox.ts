@@ -141,6 +141,7 @@ export function useComboBox<TOption, TValue = TOption>(
     focusPrev,
     findFocusedOption,
     renderedOptions,
+    isEmpty,
   } = useListBox<TOption, TValue>({
     labeledBy: () => labelledByProps.value['aria-labelledby'],
     focusStrategy: 'FOCUS_ATTR_SELECTED',
@@ -388,6 +389,10 @@ export function useComboBox<TOption, TValue = TOption>(
        * The selected option.
        */
       selectedOption,
+      /**
+       * Whether the listbox is empty, i.e. no options are visible.
+       */
+      isListEmpty: isEmpty,
     },
     field,
   );

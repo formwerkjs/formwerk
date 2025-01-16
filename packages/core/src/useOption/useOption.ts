@@ -8,18 +8,15 @@ import { createDisabledContext } from '../helpers/createDisabledContext';
 interface OptionDomProps {
   id: string;
   role: 'option';
-
   tabindex: RovingTabIndex;
-
+  hidden?: boolean;
+  style?: CSSProperties;
   // Used when the listbox allows single selection
   'aria-selected'?: boolean;
   // Used when the listbox allows multiple selections
   'aria-checked'?: boolean;
   'aria-disabled'?: boolean;
-  hidden?: boolean;
   'aria-hidden'?: boolean;
-
-  style?: CSSProperties;
 }
 
 export interface OptionProps<TValue> {
@@ -69,6 +66,7 @@ export function useOption<TOption>(_props: Reactivify<OptionProps<TOption>>, ele
     isFocused: () => isFocused.value,
     getLabel: () => toValue(props.label) ?? '',
     getValue,
+    isHidden: () => isHidden.value,
     setHidden: value => {
       isHidden.value = value;
     },
@@ -133,7 +131,7 @@ export function useOption<TOption>(_props: Reactivify<OptionProps<TOption>>, ele
     };
 
     if (focusAttr) {
-      domProps[focusAttr] = isVirtuallyFocused;
+      domProps[focusAttr] = isVirtuallyFocused || undefined;
       selectedAttr = 'aria-checked';
     }
 
@@ -145,7 +143,7 @@ export function useOption<TOption>(_props: Reactivify<OptionProps<TOption>>, ele
       };
     }
 
-    domProps[selectedAttr] = isSelected.value;
+    domProps[selectedAttr] = isSelected.value || undefined;
 
     return withRefCapture(domProps, optionEl, elementRef);
   });
