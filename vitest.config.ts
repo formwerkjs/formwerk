@@ -21,6 +21,7 @@ export default defineConfig({
         'packages/**/dist/**',
         'packages/playground/**',
         'packages/test-utils/**',
+        'packages/starter-kits/**',
         './*.ts',
         './*.js',
         'docs/*',
