@@ -81,14 +81,9 @@ export interface ComboBoxProps<TOption, TValue = TOption> {
   disableHtmlValidation?: boolean;
 
   /**
-   * Whether to allow custom values, false by default. When the user blurs the input the value is reset to the selected option or blank if no option is selected.
+   * Function to create a new option from the user input.
    */
-  allowCustomValue?: boolean;
-
-  /**
-   * Whether multiple options can be selected.
-   */
-  onNewValue?(value: TValue): TOption | Promise<TOption>;
+  onNewValue?(value: string): { label: string; value: TValue };
 }
 
 export interface ComboBoxCollectionOptions {
@@ -102,7 +97,7 @@ export function useComboBox<TOption, TValue = TOption>(
   _props: Reactivify<ComboBoxProps<TOption, TValue>, 'schema' | 'onNewValue'>,
   collectionOptions?: Partial<ComboBoxCollectionOptions>,
 ) {
-  const props = normalizeProps(_props, ['schema']);
+  const props = normalizeProps(_props, ['schema', 'onNewValue']);
   const inputEl = ref<HTMLElement>();
   const buttonEl = ref<HTMLElement>();
   const inputValue = ref('');
@@ -238,17 +233,20 @@ export function useComboBox<TOption, TValue = TOption>(
   };
 
   function findClosestOptionAndSetValue(search: string) {
-    if (!renderedOptions.value) {
-      inputValue.value = selectedOption.value?.label ?? '';
-      return;
-    }
-
     // Try to find if the search matches an option's label.
     let item = renderedOptions.value.find(i => i?.getLabel() === search);
 
     // Try to find if the search matches an option's label after trimming it.
     if (!item) {
       item = renderedOptions.value.find(i => i?.getLabel() === search.trim());
+    }
+
+    if (props.onNewValue) {
+      const newOptionValue = props.onNewValue(inputValue.value);
+      setValue(newOptionValue.value);
+      inputValue.value = newOptionValue.label;
+
+      return;
     }
 
     // Find an option with a matching value to the last one selected.
@@ -259,6 +257,8 @@ export function useComboBox<TOption, TValue = TOption>(
     if (item) {
       inputValue.value = item?.getLabel() ?? '';
       setValue(item?.getValue());
+
+      return;
     }
   }
 

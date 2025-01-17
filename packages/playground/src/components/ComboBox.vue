@@ -20,7 +20,7 @@ const {
   errorMessageProps,
   errorMessage,
   descriptionProps,
-  isEmpty,
+  isListEmpty,
 } = useComboBox(props, {
   filter: contains,
 });
@@ -29,7 +29,6 @@ const {
 <template>
   <div class="select-field">
     <p v-bind="labelProps">{{ label }}</p>
-    {{ isEmpty }}
 
     <div class="flex items-center gap-2">
       <div class="flex items-center gap-1">
@@ -50,7 +49,7 @@ const {
         <Option v-for="option in options" :key="option.label" :label="option.label" :value="option" />
       </slot>
 
-      <div v-if="isEmpty" class="text-white text-gray-400">No options found</div>
+      <div v-if="isListEmpty" class="text-white text-gray-400">No options found</div>
     </div>
 
     <p v-if="errorMessage" v-bind="errorMessageProps" class="error-message">{{ errorMessage }}</p>

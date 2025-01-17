@@ -55,6 +55,10 @@ const options = [
   { label: 'Malaysia', value: 'my' },
 ];
 
+const onNewValue = (value: string) => {
+  return { label: value, value: { label: value, value: value } };
+};
+
 const onSubmit = handleSubmit(data => {
   console.log(data.toObject());
 });
@@ -62,7 +66,7 @@ const onSubmit = handleSubmit(data => {
 
 <template>
   <div class="flex flex-col">
-    <ComboBox name="combo" label="Combo" :options="options" />
+    <ComboBox name="combo" label="Combo" :options="options" @new-value="onNewValue" />
 
     <ComboBox name="combo2" label="Combo">
       <OptionItem v-for="option in options" :key="option.label" :label="option.label" :value="option" />
