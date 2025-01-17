@@ -162,6 +162,16 @@ export function useListBox<TOption, TValue = TOption>(
     },
   };
 
+  function focusFirst() {
+    findFocusedOption()?.unfocus();
+    getSortedOptions().at(0)?.focus();
+  }
+
+  function focusLast() {
+    findFocusedOption()?.unfocus();
+    getSortedOptions().at(-1)?.focus();
+  }
+
   function focusAndToggleIfShiftPressed(option: OptionRegistration<TValue>) {
     if (listManager.getFocusStrategy() !== 'FOCUS_DOM') {
       findFocusedOption()?.unfocus();
@@ -204,7 +214,7 @@ export function useListBox<TOption, TValue = TOption>(
   function focusNext() {
     const currentlyFocusedIdx = findFocusedIdx();
     if (currentlyFocusedIdx === -1) {
-      getSortedOptions().at(0)?.focus();
+      focusFirst();
       return;
     }
 
@@ -223,7 +233,7 @@ export function useListBox<TOption, TValue = TOption>(
     const currentlyFocusedIdx = findFocusedIdx();
     const sortedOptions = getSortedOptions();
     if (currentlyFocusedIdx === -1) {
-      sortedOptions.at(0)?.focus();
+      focusFirst();
       return;
     }
 
@@ -308,6 +318,8 @@ export function useListBox<TOption, TValue = TOption>(
     isEmpty,
     focusNext,
     focusPrev,
+    focusFirst,
+    focusLast,
     findFocusedOption,
   };
 }

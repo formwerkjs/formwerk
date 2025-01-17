@@ -137,6 +137,8 @@ export function useComboBox<TOption, TValue = TOption>(
     findFocusedOption,
     renderedOptions,
     isEmpty,
+    focusFirst: focusFirstOption,
+    focusLast: focusLastOption,
   } = useListBox<TOption, TValue>({
     labeledBy: () => labelledByProps.value['aria-labelledby'],
     focusStrategy: 'FOCUS_ATTR_SELECTED',
@@ -156,9 +158,6 @@ export function useComboBox<TOption, TValue = TOption>(
 
   const handlers: InputEvents & { onKeydown(evt: KeyboardEvent): void } = {
     onInput(evt) {
-      inputValue.value = (evt.target as HTMLInputElement).value;
-    },
-    onChange(evt) {
       inputValue.value = (evt.target as HTMLInputElement).value;
     },
     async onBlur(evt) {
@@ -198,6 +197,7 @@ export function useComboBox<TOption, TValue = TOption>(
 
       if (hasKeyCode(evt, 'Enter')) {
         if (isPopupOpen.value) {
+          evt.preventDefault();
           findFocusedOption()?.toggleSelected();
         }
 
@@ -216,6 +216,16 @@ export function useComboBox<TOption, TValue = TOption>(
         // eslint-disable-next-line @typescript-eslint/no-unused-expressions
         hasKeyCode(evt, 'ArrowDown') ? focusNext() : focusPrev();
 
+        return;
+      }
+
+      if (hasKeyCode(evt, 'End')) {
+        focusLastOption();
+        return;
+      }
+
+      if (hasKeyCode(evt, 'Home')) {
+        focusFirstOption();
         return;
       }
 
