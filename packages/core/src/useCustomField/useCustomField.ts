@@ -113,6 +113,10 @@ export function useCustomField<TValue = unknown>(
        * Props for the control element/group.
        */
       controlProps,
+      /**
+       * Validates the field, pass `false` to not mutate the field errors.
+       */
+      validate: (mutate = true) => field.validate(mutate),
     },
     field,
   );

@@ -174,26 +174,26 @@ describe('useCustomField', () => {
   });
 
   describe('validation', () => {
-    test('validates the field', async () => {
-      const schema: StandardSchema<string, string> = {
-        '~standard': {
-          vendor: 'formwerk',
-          version: 1,
-          validate: value => {
-            const strValue = value ? String(value) : undefined;
-            if (!strValue || strValue.length < 0) {
-              return {
-                issues: [{ path: [], message: 'Value is required' }],
-              };
-            }
-
+    const schema: StandardSchema<string, string> = {
+      '~standard': {
+        vendor: 'formwerk',
+        version: 1,
+        validate: value => {
+          const strValue = value ? String(value) : undefined;
+          if (!strValue || strValue.length < 0) {
             return {
-              value: strValue,
+              issues: [{ path: [], message: 'Value is required' }],
             };
-          },
-        },
-      };
+          }
 
+          return {
+            value: strValue,
+          };
+        },
+      },
+    };
+
+    test('validates the field and updates the error message', async () => {
       const { validate, errorMessage } = await renderSetup(() => {
         const { validate, errorMessage } = useCustomField({ label: 'Custom Field', schema });
 
@@ -202,8 +202,19 @@ describe('useCustomField', () => {
 
       expect(errorMessage.value).toBe('');
       await validate();
-      await flush();
       expect(errorMessage.value).toBe('Value is required');
+    });
+
+    test('does not mutate the field errors when validate is called with false', async () => {
+      const { validate, errorMessage } = await renderSetup(() => {
+        const { validate, errorMessage } = useCustomField({ label: 'Custom Field', schema });
+
+        return { validate, errorMessage };
+      });
+
+      expect(errorMessage.value).toBe('');
+      await validate(false);
+      expect(errorMessage.value).toBe('');
     });
   });
 });
