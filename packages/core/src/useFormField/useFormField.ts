@@ -436,6 +436,11 @@ export type ExposedField<TValue> = {
    * Sets the value for the field.
    */
   setValue: (value: TValue) => void;
+
+  /**
+   * Validates the field.
+   */
+  validate: () => Promise<ValidationResult>;
 };
 
 export function exposeField<TReturns extends object, TValue>(
@@ -453,6 +458,7 @@ export function exposeField<TReturns extends object, TValue>(
     isTouched: field.isTouched,
     isValid: field.isValid,
     isDisabled: field.isDisabled,
+    validate: () => field.validate(true),
     setErrors: __DEV__
       ? (messages: Arrayable<string>) => {
           if (field.isDisabled.value) {

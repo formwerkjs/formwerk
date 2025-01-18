@@ -3,6 +3,8 @@ import { axe } from 'vitest-axe';
 import { useCustomField } from './useCustomField';
 import { flush } from '@test-utils/flush';
 import { describe, expect, test, vi } from 'vitest';
+import { StandardSchema } from '../types';
+import { renderSetup } from '../../../test-utils/src';
 
 describe('useCustomField', () => {
   describe('accessibility', () => {
@@ -168,6 +170,40 @@ describe('useCustomField', () => {
 
       await flush();
       expect(screen.getByTestId('custom-input')).toHaveAttribute('name', 'custom-field-name');
+    });
+  });
+
+  describe('validation', () => {
+    test('validates the field', async () => {
+      const schema: StandardSchema<string, string> = {
+        '~standard': {
+          vendor: 'formwerk',
+          version: 1,
+          validate: value => {
+            const strValue = value ? String(value) : undefined;
+            if (!strValue || strValue.length < 0) {
+              return {
+                issues: [{ path: [], message: 'Value is required' }],
+              };
+            }
+
+            return {
+              value: strValue,
+            };
+          },
+        },
+      };
+
+      const { validate, errorMessage } = await renderSetup(() => {
+        const { validate, errorMessage } = useCustomField({ label: 'Custom Field', schema });
+
+        return { validate, errorMessage };
+      });
+
+      expect(errorMessage.value).toBe('');
+      await validate();
+      await flush();
+      expect(errorMessage.value).toBe('Value is required');
     });
   });
 });
