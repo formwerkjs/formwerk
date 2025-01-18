@@ -38,7 +38,7 @@ export interface FormProps<
   /**
    * The initial values for the form fields.
    */
-  initialValues?: MaybeGetter<MaybeAsync<TInput>>;
+  initialValues?: MaybeGetter<MaybeAsync<PartialDeep<StandardSchemaV1.InferInput<TSchema>>>>;
 
   /**
    * The initial touched state for form fields.
@@ -91,7 +91,7 @@ export function useForm<
   TOutput extends FormObject = StandardSchemaV1.InferOutput<TSchema>,
 >(props?: Partial<FormProps<TSchema, TInput>>) {
   const touchedSnapshot = useFormSnapshots(props?.initialTouched);
-  const valuesSnapshot = useFormSnapshots<TInput, TOutput>(props?.initialValues, {
+  const valuesSnapshot = useFormSnapshots<TInput, TOutput>(props?.initialValues as TInput, {
     onAsyncInit,
     schema: props?.schema as StandardSchema<TInput, TOutput>,
   });
