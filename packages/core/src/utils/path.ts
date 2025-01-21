@@ -115,7 +115,14 @@ export function setInPath(object: NestedRecord, path: string, value: unknown): v
   for (let i = 0; i < keys.length; i++) {
     // Last key, set it
     if (i === keys.length - 1) {
-      acc[keys[i]] = value;
+      const targetKey = keys[i];
+
+      if (typeof value === 'boolean' && typeof acc[targetKey] === 'object' && acc[targetKey] !== null) {
+        setAllChildrenToValue(acc[targetKey] as Record<string, unknown>, value);
+      } else {
+        acc[targetKey] = value;
+      }
+
       return;
     }
 
@@ -126,6 +133,16 @@ export function setInPath(object: NestedRecord, path: string, value: unknown): v
     }
 
     acc = acc[keys[i]] as Record<string, unknown>;
+  }
+}
+
+function setAllChildrenToValue(obj: Record<string, unknown>, value: boolean): void {
+  for (const key in obj) {
+    if (typeof obj[key] === 'object' && obj[key] !== null) {
+      setAllChildrenToValue(obj[key] as Record<string, unknown>, value);
+    } else {
+      obj[key] = value;
+    }
   }
 }
 
