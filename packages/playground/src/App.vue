@@ -1,24 +1,32 @@
 <script setup lang="ts">
-import { ref } from 'vue';
-import ComboBox from '@/components/ComboBox.vue';
-import OptionItem from '@/components/OptionItem.vue';
+import z from 'zod';
+import { useForm } from '@formwerk/core';
+import FormGroup from '@/components/FormGroup.vue';
+import InputText from '@/components/InputText.vue';
 
-const drinks = ref([
-  { value: 'coffee', label: 'Coffee ☕️' },
-  { value: 'tea', label: 'Tea 🍵' },
-  { value: 'milk', label: 'Milk 🥛' },
-]);
+const schema = z.object({
+  name: z.string(),
+  company: z.object({
+    name: z.string(),
+    address: z.string(),
+  }),
+});
 
-function onNewDrink(value: string) {
-  const newDrink = { value, label: `${value} 🍹` };
-  drinks.value.push(newDrink);
+const { values, displayError, ...form } = useForm({ schema });
 
-  return newDrink;
-}
+const markNameAsTouched = () => {
+  // form.setFieldTouched('account', true);
+  // form.setFieldTouched('account.name', true);
+};
 </script>
 
 <template>
-  <ComboBox label="Select a drink" placeholder="Search..." @new-value="onNewDrink" open-on-focus>
-    <OptionItem v-for="drink in drinks" :key="drink.value" :label="drink.label" :value="drink.value" />
-  </ComboBox>
+  <div class="flex flex-col w-1/2 gap-4">
+    <pre>{{ values }}</pre>
+    <InputText name="name" label="Your Name" />
+    <FormGroup name="company" label="Company">
+      <InputText name="name" label="Account Name" />
+      <InputText name="address" label="Address" />
+    </FormGroup>
+  </div>
 </template>

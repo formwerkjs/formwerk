@@ -8,11 +8,11 @@ const { inputProps, labelProps, errorMessageProps, isTouched, displayError } = u
 
 <template>
   <div class="InputText" :class="{ touched: isTouched }">
-    <label v-bind="labelProps">{{ label }}</label>
+    <label v-bind="labelProps">{{ label }}</label> isTouched: {{ isTouched }}
 
     <input v-bind="inputProps" />
 
-    <span v-bind="errorMessageProps" class="error-message truncate w-full">
+    <span v-bind="errorMessageProps" class="w-full truncate error-message">
       {{ displayError() }}
     </span>
   </div>
