@@ -73,7 +73,9 @@ export function useFormGroup<TInput extends FormObject = FormObject, TOutput ext
 
     const prefixPath = pathPrefixer ? pathPrefixer.prefixPath(path) : path;
 
-    if (!prefixPath) return path;
+    if (!prefixPath) {
+      return path;
+    }
 
     return prefixPath;
   };
