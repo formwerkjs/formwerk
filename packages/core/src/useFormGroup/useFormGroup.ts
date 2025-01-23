@@ -15,7 +15,7 @@ import { useValidationProvider } from '../validation/useValidationProvider';
 import { FormValidationMode } from '../useForm/formContext';
 import { prefixPath as _prefixPath } from '../utils/path';
 import { getConfig } from '../config';
-import { createPathPrefixer } from '../helpers/usePathPrefixer';
+import { createPathPrefixer, usePathPrefixer } from '../helpers/usePathPrefixer';
 import { createDisabledContext } from '../helpers/createDisabledContext';
 
 export interface FormGroupProps<TInput extends FormObject = FormObject, TOutput extends FormObject = TInput> {
@@ -66,7 +66,19 @@ export function useFormGroup<TInput extends FormObject = FormObject, TOutput ext
 ) {
   const id = useUniqId(FieldTypePrefixes.FormGroup);
   const props = normalizeProps(_props, ['schema']);
-  const getPath = () => toValue(props.name);
+  const pathPrefixer = usePathPrefixer();
+
+  const getPath = () => {
+    const path = toValue(_props.name);
+
+    const prefixPath = pathPrefixer ? pathPrefixer.prefixPath(path) : path;
+
+    if (!prefixPath) {
+      return path;
+    }
+
+    return prefixPath;
+  };
   const groupEl = elementRef || shallowRef<HTMLInputElement>();
   const form = inject(FormKey, null);
   const isDisabled = createDisabledContext(props.disabled);

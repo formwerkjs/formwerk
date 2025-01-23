@@ -86,6 +86,47 @@ test('prefixes path values with its name', async () => {
   expect(form.values).toEqual({ groupTest: { field1: 'test 1' }, nestedGroup: { deep: { field2: 'test 2' } } });
 });
 
+test('nested groups', async () => {
+  let form!: ReturnType<typeof useForm>;
+  await render({
+    components: { TInput: createInputComponent(), TGroup: createGroupComponent() },
+    setup() {
+      form = useForm();
+
+      return {};
+    },
+    template: `      
+      <TGroup name="group_a">
+        <TInput name="input_a" />
+        <TGroup name="group_a_b">
+          <TInput name="input_a_b" />
+          <TGroup name="group_a_b_c">
+            <TInput name="input_a_b_c" />
+          </TGroup>
+        </TGroup>
+      </TGroup>
+    `,
+  });
+
+  await flush();
+  await fireEvent.update(screen.getByTestId('input_a'), 'input_a');
+  await fireEvent.update(screen.getByTestId('input_a_b'), 'input_a_b');
+  await fireEvent.update(screen.getByTestId('input_a_b_c'), 'input_a_b_c');
+  await flush();
+
+  expect(form.values).toEqual({
+    group_a: {
+      input_a: 'input_a',
+      group_a_b: {
+        input_a_b: 'input_a_b',
+        group_a_b_c: {
+          input_a_b_c: 'input_a_b_c',
+        },
+      },
+    },
+  });
+});
+
 test('tracks its dirty state', async () => {
   const groups: ReturnType<typeof useFormGroup>[] = [];
   await render({
