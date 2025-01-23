@@ -95,7 +95,7 @@ test('nested groups', async () => {
 
       return {};
     },
-    template: `      
+    template: `
       <TGroup name="group_a">
         <TInput name="input_a" />
         <TGroup name="group_a_b">
@@ -294,6 +294,7 @@ test('validation combines schema with form schema', async () => {
     `,
   });
 
+  await flush();
   await flush();
   expect(form.getErrors()).toHaveLength(2);
 

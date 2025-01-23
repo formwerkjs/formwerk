@@ -81,6 +81,7 @@ export function useFormGroup<TInput extends FormObject = FormObject, TOutput ext
   };
   const groupEl = elementRef || shallowRef<HTMLInputElement>();
   const form = inject(FormKey, null);
+  const parentGroup = inject(FormGroupKey, null);
   const isDisabled = createDisabledContext(props.disabled);
   const isHtmlValidationDisabled = () =>
     toValue(props.disableHtmlValidation) ?? form?.isHtmlValidationDisabled() ?? getConfig().disableHtmlValidation;
@@ -92,11 +93,16 @@ export function useFormGroup<TInput extends FormObject = FormObject, TOutput ext
       type: 'GROUP',
     });
 
-  const requestValidation = defineValidationRequest(res => {
+  const requestValidation = defineValidationRequest(async res => {
     // Clears Errors in that path before proceeding.
     form?.clearErrors(toValue(props.name));
     for (const entry of res.errors) {
       form?.setFieldErrors(entry.path, entry.messages);
+    }
+
+    const parent = parentGroup || form;
+    if (parent) {
+      await parent.requestValidation();
     }
 
     dispatchValidateDone();
