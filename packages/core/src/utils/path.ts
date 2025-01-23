@@ -1,4 +1,4 @@
-import { isIndex, isObject } from '../../../shared/src';
+import { isIndex, isObject, isObjectLike } from '../../../shared/src';
 import { isNullOrUndefined } from './common';
 
 export function isContainerValue(value: unknown): value is Record<string, unknown> {
@@ -103,7 +103,7 @@ export function getLastReachableValue<TValue = unknown>(
 /**
  * Sets a nested property value in a path, creates the path properties if it doesn't exist
  */
-export function setInPath(object: NestedRecord, path: string, value: unknown): void {
+export function setInPath(object: NestedRecord, path: string, value: unknown, setAllChildren?: boolean): void {
   if (isEscapedPath(path)) {
     object[cleanupNonNestedPath(path)] = value;
     return;
@@ -115,44 +115,9 @@ export function setInPath(object: NestedRecord, path: string, value: unknown): v
   for (let i = 0; i < keys.length; i++) {
     // Last key, set it
     if (i === keys.length - 1) {
-      acc[keys[i]] = value;
-      return;
-    }
-
-    // Key does not exist, create a container for it
-    if (!(keys[i] in acc) || isNullOrUndefined(acc[keys[i]])) {
-      // container can be either an object or an array depending on the next key if it exists
-      acc[keys[i]] = isIndex(keys[i + 1]) ? [] : {};
-    }
-
-    acc = acc[keys[i]] as Record<string, unknown>;
-  }
-}
-
-export function setTouchedInPath(object: NestedRecord, path: string, value: boolean): void {
-  if (isEscapedPath(path)) {
-    const cleanPath = cleanupNonNestedPath(path);
-
-    // Set the main path
-    object[cleanPath] = value;
-
-    // Find and set all nested paths that start with this path
-    for (const key in object) {
-      if (key.startsWith(`${cleanPath}.`)) {
-        object[key] = value;
-      }
-    }
-    return;
-  }
-
-  const normalizedPath = normalizePath(path);
-  const keys = normalizedPath.split('.').filter(Boolean);
-  let acc: Record<string, unknown> = object;
-  for (let i = 0; i < keys.length; i++) {
-    // Last key, set it
-    if (i === keys.length - 1) {
       const targetKey = keys[i];
-      if (typeof acc[targetKey] === 'object' && acc[targetKey] !== null) {
+      // If setAllChildren is true and the value is an object, set all children to the value
+      if (setAllChildren && isObjectLike(acc[targetKey])) {
         setAllChildrenToValue(acc[targetKey] as Record<string, unknown>, value);
       } else {
         acc[targetKey] = value;
@@ -170,9 +135,9 @@ export function setTouchedInPath(object: NestedRecord, path: string, value: bool
   }
 }
 
-function setAllChildrenToValue(obj: Record<string, unknown>, value: boolean): void {
+function setAllChildrenToValue(obj: Record<string, unknown>, value: unknown): void {
   for (const key in obj) {
-    if (typeof obj[key] === 'object' && obj[key] !== null) {
+    if (isObjectLike(obj[key])) {
       setAllChildrenToValue(obj[key] as Record<string, unknown>, value);
     } else {
       obj[key] = value;
