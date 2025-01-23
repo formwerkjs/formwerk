@@ -115,14 +115,38 @@ export function setInPath(object: NestedRecord, path: string, value: unknown): v
   for (let i = 0; i < keys.length; i++) {
     // Last key, set it
     if (i === keys.length - 1) {
-      const targetKey = keys[i];
+      acc[keys[i]] = value;
+      return;
+    }
 
-      if (typeof value === 'boolean' && typeof acc[targetKey] === 'object' && acc[targetKey] !== null) {
+    // Key does not exist, create a container for it
+    if (!(keys[i] in acc) || isNullOrUndefined(acc[keys[i]])) {
+      // container can be either an object or an array depending on the next key if it exists
+      acc[keys[i]] = isIndex(keys[i + 1]) ? [] : {};
+    }
+
+    acc = acc[keys[i]] as Record<string, unknown>;
+  }
+}
+
+export function setTouchedInPath(object: NestedRecord, path: string, value: boolean): void {
+  if (isEscapedPath(path)) {
+    object[cleanupNonNestedPath(path)] = value;
+    return;
+  }
+
+  const normalizedPath = normalizePath(path);
+  const keys = normalizedPath.split('.').filter(Boolean);
+  let acc: Record<string, unknown> = object;
+  for (let i = 0; i < keys.length; i++) {
+    // Last key, set it
+    if (i === keys.length - 1) {
+      const targetKey = keys[i];
+      if (typeof acc[targetKey] === 'object' && acc[targetKey] !== null) {
         setAllChildrenToValue(acc[targetKey] as Record<string, unknown>, value);
       } else {
         acc[targetKey] = value;
       }
-
       return;
     }
 

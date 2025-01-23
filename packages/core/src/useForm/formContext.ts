@@ -18,6 +18,7 @@ import {
   getLastReachableValue,
   isPathSet,
   setInPath,
+  setTouchedInPath,
   unsetPath as unsetInObject,
 } from '../utils/path';
 import { FormSnapshot } from './formSnapshot';
@@ -91,7 +92,7 @@ export function createFormContext<TForm extends FormObject = FormObject, TOutput
   }
 
   function setFieldTouched<TPath extends Path<TForm>>(path: TPath, value: boolean) {
-    setInPath(touched, path, value);
+    setTouchedInPath(touched, path, value);
   }
 
   function getFieldValue<TPath extends Path<TForm>>(path: TPath) {
