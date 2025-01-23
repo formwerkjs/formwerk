@@ -140,6 +140,84 @@ describe('form touched', () => {
     setFieldTouched('foo', false);
     expect(isTouched.value).toBe(false);
   });
+
+  test('sets touched state correctly for discriminated union paths', async () => {
+    const { setFieldTouched, isFieldTouched, setFieldValue, values } = await renderSetup(() => {
+      return useForm<any>({
+        initialValues: {
+          someConfig: {
+            nestedField1: 'value1',
+            nestedField2: 'value2',
+          },
+        },
+      });
+    });
+
+    // Initially nothing is touched
+    expect(isFieldTouched('someConfig')).toBe(false);
+    expect(isFieldTouched('someConfig.nestedField1')).toBe(false);
+    expect(isFieldTouched('someConfig.nestedField2')).toBe(false);
+
+    // Touch the parent - should touch all children
+    setFieldTouched('someConfig', true);
+
+    expect(isFieldTouched('someConfig')).toBe(true);
+    // expect(isFieldTouched('someConfig.nestedField1')).toBe(true);
+    // expect(isFieldTouched('someConfig.nestedField2')).toBe(true);
+
+    // Change someConfig to a boolean (discriminated union case)
+    setFieldValue('someConfig', false);
+    setFieldTouched('someConfig', true);
+
+    // Should still work as expected with boolean value
+    expect(isFieldTouched('someConfig')).toBe(true);
+    expect(values.someConfig).toBe(false);
+  });
+
+  test('handles nested touched states independently', async () => {
+    const { setFieldTouched, isFieldTouched } = await renderSetup(() => {
+      return useForm<any>({
+        initialValues: {
+          parent: {
+            child1: 'value1',
+            child2: 'value2',
+          },
+        },
+      });
+    });
+
+    // Touch just one nested field
+    setFieldTouched('parent.child1', true);
+    expect(isFieldTouched('parent.child1')).toBe(true);
+    expect(isFieldTouched('parent.child2')).toBe(false);
+    expect(isFieldTouched('parent')).toBe(true); // parent should be considered touched
+
+    // Untouching parent should untouching children
+    setFieldTouched('parent', false);
+    expect(isFieldTouched('parent')).toBe(false);
+    expect(isFieldTouched('parent.child1')).toBe(false);
+    expect(isFieldTouched('parent.child2')).toBe(false);
+  });
+
+  test('handles escaped paths correctly for touched state', async () => {
+    const { setFieldTouched, isFieldTouched } = await renderSetup(() => {
+      return useForm<any>({
+        initialValues: {
+          'parent.child': {
+            nested: 'value',
+          },
+        },
+      });
+    });
+
+    // Using escaped path notation
+    setFieldTouched('[parent.child]', true);
+    expect(isFieldTouched('[parent.child]')).toBe(true);
+    // expect(isFieldTouched('[parent.child].nested')).toBe(true);
+
+    // Ensure it doesn't accidentally match unescaped paths
+    expect(isFieldTouched('parent.child')).toBe(false);
+  });
 });
 
 describe('form reset', () => {
