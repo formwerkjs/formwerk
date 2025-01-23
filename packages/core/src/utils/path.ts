@@ -131,7 +131,17 @@ export function setInPath(object: NestedRecord, path: string, value: unknown): v
 
 export function setTouchedInPath(object: NestedRecord, path: string, value: boolean): void {
   if (isEscapedPath(path)) {
-    object[cleanupNonNestedPath(path)] = value;
+    const cleanPath = cleanupNonNestedPath(path);
+
+    // Set the main path
+    object[cleanPath] = value;
+
+    // Find and set all nested paths that start with this path
+    for (const key in object) {
+      if (key.startsWith(`${cleanPath}.`)) {
+        object[key] = value;
+      }
+    }
     return;
   }
 

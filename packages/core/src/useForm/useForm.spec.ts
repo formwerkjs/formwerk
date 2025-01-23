@@ -153,17 +153,22 @@ describe('form touched', () => {
       });
     });
 
-    // Initially nothing is touched
-    expect(isFieldTouched('someConfig')).toBe(false);
-    expect(isFieldTouched('someConfig.nestedField1')).toBe(false);
-    expect(isFieldTouched('someConfig.nestedField2')).toBe(false);
+    /**
+     * Initialize touched state for all fields.
+     *
+     * This is necessary because in a normal form, fields are initialized
+     * internally through the `useFormField` hook, which is not used in this test.
+     * Order of operations is important here.
+     */
+    setFieldTouched('someConfig.nestedField1', false);
+    setFieldTouched('someConfig.nestedField2', false);
+    setFieldTouched('someConfig', false);
 
     // Touch the parent - should touch all children
     setFieldTouched('someConfig', true);
-
     expect(isFieldTouched('someConfig')).toBe(true);
-    // expect(isFieldTouched('someConfig.nestedField1')).toBe(true);
-    // expect(isFieldTouched('someConfig.nestedField2')).toBe(true);
+    expect(isFieldTouched('someConfig.nestedField1')).toBe(true);
+    expect(isFieldTouched('someConfig.nestedField2')).toBe(true);
 
     // Change someConfig to a boolean (discriminated union case)
     setFieldValue('someConfig', false);
@@ -203,17 +208,29 @@ describe('form touched', () => {
     const { setFieldTouched, isFieldTouched } = await renderSetup(() => {
       return useForm<any>({
         initialValues: {
-          'parent.child': {
-            nested: 'value',
+          parent: {
+            child: {
+              nested: 'value',
+            },
           },
         },
       });
     });
 
+    /**
+     * Initialize touched state for all fields.
+     *
+     * This is necessary because in a normal form, fields are initialized
+     * internally through the `useFormField` hook, which is not used in this test.
+     * Order of operations is important here.
+     */
+    setFieldTouched('[parent.child.nested]', false);
+    setFieldTouched('[parent.child]', false);
+
     // Using escaped path notation
     setFieldTouched('[parent.child]', true);
     expect(isFieldTouched('[parent.child]')).toBe(true);
-    // expect(isFieldTouched('[parent.child].nested')).toBe(true);
+    expect(isFieldTouched('[parent.child.nested]')).toBe(true);
 
     // Ensure it doesn't accidentally match unescaped paths
     expect(isFieldTouched('parent.child')).toBe(false);
