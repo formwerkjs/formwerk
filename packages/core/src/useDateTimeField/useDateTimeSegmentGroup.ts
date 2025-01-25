@@ -1,10 +1,11 @@
 import { InjectionKey, MaybeRefOrGetter, provide, ref, toValue, Ref, onBeforeUnmount, computed } from 'vue';
-import { DateTimeSegmentType } from './types';
+import { Temporal, Intl as TemporalIntl } from '@js-temporal/polyfill';
+import { DateTimeSegmentType, TemporalDate } from './types';
 import { hasKeyCode } from '../utils/common';
 import { blockEvent } from '../utils/events';
 import { Direction } from '../types';
 import { useEventListener } from '../helpers/useEventListener';
-import { NON_EDITABLE_SEGMENT_TYPES } from './constants';
+import { isEditableSegmentType, segmentTypeToDurationLike } from './constants';
 
 export interface DateTimeSegmentRegistration {
   id: string;
@@ -22,11 +23,11 @@ export interface DateTimeSegmentGroupContext {
 export const DateTimeSegmentGroupKey: InjectionKey<DateTimeSegmentGroupContext> = Symbol('DateTimeSegmentGroupKey');
 
 export interface DateTimeSegmentGroupProps {
-  formatter: Ref<Intl.DateTimeFormat>;
-  dateValue: MaybeRefOrGetter<Date>;
+  formatter: Ref<TemporalIntl.DateTimeFormat>;
+  dateValue: MaybeRefOrGetter<TemporalDate>;
   direction?: MaybeRefOrGetter<Direction>;
   controlEl: Ref<HTMLElement | undefined>;
-  onValueChange: (value: Date) => void;
+  onValueChange: (value: TemporalDate) => void;
 }
 
 export function useDateTimeSegmentGroup({
@@ -38,7 +39,12 @@ export function useDateTimeSegmentGroup({
 }: DateTimeSegmentGroupProps) {
   const renderedSegments = ref<DateTimeSegmentRegistration[]>([]);
   const segments = computed(() => {
-    return formatter.value.formatToParts(toValue(dateValue)) as { type: DateTimeSegmentType; value: string }[];
+    let date = toValue(dateValue);
+    if (date instanceof Temporal.ZonedDateTime) {
+      date = date.toPlainDateTime();
+    }
+
+    return formatter.value.formatToParts(date) as { type: DateTimeSegmentType; value: string }[];
   });
 
   function useDateSegmentRegistration(segment: DateTimeSegmentRegistration) {
@@ -49,16 +55,14 @@ export function useDateTimeSegmentGroup({
 
     function increment() {
       const type = segment.getType();
-      const diff = 1;
-      const date = addToPart(type, toValue(dateValue), diff);
+      const date = addToPart(type, toValue(dateValue), 1);
 
       onValueChange(date);
     }
 
     function decrement() {
       const type = segment.getType();
-      const diff = -1;
-      const date = addToPart(type, toValue(dateValue), diff);
+      const date = addToPart(type, toValue(dateValue), -1);
 
       onValueChange(date);
     }
@@ -144,45 +148,21 @@ export function useDateTimeSegmentGroup({
   };
 }
 
-function addToPart(part: DateTimeSegmentType, currentDate: Date, diff: number) {
-  if (NON_EDITABLE_SEGMENT_TYPES.includes(part)) {
+function addToPart(part: DateTimeSegmentType, currentDate: TemporalDate, diff: number) {
+  if (!isEditableSegmentType(part)) {
     return currentDate;
   }
 
-  const date = new Date(currentDate.getTime());
-  if (part === 'day') {
-    date.setDate(date.getDate() + diff);
-  }
-
-  if (part === 'month') {
-    date.setMonth(date.getMonth() + diff);
-  }
-
-  if (part === 'year') {
-    date.setFullYear(date.getFullYear() + diff);
-  }
-
-  if (part === 'hour') {
-    date.setHours(date.getHours() + diff);
-  }
-
-  if (part === 'minute') {
-    date.setMinutes(date.getMinutes() + diff);
-  }
-
-  if (part === 'second') {
-    date.setSeconds(date.getSeconds() + diff);
-  }
-
   if (part === 'dayPeriod') {
-    const currentHours = date.getHours();
-    const isPM = currentHours >= 12;
-    date.setHours(isPM ? currentHours - 12 : currentHours + 12);
+    diff = diff * 12;
   }
 
-  if (part === 'weekday') {
-    date.setDate(date.getDate() + diff);
+  const durationPart = segmentTypeToDurationLike(part);
+  if (!durationPart) {
+    return currentDate;
   }
 
-  return date;
+  return currentDate.add({
+    [durationPart]: diff,
+  });
 }

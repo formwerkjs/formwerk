@@ -1,11 +1,14 @@
-import { Reactivify } from '../types';
-import { createDescribedByProps, normalizeProps, useUniqId, withRefCapture } from '../utils/common';
+import { Maybe, Reactivify } from '../types';
+import { createDescribedByProps, isNullOrUndefined, normalizeProps, useUniqId, withRefCapture } from '../utils/common';
 import { computed, shallowRef, toValue } from 'vue';
 import { exposeField, useFormField } from '../useFormField';
 import { useDateTimeSegmentGroup } from './useDateTimeSegmentGroup';
 import { FieldTypePrefixes } from '../constants';
 import { useDateFormatter, useLocale } from '../i18n';
 import { useErrorMessage, useLabel } from '../a11y';
+import { TemporalDate } from './types';
+import { DateValue } from './types';
+import { Temporal, toTemporalInstant } from '@js-temporal/polyfill';
 
 export interface DateTimeFieldProps {
   label: string;
@@ -16,8 +19,8 @@ export interface DateTimeFieldProps {
   placeholder?: string;
   readonly?: boolean;
   disabled?: boolean;
-  value?: Date;
-  modelValue?: Date;
+  value?: DateValue;
+  modelValue?: DateValue;
 
   schema?: any;
 }
@@ -26,9 +29,11 @@ export function useDateTimeField(_props: Reactivify<DateTimeFieldProps, 'schema'
   const props = normalizeProps(_props, ['schema']);
   const controlEl = shallowRef<HTMLInputElement>();
   const { locale } = useLocale();
-  const formatter = useDateFormatter(() => toValue(props.locale) ?? locale.value, props.formatOptions);
+  const fieldLocale = computed(() => toValue(props.locale) ?? locale.value);
+  const formatter = useDateFormatter(fieldLocale, props.formatOptions);
   const controlId = useUniqId(FieldTypePrefixes.DateTimeField);
-  const field = useFormField<Date>({
+
+  const field = useFormField<DateValue>({
     path: props.name,
     disabled: props.disabled,
     initialValue: toValue(props.modelValue) ?? toValue(props.value) ?? new Date(),
@@ -37,7 +42,7 @@ export function useDateTimeField(_props: Reactivify<DateTimeFieldProps, 'schema'
 
   const { fieldValue } = field;
   const { segments } = useDateTimeSegmentGroup({
-    dateValue: () => fieldValue.value ?? new Date(),
+    dateValue: () => normalizeDateValue(fieldValue.value, fieldLocale.value),
     formatter,
     controlEl,
     onValueChange: field.setValue,
@@ -82,4 +87,25 @@ export function useDateTimeField(_props: Reactivify<DateTimeFieldProps, 'schema'
     },
     field,
   );
+}
+
+function normalizeDateValue(value: Maybe<DateValue>, locale: string): TemporalDate {
+  if (isNullOrUndefined(value)) {
+    return getNowAsTemporalDate(locale);
+  }
+
+  if (value instanceof Date) {
+    const resolvedOptions = new Intl.DateTimeFormat(locale).resolvedOptions();
+
+    return toTemporalInstant.call(value).toZonedDateTime({
+      timeZone: resolvedOptions.timeZone,
+      calendar: resolvedOptions.calendar,
+    });
+  }
+
+  return value;
+}
+
+function getNowAsTemporalDate(locale: string) {
+  return Temporal.Now.zonedDateTime(new Intl.DateTimeFormat(locale).resolvedOptions().timeZone);
 }
