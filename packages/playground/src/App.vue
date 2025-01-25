@@ -3,11 +3,7 @@ import { Temporal } from '@js-temporal/polyfill';
 import { useCalendar } from '@formwerk/core';
 import DateField from '@/components/DateField.vue';
 
-const { days, daysOfTheWeek } = useCalendar({
-  currentDate: Temporal.Now.plainDate('islamic'),
-  locale: 'en-EG-u-ca-islamic',
-  calendar: 'islamic',
-});
+const { days, daysOfTheWeek } = useCalendar();
 </script>
 
 <template>
