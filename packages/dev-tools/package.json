@@ -1,0 +1,41 @@
+{
+  "name": "formwerk-dev-tools",
+  "version": "1.0.0",
+  "description": "Integration with vue-dev-tools",
+  "author": "Abdelrahman Awad <logaretm1@gmail.com>",
+  "license": "MIT",
+  "funding": "https://github.com/sponsors/logaretm",
+  "module": "dist/core.mjs",
+  "unpkg": "dist/core.iife.js",
+  "jsdelivr": "dist/core.iife.js",
+  "main": "dist/index.mjs",
+  "types": "dist/core.d.ts",
+  "type": "module",
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.cjs",
+      "types": "./dist/index.d.ts"
+    },
+    "./dist/index.d.ts": "./dist/index.d.ts"
+  },
+  "sideEffects": false,
+  "keywords": [
+    "VueJS",
+    "Vue",
+    "validation",
+    "validator",
+    "inputs",
+    "form"
+  ],
+  "files": [
+    "dist/*.js",
+    "dist/*.mjs",
+    "dist/*.cjs",
+    "dist/*.d.ts"
+  ],
+  "peerDependencies": {
+    "@vue/devtools-api": "^7.5.2",
+    "@vue/devtools-kit": "^7.5.2"
+  }
+}
