@@ -28,9 +28,8 @@ export interface DateTimeFieldProps {
 export function useDateTimeField(_props: Reactivify<DateTimeFieldProps, 'schema'>) {
   const props = normalizeProps(_props, ['schema']);
   const controlEl = shallowRef<HTMLInputElement>();
-  const { locale } = useLocale();
-  const fieldLocale = computed(() => toValue(props.locale) ?? locale.value);
-  const formatter = useDateFormatter(fieldLocale, props.formatOptions);
+  const { locale } = useLocale(props.locale);
+  const formatter = useDateFormatter(locale, props.formatOptions);
   const controlId = useUniqId(FieldTypePrefixes.DateTimeField);
 
   const field = useFormField<DateValue>({
@@ -42,7 +41,7 @@ export function useDateTimeField(_props: Reactivify<DateTimeFieldProps, 'schema'
 
   const { fieldValue } = field;
   const { segments } = useDateTimeSegmentGroup({
-    dateValue: () => normalizeDateValue(fieldValue.value, fieldLocale.value),
+    dateValue: () => normalizeDateValue(fieldValue.value, locale.value),
     formatter,
     controlEl,
     onValueChange: field.setValue,
