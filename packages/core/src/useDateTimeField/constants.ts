@@ -14,6 +14,7 @@ export function segmentTypeToDurationLike(type: DateTimeSegmentType): keyof Temp
     minute: 'minutes',
     second: 'seconds',
     dayPeriod: 'hours',
+    weekday: 'days',
   };
 
   return map[type];

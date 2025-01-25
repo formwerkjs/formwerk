@@ -9,7 +9,6 @@ import DateField from '@/components/DateField.vue';
     <DateField
       name="date"
       label="Date"
-      locale="en-EG-u-ca-islamic"
       :format-options="{
         weekday: 'long',
         day: 'numeric',
