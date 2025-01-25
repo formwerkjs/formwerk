@@ -12,19 +12,29 @@ export interface DateTimeSegmentRegistration {
 }
 
 export interface DateTimeSegmentGroupContext {
-  useDateSegmentRegistration(segment: DateTimeSegmentRegistration): void;
+  useDateSegmentRegistration(segment: DateTimeSegmentRegistration): {
+    increment(): void;
+    decrement(): void;
+  };
 }
 
 export const DateTimeSegmentGroupKey: InjectionKey<DateTimeSegmentGroupContext> = Symbol('DateTimeSegmentGroupKey');
 
 export interface DateTimeSegmentGroupProps {
   formatter: Ref<Intl.DateTimeFormat>;
-  dateValue: MaybeRefOrGetter<Date | undefined>;
+  dateValue: MaybeRefOrGetter<Date>;
   direction?: MaybeRefOrGetter<Direction>;
   controlEl: Ref<HTMLElement | undefined>;
+  onValueChange: (value: Date) => void;
 }
 
-export function useDateTimeSegmentGroup({ formatter, dateValue, direction, controlEl }: DateTimeSegmentGroupProps) {
+export function useDateTimeSegmentGroup({
+  formatter,
+  dateValue,
+  direction,
+  controlEl,
+  onValueChange,
+}: DateTimeSegmentGroupProps) {
   const renderedSegments = ref<DateTimeSegmentRegistration[]>([]);
   const segments = computed(() => {
     return formatter.value.formatToParts(toValue(dateValue)) as { type: DateTimeSegmentType; value: string }[];
@@ -35,6 +45,27 @@ export function useDateTimeSegmentGroup({ formatter, dateValue, direction, contr
     onBeforeUnmount(() => {
       renderedSegments.value = renderedSegments.value.filter(s => s.id !== segment.id);
     });
+
+    function increment() {
+      const type = segment.getType();
+      const diff = 1;
+      const date = addToPart(type, toValue(dateValue), diff);
+
+      onValueChange(date);
+    }
+
+    function decrement() {
+      const type = segment.getType();
+      const diff = -1;
+      const date = addToPart(type, toValue(dateValue), diff);
+
+      onValueChange(date);
+    }
+
+    return {
+      increment,
+      decrement,
+    };
   }
 
   function focusBasedOnDirection(evt: KeyboardEvent) {
@@ -104,4 +135,37 @@ export function useDateTimeSegmentGroup({ formatter, dateValue, direction, contr
     segments,
     useDateSegmentRegistration,
   };
+}
+
+function addToPart(part: DateTimeSegmentType, currentDate: Date, diff: number) {
+  const date = new Date(currentDate.getTime());
+  if (part === 'day') {
+    date.setDate(date.getDate() + diff);
+  }
+
+  if (part === 'month') {
+    date.setMonth(date.getMonth() + diff);
+  }
+
+  if (part === 'year') {
+    date.setFullYear(date.getFullYear() + diff);
+  }
+
+  if (part === 'hour') {
+    date.setHours(date.getHours() + diff);
+  }
+
+  if (part === 'minute') {
+    date.setMinutes(date.getMinutes() + diff);
+  }
+
+  if (part === 'second') {
+    date.setSeconds(date.getSeconds() + diff);
+  }
+
+  if (part === 'dayPeriod') {
+    date.setHours(date.getHours() + Math.sign(diff) * 12);
+  }
+
+  return date;
 }
