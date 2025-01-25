@@ -1,36 +1,40 @@
-import { computed, MaybeRefOrGetter, Ref, toValue } from 'vue';
+import { computed, InjectionKey, MaybeRefOrGetter, provide, Ref, toValue } from 'vue';
 import { Temporal } from '@js-temporal/polyfill';
-import { CalendarIdentifier } from './types';
+import { CalendarDay } from './types';
 import { normalizeProps } from '../utils/common';
 import { Reactivify } from '../types';
 import { useDateFormatter, useLocale } from '../i18n';
 import { WeekInfo } from '../i18n/getWeekInfo';
 
-interface CalendarProps {
+export interface CalendarProps {
+  /**
+   * The locale to use for the calendar.
+   */
   locale?: string;
 
-  calendar?: CalendarIdentifier;
+  /**
+   * The current date to use for the calendar.
+   */
+  currentDate?: Temporal.PlainDate | Temporal.PlainDateTime;
 
-  currentDate?: Temporal.PlainDate | Temporal.PlainDateTime | Temporal.ZonedDateTime;
-}
-
-export interface CalendarDay {
-  value: Temporal.PlainMonthDay;
-  dayOfMonth: number;
-  isToday: boolean;
-  isSelected: boolean;
-  isOutsideMonth: boolean;
+  /**
+   * The callback to call when a day is selected.
+   */
+  onDaySelected?: (day: Temporal.PlainDate) => void;
 }
 
 interface CalendarContext {
   locale: Ref<string>;
   weekInfo: Ref<WeekInfo>;
   calendar: Ref<Temporal.Calendar>;
-  currentDate: MaybeRefOrGetter<Temporal.PlainDate | Temporal.PlainDateTime | Temporal.ZonedDateTime>;
+  currentDate: MaybeRefOrGetter<Temporal.PlainDate | Temporal.PlainDateTime>;
+  setDay: (date: Temporal.PlainDate) => void;
 }
 
-export function useCalendar(_props: Reactivify<CalendarProps> = {}) {
-  const props = normalizeProps(_props);
+export const CalendarContextKey: InjectionKey<CalendarContext> = Symbol('CalendarContext');
+
+export function useCalendar(_props: Reactivify<CalendarProps, 'onDaySelected'> = {}) {
+  const props = normalizeProps(_props, ['onDaySelected']);
   const { weekInfo, locale, calendar } = useLocale(props.locale);
   const currentDate = computed(() => toValue(props.currentDate) ?? Temporal.Now.plainDate(calendar.value));
 
@@ -39,10 +43,15 @@ export function useCalendar(_props: Reactivify<CalendarProps> = {}) {
     locale,
     calendar,
     currentDate,
+    setDay: (date: Temporal.PlainDate) => {
+      props.onDaySelected?.(date);
+    },
   };
 
   const { daysOfTheWeek } = useDaysOfTheWeek(context);
   const { days } = useCalendarDays(context);
+
+  provide(CalendarContextKey, context);
 
   return {
     calendar,
@@ -91,7 +100,6 @@ function useDaysOfTheWeek({ weekInfo, locale, currentDate }: CalendarContext) {
 function useCalendarDays({ weekInfo, currentDate, calendar }: CalendarContext) {
   const days = computed<CalendarDay[]>(() => {
     const current = toValue(currentDate);
-    const plainCurrent = current.toPlainMonthDay();
     const startOfMonth = current.with({ day: 1 });
 
     const firstDayOfWeek = weekInfo.value.firstDay;
@@ -109,14 +117,14 @@ function useCalendarDays({ weekInfo, currentDate, calendar }: CalendarContext) {
     const now = Temporal.Now.plainDate(calendar.value);
 
     return Array.from({ length: gridDays }, (_, i) => {
-      const dayOfMonth = firstDay.add({ days: i }).toPlainMonthDay();
+      const dayOfMonth = firstDay.add({ days: i });
 
       return {
         value: dayOfMonth,
         dayOfMonth: dayOfMonth.day,
         isToday: dayOfMonth.equals(now),
-        isSelected: plainCurrent.equals(dayOfMonth),
-        isOutsideMonth: dayOfMonth.monthCode !== plainCurrent.monthCode,
+        isSelected: current.equals(dayOfMonth),
+        isOutsideMonth: dayOfMonth.monthCode !== current.monthCode,
       } as CalendarDay;
     });
   });

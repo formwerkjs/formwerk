@@ -1,4 +1,5 @@
 import { Maybe, Reactivify } from '../types';
+import { CalendarProps } from '../useCalendar';
 import { createDescribedByProps, isNullOrUndefined, normalizeProps, useUniqId, withRefCapture } from '../utils/common';
 import { computed, shallowRef, toValue } from 'vue';
 import { exposeField, useFormField } from '../useFormField';
@@ -6,7 +7,7 @@ import { useDateTimeSegmentGroup } from './useDateTimeSegmentGroup';
 import { FieldTypePrefixes } from '../constants';
 import { useDateFormatter, useLocale } from '../i18n';
 import { useErrorMessage, useLabel } from '../a11y';
-import { TemporalDate } from './types';
+import { TemporalValue } from './types';
 import { DateValue } from './types';
 import { Temporal, toTemporalInstant } from '@js-temporal/polyfill';
 
@@ -63,6 +64,22 @@ export function useDateTimeField(_props: Reactivify<DateTimeFieldProps, 'schema'
     errorMessage: field.errorMessage,
   });
 
+  const calendarProps: Reactivify<CalendarProps, 'onDaySelected'> = {
+    locale: () => locale.value,
+    currentDate: () => normalizeAsCalendarDate(fieldValue.value, locale.value).toPlainDate(),
+    onDaySelected: day => {
+      const nextValue = normalizeAsCalendarDate(fieldValue.value, locale.value);
+
+      field.setValue(
+        nextValue.with({
+          year: day.year,
+          month: day.month,
+          day: day.day,
+        }),
+      );
+    },
+  };
+
   const controlProps = computed(() => {
     return withRefCapture(
       {
@@ -83,14 +100,15 @@ export function useDateTimeField(_props: Reactivify<DateTimeFieldProps, 'schema'
       labelProps,
       segments,
       errorMessageProps,
+      calendarProps,
     },
     field,
   );
 }
 
-function normalizeDateValue(value: Maybe<DateValue>, locale: string): TemporalDate {
+function normalizeDateValue(value: Maybe<DateValue>, locale: string): TemporalValue {
   if (isNullOrUndefined(value)) {
-    return getNowAsTemporalDate(locale);
+    return getNowAsTemporalValue(locale);
   }
 
   if (value instanceof Date) {
@@ -105,6 +123,35 @@ function normalizeDateValue(value: Maybe<DateValue>, locale: string): TemporalDa
   return value;
 }
 
-function getNowAsTemporalDate(locale: string) {
+function getNowAsTemporalValue(locale: string) {
   return Temporal.Now.zonedDateTime(new Intl.DateTimeFormat(locale).resolvedOptions().timeZone);
+}
+
+function normalizeAsCalendarDate(value: Maybe<DateValue>, locale: string) {
+  if (isNullOrUndefined(value)) {
+    return getNowAsTemporalValue(locale).toPlainDateTime();
+  }
+
+  if (value instanceof Temporal.ZonedDateTime) {
+    return value.toPlainDateTime();
+  }
+
+  if (value instanceof Temporal.PlainDate) {
+    return value.toPlainDateTime();
+  }
+
+  if (value instanceof Temporal.PlainDateTime) {
+    return value;
+  }
+
+  if (value instanceof Date || value instanceof Temporal.Instant) {
+    const resolvedOptions = new Intl.DateTimeFormat(locale).resolvedOptions();
+
+    return (value instanceof Date ? toTemporalInstant.call(value) : value).toZonedDateTime({
+      timeZone: resolvedOptions.timeZone,
+      calendar: resolvedOptions.calendar,
+    });
+  }
+
+  throw new Error('Invalid calendar value used');
 }
