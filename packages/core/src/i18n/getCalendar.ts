@@ -1,4 +1,4 @@
-import { CalendarIdentifier } from '../useDateTimeField';
+import { CalendarIdentifier } from '../useCalendar';
 
 export function getCalendar(locale: Intl.Locale): CalendarIdentifier {
   if (locale.calendar) {

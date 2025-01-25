@@ -1,10 +1,12 @@
 <script setup lang="ts">
-import { useDateTimeField, DateTimeFieldProps, DateTimeSegment } from '@formwerk/core';
+import { useDateTimeField, DateTimeFieldProps, DateTimeSegment, useCalendar, CalendarCell } from '@formwerk/core';
 
 const props = defineProps<DateTimeFieldProps>();
 
-const { controlProps, isTouched, labelProps, errorMessageProps, errorMessage, segments, fieldValue } =
+const { controlProps, isTouched, labelProps, errorMessageProps, errorMessage, segments, fieldValue, calendarProps } =
   useDateTimeField(props);
+
+const { days, daysOfTheWeek } = useCalendar(calendarProps);
 </script>
 
 <template>
@@ -13,8 +15,37 @@ const { controlProps, isTouched, labelProps, errorMessageProps, errorMessage, se
 
     {{ fieldValue }}
 
-    <div v-bind="controlProps" class="control">
-      <DateTimeSegment v-for="segment in segments" v-bind="segment" class="segment" />
+    <div class="flex items-center gap-1 control">
+      <div v-bind="controlProps">
+        <DateTimeSegment v-for="segment in segments" v-bind="segment" class="segment" />
+      </div>
+
+      <button type="button" popovertarget="calendar">📅</button>
+    </div>
+
+    <div id="calendar" popover class="bg-zinc-800 px-4 py-4">
+      <div class="grid grid-cols-7 gap-4">
+        <div
+          v-for="day in daysOfTheWeek"
+          :key="day.long"
+          class="flex flex-col items-center justify-center text-white font-bold"
+        >
+          {{ day.short }}
+        </div>
+
+        <CalendarCell
+          v-for="day in days"
+          v-bind="day"
+          :aria-checked="day.isToday"
+          class="flex flex-col items-center justify-center aria-checked:bg-blue-600 aria-checked:text-white aria-checked:font-medium"
+          :class="{
+            'text-zinc-500': day.isOutsideMonth,
+            'text-white': !day.isOutsideMonth,
+          }"
+        >
+          {{ day.dayOfMonth }}
+        </CalendarCell>
+      </div>
     </div>
 
     <span v-bind="errorMessageProps" class="w-full truncate error-message">
@@ -34,7 +65,7 @@ const { controlProps, isTouched, labelProps, errorMessageProps, errorMessage, se
   }
 
   .control {
-    @apply max-w-xs rounded-md border-2 border-transparent py-3 px-4 w-full bg-zinc-800 focus:bg-zinc-900 focus:outline-none transition-colors duration-200 focus:border-emerald-500 disabled:cursor-not-allowed text-white font-medium;
+    @apply max-w-lg rounded-md border-2 border-transparent py-3 px-4 w-full bg-zinc-800 focus:bg-zinc-900 focus:outline-none transition-colors duration-200 focus:border-emerald-500 disabled:cursor-not-allowed text-white font-medium;
   }
 
   .segment {

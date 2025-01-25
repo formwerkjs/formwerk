@@ -16,7 +16,7 @@ export type DateTimeSegmentType =
   | 'weekday'
   | 'year';
 
-export type TemporalDate =
+export type TemporalValue =
   | Temporal.Instant
   | Temporal.PlainDate
   | Temporal.PlainDateTime
@@ -24,24 +24,4 @@ export type TemporalDate =
   | Temporal.PlainYearMonth
   | Temporal.ZonedDateTime;
 
-export type DateValue = Date | TemporalDate;
-
-export type CalendarIdentifier =
-  | 'buddhist'
-  | 'chinese'
-  | 'coptic'
-  | 'dangi'
-  | 'ethioaa'
-  | 'ethiopic'
-  | 'gregory'
-  | 'hebrew'
-  | 'indian'
-  | 'islamic'
-  | 'islamic-umalqura'
-  | 'islamic-tbla'
-  | 'islamic-civil'
-  | 'islamic-rgsa'
-  | 'iso8601'
-  | 'japanese'
-  | 'persian'
-  | 'roc';
+export type DateValue = Date | TemporalValue;

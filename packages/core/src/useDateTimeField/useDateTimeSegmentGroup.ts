@@ -1,6 +1,6 @@
 import { InjectionKey, MaybeRefOrGetter, provide, ref, toValue, Ref, onBeforeUnmount, computed } from 'vue';
 import { Temporal, Intl as TemporalIntl } from '@js-temporal/polyfill';
-import { DateTimeSegmentType, TemporalDate } from './types';
+import { DateTimeSegmentType, TemporalValue } from './types';
 import { hasKeyCode } from '../utils/common';
 import { blockEvent } from '../utils/events';
 import { Direction } from '../types';
@@ -24,10 +24,10 @@ export const DateTimeSegmentGroupKey: InjectionKey<DateTimeSegmentGroupContext> 
 
 export interface DateTimeSegmentGroupProps {
   formatter: Ref<TemporalIntl.DateTimeFormat>;
-  dateValue: MaybeRefOrGetter<TemporalDate>;
+  dateValue: MaybeRefOrGetter<TemporalValue>;
   direction?: MaybeRefOrGetter<Direction>;
   controlEl: Ref<HTMLElement | undefined>;
-  onValueChange: (value: TemporalDate) => void;
+  onValueChange: (value: TemporalValue) => void;
 }
 
 export function useDateTimeSegmentGroup({
@@ -148,7 +148,7 @@ export function useDateTimeSegmentGroup({
   };
 }
 
-function addToPart(part: DateTimeSegmentType, currentDate: TemporalDate, diff: number) {
+function addToPart(part: DateTimeSegmentType, currentDate: TemporalValue, diff: number) {
   if (!isEditableSegmentType(part)) {
     return currentDate;
   }
