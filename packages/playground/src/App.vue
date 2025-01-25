@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { Temporal } from '@js-temporal/polyfill';
 import { useForm } from '@formwerk/core';
 import DateField from '@/components/DateField.vue';
 </script>
@@ -8,6 +9,7 @@ import DateField from '@/components/DateField.vue';
     <DateField
       name="date"
       label="Date"
+      locale="en-EG-u-ca-islamic"
       :format-options="{
         weekday: 'long',
         day: 'numeric',
@@ -16,7 +18,6 @@ import DateField from '@/components/DateField.vue';
         hour: 'numeric',
         minute: 'numeric',
         hour12: true,
-        era: 'short',
       }"
     />
   </div>

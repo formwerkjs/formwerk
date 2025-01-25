@@ -5,7 +5,7 @@ import { DateTimeSegmentGroupKey } from './useDateTimeSegmentGroup';
 import { FieldTypePrefixes } from '../constants';
 import { blockEvent } from '../utils/events';
 import { DateTimeSegmentType } from './types';
-import { NON_EDITABLE_SEGMENT_TYPES } from './constants';
+import { isEditableSegmentType } from './constants';
 
 export interface DateTimeSegmentProps {
   /**
@@ -29,7 +29,7 @@ export function useDateTimeSegment(_props: Reactivify<DateTimeSegmentProps>) {
   const id = useUniqId(FieldTypePrefixes.DateTimeSegment);
   const segmentEl = shallowRef<HTMLSpanElement>();
   const segmentGroup = inject(DateTimeSegmentGroupKey, null);
-  const isNonEditable = () => toValue(props.disabled) || NON_EDITABLE_SEGMENT_TYPES.includes(toValue(props.type));
+  const isNonEditable = () => toValue(props.disabled) || !isEditableSegmentType(toValue(props.type));
 
   if (!segmentGroup) {
     throw new Error('DateTimeSegmentGroup is not provided');

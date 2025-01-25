@@ -1,4 +1,5 @@
 import { MaybeRefOrGetter, shallowRef, toValue, watch } from 'vue';
+import { Intl as TemporalIntl } from '@js-temporal/polyfill';
 import { getUserLocale } from '../getUserLocale';
 import { isEqual } from '../../utils/common';
 
@@ -7,7 +8,7 @@ export function useDateFormatter(
   opts?: MaybeRefOrGetter<Intl.DateTimeFormatOptions | undefined>,
 ) {
   const resolvedLocale = getUserLocale();
-  const formatter = shallowRef(new Intl.DateTimeFormat(toValue(locale) || resolvedLocale, toValue(opts)));
+  const formatter = shallowRef(new TemporalIntl.DateTimeFormat(toValue(locale) || resolvedLocale, toValue(opts)));
 
   watch(
     () => ({
@@ -16,7 +17,7 @@ export function useDateFormatter(
     }),
     (config, oldConfig) => {
       if (!isEqual(config, oldConfig)) {
-        formatter.value = new Intl.DateTimeFormat(config.locale, config.opts);
+        formatter.value = new TemporalIntl.DateTimeFormat(config.locale, config.opts);
       }
     },
   );
