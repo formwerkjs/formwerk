@@ -162,6 +162,22 @@ function addToPart(part: DateTimeSegmentType, currentDate: TemporalDate, diff: n
     return currentDate;
   }
 
+  if (currentDate instanceof Temporal.ZonedDateTime || currentDate instanceof Temporal.PlainDateTime) {
+    const day = currentDate.day;
+    const month = currentDate.month;
+    const year = currentDate.year;
+
+    return currentDate
+      .add({
+        [durationPart]: diff,
+      })
+      .with({
+        day: part !== 'day' && part !== 'weekday' ? day : undefined,
+        month: part !== 'month' ? month : undefined,
+        year: part !== 'year' ? year : undefined,
+      });
+  }
+
   return currentDate.add({
     [durationPart]: diff,
   });

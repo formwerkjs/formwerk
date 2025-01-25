@@ -14,12 +14,7 @@ const { controlProps, isTouched, labelProps, errorMessageProps, errorMessage, se
     {{ fieldValue }}
 
     <div v-bind="controlProps" class="control">
-      <DateTimeSegment
-        v-for="segment in segments"
-        v-bind="segment"
-        class="segment"
-        :disabled="segment.type === 'year'"
-      />
+      <DateTimeSegment v-for="segment in segments" v-bind="segment" class="segment" />
     </div>
 
     <span v-bind="errorMessageProps" class="w-full truncate error-message">
