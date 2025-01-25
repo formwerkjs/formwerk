@@ -3,6 +3,7 @@ import { Reactivify } from '../types';
 import { hasKeyCode, normalizeProps, useUniqId, withRefCapture } from '../utils/common';
 import { DateTimeSegmentGroupKey } from './useDateTimeSegmentGroup';
 import { FieldTypePrefixes } from '../constants';
+import { blockEvent } from '../utils/events';
 
 /**
  * lib.es2017.intl.d.ts
@@ -43,7 +44,7 @@ export function useDateTimeSegment(_props: Reactivify<DateTimeSegmentProps>) {
     throw new Error('DateTimeSegmentGroup is not provided');
   }
 
-  segmentGroup.useDateSegmentRegistration({
+  const { increment, decrement } = segmentGroup.useDateSegmentRegistration({
     id,
     getElem: () => segmentEl.value,
     getType: () => toValue(props.type),
@@ -52,18 +53,20 @@ export function useDateTimeSegment(_props: Reactivify<DateTimeSegmentProps>) {
   const handlers = {
     onKeydown(evt: KeyboardEvent) {
       if (isLiteral()) {
-        evt.preventDefault();
+        blockEvent(evt);
         return;
       }
 
       if (hasKeyCode(evt, 'ArrowUp')) {
-        evt.preventDefault();
-        evt.stopPropagation();
+        blockEvent(evt);
+        increment();
+        return;
       }
 
       if (hasKeyCode(evt, 'ArrowDown')) {
-        evt.preventDefault();
-        evt.stopPropagation();
+        blockEvent(evt);
+        decrement();
+        return;
       }
     },
   };

@@ -31,15 +31,16 @@ export function useDateTimeField(_props: Reactivify<DateTimeFieldProps, 'schema'
   const field = useFormField<Date>({
     path: props.name,
     disabled: props.disabled,
-    initialValue: toValue(props.modelValue) ?? toValue(props.value),
+    initialValue: toValue(props.modelValue) ?? toValue(props.value) ?? new Date(),
     schema: props.schema,
   });
 
   const { fieldValue } = field;
   const { segments } = useDateTimeSegmentGroup({
-    dateValue: fieldValue,
+    dateValue: () => fieldValue.value ?? new Date(),
     formatter,
     controlEl,
+    onValueChange: field.setValue,
   });
 
   const { labelProps, labelledByProps } = useLabel({
