@@ -144,8 +144,9 @@ export function useNumberField(
   const props = normalizeProps(_props, ['schema']);
   const inputId = useUniqId(FieldTypePrefixes.NumberField);
   const inputEl = elementRef || shallowRef<HTMLInputElement>();
-  const { locale } = useLocale();
-  const parser = useNumberParser(() => toValue(props.locale) ?? locale.value, props.formatOptions);
+  const { locale } = useLocale(props.locale);
+  const parser = useNumberParser(locale, props.formatOptions);
+
   const field = useFormField<number>({
     path: props.name,
     initialValue: toValue(props.modelValue) ?? fromNumberish(props.value),
