@@ -4,22 +4,8 @@ import { hasKeyCode, normalizeProps, useUniqId, withRefCapture } from '../utils/
 import { DateTimeSegmentGroupKey } from './useDateTimeSegmentGroup';
 import { FieldTypePrefixes } from '../constants';
 import { blockEvent } from '../utils/events';
-
-/**
- * lib.es2017.intl.d.ts
- */
-export type DateTimeSegmentType =
-  | 'day'
-  | 'dayPeriod'
-  | 'era'
-  | 'hour'
-  | 'literal'
-  | 'minute'
-  | 'month'
-  | 'second'
-  | 'timeZoneName'
-  | 'weekday'
-  | 'year';
+import { DateTimeSegmentType } from './types';
+import { NON_EDITABLE_SEGMENT_TYPES } from './constants';
 
 export interface DateTimeSegmentProps {
   /**
@@ -38,7 +24,7 @@ export function useDateTimeSegment(_props: Reactivify<DateTimeSegmentProps>) {
   const id = useUniqId(FieldTypePrefixes.DateTimeSegment);
   const segmentEl = shallowRef<HTMLSpanElement>();
   const segmentGroup = inject(DateTimeSegmentGroupKey, null);
-  const isLiteral = () => toValue(props.type) === 'literal';
+  const isNonEditable = () => NON_EDITABLE_SEGMENT_TYPES.includes(toValue(props.type));
 
   if (!segmentGroup) {
     throw new Error('DateTimeSegmentGroup is not provided');
@@ -52,7 +38,7 @@ export function useDateTimeSegment(_props: Reactivify<DateTimeSegmentProps>) {
 
   const handlers = {
     onKeydown(evt: KeyboardEvent) {
-      if (isLiteral()) {
+      if (isNonEditable()) {
         blockEvent(evt);
         return;
       }
@@ -75,8 +61,8 @@ export function useDateTimeSegment(_props: Reactivify<DateTimeSegmentProps>) {
     return withRefCapture(
       {
         id,
-        tabindex: isLiteral() ? '-1' : '0',
-        contenteditable: isLiteral() ? undefined : 'plaintext-only',
+        tabindex: isNonEditable() ? '-1' : '0',
+        contenteditable: isNonEditable() ? undefined : 'plaintext-only',
         'data-segment-type': toValue(props.type),
         ...handlers,
       },
