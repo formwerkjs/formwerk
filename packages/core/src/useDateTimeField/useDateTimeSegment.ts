@@ -1,6 +1,6 @@
 import { computed, defineComponent, h, inject, shallowRef, toValue } from 'vue';
 import { Reactivify } from '../types';
-import { normalizeProps, useUniqId, withRefCapture } from '../utils/common';
+import { hasKeyCode, normalizeProps, useUniqId, withRefCapture } from '../utils/common';
 import { DateTimeSegmentGroupKey } from './useDateTimeSegmentGroup';
 import { FieldTypePrefixes } from '../constants';
 
@@ -49,12 +49,33 @@ export function useDateTimeSegment(_props: Reactivify<DateTimeSegmentProps>) {
     getType: () => toValue(props.type),
   });
 
+  const handlers = {
+    onKeydown(evt: KeyboardEvent) {
+      if (isLiteral()) {
+        evt.preventDefault();
+        return;
+      }
+
+      if (hasKeyCode(evt, 'ArrowUp')) {
+        evt.preventDefault();
+        evt.stopPropagation();
+      }
+
+      if (hasKeyCode(evt, 'ArrowDown')) {
+        evt.preventDefault();
+        evt.stopPropagation();
+      }
+    },
+  };
+
   const segmentProps = computed(() => {
     return withRefCapture(
       {
         id,
         tabindex: isLiteral() ? '-1' : '0',
         contenteditable: isLiteral() ? undefined : 'plaintext-only',
+        'data-segment-type': toValue(props.type),
+        ...handlers,
       },
       segmentEl,
     );

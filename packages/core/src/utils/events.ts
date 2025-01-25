@@ -47,3 +47,9 @@ export function onlyMainMouseButton(cb: () => unknown) {
     }
   };
 }
+
+export function blockEvent(evt: Event) {
+  evt.preventDefault();
+  evt.stopPropagation();
+  evt.stopImmediatePropagation();
+}
