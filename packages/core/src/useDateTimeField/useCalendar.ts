@@ -7,11 +7,11 @@ import { useDateFormatter, useLocale } from '../i18n';
 import { WeekInfo } from '../i18n/getWeekInfo';
 
 interface CalendarProps {
-  locale: string;
+  locale?: string;
 
-  calendar: CalendarIdentifier;
+  calendar?: CalendarIdentifier;
 
-  currentDate: Temporal.PlainDate | Temporal.PlainDateTime | Temporal.ZonedDateTime;
+  currentDate?: Temporal.PlainDate | Temporal.PlainDateTime | Temporal.ZonedDateTime;
 }
 
 export interface CalendarDay {
@@ -29,15 +29,16 @@ interface CalendarContext {
   currentDate: MaybeRefOrGetter<Temporal.PlainDate | Temporal.PlainDateTime | Temporal.ZonedDateTime>;
 }
 
-export function useCalendar(_props: Reactivify<CalendarProps>) {
+export function useCalendar(_props: Reactivify<CalendarProps> = {}) {
   const props = normalizeProps(_props);
-  const { weekInfo, locale } = useLocale(props.locale);
-  const calendar = computed(() => new Temporal.Calendar(toValue(props.calendar)));
+  const { weekInfo, locale, calendar } = useLocale(props.locale);
+  const currentDate = computed(() => toValue(props.currentDate) ?? Temporal.Now.plainDate(calendar.value));
+
   const context: CalendarContext = {
     weekInfo,
     locale,
     calendar,
-    currentDate: props.currentDate,
+    currentDate,
   };
 
   const { daysOfTheWeek } = useDaysOfTheWeek(context);
