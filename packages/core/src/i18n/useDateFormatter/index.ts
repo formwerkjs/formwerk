@@ -3,6 +3,7 @@ import { Intl as TemporalIntl } from '@js-temporal/polyfill';
 import { getUserLocale } from '../getUserLocale';
 import { isEqual } from '../../utils/common';
 
+// TODO: May memory leak in SSR
 const dateFormatterCache = new Map<string, TemporalIntl.DateTimeFormat>();
 
 function getFormatter(locale: string, options: Intl.DateTimeFormatOptions = {}) {

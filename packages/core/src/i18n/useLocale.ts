@@ -12,7 +12,7 @@ export function useLocale(localeCode?: MaybeRefOrGetter<Maybe<string>>) {
   const direction = computed(() => getDirection(localeInstance.value));
   const weekInfo = computed(() => getWeekInfo(localeInstance.value));
 
-  const locale = computed(() => localeInstance.value.baseName);
+  const locale = computed(() => localeInstance.value.toString());
 
   return { locale, direction, weekInfo };
 }
