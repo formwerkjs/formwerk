@@ -1,9 +1,10 @@
 import { InjectionKey, MaybeRefOrGetter, provide, ref, toValue, Ref, onBeforeUnmount, computed } from 'vue';
-import { DateTimeSegmentType } from './useDateTimeSegment';
+import { DateTimeSegmentType } from './types';
 import { hasKeyCode } from '../utils/common';
 import { blockEvent } from '../utils/events';
 import { Direction } from '../types';
 import { useEventListener } from '../helpers/useEventListener';
+import { NON_EDITABLE_SEGMENT_TYPES } from './constants';
 
 export interface DateTimeSegmentRegistration {
   id: string;
@@ -138,6 +139,10 @@ export function useDateTimeSegmentGroup({
 }
 
 function addToPart(part: DateTimeSegmentType, currentDate: Date, diff: number) {
+  if (NON_EDITABLE_SEGMENT_TYPES.includes(part)) {
+    return currentDate;
+  }
+
   const date = new Date(currentDate.getTime());
   if (part === 'day') {
     date.setDate(date.getDate() + diff);
@@ -164,7 +169,13 @@ function addToPart(part: DateTimeSegmentType, currentDate: Date, diff: number) {
   }
 
   if (part === 'dayPeriod') {
-    date.setHours(date.getHours() + Math.sign(diff) * 12);
+    const currentHours = date.getHours();
+    const isPM = currentHours >= 12;
+    date.setHours(isPM ? currentHours - 12 : currentHours + 12);
+  }
+
+  if (part === 'weekday') {
+    date.setDate(date.getDate() + diff);
   }
 
   return date;
