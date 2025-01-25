@@ -67,6 +67,7 @@ interface NumberParser {
   isValidNumberPart(value: string): boolean;
 }
 
+// TODO: May memory leak in SSR
 const numberParserCache = new Map<string, NumberParser>();
 
 function getParser(locale: string, options: Intl.NumberFormatOptions) {
