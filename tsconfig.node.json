@@ -15,7 +15,8 @@
     "lib": ["esnext", "dom"],
     "paths": {
       "@core/*": ["packages/core/src/*"],
-      "@test-utils/*": ["packages/test-utils/src/*"]
+      "@test-utils/*": ["packages/test-utils/src/*"],
+      "@dev-tools/*": ["packages/dev-tools/src/*"]
     },
     "types": ["vitest/globals"],
     "typeRoots": ["node_modules/@types", "node_modules"]
