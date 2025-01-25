@@ -85,9 +85,7 @@ export function useDateTimeSegmentGroup({
   }
 
   function getSegmentElements() {
-    return Array.from(controlEl.value?.querySelectorAll('[data-segment-type]') || []).filter(el => {
-      return (el as HTMLElement).tabIndex === 0;
-    }) as HTMLElement[];
+    return Array.from(controlEl.value?.querySelectorAll('[data-segment-type]') || []);
   }
 
   function focusNextSegment() {
@@ -99,8 +97,12 @@ export function useDateTimeSegmentGroup({
     const segmentElements = getSegmentElements();
     const currentIndex = segmentElements.indexOf(focusedElement);
     const nextIndex = currentIndex + 1;
-    if (nextIndex < segmentElements.length) {
-      segmentElements[nextIndex]?.focus();
+    for (let i = nextIndex; i < segmentElements.length; i++) {
+      const element = segmentElements[i] as HTMLElement;
+      if (element.tabIndex === 0) {
+        element.focus();
+        return;
+      }
     }
   }
 
@@ -113,8 +115,12 @@ export function useDateTimeSegmentGroup({
     const segmentElements = getSegmentElements();
     const currentIndex = segmentElements.indexOf(focusedElement);
     const previousIndex = currentIndex - 1;
-    if (previousIndex >= 0) {
-      segmentElements[previousIndex]?.focus();
+    for (let i = previousIndex; i >= 0; i--) {
+      const element = segmentElements[i] as HTMLElement;
+      if (element.tabIndex === 0) {
+        element.focus();
+        return;
+      }
     }
   }
 
