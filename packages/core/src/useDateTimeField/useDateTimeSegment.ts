@@ -17,6 +17,11 @@ export interface DateTimeSegmentProps {
    * The text value of the segment.
    */
   value: string;
+
+  /**
+   * Whether the segment is disabled.
+   */
+  disabled?: boolean;
 }
 
 export function useDateTimeSegment(_props: Reactivify<DateTimeSegmentProps>) {
@@ -24,7 +29,7 @@ export function useDateTimeSegment(_props: Reactivify<DateTimeSegmentProps>) {
   const id = useUniqId(FieldTypePrefixes.DateTimeSegment);
   const segmentEl = shallowRef<HTMLSpanElement>();
   const segmentGroup = inject(DateTimeSegmentGroupKey, null);
-  const isNonEditable = () => NON_EDITABLE_SEGMENT_TYPES.includes(toValue(props.type));
+  const isNonEditable = () => toValue(props.disabled) || NON_EDITABLE_SEGMENT_TYPES.includes(toValue(props.type));
 
   if (!segmentGroup) {
     throw new Error('DateTimeSegmentGroup is not provided');
@@ -38,20 +43,19 @@ export function useDateTimeSegment(_props: Reactivify<DateTimeSegmentProps>) {
 
   const handlers = {
     onKeydown(evt: KeyboardEvent) {
-      if (isNonEditable()) {
-        blockEvent(evt);
-        return;
-      }
-
       if (hasKeyCode(evt, 'ArrowUp')) {
         blockEvent(evt);
-        increment();
+        if (!isNonEditable()) {
+          increment();
+        }
         return;
       }
 
       if (hasKeyCode(evt, 'ArrowDown')) {
         blockEvent(evt);
-        decrement();
+        if (!isNonEditable()) {
+          decrement();
+        }
         return;
       }
     },
@@ -63,6 +67,7 @@ export function useDateTimeSegment(_props: Reactivify<DateTimeSegmentProps>) {
         id,
         tabindex: isNonEditable() ? '-1' : '0',
         contenteditable: isNonEditable() ? undefined : 'plaintext-only',
+        'aria-disabled': toValue(props.disabled),
         'data-segment-type': toValue(props.type),
         ...handlers,
       },
@@ -77,7 +82,7 @@ export function useDateTimeSegment(_props: Reactivify<DateTimeSegmentProps>) {
 
 export const DateTimeSegment = defineComponent<DateTimeSegmentProps>({
   name: 'DateTimeSegment',
-  props: ['type', 'value'],
+  props: ['type', 'value', 'disabled'],
   setup(props) {
     const { segmentProps } = useDateTimeSegment(props);
 
