@@ -39,6 +39,7 @@ export function useDateTimeField(_props: Reactivify<DateTimeFieldProps, 'schema'
   const { segments } = useDateTimeSegmentGroup({
     dateValue: fieldValue,
     formatter,
+    controlEl,
   });
 
   const { labelProps, labelledByProps } = useLabel({
