@@ -3,12 +3,15 @@ import { useDateTimeField, DateTimeFieldProps, DateTimeSegment } from '@formwerk
 
 const props = defineProps<DateTimeFieldProps>();
 
-const { controlProps, isTouched, labelProps, errorMessageProps, errorMessage, segments } = useDateTimeField(props);
+const { controlProps, isTouched, labelProps, errorMessageProps, errorMessage, segments, fieldValue } =
+  useDateTimeField(props);
 </script>
 
 <template>
   <div class="InputDate" :class="{ touched: isTouched }">
     <span class="label" v-bind="labelProps">{{ label }}</span>
+
+    {{ fieldValue }}
 
     <div v-bind="controlProps" class="control">
       <DateTimeSegment v-for="segment in segments" v-bind="segment" class="segment" />
