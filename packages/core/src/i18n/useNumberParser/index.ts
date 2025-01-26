@@ -57,7 +57,7 @@ interface NumberSymbols {
   resolveNumber: (number: string) => string;
 }
 
-interface NumberParser {
+export interface NumberParser {
   formatter: Intl.NumberFormat;
   options: Intl.ResolvedNumberFormatOptions;
   locale: string;
@@ -206,6 +206,8 @@ export function defineNumberParser(locale: string, options: Intl.NumberFormatOpt
     isValidNumberPart,
   };
 }
+
+export type NumberParserContext = Pick<NumberParser, 'parse' | 'isValidNumberPart'>;
 
 export function useNumberParser(
   locale: MaybeRefOrGetter<string | undefined>,

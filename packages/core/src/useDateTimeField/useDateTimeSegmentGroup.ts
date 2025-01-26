@@ -3,9 +3,10 @@ import { Temporal, Intl as TemporalIntl } from '@js-temporal/polyfill';
 import { DateTimeSegmentType } from './types';
 import { hasKeyCode } from '../utils/common';
 import { blockEvent } from '../utils/events';
-import { Direction } from '../types';
+import { Direction, Maybe } from '../types';
 import { useEventListener } from '../helpers/useEventListener';
 import { isEditableSegmentType, segmentTypeToDurationLike } from './constants';
+import { NumberParserContext, useNumberParser } from '../i18n';
 
 export interface DateTimeSegmentRegistration {
   id: string;
@@ -15,6 +16,7 @@ export interface DateTimeSegmentRegistration {
 
 export interface DateTimeSegmentGroupContext {
   useDateSegmentRegistration(segment: DateTimeSegmentRegistration): {
+    parser: NumberParserContext;
     increment(): void;
     decrement(): void;
     setValue(value: number): void;
@@ -28,6 +30,8 @@ export const DateTimeSegmentGroupKey: InjectionKey<DateTimeSegmentGroupContext> 
 
 export interface DateTimeSegmentGroupProps {
   formatter: Ref<TemporalIntl.DateTimeFormat>;
+  locale: MaybeRefOrGetter<string | undefined>;
+  formatOptions: MaybeRefOrGetter<Maybe<Intl.DateTimeFormatOptions>>;
   temporalValue: MaybeRefOrGetter<Temporal.ZonedDateTime>;
   direction?: MaybeRefOrGetter<Direction>;
   controlEl: Ref<HTMLElement | undefined>;
@@ -37,11 +41,18 @@ export interface DateTimeSegmentGroupProps {
 export function useDateTimeSegmentGroup({
   formatter,
   temporalValue,
+  formatOptions,
   direction,
+  locale,
   controlEl,
   onValueChange,
 }: DateTimeSegmentGroupProps) {
   const renderedSegments = ref<DateTimeSegmentRegistration[]>([]);
+  const parser = useNumberParser(locale, {
+    maximumFractionDigits: 0,
+    useGrouping: false,
+  });
+
   const { setPart, addToPart } = useDateArithmetic({
     currentDate: temporalValue,
   });
@@ -86,7 +97,7 @@ export function useDateTimeSegmentGroup({
         day: date.daysInMonth,
         month: date.monthsInYear,
         year: 9999,
-        hour: 23,
+        hour: toValue(formatOptions)?.hour12 ? 12 : 23,
         minute: 59,
         second: 59,
       };
@@ -112,7 +123,7 @@ export function useDateTimeSegmentGroup({
       increment,
       decrement,
       setValue,
-
+      parser,
       maxValue,
       minValue,
     };
@@ -200,22 +211,16 @@ interface ArithmeticInit {
 function useDateArithmetic({ currentDate }: ArithmeticInit) {
   function setPart(part: DateTimeSegmentType, value: number) {
     const date = toValue(currentDate);
-
     if (!isEditableSegmentType(part)) {
       return date;
     }
 
     if (part === 'dayPeriod') {
-      return addToPart(part, Math.sign(value));
-    }
-
-    const durationPart = segmentTypeToDurationLike(part);
-    if (!durationPart) {
       return date;
     }
 
     return date.with({
-      [durationPart]: value,
+      [part]: value,
     });
   }
 
