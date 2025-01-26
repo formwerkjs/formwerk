@@ -50,6 +50,8 @@ export function useDateTimeSegment(_props: Reactivify<DateTimeSegmentProps>) {
     getType: () => toValue(props.type),
   });
 
+  const isNumeric = computed(() => parser.isValidNumberPart(toValue(props.value)));
+
   let currentInput = '';
 
   const handlers = {
@@ -64,6 +66,10 @@ export function useDateTimeSegment(_props: Reactivify<DateTimeSegmentProps>) {
       }
 
       blockEvent(evt);
+      if (!isNumeric.value) {
+        return;
+      }
+
       const nextValue = currentInput + evt.data;
       currentInput = nextValue;
 
