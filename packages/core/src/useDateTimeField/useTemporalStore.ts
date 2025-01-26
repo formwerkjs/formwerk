@@ -1,4 +1,4 @@
-import { MaybeRefOrGetter, ref, computed, toValue } from 'vue';
+import { MaybeRefOrGetter, computed, toValue } from 'vue';
 import { CalendarIdentifier } from '../useCalendar';
 import { DateValue } from './types';
 import { toTemporalInstant } from '@js-temporal/polyfill';
@@ -7,14 +7,17 @@ import { Temporal } from '@js-temporal/polyfill';
 import { isNullOrUndefined } from '../utils/common';
 
 interface TemporalValueStoreInit {
-  initialValue: Maybe<DateValue>;
+  model: {
+    get: () => Maybe<Date>;
+    set: (value: Maybe<Date>) => void;
+  };
   locale: MaybeRefOrGetter<string>;
   timeZone: MaybeRefOrGetter<string>;
   calendar: MaybeRefOrGetter<CalendarIdentifier>;
 }
 
 export function useTemporalStore(init: TemporalValueStoreInit) {
-  const dateValue = ref<Date>(toDate(init.initialValue));
+  const model = init.model;
 
   function toZonedDateTime(value: Maybe<DateValue>): Temporal.ZonedDateTime {
     if (isNullOrUndefined(value)) {
@@ -72,14 +75,11 @@ export function useTemporalStore(init: TemporalValueStoreInit) {
   }
 
   const temporalValue = computed({
-    get: () => toZonedDateTime(dateValue.value),
+    get: () => toZonedDateTime(model.get()),
     set: value => {
-      dateValue.value = toDate(value);
+      model.set(toDate(value));
     },
   });
 
-  return {
-    dateValue,
-    temporalValue,
-  };
+  return temporalValue;
 }

@@ -1,4 +1,4 @@
-import { Reactivify, StandardSchema } from '../types';
+import { Maybe, Reactivify, StandardSchema } from '../types';
 import { CalendarIdentifier, CalendarProps } from '../useCalendar';
 import { createDescribedByProps, normalizeProps, useUniqId, withRefCapture } from '../utils/common';
 import { computed, shallowRef, toValue } from 'vue';
@@ -70,6 +70,16 @@ export interface DateTimeFieldProps {
    * The schema to use for the field.
    */
   schema?: StandardSchema<Date>;
+
+  /**
+   * The minimum date to use for the field.
+   */
+  minDate?: Date;
+
+  /**
+   * The maximum date to use for the field.
+   */
+  maxDate?: Date;
 }
 
 export function useDateTimeField(_props: Reactivify<DateTimeFieldProps, 'schema'>) {
@@ -81,23 +91,26 @@ export function useDateTimeField(_props: Reactivify<DateTimeFieldProps, 'schema'
 
   const formatter = useDateFormatter(locale, props.formatOptions);
   const controlId = useUniqId(FieldTypePrefixes.DateTimeField);
-  const { dateValue, temporalValue } = useTemporalStore({
+
+  const field = useFormField<Maybe<Date>>({
+    path: props.name,
+    disabled: props.disabled,
+    initialValue: toValue(props.modelValue) ?? toValue(props.value) ?? new Date(),
+    schema: props.schema,
+  });
+
+  const temporalValue = useTemporalStore({
     calendar: calendar,
     timeZone: timeZone,
     locale: locale,
-    initialValue: toValue(props.modelValue) ?? toValue(props.value) ?? new Date(),
-  });
-
-  const field = useFormField<Date>({
-    path: props.name,
-    disabled: props.disabled,
-    initialValue: dateValue.value,
-    schema: props.schema,
+    model: {
+      get: () => field.fieldValue.value,
+      set: value => field.setValue(value),
+    },
   });
 
   function onValueChange(value: Temporal.ZonedDateTime) {
     temporalValue.value = value;
-    field.setValue(dateValue.value);
   }
 
   const { segments } = useDateTimeSegmentGroup({
