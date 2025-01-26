@@ -21,7 +21,7 @@ export type CalendarIdentifier =
   | 'roc';
 
 export interface CalendarDay {
-  value: Temporal.PlainDate;
+  value: Temporal.ZonedDateTime;
   dayOfMonth: number;
   isToday: boolean;
   isSelected: boolean;

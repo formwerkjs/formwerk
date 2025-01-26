@@ -15,12 +15,12 @@ export interface CalendarProps {
   /**
    * The current date to use for the calendar.
    */
-  currentDate?: Temporal.PlainDate | Temporal.PlainDateTime;
+  currentDate?: Temporal.ZonedDateTime;
 
   /**
    * The callback to call when a day is selected.
    */
-  onDaySelected?: (day: Temporal.PlainDate) => void;
+  onDaySelected?: (day: Temporal.ZonedDateTime) => void;
 
   /**
    * The calendar type to use for the calendar, e.g. `gregory`, `islamic-umalqura`, etc.
@@ -32,8 +32,8 @@ interface CalendarContext {
   locale: Ref<string>;
   weekInfo: Ref<WeekInfo>;
   calendar: Ref<CalendarIdentifier>;
-  currentDate: MaybeRefOrGetter<Temporal.PlainDate | Temporal.PlainDateTime>;
-  setDay: (date: Temporal.PlainDate) => void;
+  currentDate: MaybeRefOrGetter<Temporal.ZonedDateTime>;
+  setDay: (date: Temporal.ZonedDateTime) => void;
 }
 
 export const CalendarContextKey: InjectionKey<CalendarContext> = Symbol('CalendarContext');
@@ -44,14 +44,14 @@ export function useCalendar(_props: Reactivify<CalendarProps, 'onDaySelected'> =
     calendar: () => toValue(props.calendar),
   });
 
-  const currentDate = computed(() => toValue(props.currentDate) ?? Temporal.Now.plainDate(calendar.value));
+  const currentDate = computed(() => toValue(props.currentDate) ?? Temporal.Now.zonedDateTime(calendar.value));
 
   const context: CalendarContext = {
     weekInfo,
     locale,
     calendar,
     currentDate,
-    setDay: (date: Temporal.PlainDate) => {
+    setDay: (date: Temporal.ZonedDateTime) => {
       props.onDaySelected?.(date);
     },
   };
@@ -93,9 +93,9 @@ function useDaysOfTheWeek({ weekInfo, locale, currentDate }: CalendarContext) {
     }[] = [];
     for (let i = 0; i < daysPerWeek; i++) {
       days.push({
-        long: longFormatter.value.format(current.add({ days: i })),
-        short: shortFormatter.value.format(current.add({ days: i })),
-        narrow: narrowFormatter.value.format(current.add({ days: i })),
+        long: longFormatter.value.format(current.add({ days: i }).toPlainDateTime()),
+        short: shortFormatter.value.format(current.add({ days: i }).toPlainDateTime()),
+        narrow: narrowFormatter.value.format(current.add({ days: i }).toPlainDateTime()),
       });
     }
 
@@ -122,7 +122,7 @@ function useCalendarDays({ weekInfo, currentDate, calendar }: CalendarContext) {
     const totalDays = daysInMonth + daysToSubtract;
     const remainingDays = 7 - (totalDays % 7);
     const gridDays = totalDays + (remainingDays === 7 ? 0 : remainingDays);
-    const now = Temporal.Now.plainDate(calendar.value);
+    const now = Temporal.Now.zonedDateTime(calendar.value);
 
     return Array.from({ length: gridDays }, (_, i) => {
       const dayOfMonth = firstDay.add({ days: i });
