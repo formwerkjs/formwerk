@@ -1,6 +1,6 @@
 import { computed, InjectionKey, MaybeRefOrGetter, provide, Ref, toValue } from 'vue';
 import { Temporal } from '@js-temporal/polyfill';
-import { CalendarDay } from './types';
+import { CalendarDay, CalendarIdentifier } from './types';
 import { normalizeProps } from '../utils/common';
 import { Reactivify } from '../types';
 import { useDateFormatter, useLocale } from '../i18n';
@@ -21,6 +21,11 @@ export interface CalendarProps {
    * The callback to call when a day is selected.
    */
   onDaySelected?: (day: Temporal.PlainDate) => void;
+
+  /**
+   * The calendar type to use for the calendar, e.g. `gregory`, `islamic-umalqura`, etc.
+   */
+  calendar?: CalendarIdentifier;
 }
 
 interface CalendarContext {
@@ -35,7 +40,10 @@ export const CalendarContextKey: InjectionKey<CalendarContext> = Symbol('Calenda
 
 export function useCalendar(_props: Reactivify<CalendarProps, 'onDaySelected'> = {}) {
   const props = normalizeProps(_props, ['onDaySelected']);
-  const { weekInfo, locale, calendar } = useLocale(props.locale);
+  const { weekInfo, locale, calendar } = useLocale(props.locale, {
+    calendar: () => toValue(props.calendar),
+  });
+
   const currentDate = computed(() => toValue(props.currentDate) ?? Temporal.Now.plainDate(calendar.value));
 
   const context: CalendarContext = {

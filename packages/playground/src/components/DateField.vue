@@ -3,14 +3,23 @@ import { useDateTimeField, DateTimeFieldProps, DateTimeSegment, useCalendar, Cal
 
 const props = defineProps<DateTimeFieldProps>();
 
-const { controlProps, isTouched, labelProps, errorMessageProps, errorMessage, segments, fieldValue, calendarProps } =
-  useDateTimeField(props);
+const {
+  controlProps,
+  isTouched,
+  labelProps,
+  errorMessageProps,
+  errorMessage,
+  segments,
+  fieldValue,
+  calendarProps,
+  direction,
+} = useDateTimeField(props);
 
 const { days, daysOfTheWeek } = useCalendar(calendarProps);
 </script>
 
 <template>
-  <div class="InputDate" :class="{ touched: isTouched }">
+  <div class="InputDate" :class="{ touched: isTouched }" :dir="direction">
     <span class="label" v-bind="labelProps">{{ label }}</span>
 
     {{ fieldValue }}
@@ -24,7 +33,7 @@ const { days, daysOfTheWeek } = useCalendar(calendarProps);
     </div>
 
     <div id="calendar" popover class="bg-zinc-800 px-4 py-4">
-      <div class="grid grid-cols-7 gap-4">
+      <div class="grid grid-cols-7 gap-4" :dir="direction">
         <div
           v-for="day in daysOfTheWeek"
           :key="day.long"
@@ -36,11 +45,13 @@ const { days, daysOfTheWeek } = useCalendar(calendarProps);
         <CalendarCell
           v-for="day in days"
           v-bind="day"
-          :aria-checked="day.isToday"
-          class="flex flex-col items-center justify-center aria-checked:bg-blue-600 aria-checked:text-white aria-checked:font-medium"
+          :aria-checked="day.isSelected"
+          class="flex flex-col items-center justify-center aria-checked:bg-emerald-600 aria-checked:text-white aria-checked:font-medium border-2"
           :class="{
             'text-zinc-500': day.isOutsideMonth,
             'text-white': !day.isOutsideMonth,
+            'border-transparent': !day.isToday,
+            'border-emerald-600': day.isToday,
           }"
         >
           {{ day.dayOfMonth }}

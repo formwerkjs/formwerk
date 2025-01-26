@@ -1,5 +1,5 @@
 import { Maybe, Reactivify } from '../types';
-import { CalendarProps } from '../useCalendar';
+import { CalendarIdentifier, CalendarProps } from '../useCalendar';
 import { createDescribedByProps, isNullOrUndefined, normalizeProps, useUniqId, withRefCapture } from '../utils/common';
 import { computed, shallowRef, toValue } from 'vue';
 import { exposeField, useFormField } from '../useFormField';
@@ -29,7 +29,10 @@ export interface DateTimeFieldProps {
 export function useDateTimeField(_props: Reactivify<DateTimeFieldProps, 'schema'>) {
   const props = normalizeProps(_props, ['schema']);
   const controlEl = shallowRef<HTMLInputElement>();
-  const { locale } = useLocale(props.locale);
+  const { locale, direction } = useLocale(props.locale, {
+    calendar: () => toValue(props.formatOptions)?.calendar as CalendarIdentifier,
+  });
+
   const formatter = useDateFormatter(locale, props.formatOptions);
   const controlId = useUniqId(FieldTypePrefixes.DateTimeField);
 
@@ -101,6 +104,7 @@ export function useDateTimeField(_props: Reactivify<DateTimeFieldProps, 'schema'
       segments,
       errorMessageProps,
       calendarProps,
+      direction,
     },
     field,
   );
