@@ -80,7 +80,7 @@ const { days, daysOfTheWeek } = useCalendar(calendarProps);
   }
 
   .segment {
-    @apply p-0.5 rounded focus:outline-none focus:bg-blue-600;
+    @apply p-0.5 rounded focus:outline-none focus:bg-blue-600 caret-transparent;
   }
 
   .error-message {
