@@ -31,7 +31,7 @@ export interface CalendarProps {
 interface CalendarContext {
   locale: Ref<string>;
   weekInfo: Ref<WeekInfo>;
-  calendar: Ref<Temporal.Calendar>;
+  calendar: Ref<CalendarIdentifier>;
   currentDate: MaybeRefOrGetter<Temporal.PlainDate | Temporal.PlainDateTime>;
   setDay: (date: Temporal.PlainDate) => void;
 }
