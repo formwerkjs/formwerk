@@ -1,6 +1,6 @@
 import { computed, CSSProperties, defineComponent, h, inject, shallowRef, toValue } from 'vue';
 import { Reactivify } from '../types';
-import { hasKeyCode, normalizeProps, useUniqId, withRefCapture } from '../utils/common';
+import { hasKeyCode, isNullOrUndefined, normalizeProps, useUniqId, withRefCapture } from '../utils/common';
 import { DateTimeSegmentGroupKey } from './useDateTimeSegmentGroup';
 import { FieldTypePrefixes } from '../constants';
 import { blockEvent } from '../utils/events';
@@ -44,14 +44,53 @@ export function useDateTimeSegment(_props: Reactivify<DateTimeSegmentProps>) {
     throw new Error('DateTimeSegmentGroup is not provided');
   }
 
-  const { increment, decrement } = segmentGroup.useDateSegmentRegistration({
+  const { increment, decrement, setValue, maxValue, minValue, parser } = segmentGroup.useDateSegmentRegistration({
     id,
     getElem: () => segmentEl.value,
     getType: () => toValue(props.type),
   });
 
+  let currentInput = '';
+
   const handlers = {
-    onFocus() {},
+    onFocus() {
+      // Reset the current input when the segment is focused
+      currentInput = '';
+    },
+    onBeforeinput(evt: InputEvent) {
+      // No data,like backspace or whatever
+      if (isNullOrUndefined(evt.data)) {
+        return;
+      }
+
+      blockEvent(evt);
+      const nextValue = currentInput + evt.data;
+      currentInput = nextValue;
+
+      const parsed = parser.parse(nextValue);
+      const min = minValue();
+      const max = maxValue();
+      if (isNullOrUndefined(min) || isNullOrUndefined(max)) {
+        return;
+      }
+
+      if (Number.isNaN(parsed) || parsed < min || parsed > max) {
+        return;
+      }
+
+      if (segmentEl.value) {
+        segmentEl.value.textContent = parsed.toString();
+      }
+    },
+    onBlur() {
+      const parsed = parser.parse(segmentEl.value?.textContent || '');
+      if (!Number.isNaN(parsed)) {
+        setValue(parsed);
+      }
+
+      // Reset the current input when the segment is blurred
+      currentInput = '';
+    },
     onKeydown(evt: KeyboardEvent) {
       if (hasKeyCode(evt, 'ArrowUp')) {
         blockEvent(evt);

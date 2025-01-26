@@ -102,6 +102,8 @@ export function useDateTimeField(_props: Reactivify<DateTimeFieldProps, 'schema'
 
   const { segments } = useDateTimeSegmentGroup({
     formatter,
+    locale,
+    formatOptions: props.formatOptions,
     controlEl,
     temporalValue,
     onValueChange,
