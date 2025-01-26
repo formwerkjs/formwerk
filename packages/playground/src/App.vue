@@ -9,7 +9,7 @@ import DateField from '@/components/DateField.vue';
       label="Date"
       :format-options="{
         day: '2-digit',
-        month: '2-digit',
+        month: 'long',
         year: 'numeric',
         hour: '2-digit',
         hour12: true,
