@@ -1,15 +1,14 @@
-import { Maybe, Reactivify, StandardSchema } from '../types';
+import { Reactivify, StandardSchema } from '../types';
 import { CalendarIdentifier, CalendarProps } from '../useCalendar';
-import { createDescribedByProps, isNullOrUndefined, normalizeProps, useUniqId, withRefCapture } from '../utils/common';
+import { createDescribedByProps, normalizeProps, useUniqId, withRefCapture } from '../utils/common';
 import { computed, shallowRef, toValue } from 'vue';
 import { exposeField, useFormField } from '../useFormField';
 import { useDateTimeSegmentGroup } from './useDateTimeSegmentGroup';
 import { FieldTypePrefixes } from '../constants';
 import { useDateFormatter, useLocale } from '../i18n';
 import { useErrorMessage, useLabel } from '../a11y';
-import { TemporalValue } from './types';
-import { DateValue } from './types';
-import { Temporal, toTemporalInstant } from '@js-temporal/polyfill';
+import { useTemporalStore } from './useTemporalStore';
+import { Temporal } from '@js-temporal/polyfill';
 
 export interface DateTimeFieldProps {
   /**
@@ -60,17 +59,17 @@ export interface DateTimeFieldProps {
   /**
    * The value to use for the field.
    */
-  value?: DateValue;
+  value?: Date;
 
   /**
    * The model value to use for the field.
    */
-  modelValue?: DateValue;
+  modelValue?: Date;
 
   /**
    * The schema to use for the field.
    */
-  schema?: StandardSchema<DateValue>;
+  schema?: StandardSchema<Date>;
 }
 
 export function useDateTimeField(_props: Reactivify<DateTimeFieldProps, 'schema'>) {
@@ -82,22 +81,30 @@ export function useDateTimeField(_props: Reactivify<DateTimeFieldProps, 'schema'
 
   const formatter = useDateFormatter(locale, props.formatOptions);
   const controlId = useUniqId(FieldTypePrefixes.DateTimeField);
+  const { dateValue, temporalValue } = useTemporalStore({
+    calendar: calendar,
+    timeZone: timeZone,
+    locale: locale,
+    initialValue: toValue(props.modelValue) ?? toValue(props.value) ?? new Date(),
+  });
 
-  const field = useFormField<DateValue>({
+  const field = useFormField<Date>({
     path: props.name,
     disabled: props.disabled,
-    initialValue: toValue(props.modelValue) ?? toValue(props.value) ?? new Date(),
+    initialValue: dateValue.value,
     schema: props.schema,
   });
 
-  const { fieldValue } = field;
+  function onValueChange(value: Temporal.ZonedDateTime) {
+    temporalValue.value = value;
+    field.setValue(dateValue.value);
+  }
+
   const { segments } = useDateTimeSegmentGroup({
     formatter,
     controlEl,
-    calendar,
-    timeZone,
-    dateValue: () => normalizeDateValue(fieldValue.value, locale.value, timeZone.value, calendar.value),
-    onValueChange: field.setValue,
+    temporalValue,
+    onValueChange,
   });
 
   const { labelProps, labelledByProps } = useLabel({
@@ -118,19 +125,8 @@ export function useDateTimeField(_props: Reactivify<DateTimeFieldProps, 'schema'
 
   const calendarProps: Reactivify<CalendarProps, 'onDaySelected'> = {
     locale: () => locale.value,
-    currentDate: () =>
-      normalizeAsCalendarDate(fieldValue.value, locale.value, timeZone.value, calendar.value).toPlainDate(),
-    onDaySelected: day => {
-      const nextValue = normalizeAsCalendarDate(fieldValue.value, locale.value, timeZone.value, calendar.value);
-
-      field.setValue(
-        nextValue.with({
-          year: day.year,
-          month: day.month,
-          day: day.day,
-        }),
-      );
-    },
+    currentDate: temporalValue,
+    onDaySelected: onValueChange,
   };
 
   const controlProps = computed(() => {
@@ -158,63 +154,4 @@ export function useDateTimeField(_props: Reactivify<DateTimeFieldProps, 'schema'
     },
     field,
   );
-}
-
-// TODO: VALUE NORMALIZER
-function normalizeDateValue(
-  value: Maybe<DateValue>,
-  locale: string,
-  timeZone: string,
-  calendar: CalendarIdentifier,
-): TemporalValue {
-  if (isNullOrUndefined(value)) {
-    return getNowAsTemporalValue(timeZone, calendar);
-  }
-
-  if (value instanceof Date) {
-    return toTemporalInstant.call(value).toZonedDateTime({
-      timeZone,
-      calendar,
-    });
-  }
-
-  return value;
-}
-
-function getNowAsTemporalValue(timeZone: string, calendar: CalendarIdentifier) {
-  return Temporal.Now.zonedDateTime(timeZone, calendar);
-}
-
-function normalizeAsCalendarDate(
-  value: Maybe<DateValue>,
-  locale: string,
-  timeZone: string,
-  calendar: CalendarIdentifier,
-) {
-  if (isNullOrUndefined(value)) {
-    return getNowAsTemporalValue(timeZone, calendar).toPlainDateTime();
-  }
-
-  if (value instanceof Temporal.ZonedDateTime) {
-    return value.toPlainDateTime();
-  }
-
-  if (value instanceof Temporal.PlainDate) {
-    return value.toPlainDateTime();
-  }
-
-  if (value instanceof Temporal.PlainDateTime) {
-    return value;
-  }
-
-  if (value instanceof Date || value instanceof Temporal.Instant) {
-    const resolvedOptions = new Intl.DateTimeFormat(locale).resolvedOptions();
-
-    return (value instanceof Date ? toTemporalInstant.call(value) : value).toZonedDateTime({
-      timeZone: resolvedOptions.timeZone,
-      calendar: resolvedOptions.calendar,
-    });
-  }
-
-  throw new Error('Invalid calendar value used');
 }

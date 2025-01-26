@@ -1,12 +1,11 @@
 import { InjectionKey, MaybeRefOrGetter, provide, ref, toValue, Ref, onBeforeUnmount, computed } from 'vue';
 import { Temporal, Intl as TemporalIntl } from '@js-temporal/polyfill';
-import { DateTimeSegmentType, TemporalValue } from './types';
+import { DateTimeSegmentType } from './types';
 import { hasKeyCode } from '../utils/common';
 import { blockEvent } from '../utils/events';
 import { Direction } from '../types';
 import { useEventListener } from '../helpers/useEventListener';
 import { isEditableSegmentType, segmentTypeToDurationLike } from './constants';
-import { CalendarIdentifier } from '../useCalendar';
 
 export interface DateTimeSegmentRegistration {
   id: string;
@@ -19,6 +18,9 @@ export interface DateTimeSegmentGroupContext {
     increment(): void;
     decrement(): void;
     setValue(value: number): void;
+
+    maxValue(): number | null;
+    minValue(): number | null;
   };
 }
 
@@ -26,37 +28,28 @@ export const DateTimeSegmentGroupKey: InjectionKey<DateTimeSegmentGroupContext> 
 
 export interface DateTimeSegmentGroupProps {
   formatter: Ref<TemporalIntl.DateTimeFormat>;
-  calendar: MaybeRefOrGetter<CalendarIdentifier>;
-  timeZone: MaybeRefOrGetter<string>;
-  dateValue: MaybeRefOrGetter<TemporalValue>;
+  temporalValue: MaybeRefOrGetter<Temporal.ZonedDateTime>;
   direction?: MaybeRefOrGetter<Direction>;
   controlEl: Ref<HTMLElement | undefined>;
-  onValueChange: (value: TemporalValue) => void;
+  onValueChange: (value: Temporal.ZonedDateTime) => void;
 }
 
 export function useDateTimeSegmentGroup({
   formatter,
-  dateValue,
+  temporalValue,
   direction,
   controlEl,
-  calendar,
-  timeZone,
   onValueChange,
 }: DateTimeSegmentGroupProps) {
   const renderedSegments = ref<DateTimeSegmentRegistration[]>([]);
   const { setPart, addToPart } = useDateArithmetic({
-    currentDate: dateValue,
-    calendar: calendar,
-    timeZone: timeZone,
+    currentDate: temporalValue,
   });
 
   const segments = computed(() => {
-    let date = toValue(dateValue);
-    if (date instanceof Temporal.ZonedDateTime) {
-      date = date.toPlainDateTime();
-    }
+    const date = toValue(temporalValue);
 
-    return formatter.value.formatToParts(date) as { type: DateTimeSegmentType; value: string }[];
+    return formatter.value.formatToParts(date.toPlainDateTime()) as { type: DateTimeSegmentType; value: string }[];
   });
 
   function useDateSegmentRegistration(segment: DateTimeSegmentRegistration) {
@@ -86,10 +79,42 @@ export function useDateTimeSegmentGroup({
       onValueChange(date);
     }
 
+    function maxValue() {
+      const type = segment.getType();
+      const date = toValue(temporalValue);
+      const maxPartsRecord: Partial<Record<DateTimeSegmentType, number>> = {
+        day: date.daysInMonth,
+        month: date.monthsInYear,
+        year: 9999,
+        hour: 23,
+        minute: 59,
+        second: 59,
+      };
+
+      return maxPartsRecord[type] ?? null;
+    }
+
+    function minValue() {
+      const type = segment.getType();
+      const minPartsRecord: Partial<Record<DateTimeSegmentType, number>> = {
+        day: 1,
+        month: 1,
+        year: 0,
+        hour: 0,
+        minute: 0,
+        second: 0,
+      };
+
+      return minPartsRecord[type] ?? null;
+    }
+
     return {
       increment,
       decrement,
       setValue,
+
+      maxValue,
+      minValue,
     };
   }
 
@@ -169,14 +194,12 @@ export function useDateTimeSegmentGroup({
 }
 
 interface ArithmeticInit {
-  currentDate: MaybeRefOrGetter<TemporalValue>;
-  calendar: MaybeRefOrGetter<CalendarIdentifier>;
-  timeZone: MaybeRefOrGetter<string>;
+  currentDate: MaybeRefOrGetter<Temporal.ZonedDateTime>;
 }
 
-function useDateArithmetic({ calendar, timeZone, currentDate }: ArithmeticInit) {
+function useDateArithmetic({ currentDate }: ArithmeticInit) {
   function setPart(part: DateTimeSegmentType, value: number) {
-    let date = toValue(currentDate);
+    const date = toValue(currentDate);
 
     if (!isEditableSegmentType(part)) {
       return date;
@@ -189,13 +212,6 @@ function useDateArithmetic({ calendar, timeZone, currentDate }: ArithmeticInit) 
     const durationPart = segmentTypeToDurationLike(part);
     if (!durationPart) {
       return date;
-    }
-
-    if (date instanceof Temporal.Instant) {
-      date = date.toZonedDateTime({
-        timeZone: toValue(timeZone),
-        calendar: toValue(calendar),
-      });
     }
 
     return date.with({
@@ -220,25 +236,19 @@ function useDateArithmetic({ calendar, timeZone, currentDate }: ArithmeticInit) 
     }
 
     // Preserves the day, month, and year when adding to the part so it doesn't overflow.
-    if (date instanceof Temporal.ZonedDateTime || date instanceof Temporal.PlainDateTime) {
-      const day = date.day;
-      const month = date.month;
-      const year = date.year;
+    const day = date.day;
+    const month = date.month;
+    const year = date.year;
 
-      return date
-        .add({
-          [durationPart]: diff,
-        })
-        .with({
-          day: part !== 'day' && part !== 'weekday' ? day : undefined,
-          month: part !== 'month' ? month : undefined,
-          year: part !== 'year' ? year : undefined,
-        });
-    }
-
-    return date.add({
-      [durationPart]: diff,
-    });
+    return date
+      .add({
+        [durationPart]: diff,
+      })
+      .with({
+        day: part !== 'day' && part !== 'weekday' ? day : undefined,
+        month: part !== 'month' ? month : undefined,
+        year: part !== 'year' ? year : undefined,
+      });
   }
 
   return {
