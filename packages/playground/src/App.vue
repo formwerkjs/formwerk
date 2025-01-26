@@ -7,12 +7,9 @@ import DateField from '@/components/DateField.vue';
     <DateField
       name="date"
       label="Date"
-      locale="ar-EG"
       :format-options="{
-        calendar: 'islamic-umalqura',
         day: '2-digit',
-        month: 'long',
-        weekday: 'long',
+        month: '2-digit',
         year: 'numeric',
       }"
     />
