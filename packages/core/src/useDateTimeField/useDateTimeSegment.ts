@@ -1,4 +1,4 @@
-import { computed, defineComponent, h, inject, shallowRef, toValue } from 'vue';
+import { computed, CSSProperties, defineComponent, h, inject, shallowRef, toValue } from 'vue';
 import { Reactivify } from '../types';
 import { hasKeyCode, normalizeProps, useUniqId, withRefCapture } from '../utils/common';
 import { DateTimeSegmentGroupKey } from './useDateTimeSegmentGroup';
@@ -24,6 +24,15 @@ export interface DateTimeSegmentProps {
   disabled?: boolean;
 }
 
+interface DateTimeSegmentDomProps {
+  id: string;
+  tabindex: number;
+  contenteditable: string | undefined;
+  'aria-disabled': boolean | undefined;
+  'data-segment-type': DateTimeSegmentType;
+  style?: CSSProperties;
+}
+
 export function useDateTimeSegment(_props: Reactivify<DateTimeSegmentProps>) {
   const props = normalizeProps(_props);
   const id = useUniqId(FieldTypePrefixes.DateTimeSegment);
@@ -42,6 +51,7 @@ export function useDateTimeSegment(_props: Reactivify<DateTimeSegmentProps>) {
   });
 
   const handlers = {
+    onFocus() {},
     onKeydown(evt: KeyboardEvent) {
       if (hasKeyCode(evt, 'ArrowUp')) {
         blockEvent(evt);
@@ -62,17 +72,20 @@ export function useDateTimeSegment(_props: Reactivify<DateTimeSegmentProps>) {
   };
 
   const segmentProps = computed(() => {
-    return withRefCapture(
-      {
-        id,
-        tabindex: isNonEditable() ? '-1' : '0',
-        contenteditable: isNonEditable() ? undefined : 'plaintext-only',
-        'aria-disabled': toValue(props.disabled),
-        'data-segment-type': toValue(props.type),
-        ...handlers,
-      },
-      segmentEl,
-    );
+    const domProps: DateTimeSegmentDomProps = {
+      id,
+      tabindex: isNonEditable() ? -1 : 0,
+      contenteditable: isNonEditable() ? undefined : 'plaintext-only',
+      'aria-disabled': toValue(props.disabled),
+      'data-segment-type': toValue(props.type),
+      ...handlers,
+    };
+
+    if (isNonEditable()) {
+      domProps.style = { pointerEvents: 'none' };
+    }
+
+    return withRefCapture(domProps, segmentEl);
   });
 
   return {
