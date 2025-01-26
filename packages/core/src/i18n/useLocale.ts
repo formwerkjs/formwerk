@@ -4,8 +4,8 @@ import { getDirection } from './getDirection';
 import { getWeekInfo } from './getWeekInfo';
 import { Maybe, Reactivify } from '../types';
 import { getCalendar } from './getCalendar';
-import { Temporal } from '@js-temporal/polyfill';
 import { CalendarIdentifier } from '../useCalendar';
+import { getTimeZone } from './getTimezone';
 
 export type NumberLocaleExtension = `nu-${string}`;
 
@@ -49,8 +49,9 @@ export function useLocale(
   const localeInstance = computed(() => new Intl.Locale(localeString.value));
   const direction = computed(() => getDirection(localeInstance.value));
   const weekInfo = computed(() => getWeekInfo(localeInstance.value));
-  const calendar = computed(() => new Temporal.Calendar(getCalendar(localeInstance.value)));
+  const calendar = computed(() => getCalendar(localeInstance.value));
+  const timeZone = computed(() => getTimeZone(localeInstance.value));
   const locale = computed(() => localeInstance.value.toString());
 
-  return { locale, direction, weekInfo, calendar };
+  return { locale, direction, weekInfo, calendar, timeZone };
 }

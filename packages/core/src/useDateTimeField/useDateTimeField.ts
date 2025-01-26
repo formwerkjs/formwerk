@@ -76,7 +76,7 @@ export interface DateTimeFieldProps {
 export function useDateTimeField(_props: Reactivify<DateTimeFieldProps, 'schema'>) {
   const props = normalizeProps(_props, ['schema']);
   const controlEl = shallowRef<HTMLInputElement>();
-  const { locale, direction } = useLocale(props.locale, {
+  const { locale, direction, timeZone, calendar } = useLocale(props.locale, {
     calendar: () => toValue(props.calendar) ?? (toValue(props.formatOptions)?.calendar as CalendarIdentifier),
   });
 
@@ -92,9 +92,11 @@ export function useDateTimeField(_props: Reactivify<DateTimeFieldProps, 'schema'
 
   const { fieldValue } = field;
   const { segments } = useDateTimeSegmentGroup({
-    dateValue: () => normalizeDateValue(fieldValue.value, locale.value),
     formatter,
     controlEl,
+    calendar,
+    timeZone,
+    dateValue: () => normalizeDateValue(fieldValue.value, locale.value, timeZone.value, calendar.value),
     onValueChange: field.setValue,
   });
 
@@ -116,9 +118,10 @@ export function useDateTimeField(_props: Reactivify<DateTimeFieldProps, 'schema'
 
   const calendarProps: Reactivify<CalendarProps, 'onDaySelected'> = {
     locale: () => locale.value,
-    currentDate: () => normalizeAsCalendarDate(fieldValue.value, locale.value).toPlainDate(),
+    currentDate: () =>
+      normalizeAsCalendarDate(fieldValue.value, locale.value, timeZone.value, calendar.value).toPlainDate(),
     onDaySelected: day => {
-      const nextValue = normalizeAsCalendarDate(fieldValue.value, locale.value);
+      const nextValue = normalizeAsCalendarDate(fieldValue.value, locale.value, timeZone.value, calendar.value);
 
       field.setValue(
         nextValue.with({
@@ -157,30 +160,39 @@ export function useDateTimeField(_props: Reactivify<DateTimeFieldProps, 'schema'
   );
 }
 
-function normalizeDateValue(value: Maybe<DateValue>, locale: string): TemporalValue {
+// TODO: VALUE NORMALIZER
+function normalizeDateValue(
+  value: Maybe<DateValue>,
+  locale: string,
+  timeZone: string,
+  calendar: CalendarIdentifier,
+): TemporalValue {
   if (isNullOrUndefined(value)) {
-    return getNowAsTemporalValue(locale);
+    return getNowAsTemporalValue(timeZone, calendar);
   }
 
   if (value instanceof Date) {
-    const resolvedOptions = new Intl.DateTimeFormat(locale).resolvedOptions();
-
     return toTemporalInstant.call(value).toZonedDateTime({
-      timeZone: resolvedOptions.timeZone,
-      calendar: resolvedOptions.calendar,
+      timeZone,
+      calendar,
     });
   }
 
   return value;
 }
 
-function getNowAsTemporalValue(locale: string) {
-  return Temporal.Now.zonedDateTime(new Intl.DateTimeFormat(locale).resolvedOptions().timeZone);
+function getNowAsTemporalValue(timeZone: string, calendar: CalendarIdentifier) {
+  return Temporal.Now.zonedDateTime(timeZone, calendar);
 }
 
-function normalizeAsCalendarDate(value: Maybe<DateValue>, locale: string) {
+function normalizeAsCalendarDate(
+  value: Maybe<DateValue>,
+  locale: string,
+  timeZone: string,
+  calendar: CalendarIdentifier,
+) {
   if (isNullOrUndefined(value)) {
-    return getNowAsTemporalValue(locale).toPlainDateTime();
+    return getNowAsTemporalValue(timeZone, calendar).toPlainDateTime();
   }
 
   if (value instanceof Temporal.ZonedDateTime) {

@@ -6,6 +6,7 @@ import { blockEvent } from '../utils/events';
 import { Direction } from '../types';
 import { useEventListener } from '../helpers/useEventListener';
 import { isEditableSegmentType, segmentTypeToDurationLike } from './constants';
+import { CalendarIdentifier } from '../useCalendar';
 
 export interface DateTimeSegmentRegistration {
   id: string;
@@ -17,6 +18,7 @@ export interface DateTimeSegmentGroupContext {
   useDateSegmentRegistration(segment: DateTimeSegmentRegistration): {
     increment(): void;
     decrement(): void;
+    setValue(value: number): void;
   };
 }
 
@@ -24,6 +26,8 @@ export const DateTimeSegmentGroupKey: InjectionKey<DateTimeSegmentGroupContext> 
 
 export interface DateTimeSegmentGroupProps {
   formatter: Ref<TemporalIntl.DateTimeFormat>;
+  calendar: MaybeRefOrGetter<CalendarIdentifier>;
+  timeZone: MaybeRefOrGetter<string>;
   dateValue: MaybeRefOrGetter<TemporalValue>;
   direction?: MaybeRefOrGetter<Direction>;
   controlEl: Ref<HTMLElement | undefined>;
@@ -35,9 +39,17 @@ export function useDateTimeSegmentGroup({
   dateValue,
   direction,
   controlEl,
+  calendar,
+  timeZone,
   onValueChange,
 }: DateTimeSegmentGroupProps) {
   const renderedSegments = ref<DateTimeSegmentRegistration[]>([]);
+  const { setPart, addToPart } = useDateArithmetic({
+    currentDate: dateValue,
+    calendar: calendar,
+    timeZone: timeZone,
+  });
+
   const segments = computed(() => {
     let date = toValue(dateValue);
     if (date instanceof Temporal.ZonedDateTime) {
@@ -55,14 +67,21 @@ export function useDateTimeSegmentGroup({
 
     function increment() {
       const type = segment.getType();
-      const date = addToPart(type, toValue(dateValue), 1);
+      const date = addToPart(type, 1);
 
       onValueChange(date);
     }
 
     function decrement() {
       const type = segment.getType();
-      const date = addToPart(type, toValue(dateValue), -1);
+      const date = addToPart(type, -1);
+
+      onValueChange(date);
+    }
+
+    function setValue(value: number) {
+      const type = segment.getType();
+      const date = setPart(type, value);
 
       onValueChange(date);
     }
@@ -70,6 +89,7 @@ export function useDateTimeSegmentGroup({
     return {
       increment,
       decrement,
+      setValue,
     };
   }
 
@@ -148,37 +168,81 @@ export function useDateTimeSegmentGroup({
   };
 }
 
-function addToPart(part: DateTimeSegmentType, currentDate: TemporalValue, diff: number) {
-  if (!isEditableSegmentType(part)) {
-    return currentDate;
-  }
+interface ArithmeticInit {
+  currentDate: MaybeRefOrGetter<TemporalValue>;
+  calendar: MaybeRefOrGetter<CalendarIdentifier>;
+  timeZone: MaybeRefOrGetter<string>;
+}
 
-  if (part === 'dayPeriod') {
-    diff = diff * 12;
-  }
+function useDateArithmetic({ calendar, timeZone, currentDate }: ArithmeticInit) {
+  function setPart(part: DateTimeSegmentType, value: number) {
+    let date = toValue(currentDate);
 
-  const durationPart = segmentTypeToDurationLike(part);
-  if (!durationPart) {
-    return currentDate;
-  }
+    if (!isEditableSegmentType(part)) {
+      return date;
+    }
 
-  if (currentDate instanceof Temporal.ZonedDateTime || currentDate instanceof Temporal.PlainDateTime) {
-    const day = currentDate.day;
-    const month = currentDate.month;
-    const year = currentDate.year;
+    if (part === 'dayPeriod') {
+      return addToPart(part, Math.sign(value));
+    }
 
-    return currentDate
-      .add({
-        [durationPart]: diff,
-      })
-      .with({
-        day: part !== 'day' && part !== 'weekday' ? day : undefined,
-        month: part !== 'month' ? month : undefined,
-        year: part !== 'year' ? year : undefined,
+    const durationPart = segmentTypeToDurationLike(part);
+    if (!durationPart) {
+      return date;
+    }
+
+    if (date instanceof Temporal.Instant) {
+      date = date.toZonedDateTime({
+        timeZone: toValue(timeZone),
+        calendar: toValue(calendar),
       });
+    }
+
+    return date.with({
+      [durationPart]: value,
+    });
   }
 
-  return currentDate.add({
-    [durationPart]: diff,
-  });
+  function addToPart(part: DateTimeSegmentType, diff: number) {
+    const date = toValue(currentDate);
+
+    if (!isEditableSegmentType(part)) {
+      return date;
+    }
+
+    if (part === 'dayPeriod') {
+      diff = diff * 12;
+    }
+
+    const durationPart = segmentTypeToDurationLike(part);
+    if (!durationPart) {
+      return date;
+    }
+
+    // Preserves the day, month, and year when adding to the part so it doesn't overflow.
+    if (date instanceof Temporal.ZonedDateTime || date instanceof Temporal.PlainDateTime) {
+      const day = date.day;
+      const month = date.month;
+      const year = date.year;
+
+      return date
+        .add({
+          [durationPart]: diff,
+        })
+        .with({
+          day: part !== 'day' && part !== 'weekday' ? day : undefined,
+          month: part !== 'month' ? month : undefined,
+          year: part !== 'year' ? year : undefined,
+        });
+    }
+
+    return date.add({
+      [durationPart]: diff,
+    });
+  }
+
+  return {
+    setPart,
+    addToPart,
+  };
 }
