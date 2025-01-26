@@ -44,7 +44,7 @@ export function useDateTimeSegment(_props: Reactivify<DateTimeSegmentProps>) {
     throw new Error('DateTimeSegmentGroup is not provided');
   }
 
-  const { increment, decrement, setValue, maxValue, minValue, parser } = segmentGroup.useDateSegmentRegistration({
+  const { increment, decrement, setValue, getMetadata, onDone, parser } = segmentGroup.useDateSegmentRegistration({
     id,
     getElem: () => segmentEl.value,
     getType: () => toValue(props.type),
@@ -74,23 +74,34 @@ export function useDateTimeSegment(_props: Reactivify<DateTimeSegmentProps>) {
       currentInput = nextValue;
 
       const parsed = parser.parse(nextValue);
-      const min = minValue();
-      const max = maxValue();
-      if (isNullOrUndefined(min) || isNullOrUndefined(max)) {
+      const { min, max, maxLength } = getMetadata();
+      if (isNullOrUndefined(min) || isNullOrUndefined(max) || isNullOrUndefined(maxLength)) {
         return;
       }
 
-      if (Number.isNaN(parsed) || parsed < min || parsed > max) {
+      if (Number.isNaN(parsed) || parsed > max) {
         return;
       }
 
       if (segmentEl.value) {
-        segmentEl.value.textContent = parsed.toString();
+        segmentEl.value.textContent = currentInput;
+      }
+
+      // If the current input length is greater than or equal to the max length, or the parsed value is greater than the max value,
+      // then we should signal the segment group that this segment is done and it can move to the next segment
+      if (currentInput.length >= maxLength || parsed * 10 > max) {
+        onDone();
       }
     },
     onBlur() {
+      const { min, max } = getMetadata();
+
+      if (isNullOrUndefined(min) || isNullOrUndefined(max)) {
+        return;
+      }
+
       const parsed = parser.parse(segmentEl.value?.textContent || '');
-      if (!Number.isNaN(parsed)) {
+      if (!Number.isNaN(parsed) && parsed >= min && parsed <= max) {
         setValue(parsed);
       }
 

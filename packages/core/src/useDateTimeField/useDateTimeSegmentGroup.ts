@@ -20,9 +20,8 @@ export interface DateTimeSegmentGroupContext {
     increment(): void;
     decrement(): void;
     setValue(value: number): void;
-
-    maxValue(): number | null;
-    minValue(): number | null;
+    getMetadata(): { min: number | null; max: number | null; maxLength: number | null };
+    onDone(): void;
   };
 }
 
@@ -63,6 +62,10 @@ export function useDateTimeSegmentGroup({
     return formatter.value.formatToParts(date.toPlainDateTime()) as { type: DateTimeSegmentType; value: string }[];
   });
 
+  function onSegmentDone() {
+    focusNextSegment();
+  }
+
   function useDateSegmentRegistration(segment: DateTimeSegmentRegistration) {
     renderedSegments.value.push(segment);
     onBeforeUnmount(() => {
@@ -90,7 +93,7 @@ export function useDateTimeSegmentGroup({
       onValueChange(date);
     }
 
-    function maxValue() {
+    function getMetadata() {
       const type = segment.getType();
       const date = toValue(temporalValue);
       const maxPartsRecord: Partial<Record<DateTimeSegmentType, number>> = {
@@ -102,11 +105,6 @@ export function useDateTimeSegmentGroup({
         second: 59,
       };
 
-      return maxPartsRecord[type] ?? null;
-    }
-
-    function minValue() {
-      const type = segment.getType();
       const minPartsRecord: Partial<Record<DateTimeSegmentType, number>> = {
         day: 1,
         month: 1,
@@ -116,7 +114,20 @@ export function useDateTimeSegmentGroup({
         second: 0,
       };
 
-      return minPartsRecord[type] ?? null;
+      const maxLengths: Partial<Record<DateTimeSegmentType, number>> = {
+        day: 2,
+        month: 2,
+        year: 4,
+        hour: 2,
+        minute: 2,
+        second: 2,
+      };
+
+      return {
+        min: minPartsRecord[type] ?? null,
+        max: maxPartsRecord[type] ?? null,
+        maxLength: maxLengths[type] ?? null,
+      };
     }
 
     return {
@@ -124,8 +135,9 @@ export function useDateTimeSegmentGroup({
       decrement,
       setValue,
       parser,
-      maxValue,
-      minValue,
+      onSegmentDone,
+      getMetadata,
+      onDone: onSegmentDone,
     };
   }
 
