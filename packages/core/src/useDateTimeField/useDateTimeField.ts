@@ -1,4 +1,4 @@
-import { Maybe, Reactivify } from '../types';
+import { Maybe, Reactivify, StandardSchema } from '../types';
 import { CalendarIdentifier, CalendarProps } from '../useCalendar';
 import { createDescribedByProps, isNullOrUndefined, normalizeProps, useUniqId, withRefCapture } from '../utils/common';
 import { computed, shallowRef, toValue } from 'vue';
@@ -12,25 +12,72 @@ import { DateValue } from './types';
 import { Temporal, toTemporalInstant } from '@js-temporal/polyfill';
 
 export interface DateTimeFieldProps {
+  /**
+   * The label to use for the field.
+   */
   label: string;
-  locale?: string;
+
+  /**
+   * The name to use for the field.
+   */
   name: string;
+
+  /**
+   * The locale to use for the field.
+   */
+  locale?: string;
+
+  /**
+   * The calendar type to use for the field, e.g. `gregory`, `islamic-umalqura`, etc.
+   */
+  calendar?: CalendarIdentifier;
+
+  /**
+   * The Intl.DateTimeFormatOptions to use for the field, used to format the date value.
+   */
   formatOptions?: Intl.DateTimeFormatOptions;
+
+  /**
+   * The description to use for the field.
+   */
   description?: string;
+
+  /**
+   * The placeholder to use for the field.
+   */
   placeholder?: string;
+
+  /**
+   * Whether the field is readonly.
+   */
   readonly?: boolean;
+
+  /**
+   * Whether the field is disabled.
+   */
   disabled?: boolean;
+
+  /**
+   * The value to use for the field.
+   */
   value?: DateValue;
+
+  /**
+   * The model value to use for the field.
+   */
   modelValue?: DateValue;
 
-  schema?: any;
+  /**
+   * The schema to use for the field.
+   */
+  schema?: StandardSchema<DateValue>;
 }
 
 export function useDateTimeField(_props: Reactivify<DateTimeFieldProps, 'schema'>) {
   const props = normalizeProps(_props, ['schema']);
   const controlEl = shallowRef<HTMLInputElement>();
   const { locale, direction } = useLocale(props.locale, {
-    calendar: () => toValue(props.formatOptions)?.calendar as CalendarIdentifier,
+    calendar: () => toValue(props.calendar) ?? (toValue(props.formatOptions)?.calendar as CalendarIdentifier),
   });
 
   const formatter = useDateFormatter(locale, props.formatOptions);
