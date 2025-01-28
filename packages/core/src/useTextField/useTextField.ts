@@ -1,4 +1,4 @@
-import { Ref, computed, shallowRef, toValue } from 'vue';
+import { Ref, computed, inject, shallowRef, toValue, watch } from 'vue';
 import { createDescribedByProps, normalizeProps, propsToValues, useUniqId, withRefCapture } from '../utils/common';
 import {
   AriaDescribableProps,
@@ -14,6 +14,8 @@ import { useLabel, useErrorMessage } from '../a11y';
 import { useFormField, exposeField } from '../useFormField';
 import { FieldTypePrefixes } from '../constants';
 import { StandardSchema } from '../types';
+import { refreshInspector, registerTextFieldWithDevtools } from '@dev-tools';
+import { FormKey } from '@core/useForm';
 
 export type TextInputDOMType = 'text' | 'password' | 'email' | 'number' | 'tel' | 'url';
 
@@ -116,6 +118,8 @@ export function useTextField(
   _props: Reactivify<TextFieldProps, 'schema'>,
   elementRef?: Ref<HTMLInputElement | HTMLTextAreaElement>,
 ) {
+  const form = inject(FormKey, null);
+
   const props = normalizeProps(_props, ['schema']);
   const inputId = useUniqId(FieldTypePrefixes.TextField);
   const inputEl = elementRef || shallowRef<HTMLInputElement>();
@@ -177,7 +181,7 @@ export function useTextField(
     );
   });
 
-  return exposeField(
+  const exposedField = exposeField(
     {
       /**
        * Props for the description element.
@@ -206,4 +210,22 @@ export function useTextField(
     },
     field,
   );
+
+  if (__DEV__) {
+    registerTextFieldWithDevtools({ ...exposedField, ...field }, form?.id);
+
+    watch(
+      () => ({
+        errors: errorMessage.value,
+        isValid: !errorMessage.value,
+        value: fieldValue.value,
+      }),
+      refreshInspector,
+      {
+        deep: true,
+      },
+    );
+  }
+
+  return exposedField;
 }
