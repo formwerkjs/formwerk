@@ -1,4 +1,4 @@
-import { MaybeRefOrGetter, toValue } from 'vue';
+import { MaybeRefOrGetter, shallowRef, toValue, watch } from 'vue';
 import { getUserLocale } from '../getUserLocale';
 
 /**
@@ -217,7 +217,7 @@ export function useNumberParser(
   // Keeps references to the last resolved parser to avoid re-resolving it.
   // Also has the benefit to format the value with the same parser that parsed before.
   // So it will keep the same numbering system that the user prefers.
-  let lastResolvedParser: NumberParser | null = null;
+  const lastResolvedParser = shallowRef<NumberParser | null>(null);
 
   function findParser(value: string) {
     const defaultLocale = toValue(locale) ?? toValue(resolvedLocale);
@@ -254,12 +254,12 @@ export function useNumberParser(
   }
 
   function resolveParser(value: string) {
-    if (lastResolvedParser && lastResolvedParser.isValidNumberPart(value)) {
-      return lastResolvedParser;
+    if (lastResolvedParser.value && lastResolvedParser.value.isValidNumberPart(value)) {
+      return lastResolvedParser.value;
     }
 
     const parser = findParser(value);
-    lastResolvedParser = parser;
+    lastResolvedParser.value = parser;
 
     return parser;
   }
@@ -277,10 +277,21 @@ export function useNumberParser(
   }
 
   function format(value: number): string {
-    const defaultParser = getParser(toValue(locale) ?? toValue(resolvedLocale), toValue(opts) || {});
+    const defaultParser = getDefaultParser();
 
-    return (lastResolvedParser ?? defaultParser).format(value);
+    return (lastResolvedParser.value ?? defaultParser).format(value);
   }
+
+  function getDefaultParser() {
+    return getParser(toValue(locale) ?? toValue(resolvedLocale), toValue(opts) || {});
+  }
+
+  watch(
+    () => [toValue(locale), toValue(opts)],
+    () => {
+      lastResolvedParser.value = getDefaultParser();
+    },
+  );
 
   return {
     parse,
