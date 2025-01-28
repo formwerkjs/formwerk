@@ -23,7 +23,7 @@
     "resolveJsonModule": true,
     "paths": {
       "@core/*": ["packages/core/src/*"],
-      "@dev-tools/*": ["packages/dev-tools/src/*"]
+      "@dev-tools": ["packages/dev-tools/src/index.ts"]
     }
   },
   "include": ["packages/*/src", "global.d.ts"],
