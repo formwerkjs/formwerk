@@ -1,9 +1,9 @@
 import { initDevTools, refreshInspector } from './init';
 import { onUnmounted } from 'vue';
-import { FormContext, TextField } from './types';
+import { FIELD_TYPES, FormContext, TextField } from './types';
 import { DEVTOOLS_FIELDS, DEVTOOLS_FORMS } from './storage';
 
-export function registerTextFieldWithDevtools(field: TextField, formId?: string) {
+export function registerTextFieldWithDevtools(field: Omit<TextField, 'type'>, formId?: string) {
   const vm = initDevTools();
 
   const id = field.getPath() ?? field.getName() ?? '';
@@ -13,11 +13,12 @@ export function registerTextFieldWithDevtools(field: TextField, formId?: string)
     DEVTOOLS_FORMS[formId].children = DEVTOOLS_FORMS[formId].children ?? [];
     DEVTOOLS_FORMS[formId].children.push({
       ...field,
+      type: FIELD_TYPES.TextField,
       _vm: vm,
     });
   } else {
     // if the field is a standalone field, we need to register it
-    DEVTOOLS_FIELDS[id] = { ...field, _vm: vm };
+    DEVTOOLS_FIELDS[id] = { ...field, type: FIELD_TYPES.TextField, _vm: vm };
   }
 
   onUnmounted(() => {

@@ -7,7 +7,6 @@ import {
   FormContext,
   formToState,
   NODE_TYPE,
-  NODE_TYPES,
   NodeState,
   PathState,
 } from './types';
@@ -192,7 +191,7 @@ export function getValidityColors(valid: boolean) {
   };
 }
 
-export function getFieldNodeTags(type: NODE_TYPE, valid: boolean, form: FormContext | undefined) {
+export function getFieldNodeTags(type: InputField, valid: boolean, form: FormContext | undefined) {
   const { textColor, bgColor } = getValidityColors(valid);
 
   return [
@@ -200,6 +199,11 @@ export function getFieldNodeTags(type: NODE_TYPE, valid: boolean, form: FormCont
       label: 'Field',
       textColor,
       backgroundColor: bgColor,
+    },
+    {
+      label: resolveFieldTypeName(type),
+      textColor: COLORS.black,
+      backgroundColor: COLORS.gray,
     },
     !form
       ? {
@@ -241,6 +245,16 @@ export function mapFieldForDevtoolsInspector(field: InputField, form?: FormConte
   return {
     id: encodeNodeId(fieldState),
     label: fieldState.name,
-    tags: getFieldNodeTags(NODE_TYPES.field, fieldState.valid, form),
+    tags: getFieldNodeTags(field, fieldState.valid, form),
   };
+}
+
+function resolveFieldTypeName(field: InputField) {
+  switch (field.type) {
+    case 'text-field':
+      return 'Text Field';
+
+    default:
+      return 'unknown';
+  }
 }

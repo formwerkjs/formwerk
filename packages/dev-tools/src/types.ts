@@ -31,11 +31,24 @@ export type NodeState = FormState | FieldState;
 // Form context type
 export type FormContext = ReturnType<typeof useForm>;
 
+// Node types
+export const FIELD_TYPES = {
+  TextField: 'text-field',
+  unknown: 'unknown',
+} as const;
+
 // Text field type combining form field and text field
-export type TextField = ReturnType<typeof useTextField> & ReturnType<typeof useFormField<string | undefined>>;
+export type TextField = ReturnType<typeof useTextField> &
+  ReturnType<typeof useFormField<string | undefined>> & {
+    type: (typeof FIELD_TYPES)['TextField'];
+  };
 
 // Input field type
-export type InputField = FormField<unknown> | TextField;
+export type InputField =
+  | (FormField<unknown> & {
+      type: (typeof FIELD_TYPES)['unknown'];
+    })
+  | TextField;
 
 // Devtools form type
 export type DevtoolsForm = FormContext & {
