@@ -1,4 +1,4 @@
-import { MaybeRefOrGetter, toValue } from 'vue';
+import { MaybeRefOrGetter, toValue, watch } from 'vue';
 import { getUserLocale } from '../getUserLocale';
 
 /**
@@ -276,11 +276,17 @@ export function useNumberParser(
     return resolveParser(value).isValidNumberPart(value);
   }
 
-  function format(value: number): string {
-    const defaultParser = getParser(toValue(locale) ?? toValue(resolvedLocale), toValue(opts) || {});
-
-    return (lastResolvedParser ?? defaultParser).format(value);
+  function getDefaultParser() {
+    return getParser(toValue(locale) ?? toValue(resolvedLocale), toValue(opts) || {});
   }
+
+  function format(value: number): string {
+    return (lastResolvedParser ?? getDefaultParser()).format(value);
+  }
+
+  watch([() => toValue(locale), () => toValue(opts)], () => {
+    lastResolvedParser = getDefaultParser();
+  });
 
   return {
     parse,
