@@ -9,7 +9,7 @@ import {
   decodeNodeId,
   mapFieldForDevtoolsInspector,
   mapFormForDevtoolsInspector,
-} from './helper';
+} from './helpers';
 
 let SELECTED_NODE:
   | { type: 'form'; form: FormContext }
