@@ -3,6 +3,7 @@ import { FormField, useFormField } from '@core/useFormField';
 import { ComponentInternalInstance } from 'vue';
 import { useTextField } from '@core/useTextField';
 import { DEVTOOLS_FIELDS } from './storage';
+import { useCheckbox } from '@core/useCheckbox';
 
 // Base interface for state
 export interface PathState<TValue = unknown> {
@@ -34,6 +35,7 @@ export type FormContext = ReturnType<typeof useForm>;
 // Node types
 export const FIELD_TYPES = {
   TextField: 'text-field',
+  Checkbox: 'checkbox',
   unknown: 'unknown',
 } as const;
 
@@ -43,12 +45,18 @@ export type TextField = ReturnType<typeof useTextField> &
     type: (typeof FIELD_TYPES)['TextField'];
   };
 
+export type CheckboxField = ReturnType<typeof useCheckbox> &
+  ReturnType<typeof useFormField<string | undefined>> & {
+    type: (typeof FIELD_TYPES)['Checkbox'];
+  };
+
 // Input field type
 export type InputField =
   | (FormField<unknown> & {
       type: (typeof FIELD_TYPES)['unknown'];
     })
-  | TextField;
+  | TextField
+  | CheckboxField;
 
 // Devtools form type
 export type DevtoolsForm = FormContext & {
