@@ -1,4 +1,4 @@
-import { computed, inject, nextTick, Ref, ref, toValue, watch } from 'vue';
+import { computed, inject, nextTick, Ref, ref, toValue } from 'vue';
 import { hasKeyCode, isEqual, isInputElement, normalizeProps, useUniqId, withRefCapture } from '../utils/common';
 import {
   AriaLabelableProps,
@@ -13,8 +13,7 @@ import { CheckboxGroupContext, CheckboxGroupKey } from './useCheckboxGroup';
 import { useFormField, exposeField, FormField } from '../useFormField';
 import { FieldTypePrefixes } from '../constants';
 import { useInputValidity } from '../validation';
-import { refreshInspector, registerCheckboxWithDevtools } from '@dev-tools/index';
-import { FormKey } from '@core/useForm';
+import { registerCheckboxWithDevtools } from '@dev-tools/index';
 
 export interface CheckboxProps<TValue = string> {
   /**
@@ -102,8 +101,6 @@ export function useCheckbox<TValue = string>(
   _props: Reactivify<CheckboxProps<TValue>, 'schema'>,
   elementRef?: Ref<HTMLElement | undefined>,
 ) {
-  const form = inject(FormKey, null);
-
   const props = normalizeProps(_props, ['schema']);
   const inputId = useUniqId(FieldTypePrefixes.Checkbox);
   const getTrueValue = createTrueValueGetter(props);
@@ -314,19 +311,7 @@ export function useCheckbox<TValue = string>(
 
   if (__DEV__) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    registerCheckboxWithDevtools({ ...exposedField, ...field } as any, form?.id);
-
-    watch(
-      () => ({
-        errors: errorMessage.value,
-        isValid: !errorMessage.value,
-        value: fieldValue.value,
-      }),
-      refreshInspector,
-      {
-        deep: true,
-      },
-    );
+    registerCheckboxWithDevtools({ ...exposedField, ...field } as any);
   }
 
   return exposedField;
