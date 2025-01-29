@@ -253,7 +253,8 @@ function resolveFieldTypeName(field: InputField) {
   switch (field.type) {
     case 'text-field':
       return 'Text Field';
-
+    case 'checkbox':
+      return 'Checkbox';
     default:
       return 'unknown';
   }
