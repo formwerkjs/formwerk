@@ -1,4 +1,4 @@
-import { InjectionKey, toValue, computed, onBeforeUnmount, reactive, provide, ref, inject, watch } from 'vue';
+import { InjectionKey, toValue, computed, onBeforeUnmount, reactive, provide, ref } from 'vue';
 import { useInputValidity } from '../validation/useInputValidity';
 import { useLabel, useErrorMessage } from '../a11y';
 import {
@@ -22,8 +22,7 @@ import {
 import { useLocale } from '../i18n';
 import { useFormField, exposeField } from '../useFormField';
 import { FieldTypePrefixes } from '../constants';
-import { FormKey } from '@core/useForm';
-import { refreshInspector, registerRadioWithDevtools } from '@dev-tools/index';
+import { registerRadioWithDevtools } from '@dev-tools/index';
 
 export interface RadioGroupContext<TValue> {
   name: string;
@@ -129,8 +128,6 @@ function getOrientationArrows(dir: Direction | undefined) {
 }
 
 export function useRadioGroup<TValue = string>(_props: Reactivify<RadioGroupProps<TValue>, 'schema'>) {
-  const form = inject(FormKey, null);
-
   const props = normalizeProps(_props, ['schema']);
   const groupId = useUniqId(FieldTypePrefixes.RadioButtonGroup);
   const { direction } = useLocale();
@@ -300,19 +297,7 @@ export function useRadioGroup<TValue = string>(_props: Reactivify<RadioGroupProp
 
   if (__DEV__) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    registerRadioWithDevtools({ ...exposedField, ...field } as any, form?.id);
-
-    watch(
-      () => ({
-        errors: errorMessage.value,
-        isValid: !errorMessage.value,
-        value: fieldValue.value,
-      }),
-      refreshInspector,
-      {
-        deep: true,
-      },
-    );
+    registerRadioWithDevtools({ ...exposedField, ...field } as any);
   }
 
   return exposedField;

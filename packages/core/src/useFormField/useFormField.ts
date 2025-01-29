@@ -37,6 +37,7 @@ export type FormField<TValue> = {
   setTouched: (touched: boolean) => void;
   setErrors: (messages: Arrayable<string>) => void;
   displayError: () => string | undefined;
+  form?: FormContext | null;
 };
 
 export function useFormField<TValue = unknown>(opts?: Partial<FormFieldOptions<TValue>>): FormField<TValue> {
@@ -200,7 +201,7 @@ export function useFormField<TValue = unknown>(opts?: Partial<FormFieldOptions<T
     form.setFieldDisabled(path, disabled);
   });
 
-  return field;
+  return { ...field, form };
 }
 
 function useFieldValidity(getPath: Getter<string | undefined>, isDisabled: Ref<boolean>, form?: FormContext | null) {
