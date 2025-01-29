@@ -4,6 +4,7 @@ import { ComponentInternalInstance } from 'vue';
 import { useTextField } from '@core/useTextField';
 import { DEVTOOLS_FIELDS } from './storage';
 import { useCheckbox } from '@core/useCheckbox';
+import { useRadioGroup } from '@core/useRadio';
 
 // Base interface for state
 export interface PathState<TValue = unknown> {
@@ -36,6 +37,7 @@ export type FormContext = ReturnType<typeof useForm>;
 export const FIELD_TYPES = {
   TextField: 'text-field',
   Checkbox: 'checkbox',
+  Radio: 'radio',
   unknown: 'unknown',
 } as const;
 
@@ -50,13 +52,19 @@ export type CheckboxField = ReturnType<typeof useCheckbox> &
     type: (typeof FIELD_TYPES)['Checkbox'];
   };
 
+export type RadioField = ReturnType<typeof useRadioGroup> &
+  ReturnType<typeof useFormField<string | undefined>> & {
+    type: (typeof FIELD_TYPES)['Radio'];
+  };
+
 // Input field type
 export type InputField =
   | (FormField<unknown> & {
       type: (typeof FIELD_TYPES)['unknown'];
     })
   | TextField
-  | CheckboxField;
+  | CheckboxField
+  | RadioField;
 
 // Devtools form type
 export type DevtoolsForm = FormContext & {

@@ -255,6 +255,8 @@ function resolveFieldTypeName(field: InputField) {
       return 'Text Field';
     case 'checkbox':
       return 'Checkbox';
+    case 'radio':
+      return 'Radio';
     default:
       return 'unknown';
   }
