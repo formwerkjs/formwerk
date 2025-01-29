@@ -14,7 +14,7 @@ import { useLabel, useErrorMessage } from '../a11y';
 import { useFormField, exposeField } from '../useFormField';
 import { FieldTypePrefixes } from '../constants';
 import { StandardSchema } from '../types';
-import { refreshInspector, registerTextFieldWithDevtools } from '@dev-tools';
+import { refreshInspector, registerTextFieldWithDevtools } from '@dev-tools/index';
 import { FormKey } from '@core/useForm';
 
 export type TextInputDOMType = 'text' | 'password' | 'email' | 'number' | 'tel' | 'url';
