@@ -1,6 +1,6 @@
 import { MaybeRefOrGetter, computed, ref, toValue } from 'vue';
 import { Maybe, AriaLabelProps, AriaLabelableProps } from '../types';
-import { createRefCapture } from '../utils/common';
+import { createRefCapture, isInputElement, isLabelElement } from '../utils/common';
 
 interface LabelProps {
   for: MaybeRefOrGetter<string>;
@@ -17,12 +17,16 @@ export function useLabel(props: LabelProps) {
     return {
       ref: refCapture,
       id: `${toValue(props.for)}-l`,
-      for: labelRef.value?.tagName === 'LABEL' ? toValue(props.for) : undefined,
+      for: isLabelElement(labelRef.value) ? toValue(props.for) : undefined,
       onClick: props.handleClick || undefined,
     } as AriaLabelProps;
   });
 
   const labelledByProps = computed<AriaLabelableProps>(() => {
+    if (isLabelElement(labelRef.value) && isInputElement(toValue(props.targetRef))) {
+      return {};
+    }
+
     if (labelRef.value && toValue(props.label) && toValue(props.targetRef)) {
       return {
         'aria-labelledby': toValue(props.label) && labelRef.value ? labelProps.value.id : undefined,

@@ -316,12 +316,12 @@ export function isInputElement(el: Maybe<HTMLElement>): el is HTMLInputElement {
   return ['INPUT', 'TEXTAREA', 'SELECT'].includes(el.tagName);
 }
 
-export function isButtonElement(el: Maybe<HTMLElement>): el is HTMLButtonElement {
-  if (!el) {
-    return false;
-  }
+export function isLabelElement(el: Maybe<HTMLElement>): el is HTMLLabelElement {
+  return el?.tagName === 'LABEL';
+}
 
-  return ['BUTTON'].includes(el.tagName);
+export function isButtonElement(el: Maybe<HTMLElement>): el is HTMLButtonElement {
+  return el?.tagName === 'BUTTON';
 }
 
 export function toggleValueSelection<TValue>(current: Arrayable<TValue>, value: TValue, force?: boolean): TValue[] {
