@@ -143,8 +143,14 @@ export function useForm<
       scrollToInvalidFieldOnSubmit: props?.scrollToInvalidFieldOnSubmit ?? true,
     });
 
-  function getErrors() {
-    return ctx.getErrors();
+  function getErrors<TPath extends Path<TInput>>(path?: TPath) {
+    const allErrors = ctx.getErrors();
+
+    if (!path) {
+      return allErrors;
+    }
+
+    return allErrors.filter(e => e.path.startsWith(path));
   }
 
   function getError<TPath extends Path<TInput>>(path: TPath): string | undefined {
