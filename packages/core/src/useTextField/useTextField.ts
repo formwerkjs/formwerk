@@ -14,6 +14,7 @@ import { useLabel, useErrorMessage } from '../a11y';
 import { useFormField, exposeField } from '../useFormField';
 import { FieldTypePrefixes } from '../constants';
 import { StandardSchema } from '../types';
+import { registerTextFieldWithDevtools } from '@dev-tools/index';
 
 export type TextInputDOMType = 'text' | 'password' | 'email' | 'number' | 'tel' | 'url';
 
@@ -172,7 +173,7 @@ export function useTextField(
     );
   });
 
-  return exposeField(
+  const exposedField = exposeField(
     {
       /**
        * Props for the description element.
@@ -201,4 +202,10 @@ export function useTextField(
     },
     field,
   );
+
+  if (__DEV__) {
+    registerTextFieldWithDevtools({ ...exposedField, ...field });
+  }
+
+  return exposedField;
 }

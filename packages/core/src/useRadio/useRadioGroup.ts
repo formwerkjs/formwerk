@@ -22,6 +22,7 @@ import {
 import { useLocale } from '../i18n';
 import { useFormField, exposeField } from '../useFormField';
 import { FieldTypePrefixes } from '../constants';
+import { registerRadioWithDevtools } from '@dev-tools/index';
 
 export interface RadioGroupContext<TValue> {
   name: string;
@@ -268,7 +269,7 @@ export function useRadioGroup<TValue = string>(_props: Reactivify<RadioGroupProp
 
   provide(RadioGroupKey, context);
 
-  return exposeField(
+  const exposedField = exposeField(
     {
       /**
        * Props for the description element.
@@ -293,4 +294,11 @@ export function useRadioGroup<TValue = string>(_props: Reactivify<RadioGroupProp
     },
     field,
   );
+
+  if (__DEV__) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    registerRadioWithDevtools({ ...exposedField, ...field } as any);
+  }
+
+  return exposedField;
 }

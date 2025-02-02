@@ -1,4 +1,4 @@
-import { computed, InjectionKey, MaybeRefOrGetter, onMounted, provide, reactive, readonly, Ref, ref } from 'vue';
+import { computed, InjectionKey, MaybeRefOrGetter, onMounted, provide, reactive, readonly, Ref, ref, watch } from 'vue';
 import type { StandardSchemaV1 } from '@standard-schema/spec';
 import { cloneDeep, isEqual, useUniqId } from '../utils/common';
 import {
@@ -25,6 +25,7 @@ import { FieldTypePrefixes } from '../constants';
 import { appendToFormData, clearFormData } from '../utils/formData';
 import { PartialDeep } from 'type-fest';
 import { createDisabledContext } from '../helpers/createDisabledContext';
+import { registerFormWithDevTools, refreshInspector } from '@dev-tools/index';
 
 export interface FormProps<
   TSchema extends GenericFormSchema,
@@ -296,8 +297,29 @@ export function useForm<
     formProps,
   };
 
-  return {
+  const form = {
     ...baseReturns,
     ...actions,
-  } as typeof baseReturns & FormActions<TInput, TOutput>;
+  };
+
+  if (__DEV__) {
+    // using any until we can figure out how to type this properly
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    registerFormWithDevTools(form as any);
+    watch(
+      () => ({
+        errors: errors.value,
+        isValid: isValid.value,
+        values: values,
+        isSubmitting: isSubmitting.value,
+        submitAttemptsCount: submitAttemptsCount.value,
+      }),
+      refreshInspector,
+      {
+        deep: true,
+      },
+    );
+  }
+
+  return form as typeof baseReturns & FormActions<TInput, TOutput>;
 }
