@@ -82,6 +82,11 @@ export interface TextFieldProps {
   placeholder?: string | undefined;
 
   /**
+   * Autocomplete hint for the input field.
+   */
+  autocomplete?: string | undefined;
+
+  /**
    * Whether the field is required.
    */
   required?: boolean;
@@ -154,7 +159,7 @@ export function useTextField(
   const inputProps = computed<TextInputDOMProps>(() => {
     return withRefCapture(
       {
-        ...propsToValues(props, ['name', 'type', 'placeholder', 'required', 'readonly']),
+        ...propsToValues(props, ['name', 'type', 'placeholder', 'autocomplete', 'required', 'readonly']),
         ...labelledByProps.value,
         ...describedByProps.value,
         ...accessibleErrorProps.value,
