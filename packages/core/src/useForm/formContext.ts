@@ -217,7 +217,22 @@ export function createFormContext<TForm extends FormObject = FormObject, TOutput
   }
 
   function getFieldErrors<TPath extends Path<TForm>>(path: TPath) {
-    return [...(getFromPath<string[]>(errors.value, escapePath(path), []) || [])];
+    // First check for direct errors at this path
+    const directErrors = getFromPath<string[]>(errors.value, escapePath(path), []);
+
+    if (directErrors?.length) {
+      return [...directErrors];
+    }
+
+    // Check if there are any errors in the path prefix
+    const allErrors = getErrors();
+    const pathPrefixErrors = allErrors.filter(e => e.path.startsWith(path));
+
+    if (pathPrefixErrors.length > 0) {
+      return [pathPrefixErrors[0].messages[0]];
+    }
+
+    return [];
   }
 
   function getFieldSubmitErrors<TPath extends Path<TForm>>(path: TPath) {
