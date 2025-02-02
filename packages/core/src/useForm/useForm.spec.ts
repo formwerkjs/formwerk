@@ -1310,4 +1310,47 @@ describe('form validation', () => {
     setFieldTouched('test', true);
     expect(displayError('test')).toBe('error');
   });
+
+  test('when looking up errors for a path, search for prefix matches when direct path is not found', async () => {
+    const { ...form } = useForm({
+      initialValues: {
+        name: 'John Doe',
+        address: {
+          street: '123 Main St',
+          city: 'New York',
+        },
+      },
+    });
+
+    // Set some errors
+    form.setFieldErrors('address.street', "Address street can't be empty");
+    form.setFieldErrors('address.city', "Address city can't be empty");
+
+    expect(form.getError('address.street')).toBe("Address street can't be empty");
+    expect(form.getError('address.city')).toBe("Address city can't be empty");
+    expect(form.getError('address')).toBe("Address street can't be empty");
+  });
+
+  test('When getting errors for a path, return only the errors for that path', async () => {
+    const { ...form } = useForm({
+      initialValues: {
+        name: 'John Doe',
+        address: {
+          street: '123 Main St',
+          city: 'New York',
+        },
+      },
+    });
+
+    // Set some errors
+    form.setFieldErrors('address.street', "Address street can't be empty");
+    form.setFieldErrors('address.city', "Address city can't be empty");
+    form.setFieldErrors('name', "Name can't be empty");
+
+    const allErrors = form.getErrors();
+    const addressErrors = form.getErrors('address');
+
+    expect(allErrors).toHaveLength(3);
+    expect(addressErrors).toHaveLength(2);
+  });
 });
