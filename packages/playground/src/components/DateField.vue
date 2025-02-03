@@ -15,7 +15,7 @@ const {
   direction,
 } = useDateTimeField(props);
 
-const { days, daysOfTheWeek } = useCalendar(calendarProps);
+const { days, daysOfTheWeek, pickerProps, gridProps, buttonProps } = useCalendar(calendarProps);
 </script>
 
 <template>
@@ -29,11 +29,11 @@ const { days, daysOfTheWeek } = useCalendar(calendarProps);
         <DateTimeSegment v-for="segment in segments" v-bind="segment" class="segment" />
       </div>
 
-      <button type="button" popovertarget="calendar">📅</button>
+      <button v-bind="buttonProps">📅</button>
     </div>
 
-    <div id="calendar" popover class="bg-zinc-800 px-4 py-4">
-      <div class="grid grid-cols-7 gap-4" :dir="direction">
+    <div popover class="bg-zinc-800 px-4 py-4" v-bind="pickerProps">
+      <div class="grid grid-cols-7 gap-4" :dir="direction" v-bind="gridProps">
         <div
           v-for="day in daysOfTheWeek"
           :key="day.long"
@@ -45,8 +45,7 @@ const { days, daysOfTheWeek } = useCalendar(calendarProps);
         <CalendarCell
           v-for="day in days"
           v-bind="day"
-          :aria-checked="day.isSelected"
-          class="flex flex-col items-center justify-center aria-checked:bg-emerald-600 aria-checked:text-white aria-checked:font-medium border-2"
+          class="flex flex-col items-center justify-center aria-selected:bg-emerald-600 aria-selected:text-white aria-selected:font-medium border-2 focus:border-emerald-600 focus:outline-none"
           :class="{
             'text-zinc-500': day.isOutsideMonth,
             'text-white': !day.isOutsideMonth,

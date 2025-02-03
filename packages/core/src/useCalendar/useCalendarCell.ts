@@ -1,22 +1,30 @@
 import { Reactivify } from '../types';
-import { normalizeProps } from '../utils/common';
+import { normalizeProps, withRefCapture } from '../utils/common';
 import { CalendarContextKey } from './useCalendar';
-import { computed, defineComponent, h, inject, toValue } from 'vue';
+import { computed, defineComponent, h, inject, shallowRef, toValue } from 'vue';
 import { CalendarDay } from './types';
 
 export function useCalendarCell(_props: Reactivify<CalendarDay>) {
   const props = normalizeProps(_props);
+  const cellEl = shallowRef<HTMLElement>();
   const calendarCtx = inject(CalendarContextKey, null);
-  if (!calendarCtx) {
-    throw new Error('Calendar context not found');
+
+  function handleClick() {
+    calendarCtx?.setDay(toValue(props.value));
   }
 
-  const cellProps = computed(() => ({
-    key: toValue(props.value).toString(),
-    onClick() {
-      calendarCtx.setDay(toValue(props.value));
-    },
-  }));
+  const cellProps = computed(() => {
+    return withRefCapture(
+      {
+        key: toValue(props.value).toString(),
+        onClick: handleClick,
+        'aria-selected': toValue(props.selected),
+        'aria-disabled': toValue(props.disabled),
+        tabindex: toValue(props.disabled) || !toValue(props.focused) ? '-1' : '0',
+      },
+      cellEl,
+    );
+  });
 
   return {
     cellProps,
@@ -24,7 +32,7 @@ export function useCalendarCell(_props: Reactivify<CalendarDay>) {
 }
 
 export const CalendarCell = defineComponent({
-  props: ['value', 'dayOfMonth', 'isToday', 'isSelected', 'isOutsideMonth'],
+  props: ['value', 'dayOfMonth', 'isToday', 'selected', 'isOutsideMonth', 'disabled', 'focused'],
   setup(props) {
     const { cellProps } = useCalendarCell(props);
 
