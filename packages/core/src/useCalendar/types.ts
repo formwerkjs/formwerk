@@ -22,8 +22,16 @@ export type CalendarIdentifier =
 
 export interface CalendarDay {
   value: Temporal.ZonedDateTime;
+
   dayOfMonth: number;
+
   isToday: boolean;
-  isSelected: boolean;
+
   isOutsideMonth: boolean;
+
+  selected: boolean;
+
+  disabled: boolean;
+
+  focused: boolean;
 }

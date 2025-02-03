@@ -20,6 +20,7 @@ export const FieldTypePrefixes = {
   ListBox: 'lb',
   DateTimeField: 'dtf',
   DateTimeSegment: 'dts',
+  Calendar: 'cal',
 } as const;
 
 export const NOOP = () => {};

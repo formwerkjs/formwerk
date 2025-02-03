@@ -1,10 +1,12 @@
-import { computed, InjectionKey, MaybeRefOrGetter, provide, Ref, toValue } from 'vue';
+import { computed, InjectionKey, MaybeRefOrGetter, nextTick, provide, ref, Ref, shallowRef, toValue, watch } from 'vue';
 import { Temporal } from '@js-temporal/polyfill';
 import { CalendarDay, CalendarIdentifier } from './types';
-import { normalizeProps } from '../utils/common';
+import { hasKeyCode, isButtonElement, normalizeProps, useUniqId, withRefCapture } from '../utils/common';
 import { Reactivify } from '../types';
 import { useDateFormatter, useLocale } from '../i18n';
 import { WeekInfo } from '../i18n/getWeekInfo';
+import { FieldTypePrefixes } from '../constants';
+import { usePopoverController } from '../helpers/usePopoverController';
 
 export interface CalendarProps {
   /**
@@ -26,65 +28,218 @@ export interface CalendarProps {
    * The calendar type to use for the calendar, e.g. `gregory`, `islamic-umalqura`, etc.
    */
   calendar?: CalendarIdentifier;
+
+  /**
+   * Whether the calendar is disabled.
+   */
+  disabled?: boolean;
 }
 
 interface CalendarContext {
   locale: Ref<string>;
   weekInfo: Ref<WeekInfo>;
   calendar: Ref<CalendarIdentifier>;
-  currentDate: MaybeRefOrGetter<Temporal.ZonedDateTime>;
+  selectedDate: MaybeRefOrGetter<Temporal.ZonedDateTime>;
+  focusedDay: Ref<Temporal.ZonedDateTime | undefined>;
   setDay: (date: Temporal.ZonedDateTime) => void;
+  setFocusedDay: (date: Temporal.ZonedDateTime) => void;
 }
 
 export const CalendarContextKey: InjectionKey<CalendarContext> = Symbol('CalendarContext');
 
 export function useCalendar(_props: Reactivify<CalendarProps, 'onDaySelected'> = {}) {
   const props = normalizeProps(_props, ['onDaySelected']);
+  const calendarId = useUniqId(FieldTypePrefixes.Calendar);
+  const pickerEl = ref<HTMLElement>();
+  const gridEl = ref<HTMLElement>();
+  const buttonEl = ref<HTMLElement>();
   const { weekInfo, locale, calendar } = useLocale(props.locale, {
     calendar: () => toValue(props.calendar),
   });
 
-  const currentDate = computed(() => toValue(props.currentDate) ?? Temporal.Now.zonedDateTime(calendar.value));
+  const selectedDate = computed(() => toValue(props.currentDate) ?? Temporal.Now.zonedDateTime(calendar.value));
+  const focusedDay = shallowRef<Temporal.ZonedDateTime>();
 
   const context: CalendarContext = {
     weekInfo,
     locale,
     calendar,
-    currentDate,
+    selectedDate,
+    focusedDay,
     setDay: (date: Temporal.ZonedDateTime) => {
       props.onDaySelected?.(date);
+    },
+    setFocusedDay: async (date: Temporal.ZonedDateTime) => {
+      focusedDay.value = date;
+      await nextTick();
+      focusCurrent();
     },
   };
 
   const { daysOfTheWeek } = useDaysOfTheWeek(context);
   const { days } = useCalendarDays(context);
 
+  const buttonProps = computed(() => {
+    const isBtn = isButtonElement(buttonEl.value);
+
+    return withRefCapture(
+      {
+        type: isBtn ? ('button' as const) : undefined,
+        role: isBtn ? undefined : 'button',
+        tabindex: '-1',
+        onClick: () => {
+          isOpen.value = true;
+        },
+      },
+      buttonEl,
+    );
+  });
+
+  const getFocusedOrSelected = () => {
+    if (focusedDay.value) {
+      return focusedDay.value;
+    }
+
+    return selectedDate.value;
+  };
+  const { isOpen } = usePopoverController(pickerEl, { disabled: props.disabled });
+
+  const pickerHandlers = {
+    onKeydown(e: KeyboardEvent) {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        isOpen.value = false;
+        return;
+      }
+
+      if (hasKeyCode(e, 'ArrowLeft')) {
+        e.preventDefault();
+        context.setFocusedDay(getFocusedOrSelected().subtract({ days: 1 }));
+        return;
+      }
+
+      if (hasKeyCode(e, 'ArrowRight')) {
+        e.preventDefault();
+        context.setFocusedDay(getFocusedOrSelected().add({ days: 1 }));
+        return;
+      }
+
+      if (hasKeyCode(e, 'ArrowUp')) {
+        e.preventDefault();
+        context.setFocusedDay(getFocusedOrSelected().subtract({ weeks: 1 }));
+        return;
+      }
+
+      if (hasKeyCode(e, 'ArrowDown')) {
+        e.preventDefault();
+        context.setFocusedDay(getFocusedOrSelected().add({ weeks: 1 }));
+        return;
+      }
+
+      if (hasKeyCode(e, 'Tab')) {
+        isOpen.value = false;
+        return;
+      }
+    },
+  };
+
+  function focusCurrent() {
+    const currentlySelected = gridEl.value?.querySelector('[tabindex="0"]') as HTMLElement | null;
+    if (currentlySelected) {
+      currentlySelected.focus();
+      return;
+    }
+  }
+
+  watch(isOpen, async value => {
+    if (!value) {
+      focusedDay.value = undefined;
+      return;
+    }
+
+    if (!focusedDay.value) {
+      focusedDay.value = Temporal.ZonedDateTime.from(selectedDate.value);
+    }
+
+    await nextTick();
+    focusCurrent();
+  });
+
+  const pickerProps = computed(() => {
+    return withRefCapture(
+      {
+        id: calendarId,
+        ...pickerHandlers,
+      },
+      pickerEl,
+    );
+  });
+
+  const gridProps = computed(() => {
+    return withRefCapture(
+      {
+        id: `${calendarId}-g`,
+        role: 'grid',
+      },
+      gridEl,
+    );
+  });
+
   provide(CalendarContextKey, context);
 
   return {
-    calendar,
-    days,
+    /**
+     * Whether the calendar is open.
+     */
+    isOpen,
+    /**
+     * The props for the picker element.
+     */
+    pickerProps,
+    /**
+     * The props for the grid element.
+     */
+    gridProps,
+    /**
+     * The props for the button element.
+     */
+    buttonProps,
+    /**
+     * The current date.
+     */
+    selectedDate,
+    /**
+     * The grid element.
+     */
+    gridEl,
+    /**
+     * The days of the week.
+     */
     daysOfTheWeek,
+    /**
+     * The days of the month.
+     */
+    days,
   };
 }
 
-function useDaysOfTheWeek({ weekInfo, locale, currentDate }: CalendarContext) {
+function useDaysOfTheWeek({ weekInfo, locale, focusedDay, selectedDate }: CalendarContext) {
   const longFormatter = useDateFormatter(locale, { weekday: 'long' });
   const shortFormatter = useDateFormatter(locale, { weekday: 'short' });
   const narrowFormatter = useDateFormatter(locale, { weekday: 'narrow' });
 
   const daysOfTheWeek = computed(() => {
-    let current = toValue(currentDate);
-    const daysPerWeek = current.daysInWeek;
+    let focused = toValue(focusedDay) ?? toValue(selectedDate);
+    const daysPerWeek = focused.daysInWeek;
     const firstDayOfWeek = weekInfo.value.firstDay;
     // Get the current date's day of week (0-6)
-    const currentDayOfWeek = current.dayOfWeek;
+    const currentDayOfWeek = focused.dayOfWeek;
 
     // Calculate how many days to go back to reach first day of week
     const daysToSubtract = (currentDayOfWeek - firstDayOfWeek + 7) % 7;
 
     // Move current date back to first day of week
-    current = current.subtract({ days: daysToSubtract });
+    focused = focused.subtract({ days: daysToSubtract });
 
     const days: {
       long: string;
@@ -93,9 +248,9 @@ function useDaysOfTheWeek({ weekInfo, locale, currentDate }: CalendarContext) {
     }[] = [];
     for (let i = 0; i < daysPerWeek; i++) {
       days.push({
-        long: longFormatter.value.format(current.add({ days: i }).toPlainDateTime()),
-        short: shortFormatter.value.format(current.add({ days: i }).toPlainDateTime()),
-        narrow: narrowFormatter.value.format(current.add({ days: i }).toPlainDateTime()),
+        long: longFormatter.value.format(focused.add({ days: i }).toPlainDateTime()),
+        short: shortFormatter.value.format(focused.add({ days: i }).toPlainDateTime()),
+        narrow: narrowFormatter.value.format(focused.add({ days: i }).toPlainDateTime()),
       });
     }
 
@@ -105,10 +260,11 @@ function useDaysOfTheWeek({ weekInfo, locale, currentDate }: CalendarContext) {
   return { daysOfTheWeek };
 }
 
-function useCalendarDays({ weekInfo, currentDate, calendar }: CalendarContext) {
+function useCalendarDays({ weekInfo, focusedDay, calendar, selectedDate }: CalendarContext) {
   const days = computed<CalendarDay[]>(() => {
-    const current = toValue(currentDate);
-    const startOfMonth = current.with({ day: 1 });
+    const current = toValue(selectedDate);
+    const focused = toValue(focusedDay) ?? current;
+    const startOfMonth = focused.with({ day: 1 });
 
     const firstDayOfWeek = weekInfo.value.firstDay;
     const startDayOfWeek = startOfMonth.dayOfWeek;
@@ -131,8 +287,11 @@ function useCalendarDays({ weekInfo, currentDate, calendar }: CalendarContext) {
         value: dayOfMonth,
         dayOfMonth: dayOfMonth.day,
         isToday: dayOfMonth.equals(now),
-        isSelected: current.equals(dayOfMonth),
-        isOutsideMonth: dayOfMonth.monthCode !== current.monthCode,
+        selected: current.equals(dayOfMonth),
+        isOutsideMonth: dayOfMonth.monthCode !== focused.monthCode,
+        focused: focused.equals(dayOfMonth),
+        // TODO: Figure out when to disable days
+        disabled: false,
       } as CalendarDay;
     });
   });
