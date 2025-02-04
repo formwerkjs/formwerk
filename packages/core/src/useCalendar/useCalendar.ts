@@ -7,6 +7,7 @@ import { useDateFormatter, useLocale } from '../i18n';
 import { WeekInfo } from '../i18n/getWeekInfo';
 import { FieldTypePrefixes } from '../constants';
 import { usePopoverController } from '../helpers/usePopoverController';
+import { blockEvent } from '../utils/events';
 
 export interface CalendarProps {
   /**
@@ -40,7 +41,7 @@ interface CalendarContext {
   weekInfo: Ref<WeekInfo>;
   calendar: Ref<CalendarIdentifier>;
   selectedDate: MaybeRefOrGetter<Temporal.ZonedDateTime>;
-  focusedDay: Ref<Temporal.ZonedDateTime | undefined>;
+  getFocusedDate: () => Temporal.ZonedDateTime;
   setDay: (date: Temporal.ZonedDateTime) => void;
   setFocusedDay: (date: Temporal.ZonedDateTime) => void;
 }
@@ -59,13 +60,22 @@ export function useCalendar(_props: Reactivify<CalendarProps, 'onDaySelected'> =
 
   const selectedDate = computed(() => toValue(props.currentDate) ?? Temporal.Now.zonedDateTime(calendar.value));
   const focusedDay = shallowRef<Temporal.ZonedDateTime>();
+  const { isOpen } = usePopoverController(pickerEl, { disabled: props.disabled });
+
+  function getFocusedOrSelected() {
+    if (focusedDay.value) {
+      return focusedDay.value;
+    }
+
+    return selectedDate.value;
+  }
 
   const context: CalendarContext = {
     weekInfo,
     locale,
     calendar,
     selectedDate,
-    focusedDay,
+    getFocusedDate: getFocusedOrSelected,
     setDay: (date: Temporal.ZonedDateTime) => {
       props.onDaySelected?.(date);
     },
@@ -76,6 +86,7 @@ export function useCalendar(_props: Reactivify<CalendarProps, 'onDaySelected'> =
     },
   };
 
+  const handleKeyDown = useCalendarKeyboard(context);
   const { daysOfTheWeek } = useDaysOfTheWeek(context);
   const { days } = useCalendarDays(context);
 
@@ -95,44 +106,16 @@ export function useCalendar(_props: Reactivify<CalendarProps, 'onDaySelected'> =
     );
   });
 
-  const getFocusedOrSelected = () => {
-    if (focusedDay.value) {
-      return focusedDay.value;
-    }
-
-    return selectedDate.value;
-  };
-  const { isOpen } = usePopoverController(pickerEl, { disabled: props.disabled });
-
   const pickerHandlers = {
     onKeydown(e: KeyboardEvent) {
+      const handled = handleKeyDown(e);
+      if (handled) {
+        blockEvent(e);
+        return;
+      }
+
       if (e.key === 'Escape') {
-        e.preventDefault();
         isOpen.value = false;
-        return;
-      }
-
-      if (hasKeyCode(e, 'ArrowLeft')) {
-        e.preventDefault();
-        context.setFocusedDay(getFocusedOrSelected().subtract({ days: 1 }));
-        return;
-      }
-
-      if (hasKeyCode(e, 'ArrowRight')) {
-        e.preventDefault();
-        context.setFocusedDay(getFocusedOrSelected().add({ days: 1 }));
-        return;
-      }
-
-      if (hasKeyCode(e, 'ArrowUp')) {
-        e.preventDefault();
-        context.setFocusedDay(getFocusedOrSelected().subtract({ weeks: 1 }));
-        return;
-      }
-
-      if (hasKeyCode(e, 'ArrowDown')) {
-        e.preventDefault();
-        context.setFocusedDay(getFocusedOrSelected().add({ weeks: 1 }));
         return;
       }
 
@@ -223,13 +206,13 @@ export function useCalendar(_props: Reactivify<CalendarProps, 'onDaySelected'> =
   };
 }
 
-function useDaysOfTheWeek({ weekInfo, locale, focusedDay, selectedDate }: CalendarContext) {
+function useDaysOfTheWeek({ weekInfo, locale, getFocusedDate }: CalendarContext) {
   const longFormatter = useDateFormatter(locale, { weekday: 'long' });
   const shortFormatter = useDateFormatter(locale, { weekday: 'short' });
   const narrowFormatter = useDateFormatter(locale, { weekday: 'narrow' });
 
   const daysOfTheWeek = computed(() => {
-    let focused = toValue(focusedDay) ?? toValue(selectedDate);
+    let focused = getFocusedDate();
     const daysPerWeek = focused.daysInWeek;
     const firstDayOfWeek = weekInfo.value.firstDay;
     // Get the current date's day of week (0-6)
@@ -260,10 +243,10 @@ function useDaysOfTheWeek({ weekInfo, locale, focusedDay, selectedDate }: Calend
   return { daysOfTheWeek };
 }
 
-function useCalendarDays({ weekInfo, focusedDay, calendar, selectedDate }: CalendarContext) {
+function useCalendarDays({ weekInfo, getFocusedDate, calendar, selectedDate }: CalendarContext) {
   const days = computed<CalendarDay[]>(() => {
     const current = toValue(selectedDate);
-    const focused = toValue(focusedDay) ?? current;
+    const focused = getFocusedDate();
     const startOfMonth = focused.with({ day: 1 });
 
     const firstDayOfWeek = weekInfo.value.firstDay;
@@ -297,4 +280,98 @@ function useCalendarDays({ weekInfo, focusedDay, calendar, selectedDate }: Calen
   });
 
   return { days };
+}
+
+interface ShortcutDefinition {
+  fn: () => Temporal.ZonedDateTime | undefined;
+  type: 'focus' | 'select';
+}
+
+export function useCalendarKeyboard(context: CalendarContext) {
+  const shortcuts: Partial<Record<string, ShortcutDefinition>> = {
+    ArrowLeft: {
+      fn: () => context.getFocusedDate().subtract({ days: 1 }),
+      type: 'focus',
+    },
+    ArrowRight: {
+      fn: () => context.getFocusedDate().add({ days: 1 }),
+      type: 'focus',
+    },
+    ArrowUp: {
+      fn: () => context.getFocusedDate().subtract({ weeks: 1 }),
+      type: 'focus',
+    },
+    ArrowDown: {
+      fn: () => context.getFocusedDate().add({ weeks: 1 }),
+      type: 'focus',
+    },
+    Enter: {
+      fn: () => context.getFocusedDate(),
+      type: 'select',
+    },
+    PageDown: {
+      fn: () => context.getFocusedDate().add({ months: 1 }),
+      type: 'focus',
+    },
+    PageUp: {
+      fn: () => context.getFocusedDate().subtract({ months: 1 }),
+      type: 'focus',
+    },
+    Home: {
+      fn: () => {
+        const current = context.getFocusedDate();
+        if (current.day === 1) {
+          return current.subtract({ months: 1 }).with({ day: 1 });
+        }
+
+        return current.with({ day: 1 });
+      },
+      type: 'focus',
+    },
+    End: {
+      type: 'focus',
+      fn: () => {
+        const current = context.getFocusedDate();
+        if (current.day === current.daysInMonth) {
+          return current.add({ months: 1 }).with({ day: 1 });
+        }
+
+        return current.with({ day: current.daysInMonth });
+      },
+    },
+    Escape: {
+      type: 'focus',
+      fn: () => {
+        const selected = toValue(context.selectedDate).toPlainDateTime();
+        const focused = context.getFocusedDate().toPlainDateTime();
+        if (!selected.equals(focused)) {
+          return Temporal.ZonedDateTime.from(toValue(context.selectedDate));
+        }
+
+        return undefined;
+      },
+    },
+  };
+
+  function handleKeyDown(e: KeyboardEvent): boolean {
+    const shortcut = shortcuts[e.key];
+    if (!shortcut) {
+      return false;
+    }
+
+    const newDate = shortcut.fn();
+    if (!newDate) {
+      return false;
+    }
+
+    if (shortcut.type === 'focus') {
+      context.setFocusedDay(newDate);
+    } else {
+      context.setDay(newDate);
+    }
+
+    return true;
+  }
+
+  return handleKeyDown;
 }
