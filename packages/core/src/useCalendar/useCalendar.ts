@@ -34,6 +34,16 @@ export interface CalendarProps {
    * Whether the calendar is disabled.
    */
   disabled?: boolean;
+
+  /**
+   * The label for the next month button.
+   */
+  nextMonthButtonLabel?: string;
+
+  /**
+   * The label for the previous month button.
+   */
+  previousMonthButtonLabel?: string;
 }
 
 interface CalendarContext {
@@ -54,10 +64,12 @@ export function useCalendar(_props: Reactivify<CalendarProps, 'onDaySelected'> =
   const pickerEl = ref<HTMLElement>();
   const gridEl = ref<HTMLElement>();
   const buttonEl = ref<HTMLElement>();
+  const calendarLabelEl = ref<HTMLElement>();
   const { weekInfo, locale, calendar } = useLocale(props.locale, {
     calendar: () => toValue(props.calendar),
   });
 
+  const formatter = useDateFormatter(locale, { month: 'long', year: 'numeric' });
   const selectedDate = computed(() => toValue(props.currentDate) ?? Temporal.Now.zonedDateTime(calendar.value));
   const focusedDay = shallowRef<Temporal.ZonedDateTime>();
   const { isOpen } = usePopoverController(pickerEl, { disabled: props.disabled });
@@ -168,6 +180,58 @@ export function useCalendar(_props: Reactivify<CalendarProps, 'onDaySelected'> =
     );
   });
 
+  const monthYearLabelProps = computed(() => {
+    return withRefCapture(
+      {
+        id: `${calendarId}-label`,
+        'aria-live': 'polite' as const,
+      },
+      calendarLabelEl,
+    );
+  });
+
+  const nextMonthBtn = ref<HTMLElement>();
+
+  const nextMonthButtonProps = computed(() => {
+    const isBtn = isButtonElement(nextMonthBtn.value);
+
+    return withRefCapture(
+      {
+        id: `${calendarId}-next-month`,
+        type: isBtn ? ('button' as const) : undefined,
+        role: isBtn ? undefined : 'button',
+        tabindex: '-1',
+        onClick: () => {
+          context.setFocusedDay(context.getFocusedDate().add({ months: 1 }));
+        },
+      },
+      nextMonthBtn,
+    );
+  });
+
+  const previousMonthBtn = ref<HTMLElement>();
+
+  const previousMonthButtonProps = computed(() => {
+    const isBtn = isButtonElement(previousMonthBtn.value);
+
+    return withRefCapture(
+      {
+        id: `${calendarId}-previous-month`,
+        type: isBtn ? ('button' as const) : undefined,
+        role: isBtn ? undefined : 'button',
+        tabindex: '-1',
+        onClick: () => {
+          context.setFocusedDay(context.getFocusedDate().subtract({ months: 1 }));
+        },
+      },
+      previousMonthBtn,
+    );
+  });
+
+  const monthYearLabel = computed(() => {
+    return formatter.value.format(context.getFocusedDate().toPlainDateTime());
+  });
+
   provide(CalendarContextKey, context);
 
   return {
@@ -203,6 +267,22 @@ export function useCalendar(_props: Reactivify<CalendarProps, 'onDaySelected'> =
      * The days of the month.
      */
     days,
+    /**
+     * The props for the month and year label element.
+     */
+    monthYearLabelProps,
+    /**
+     * The props for the next month button.
+     */
+    nextMonthButtonProps,
+    /**
+     * The props for the previous month button.
+     */
+    previousMonthButtonProps,
+    /**
+     * The month and year label.
+     */
+    monthYearLabel,
   };
 }
 
@@ -256,11 +336,8 @@ function useCalendarDays({ weekInfo, getFocusedDate, calendar, selectedDate }: C
     // Move to first day of week
     const firstDay = startOfMonth.subtract({ days: daysToSubtract });
 
-    // Calculate total days needed to fill grid
-    const daysInMonth = startOfMonth.daysInMonth;
-    const totalDays = daysInMonth + daysToSubtract;
-    const remainingDays = 7 - (totalDays % 7);
-    const gridDays = totalDays + (remainingDays === 7 ? 0 : remainingDays);
+    // Always use 6 weeks (42 days) for consistent layout
+    const gridDays = 42;
     const now = Temporal.Now.zonedDateTime(calendar.value);
 
     return Array.from({ length: gridDays }, (_, i) => {

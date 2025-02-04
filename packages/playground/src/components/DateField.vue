@@ -15,7 +15,17 @@ const {
   direction,
 } = useDateTimeField(props);
 
-const { days, daysOfTheWeek, pickerProps, gridProps, buttonProps } = useCalendar(calendarProps);
+const {
+  days,
+  daysOfTheWeek,
+  pickerProps,
+  gridProps,
+  buttonProps,
+  nextMonthButtonProps,
+  previousMonthButtonProps,
+  monthYearLabelProps: calendarLabelProps,
+  monthYearLabel,
+} = useCalendar(calendarProps);
 </script>
 
 <template>
@@ -33,6 +43,16 @@ const { days, daysOfTheWeek, pickerProps, gridProps, buttonProps } = useCalendar
     </div>
 
     <div popover class="bg-zinc-800 px-4 py-4" v-bind="pickerProps">
+      <div class="flex items-center justify-between text-white my-4">
+        <button v-bind="previousMonthButtonProps">⬆️</button>
+
+        <span v-bind="calendarLabelProps">
+          {{ monthYearLabel }}
+        </span>
+
+        <button v-bind="nextMonthButtonProps">⬇️</button>
+      </div>
+
       <div class="grid grid-cols-7 gap-4" :dir="direction" v-bind="gridProps">
         <div
           v-for="day in daysOfTheWeek"
