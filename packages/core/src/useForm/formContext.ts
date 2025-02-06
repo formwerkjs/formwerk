@@ -41,12 +41,11 @@ export interface BaseFormContext<TForm extends FormObject = FormObject> {
   setInitialValues: (newValues: Partial<TForm>, opts?: SetValueOptions) => void;
   setInitialTouched: (newTouched: Partial<TouchedSchema<TForm>>, opts?: SetValueOptions) => void;
   setFieldDisabled<TPath extends Path<TForm>>(path: TPath, value: boolean): void;
-  getFieldErrors<TPath extends Path<TForm>>(path: TPath): string[];
+  getErrors<TPath extends Path<TForm>>(path?: TPath): string[];
   getFieldSubmitErrors<TPath extends Path<TForm>>(path: TPath): string[];
   setErrors<TPath extends Path<TForm>>(path: TPath, message: Arrayable<string>): void;
   setFieldSubmitErrors<TPath extends Path<TForm>>(path: TPath, message: Arrayable<string>): void;
   getValidationMode(): FormValidationMode;
-  getErrors: <TPath extends Path<TForm>>(path?: TPath) => IssueCollection[];
   getSubmitErrors: () => IssueCollection[];
   clearErrors: (path?: string) => void;
   clearSubmitErrors: (path?: string) => void;
@@ -158,18 +157,6 @@ export function createFormContext<TForm extends FormObject = FormObject, TOutput
     return typeof value === 'boolean' ? value : false;
   }
 
-  function getErrors<TPath extends Path<TForm>>(path?: TPath): IssueCollection[] {
-    const allErrors = Object.entries(errors.value)
-      .map<IssueCollection>(([key, value]) => ({ path: key, messages: value as string[] }))
-      .filter(e => e.messages.length > 0);
-
-    if (!path) {
-      return allErrors;
-    }
-
-    return allErrors.filter(e => e.path.startsWith(path));
-  }
-
   function getSubmitErrors(): IssueCollection[] {
     return Object.entries(submitErrors.value)
       .map<IssueCollection>(([key, value]) => ({ path: key, messages: value as string[] }))
@@ -222,20 +209,20 @@ export function createFormContext<TForm extends FormObject = FormObject, TOutput
     });
   }
 
-  function getFieldErrors<TPath extends Path<TForm>>(path: TPath) {
-    // First check for direct errors at this path
-    const directErrors = getFromPath<string[]>(errors.value, escapePath(path), []);
+  function getErrors<TPath extends Path<TForm>>(path?: TPath) {
+    const allErrors = Object.entries(errors.value)
+      .map<IssueCollection>(([key, value]) => ({ path: key, messages: value as string[] }))
+      .filter(e => e.messages.length > 0);
 
-    if (directErrors?.length) {
-      return [...directErrors];
+    if (!path) {
+      return allErrors.map(e => e.messages).flat();
     }
 
-    // Check if there are any errors in the path prefix
-    const allErrors = getErrors();
+    // // Check if there are any errors in the path prefix
     const pathPrefixErrors = allErrors.filter(e => e.path.startsWith(path));
 
     if (pathPrefixErrors.length > 0) {
-      return [pathPrefixErrors[0].messages[0]];
+      return pathPrefixErrors.map(e => e.messages).flat();
     }
 
     return [];
@@ -328,9 +315,8 @@ export function createFormContext<TForm extends FormObject = FormObject, TOutput
     setFieldDisabled,
     setErrors,
     setFieldSubmitErrors,
-    getFieldErrors,
-    getFieldSubmitErrors,
     getErrors,
+    getFieldSubmitErrors,
     getSubmitErrors,
     clearErrors,
     clearSubmitErrors,

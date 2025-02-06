@@ -176,7 +176,7 @@ export function useFormField<TValue = unknown>(opts?: Partial<FormFieldOptions<T
           value: cloneDeep(oldPath ? tf.getValue(oldPath) : pathlessValue.value),
           touched: oldPath ? tf.isTouched(oldPath) : pathlessTouched.value,
           disabled: isDisabled.value,
-          errors: [...(oldPath ? tf.getFieldErrors(oldPath) : pathlessValidity.errors.value)],
+          errors: [...(oldPath ? tf.getErrors(oldPath) : pathlessValidity.errors.value)],
         };
       });
     }
@@ -321,7 +321,7 @@ function initFormPathIfNecessary(
       value: initialValue ?? form.getFieldInitialValue(path),
       touched: initialTouched,
       disabled: toValue(isDisabled),
-      errors: [...tf.getFieldErrors(path)],
+      errors: [...tf.getErrors(path)],
     }));
   });
 }
@@ -331,7 +331,7 @@ function createFormValidityRef(getPath: Getter<string | undefined>, form: FormCo
   const errors = computed(() => {
     const path = getPath();
 
-    return path ? form.getFieldErrors(path) : pathlessValidity.errors.value;
+    return path ? form.getErrors(path) : pathlessValidity.errors.value;
   }) as Ref<string[]>;
 
   const submitErrors = computed(() => {

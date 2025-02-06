@@ -149,7 +149,7 @@ export function useFormGroup<TInput extends FormObject = FormObject, TOutput ext
   });
 
   function getError(name: string) {
-    return form?.getFieldErrors(prefixPath(name) ?? '')?.[0];
+    return form?.getErrors(prefixPath(name) ?? '')?.[0];
   }
 
   function displayError(name: string) {

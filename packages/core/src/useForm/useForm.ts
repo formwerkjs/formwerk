@@ -137,7 +137,7 @@ export function useForm<
     });
 
   function getError<TPath extends Path<TInput>>(path: TPath): string | undefined {
-    return ctx.isPathDisabled(path) ? undefined : ctx.getFieldErrors(path)[0];
+    return ctx.isPathDisabled(path) ? undefined : ctx.getErrors(path)[0];
   }
 
   function getSubmitError<TPath extends Path<TInput>>(path: TPath): string | undefined {
