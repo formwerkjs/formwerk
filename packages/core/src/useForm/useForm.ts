@@ -1,6 +1,6 @@
 import { computed, InjectionKey, MaybeRefOrGetter, onMounted, provide, reactive, readonly, Ref, ref } from 'vue';
 import type { StandardSchemaV1 } from '@standard-schema/spec';
-import { cloneDeep, isEqual, useUniqId } from '../utils/common';
+import { cloneDeep, useUniqId } from '../utils/common';
 import {
   FormObject,
   MaybeAsync,
@@ -118,10 +118,6 @@ export function useForm<
     },
   });
 
-  const isDirty = computed(() => {
-    return !isEqual(values, valuesSnapshot.originals.value);
-  });
-
   const isValid = computed(() => {
     return !ctx.hasErrors();
   });
@@ -204,10 +200,6 @@ export function useForm<
      */
     isSubmitting,
     /**
-     * Whether the form is dirty.
-     */
-    isDirty,
-    /**
      * Whether the form is valid.
      */
     isValid,
@@ -228,9 +220,9 @@ export function useForm<
      */
     isSubmitAttempted,
     /**
-     * Whether the specified field is dirty.
+     * Whether the path is dirty.
      */
-    isFieldDirty: ctx.isFieldDirty,
+    isDirty: ctx.isDirty,
     /**
      * Sets the value of a field.
      */

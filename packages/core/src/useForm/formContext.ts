@@ -33,7 +33,7 @@ export interface BaseFormContext<TForm extends FormObject = FormObject> {
   unsetPath<TPath extends Path<TForm>>(path: TPath): void;
   setFieldTouched<TPath extends Path<TForm>>(path: TPath, value: boolean): void;
   isTouched<TPath extends Path<TForm>>(path?: TPath): boolean;
-  isFieldDirty<TPath extends Path<TForm>>(path: TPath): boolean;
+  isDirty<TPath extends Path<TForm>>(path?: TPath): boolean;
   isFieldSet<TPath extends Path<TForm>>(path: TPath): boolean;
   getFieldInitialValue<TPath extends Path<TForm>>(path: TPath): PathValue<TForm, TPath>;
   getFieldOriginalValue<TPath extends Path<TForm>>(path: TPath): PathValue<TForm, TPath>;
@@ -111,7 +111,11 @@ export function createFormContext<TForm extends FormObject = FormObject, TOutput
     return !!value;
   }
 
-  function isFieldDirty<TPath extends Path<TForm>>(path: TPath) {
+  function isDirty<TPath extends Path<TForm>>(path?: TPath) {
+    if (!path) {
+      return !isEqual(values, snapshots.values.originals.value);
+    }
+
     return !isEqual(getFieldValue(path), getFieldOriginalValue(path));
   }
 
@@ -318,7 +322,7 @@ export function createFormContext<TForm extends FormObject = FormObject, TOutput
     setFieldTouched,
     getFieldValue,
     isTouched,
-    isFieldDirty,
+    isDirty,
     isFieldSet,
     destroyPath,
     unsetPath,

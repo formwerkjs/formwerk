@@ -785,11 +785,11 @@ describe('form dirty state', () => {
       return useForm({ initialValues: { foo: 'bar' } });
     });
 
-    expect(isDirty.value).toBe(false);
+    expect(isDirty()).toBe(false);
     setFieldValue('foo', 'baz');
-    expect(isDirty.value).toBe(true);
+    expect(isDirty()).toBe(true);
     reset();
-    expect(isDirty.value).toBe(false);
+    expect(isDirty()).toBe(false);
   });
 
   test('pathless fields do not contribute their dirty state to the form', async () => {
@@ -802,9 +802,9 @@ describe('form dirty state', () => {
       },
     );
 
-    expect(form.isDirty.value).toBe(false);
+    expect(form.isDirty()).toBe(false);
     form.setFieldValue('field', 'bar');
-    expect(form.isDirty.value).toBe(true);
+    expect(form.isDirty()).toBe(true);
 
     expect(field.isDirty.value).toBe(false);
     field.setValue('foo');
@@ -812,7 +812,7 @@ describe('form dirty state', () => {
 
     form.setFieldValue('field', 'foo');
     field.setValue('bar');
-    expect(form.isDirty.value).toBe(false);
+    expect(form.isDirty()).toBe(false);
     expect(field.isDirty.value).toBe(false);
   });
 
@@ -827,10 +827,10 @@ describe('form dirty state', () => {
     );
 
     expect(field.isDirty.value).toBe(false);
-    expect(form.isDirty.value).toBe(false);
+    expect(form.isDirty()).toBe(false);
     field.setValue('bar');
     expect(field.isDirty.value).toBe(true);
-    expect(form.isDirty.value).toBe(true);
+    expect(form.isDirty()).toBe(true);
     field.setValue('foo');
     expect(field.isDirty.value).toBe(false);
   });
@@ -845,13 +845,13 @@ describe('form dirty state', () => {
       },
     );
 
-    expect(form.isFieldDirty('foo')).toBe(false);
-    expect(form.isFieldDirty('field')).toBe(false);
+    expect(form.isDirty('foo')).toBe(false);
+    expect(form.isDirty('field')).toBe(false);
 
     form.setFieldValue('foo', 'baz');
     form.setFieldValue('field', 'something');
-    expect(form.isFieldDirty('foo')).toBe(true);
-    expect(form.isFieldDirty('field')).toBe(true);
+    expect(form.isDirty('foo')).toBe(true);
+    expect(form.isDirty('field')).toBe(true);
   });
 });
 
