@@ -141,7 +141,7 @@ export function useFormGroup<TInput extends FormObject = FormObject, TOutput ext
   }
 
   const isValid = computed(() => getErrors().length === 0);
-  const isTouched = computed(() => form?.isFieldTouched(getPath()) ?? false);
+  const isTouched = computed(() => form?.isTouched(getPath()) ?? false);
   const isDirty = computed(() => {
     const path = getPath();
 
@@ -156,7 +156,7 @@ export function useFormGroup<TInput extends FormObject = FormObject, TOutput ext
     const msg = getError(name);
     const path = prefixPath(name) ?? '';
 
-    return form?.isFieldTouched(path) ? msg : undefined;
+    return form?.isTouched(path) ? msg : undefined;
   }
 
   function prefixPath(path: string | undefined) {

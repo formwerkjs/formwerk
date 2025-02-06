@@ -51,7 +51,7 @@ export interface FormTransactionManager<TForm extends FormObject> {
     tr: (
       formCtx: Pick<
         BaseFormContext<TForm>,
-        'getValues' | 'getFieldValue' | 'isFieldSet' | 'isFieldTouched' | 'getFieldErrors'
+        'getValues' | 'getFieldValue' | 'isFieldSet' | 'isTouched' | 'getFieldErrors'
       >,
       codes: typeof TransactionKind,
     ) => FormTransaction<TForm> | null,

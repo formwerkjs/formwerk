@@ -19,7 +19,6 @@ import { createFormContext, BaseFormContext } from './formContext';
 import { FormTransactionManager, useFormTransactions } from './useFormTransactions';
 import { FormActions, useFormActions } from './useFormActions';
 import { useFormSnapshots } from './formSnapshot';
-import { findLeaf } from '../utils/path';
 import { getConfig } from '../config';
 import { FieldTypePrefixes } from '../constants';
 import { appendToFormData, clearFormData } from '../utils/formData';
@@ -119,10 +118,6 @@ export function useForm<
     },
   });
 
-  const isTouched = computed(() => {
-    return !!findLeaf(touched, l => l === true);
-  });
-
   const isDirty = computed(() => {
     return !isEqual(values, valuesSnapshot.originals.value);
   });
@@ -160,7 +155,7 @@ export function useForm<
   }
 
   function displayError(path: Path<TInput>) {
-    return ctx.isFieldTouched(path) && !ctx.isPathDisabled(path) ? getError(path) : undefined;
+    return ctx.isTouched(path) && !ctx.isPathDisabled(path) ? getError(path) : undefined;
   }
 
   provide(FormKey, {
@@ -209,10 +204,6 @@ export function useForm<
      */
     isSubmitting,
     /**
-     * Whether the form is touched.
-     */
-    isTouched,
-    /**
      * Whether the form is dirty.
      */
     isDirty,
@@ -249,9 +240,9 @@ export function useForm<
      */
     getFieldValue: ctx.getFieldValue,
     /**
-     * Whether the specified field is touched.
+     * Whether the path is touched.
      */
-    isFieldTouched: ctx.isFieldTouched,
+    isTouched: ctx.isTouched,
     /**
      * Sets the touched state of a field.
      */
