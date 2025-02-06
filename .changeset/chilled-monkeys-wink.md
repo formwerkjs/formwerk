@@ -1,5 +1,5 @@
 ---
-'@formwerk/core': patch
+'@formwerk/core': minor
 ---
 
 Use consistent API for query/set methods
