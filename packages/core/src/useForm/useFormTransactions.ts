@@ -90,8 +90,8 @@ export function useFormTransactions<TForm extends FormObject>(form: BaseFormCont
 
     for (const tr of trs) {
       if (tr.kind === TransactionKind.SET_PATH) {
-        form.setFieldValue(tr.path, tr.value);
         form.setFieldTouched(tr.path, tr.touched);
+        form.setValue(tr.path, tr.value);
         form.setFieldDisabled(tr.path, tr.disabled);
         form.setFieldErrors(tr.path, tr.errors);
         continue;
@@ -109,7 +109,7 @@ export function useFormTransactions<TForm extends FormObject>(form: BaseFormCont
 
       if (tr.kind === TransactionKind.INIT_PATH) {
         const formInit = form.getFieldInitialValue(tr.path);
-        form.setFieldValue(tr.path, tr.value ?? formInit);
+        form.setValue(tr.path, tr.value ?? formInit);
         form.setFieldDisabled(tr.path, tr.disabled);
         form.setFieldTouched(tr.path, tr.touched);
         form.unsetInitialValue(tr.path);

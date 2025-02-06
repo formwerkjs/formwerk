@@ -275,7 +275,7 @@ function createFormValueRef<TValue = unknown>(
     const path = getPath();
     pathlessValue.value = value;
     if (path) {
-      form.setFieldValue(path, value);
+      form.setValue(path, value);
     }
   }
 

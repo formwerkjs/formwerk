@@ -228,7 +228,7 @@ export function useForm<
     /**
      * Sets the value of a field.
      */
-    setFieldValue: ctx.setFieldValue,
+    setValue: ctx.setValue,
     /**
      * Gets the value of a field.
      */

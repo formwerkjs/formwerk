@@ -28,7 +28,7 @@ export type FormValidationMode = 'aggregate' | 'schema';
 export interface BaseFormContext<TForm extends FormObject = FormObject> {
   id: string;
   getFieldValue<TPath extends Path<TForm>>(path: TPath): PathValue<TForm, TPath>;
-  setFieldValue<TPath extends Path<TForm>>(path: TPath, value: PathValue<TForm, TPath> | undefined): void;
+  setValue<TPath extends Path<TForm>>(path: TPath, value: PathValue<TForm, TPath> | undefined): void;
   destroyPath<TPath extends Path<TForm>>(path: TPath): void;
   unsetPath<TPath extends Path<TForm>>(path: TPath): void;
   setFieldTouched<TPath extends Path<TForm>>(path: TPath, value: boolean): void;
@@ -85,7 +85,7 @@ export function createFormContext<TForm extends FormObject = FormObject, TOutput
   touched,
   snapshots,
 }: FormContextCreateOptions<TForm, TOutput>): BaseFormContext<TForm> {
-  function setFieldValue<TPath extends Path<TForm>>(path: TPath, value: PathValue<TForm, TPath> | undefined) {
+  function setValue<TPath extends Path<TForm>>(path: TPath, value: PathValue<TForm, TPath> | undefined) {
     setInPath(values, path, cloneDeep(value));
   }
 
@@ -218,7 +218,7 @@ export function createFormContext<TForm extends FormObject = FormObject, TOutput
 
     // We escape paths automatically
     Object.keys(newValues).forEach(key => {
-      setFieldValue(escapePath(key) as Path<TForm>, newValues[key] as PathValue<TForm, Path<TForm>>);
+      setValue(escapePath(key) as Path<TForm>, newValues[key] as PathValue<TForm, Path<TForm>>);
     });
   }
 
@@ -309,7 +309,7 @@ export function createFormContext<TForm extends FormObject = FormObject, TOutput
   return {
     id,
     getValues: () => cloneDeep(values),
-    setFieldValue,
+    setValue,
     getFieldInitialValue,
     setFieldTouched,
     getFieldValue,
