@@ -240,7 +240,7 @@ export function useForm<
     /**
      * Sets the touched state of a field.
      */
-    setFieldTouched: ctx.setFieldTouched,
+    setTouched: ctx.setTouched,
     /**
      * Sets the errors for a field.
      */

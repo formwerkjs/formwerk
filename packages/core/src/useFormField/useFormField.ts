@@ -247,7 +247,7 @@ function createFormTouchedRef(getPath: Getter<string | undefined>, form: FormCon
     pathlessTouched.value = value;
     // Only update it if the value is actually different, this avoids unnecessary path traversal/creation
     if (path && isDifferent) {
-      form.setFieldTouched(path, value);
+      form.setTouched(path, value);
     }
   }
 

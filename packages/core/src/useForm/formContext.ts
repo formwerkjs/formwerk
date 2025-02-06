@@ -31,7 +31,7 @@ export interface BaseFormContext<TForm extends FormObject = FormObject> {
   setValue<TPath extends Path<TForm>>(path: TPath, value: PathValue<TForm, TPath> | undefined): void;
   destroyPath<TPath extends Path<TForm>>(path: TPath): void;
   unsetPath<TPath extends Path<TForm>>(path: TPath): void;
-  setFieldTouched<TPath extends Path<TForm>>(path: TPath, value: boolean): void;
+  setTouched<TPath extends Path<TForm>>(path: TPath, value: boolean): void;
   isTouched<TPath extends Path<TForm>>(path?: TPath): boolean;
   isDirty<TPath extends Path<TForm>>(path?: TPath): boolean;
   isFieldSet<TPath extends Path<TForm>>(path: TPath): boolean;
@@ -89,7 +89,7 @@ export function createFormContext<TForm extends FormObject = FormObject, TOutput
     setInPath(values, path, cloneDeep(value));
   }
 
-  function setFieldTouched<TPath extends Path<TForm>>(path: TPath, value: boolean) {
+  function setTouched<TPath extends Path<TForm>>(path: TPath, value: boolean) {
     setInPath(touched, path, value, true);
   }
 
@@ -253,7 +253,7 @@ export function createFormContext<TForm extends FormObject = FormObject, TOutput
     setInPath(submitErrors.value, escapePath(path), message ? normalizeArrayable(message) : []);
   }
 
-  function setTouched(newTouched: Partial<TouchedSchema<TForm>>, opts?: SetValueOptions) {
+  function updateTouched(newTouched: Partial<TouchedSchema<TForm>>, opts?: SetValueOptions) {
     if (opts?.behavior === 'merge') {
       merge(touched, newTouched);
 
@@ -299,7 +299,7 @@ export function createFormContext<TForm extends FormObject = FormObject, TOutput
   }
 
   function revertTouched() {
-    setTouched(cloneDeep(snapshots.touched.originals.value), { behavior: 'replace' });
+    updateTouched(cloneDeep(snapshots.touched.originals.value), { behavior: 'replace' });
   }
 
   function getValidationMode(): FormValidationMode {
@@ -311,7 +311,7 @@ export function createFormContext<TForm extends FormObject = FormObject, TOutput
     getValues: () => cloneDeep(values),
     setValue,
     getFieldInitialValue,
-    setFieldTouched,
+    setTouched,
     getFieldValue,
     isTouched,
     isDirty,

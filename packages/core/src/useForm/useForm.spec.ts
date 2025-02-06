@@ -102,22 +102,22 @@ describe('form values', () => {
 
 describe('form touched', () => {
   test('can set field touched state', async () => {
-    const { setFieldTouched, isTouched } = await renderSetup(() => {
+    const { setTouched, isTouched } = await renderSetup(() => {
       return useForm({ initialValues: { foo: 'bar' } });
     });
 
     expect(isTouched('foo')).toBe(false);
-    setFieldTouched('foo', true);
+    setTouched('foo', true);
     expect(isTouched('foo')).toBe(true);
   });
 
   test('can set nested field touched state', async () => {
-    const { setFieldTouched, isTouched } = await renderSetup(() => {
+    const { setTouched, isTouched } = await renderSetup(() => {
       return useForm<any>();
     });
 
     expect(isTouched('foo.bar')).toBe(false);
-    setFieldTouched('foo.bar', true);
+    setTouched('foo.bar', true);
     expect(isTouched('foo.bar')).toBe(true);
   });
 
@@ -130,14 +130,14 @@ describe('form touched', () => {
   });
 
   test('has a form-level computed isTouched state', async () => {
-    const { isTouched, setFieldTouched } = await renderSetup(() => {
+    const { isTouched, setTouched } = await renderSetup(() => {
       return useForm({ initialValues: { foo: 'bar' } });
     });
 
     expect(isTouched()).toBe(false);
-    setFieldTouched('foo', true);
+    setTouched('foo', true);
     expect(isTouched()).toBe(true);
-    setFieldTouched('foo', false);
+    setTouched('foo', false);
     expect(isTouched()).toBe(false);
   });
 
@@ -160,19 +160,19 @@ describe('form touched', () => {
      * internally through the `useFormField` hook, which is not used in this test.
      * Order of operations is important here.
      */
-    setFieldTouched('someConfig.nestedField1', false);
-    setFieldTouched('someConfig.nestedField2', false);
-    setFieldTouched('someConfig', false);
+    setTouched('someConfig.nestedField1', false);
+    setTouched('someConfig.nestedField2', false);
+    setTouched('someConfig', false);
 
     // Touch the parent - should touch all children
-    setFieldTouched('someConfig', true);
+    setTouched('someConfig', true);
     expect(isTouched('someConfig')).toBe(true);
     expect(isTouched('someConfig.nestedField1')).toBe(true);
     expect(isTouched('someConfig.nestedField2')).toBe(true);
 
     // Change someConfig to a boolean (discriminated union case)
-    setFieldTouched('someConfig', true);
     setValue('someConfig', false);
+    setTouched('someConfig', true);
 
     // Should still work as expected with boolean value
     expect(isTouched('someConfig')).toBe(true);
@@ -180,7 +180,7 @@ describe('form touched', () => {
   });
 
   test('handles nested touched states independently', async () => {
-    const { setFieldTouched, isTouched } = await renderSetup(() => {
+    const { setTouched, isTouched } = await renderSetup(() => {
       return useForm<any>({
         initialValues: {
           parent: {
@@ -192,20 +192,20 @@ describe('form touched', () => {
     });
 
     // Touch just one nested field
-    setFieldTouched('parent.child1', true);
+    setTouched('parent.child1', true);
     expect(isTouched('parent.child1')).toBe(true);
     expect(isTouched('parent.child2')).toBe(false);
     expect(isTouched('parent')).toBe(true); // parent should be considered touched
 
     // Untouching parent should untouching children
-    setFieldTouched('parent', false);
+    setTouched('parent', false);
     expect(isTouched('parent')).toBe(false);
     expect(isTouched('parent.child1')).toBe(false);
     expect(isTouched('parent.child2')).toBe(false);
   });
 
   test('handles escaped paths correctly for touched state', async () => {
-    const { setFieldTouched, isTouched } = await renderSetup(() => {
+    const { setTouched, isTouched } = await renderSetup(() => {
       return useForm<any>({
         initialValues: {
           parent: {
@@ -224,11 +224,11 @@ describe('form touched', () => {
      * internally through the `useFormField` hook, which is not used in this test.
      * Order of operations is important here.
      */
-    setFieldTouched('[parent.child.nested]', false);
-    setFieldTouched('[parent.child]', false);
+    setTouched('[parent.child.nested]', false);
+    setTouched('[parent.child]', false);
 
     // Using escaped path notation
-    setFieldTouched('[parent.child]', true);
+    setTouched('[parent.child]', true);
     expect(isTouched('[parent.child]')).toBe(true);
     expect(isTouched('[parent.child.nested]')).toBe(false);
 
@@ -243,8 +243,8 @@ describe('form reset', () => {
       return useForm({ initialValues: { foo: 'bar' }, initialTouched: { foo: true } });
     });
 
-    setFieldTouched('foo', false);
     setValue('foo', '');
+    setTouched('foo', false);
     expect(values).toEqual({ foo: '' });
     expect(isTouched('foo')).toBe(false);
     reset();
@@ -253,7 +253,6 @@ describe('form reset', () => {
   });
 
   test('can reset form values and touched to a new state', async () => {
-    const { values, reset, setFieldValue, isTouched, setFieldTouched } = await renderSetup(() => {
     const { values, reset, setValue, isTouched, setTouched } = await renderSetup(() => {
       return useForm({ initialValues: { foo: 'bar' } });
     });
@@ -261,7 +260,7 @@ describe('form reset', () => {
     reset({ values: { foo: 'baz' }, touched: { foo: true } });
     expect(values).toEqual({ foo: 'baz' });
     expect(isTouched('foo')).toBe(true);
-    setFieldTouched('foo', false);
+    setTouched('foo', false);
     setValue('foo', '');
     reset();
     expect(values).toEqual({ foo: 'baz' });
@@ -1302,13 +1301,13 @@ describe('form validation', () => {
   });
 
   test('displays errors if the field is touched', async () => {
-    const { setFieldTouched, displayError, setFieldErrors } = await renderSetup(() => {
+    const { setTouched, displayError, setErrors } = await renderSetup(() => {
       return useForm();
     });
 
     setFieldErrors('test', 'error');
     expect(displayError('test')).toBeUndefined();
-    setFieldTouched('test', true);
+    setTouched('test', true);
     expect(displayError('test')).toBe('error');
   });
 
