@@ -50,7 +50,6 @@ export interface BaseFormContext<TForm extends FormObject = FormObject> {
   getSubmitErrors: () => IssueCollection[];
   clearErrors: (path?: string) => void;
   clearSubmitErrors: (path?: string) => void;
-  hasErrors: () => boolean;
   getValues: () => TForm;
   setValues: (newValues: Partial<TForm>, opts?: SetValueOptions) => void;
   revertValues: () => void;
@@ -151,13 +150,6 @@ export function createFormContext<TForm extends FormObject = FormObject, TOutput
 
   function setFieldDisabled<TPath extends Path<TForm>>(path: TPath, value: boolean) {
     setInPath(disabled, escapePath(path), value);
-  }
-
-  function hasErrors() {
-    return !!findLeaf(
-      errors.value,
-      (l, path) => !isPathDisabled(path as Path<TForm>) && Array.isArray(l) && l.length > 0,
-    );
   }
 
   function isPathDisabled(path: Path<TForm>) {
@@ -338,7 +330,6 @@ export function createFormContext<TForm extends FormObject = FormObject, TOutput
     setFieldSubmitErrors,
     getFieldErrors,
     getFieldSubmitErrors,
-    hasErrors,
     getErrors,
     getSubmitErrors,
     clearErrors,

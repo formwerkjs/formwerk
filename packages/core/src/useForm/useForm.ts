@@ -1,4 +1,4 @@
-import { computed, InjectionKey, MaybeRefOrGetter, onMounted, provide, reactive, readonly, Ref, ref } from 'vue';
+import { InjectionKey, MaybeRefOrGetter, onMounted, provide, reactive, readonly, Ref, ref } from 'vue';
 import type { StandardSchemaV1 } from '@standard-schema/spec';
 import { cloneDeep, useUniqId } from '../utils/common';
 import {
@@ -118,9 +118,11 @@ export function useForm<
     },
   });
 
-  const isValid = computed(() => {
-    return !ctx.hasErrors();
-  });
+  function isValid<TPath extends Path<TInput>>(path?: TPath) {
+    const pathErrors = ctx.getErrors(path);
+
+    return pathErrors.length === 0;
+  }
 
   function onAsyncInit(v: TInput) {
     ctx.setValues(v, { behavior: 'merge' });

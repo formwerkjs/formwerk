@@ -941,7 +941,7 @@ describe('form validation', () => {
       <form>
         <Child />
 
-        <span v-if="isValid">Form is valid</span>
+        <span v-if="isValid()">Form is valid</span>
         <span v-else>Form is invalid</span>
       </form>
     `,
