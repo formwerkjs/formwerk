@@ -8,3 +8,6 @@ Use consistent API for query/set methods
 - `setFieldErrors()` is renamed to `setErrors()`
 - `setFieldValue()` is renamed to `setValue()`
 - `setFieldTouched()` is renamed to `setTouched()`
+- `getFieldvalue()` is renamed to `getValue()`
+- `getFieldErrors()` is renmaed to `getErrors()`
+    - `getErrors()` now only returns an array of errors as `string[]`
