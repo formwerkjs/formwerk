@@ -136,16 +136,8 @@ export function useForm<
       scrollToInvalidFieldOnSubmit: props?.scrollToInvalidFieldOnSubmit ?? true,
     });
 
-  function getErrors<TPath extends Path<TInput>>(path?: TPath) {
-    return ctx.getErrors(path);
-  }
-
   function getError<TPath extends Path<TInput>>(path: TPath): string | undefined {
     return ctx.isPathDisabled(path) ? undefined : ctx.getFieldErrors(path)[0];
-  }
-
-  function getSubmitErrors() {
-    return ctx.getSubmitErrors();
   }
 
   function getSubmitError<TPath extends Path<TInput>>(path: TPath): string | undefined {
@@ -244,7 +236,7 @@ export function useForm<
     /**
      * Sets the errors for a field.
      */
-    setFieldErrors: ctx.setFieldErrors,
+    setErrors: ctx.setErrors,
     /**
      * Sets the values of the form.
      */
@@ -260,7 +252,7 @@ export function useForm<
     /**
      * Gets all the errors for the form.
      */
-    getErrors,
+    getErrors: ctx.getErrors,
     /**
      * Gets the submit errors for a field.
      */
@@ -268,7 +260,7 @@ export function useForm<
     /**
      * Gets all the submit errors for the form.
      */
-    getSubmitErrors,
+    getSubmitErrors: ctx.getSubmitErrors,
     /**
      * Props for the form element.
      */

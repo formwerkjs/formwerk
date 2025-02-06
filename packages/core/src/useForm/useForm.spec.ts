@@ -1101,11 +1101,11 @@ describe('form validation', () => {
       await render({
         components: { Child: createInputComponent() },
         setup() {
-          const { handleSubmit, getError, setFieldErrors } = useForm({
+          const { handleSubmit, getError, setErrors } = useForm({
             schema,
           });
 
-          setFieldErrors('test', 'error');
+          setErrors('test', 'error');
 
           return { getError, onSubmit: handleSubmit(v => handler(v.toObject())) };
         },
@@ -1142,11 +1142,11 @@ describe('form validation', () => {
       await render({
         components: { Child: createInputComponent() },
         setup() {
-          const { handleSubmit, getError, setFieldErrors } = useForm({
+          const { handleSubmit, getError, setErrors } = useForm({
             schema,
           });
 
-          setFieldErrors('test', 'error');
+          setErrors('test', 'error');
 
           return { getError, onSubmit: handleSubmit(v => handler(v.toObject())) };
         },
@@ -1305,7 +1305,7 @@ describe('form validation', () => {
       return useForm();
     });
 
-    setFieldErrors('test', 'error');
+    setErrors('test', 'error');
     expect(displayError('test')).toBeUndefined();
     setTouched('test', true);
     expect(displayError('test')).toBe('error');
@@ -1323,8 +1323,8 @@ describe('form validation', () => {
     });
 
     // Set some errors
-    form.setFieldErrors('address.street', "Address street can't be empty");
-    form.setFieldErrors('address.city', "Address city can't be empty");
+    form.setErrors('address.street', "Address street can't be empty");
+    form.setErrors('address.city', "Address city can't be empty");
 
     expect(form.getError('address.street')).toBe("Address street can't be empty");
     expect(form.getError('address.city')).toBe("Address city can't be empty");
@@ -1343,9 +1343,9 @@ describe('form validation', () => {
     });
 
     // Set some errors
-    form.setFieldErrors('address.street', "Address street can't be empty");
-    form.setFieldErrors('address.city', "Address city can't be empty");
-    form.setFieldErrors('name', "Name can't be empty");
+    form.setErrors('address.street', "Address street can't be empty");
+    form.setErrors('address.city', "Address city can't be empty");
+    form.setErrors('name', "Name can't be empty");
 
     const allErrors = form.getErrors();
     const addressErrors = form.getErrors('address');

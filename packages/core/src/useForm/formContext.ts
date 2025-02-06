@@ -43,7 +43,7 @@ export interface BaseFormContext<TForm extends FormObject = FormObject> {
   setFieldDisabled<TPath extends Path<TForm>>(path: TPath, value: boolean): void;
   getFieldErrors<TPath extends Path<TForm>>(path: TPath): string[];
   getFieldSubmitErrors<TPath extends Path<TForm>>(path: TPath): string[];
-  setFieldErrors<TPath extends Path<TForm>>(path: TPath, message: Arrayable<string>): void;
+  setErrors<TPath extends Path<TForm>>(path: TPath, message: Arrayable<string>): void;
   setFieldSubmitErrors<TPath extends Path<TForm>>(path: TPath, message: Arrayable<string>): void;
   getValidationMode(): FormValidationMode;
   getErrors: <TPath extends Path<TForm>>(path?: TPath) => IssueCollection[];
@@ -245,7 +245,7 @@ export function createFormContext<TForm extends FormObject = FormObject, TOutput
     return [...(getFromPath<string[]>(submitErrors.value, escapePath(path), []) || [])];
   }
 
-  function setFieldErrors<TPath extends Path<TForm>>(path: TPath, message: Arrayable<string>) {
+  function setErrors<TPath extends Path<TForm>>(path: TPath, message: Arrayable<string>) {
     setInPath(errors.value, escapePath(path), message ? normalizeArrayable(message) : []);
   }
 
@@ -326,7 +326,7 @@ export function createFormContext<TForm extends FormObject = FormObject, TOutput
     setInitialTouched,
     getFieldOriginalValue,
     setFieldDisabled,
-    setFieldErrors,
+    setErrors,
     setFieldSubmitErrors,
     getFieldErrors,
     getFieldSubmitErrors,

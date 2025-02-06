@@ -93,7 +93,7 @@ export function useFormTransactions<TForm extends FormObject>(form: BaseFormCont
         form.setValue(tr.path, tr.value);
         form.setTouched(tr.path, tr.touched);
         form.setFieldDisabled(tr.path, tr.disabled);
-        form.setFieldErrors(tr.path, tr.errors);
+        form.setErrors(tr.path, tr.errors);
         continue;
       }
 
@@ -113,7 +113,7 @@ export function useFormTransactions<TForm extends FormObject>(form: BaseFormCont
         form.setFieldDisabled(tr.path, tr.disabled);
         form.setTouched(tr.path, tr.touched);
         form.unsetInitialValue(tr.path);
-        form.setFieldErrors(tr.path, tr.errors);
+        form.setErrors(tr.path, tr.errors);
         continue;
       }
     }

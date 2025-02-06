@@ -142,7 +142,7 @@ export function useFormActions<TForm extends FormObject = FormObject, TOutput ex
 
   function applyErrors(errors: IssueCollection[]) {
     for (const entry of errors) {
-      form.setFieldErrors(entry.path as Path<TForm>, entry.messages);
+      form.setErrors(entry.path as Path<TForm>, entry.messages);
     }
   }
 

@@ -344,7 +344,7 @@ function createFormValidityRef(getPath: Getter<string | undefined>, form: FormCo
     pathlessValidity.setErrors(messages);
     const path = getPath();
     if (path) {
-      form.setFieldErrors(path, messages);
+      form.setErrors(path, messages);
     }
   }
 
