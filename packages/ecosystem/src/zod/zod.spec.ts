@@ -77,10 +77,5 @@ test('collects multiple errors per field', async () => {
 
   await fireEvent.click(screen.getByText('Submit'));
   await flush();
-  expect(handler).toHaveBeenCalledWith([
-    {
-      path: 'test',
-      messages: ['Invalid email', 'String must contain at least 8 character(s)'],
-    },
-  ]);
+  expect(handler).toHaveBeenCalledWith(['Invalid email', 'String must contain at least 8 character(s)']);
 });

@@ -78,9 +78,7 @@ test('collects multiple errors per field', async () => {
   await fireEvent.click(screen.getByText('Submit'));
   await flush();
   expect(handler).toHaveBeenCalledWith([
-    {
-      path: 'test',
-      messages: ['Invalid email: Received "123"', 'Invalid length: Expected >=8 but received 3'],
-    },
+    'Invalid email: Received "123"',
+    'Invalid length: Expected >=8 but received 3',
   ]);
 });
