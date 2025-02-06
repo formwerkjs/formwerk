@@ -10,4 +10,4 @@ Use consistent API for query/set methods
 - `setFieldTouched()` is renamed to `setTouched()`
 - `getFieldvalue()` is renamed to `getValue()`
 - `getFieldErrors()` is renmaed to `getErrors()`
-    - `getErrors()` now only returns an array of errors as `string[]`
+    - `getErrors()` now only returns an array of error messages as `string[]`
