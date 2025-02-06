@@ -173,7 +173,7 @@ export function useFormField<TValue = unknown>(opts?: Partial<FormFieldOptions<T
         return {
           kind: SET_PATH,
           path: newPath,
-          value: cloneDeep(oldPath ? tf.getFieldValue(oldPath) : pathlessValue.value),
+          value: cloneDeep(oldPath ? tf.getValue(oldPath) : pathlessValue.value),
           touched: oldPath ? tf.isTouched(oldPath) : pathlessTouched.value,
           disabled: isDisabled.value,
           errors: [...(oldPath ? tf.getFieldErrors(oldPath) : pathlessValidity.errors.value)],
@@ -268,7 +268,7 @@ function createFormValueRef<TValue = unknown>(
   const fieldValue = computed(() => {
     const path = getPath();
 
-    return path ? form.getFieldValue(path) : pathlessValue.value;
+    return path ? form.getValue(path) : pathlessValue.value;
   }) as Ref<TValue | undefined>;
 
   function setValue(value: TValue | undefined) {

@@ -116,7 +116,7 @@ export function useFormRepeater<TItem = unknown>(_props: Reactivify<FormRepeater
   const form = inject(FormKey, null);
   const repeaterProps = normalizeProps(_props);
   const getPath = () => toValue(repeaterProps.name);
-  const getPathValue = () => (form?.getFieldValue(getPath()) || []) as TItem[];
+  const getPathValue = () => (form?.getValue(getPath()) || []) as TItem[];
   let lastControlledValueSnapshot: TItem[] | undefined;
   const records = ref(buildRecords());
 

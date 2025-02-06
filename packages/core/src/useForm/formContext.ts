@@ -27,7 +27,7 @@ export type FormValidationMode = 'aggregate' | 'schema';
 
 export interface BaseFormContext<TForm extends FormObject = FormObject> {
   id: string;
-  getFieldValue<TPath extends Path<TForm>>(path: TPath): PathValue<TForm, TPath>;
+  getValue<TPath extends Path<TForm>>(path: TPath): PathValue<TForm, TPath>;
   setValue<TPath extends Path<TForm>>(path: TPath, value: PathValue<TForm, TPath> | undefined): void;
   destroyPath<TPath extends Path<TForm>>(path: TPath): void;
   unsetPath<TPath extends Path<TForm>>(path: TPath): void;
@@ -93,7 +93,7 @@ export function createFormContext<TForm extends FormObject = FormObject, TOutput
     setInPath(touched, path, value, true);
   }
 
-  function getFieldValue<TPath extends Path<TForm>>(path: TPath) {
+  function getValue<TPath extends Path<TForm>>(path: TPath) {
     return getFromPath(values, path) as PathValue<TForm, TPath>;
   }
 
@@ -115,7 +115,7 @@ export function createFormContext<TForm extends FormObject = FormObject, TOutput
       return !isEqual(values, snapshots.values.originals.value);
     }
 
-    return !isEqual(getFieldValue(path), getFieldOriginalValue(path));
+    return !isEqual(getValue(path), getFieldOriginalValue(path));
   }
 
   function isFieldSet<TPath extends Path<TForm>>(path: TPath) {
@@ -312,7 +312,7 @@ export function createFormContext<TForm extends FormObject = FormObject, TOutput
     setValue,
     getFieldInitialValue,
     setTouched,
-    getFieldValue,
+    getValue,
     isTouched,
     isDirty,
     isFieldSet,

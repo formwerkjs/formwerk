@@ -224,7 +224,7 @@ export function useForm<
     /**
      * Gets the value of a field.
      */
-    getFieldValue: ctx.getFieldValue,
+    getValue: ctx.getValue,
     /**
      * Whether the path is touched.
      */

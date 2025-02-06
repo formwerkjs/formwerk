@@ -133,7 +133,7 @@ export function useFormGroup<TInput extends FormObject = FormObject, TOutput ext
   });
 
   function getValues(): TInput {
-    return form?.getFieldValue(getPath()) ?? {};
+    return form?.getValue(getPath()) ?? {};
   }
 
   function getErrors() {
