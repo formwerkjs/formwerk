@@ -12,6 +12,7 @@ interface FormFieldOptions<TValue = unknown> {
   path: MaybeRefOrGetter<string | undefined> | undefined;
   initialValue: TValue;
   initialTouched: boolean;
+  initialDirty: boolean;
   syncModel: boolean;
   modelName: string;
   disabled: MaybeRefOrGetter<boolean | undefined>;
@@ -67,6 +68,16 @@ export function useFormField<TValue = unknown>(opts?: Partial<FormFieldOptions<T
     }
 
     return !isEqual(fieldValue.value, form.getFieldOriginalValue(path));
+  });
+
+  // Keeps the form's dirty state in sync with the field's dirty state.
+  watch(isDirty, dirty => {
+    const path = getPath();
+    if (!path) {
+      return;
+    }
+
+    form?.setDirty(path, dirty);
   });
 
   if (opts?.syncModel ?? true) {
@@ -138,7 +149,14 @@ export function useFormField<TValue = unknown>(opts?: Partial<FormFieldOptions<T
     return field;
   }
 
-  initFormPathIfNecessary(form, getPath, initialValue, opts?.initialTouched ?? false, isDisabled);
+  initFormPathIfNecessary({
+    form,
+    getPath,
+    initialValue,
+    initialTouched: opts?.initialTouched ?? false,
+    initialDirty: opts?.initialDirty ?? false,
+    isDisabled,
+  });
 
   form.onSubmitAttempt(() => {
     setTouched(true);
@@ -175,6 +193,7 @@ export function useFormField<TValue = unknown>(opts?: Partial<FormFieldOptions<T
           path: newPath,
           value: cloneDeep(oldPath ? tf.getValue(oldPath) : pathlessValue.value),
           touched: oldPath ? tf.isTouched(oldPath) : pathlessTouched.value,
+          dirty: oldPath ? tf.isDirty(oldPath) : isDirty.value,
           disabled: isDisabled.value,
           errors: [...(oldPath ? tf.getErrors(oldPath) : pathlessValidity.errors.value)],
         };
@@ -298,16 +317,26 @@ function createLocalValueRef<TValue = unknown>(initialValue?: TValue) {
   };
 }
 
+interface FormPathInitOptions {
+  form: FormContext;
+  getPath: Getter<string | undefined>;
+  initialValue: unknown;
+  initialTouched: boolean;
+  initialDirty: boolean;
+  isDisabled: MaybeRefOrGetter<boolean>;
+}
+
 /**
  * Sets the initial value of the form if not already set and if an initial value is provided.
  */
-function initFormPathIfNecessary(
-  form: FormContext,
-  getPath: Getter<string | undefined>,
-  initialValue: unknown,
-  initialTouched: boolean,
-  isDisabled: MaybeRefOrGetter<boolean>,
-) {
+function initFormPathIfNecessary({
+  form,
+  getPath,
+  initialValue,
+  initialTouched,
+  initialDirty,
+  isDisabled,
+}: FormPathInitOptions) {
   const path = getPath();
   if (!path) {
     return;
@@ -320,6 +349,7 @@ function initFormPathIfNecessary(
       path,
       value: initialValue ?? form.getFieldInitialValue(path),
       touched: initialTouched,
+      dirty: initialDirty,
       disabled: toValue(isDisabled),
       errors: [...tf.getErrors(path)],
     }));

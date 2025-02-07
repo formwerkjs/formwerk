@@ -14,6 +14,7 @@ import {
   GroupValidationResult,
   GenericFormSchema,
   StandardSchema,
+  DirtySchema,
 } from '../types';
 import { createFormContext, BaseFormContext } from './formContext';
 import { FormTransactionManager, useFormTransactions } from './useFormTransactions';
@@ -43,6 +44,11 @@ export interface FormProps<
    * The initial touched state for form fields.
    */
   initialTouched?: TouchedSchema<TInput>;
+
+  /**
+   * The initial dirty state for form fields.
+   */
+  initialDirty?: DirtySchema<TInput>;
 
   /**
    * The validation schema for the form.
@@ -90,6 +96,7 @@ export function useForm<
   TOutput extends FormObject = StandardSchemaV1.InferOutput<TSchema>,
 >(props?: Partial<FormProps<TSchema, TInput>>) {
   const touchedSnapshot = useFormSnapshots(props?.initialTouched);
+  const dirtySnapshot = useFormSnapshots(props?.initialDirty);
   const valuesSnapshot = useFormSnapshots<TInput, TOutput>(props?.initialValues as TInput, {
     onAsyncInit,
     schema: props?.schema as StandardSchema<TInput, TOutput>,
@@ -100,6 +107,7 @@ export function useForm<
   const isHtmlValidationDisabled = () => props?.disableHtmlValidation ?? getConfig().disableHtmlValidation;
   const values = reactive(cloneDeep(valuesSnapshot.originals.value)) as PartialDeep<TInput>;
   const touched = reactive(cloneDeep(touchedSnapshot.originals.value)) as TouchedSchema<TInput>;
+  const dirty = reactive(cloneDeep(dirtySnapshot.originals.value)) as DirtySchema<TInput>;
   const disabled = reactive({}) as DisabledSchema<TInput>;
   const errors = ref({}) as Ref<ErrorsSchema<TInput>>;
   const submitErrors = ref({}) as Ref<ErrorsSchema<TInput>>;
@@ -109,12 +117,14 @@ export function useForm<
     values: values as TInput,
     touched,
     disabled,
+    dirty,
     schema: props?.schema as StandardSchema<TInput, TOutput>,
     errors,
     submitErrors,
     snapshots: {
       values: valuesSnapshot,
       touched: touchedSnapshot,
+      dirty: dirtySnapshot,
     },
   });
 

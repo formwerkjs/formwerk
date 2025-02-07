@@ -9,8 +9,9 @@ import {
   StandardSchema,
   ErrorsSchema,
   IssueCollection,
+  DirtySchema,
 } from '../types';
-import { cloneDeep, isEqual, normalizeArrayable } from '../utils/common';
+import { cloneDeep, normalizeArrayable } from '../utils/common';
 import {
   escapePath,
   findLeaf,
@@ -35,6 +36,8 @@ export interface BaseFormContext<TForm extends FormObject = FormObject> {
   setTouched<TPath extends Path<TForm>>(path: TPath, value: boolean): void;
   isTouched<TPath extends Path<TForm>>(path?: TPath): boolean;
   isDirty<TPath extends Path<TForm>>(path?: TPath): boolean;
+  setDirty(value: boolean): void;
+  setDirty<TPath extends Path<TForm>>(path: TPath, value: boolean): void;
   isFieldSet<TPath extends Path<TForm>>(path: TPath): boolean;
   getFieldInitialValue<TPath extends Path<TForm>>(path: TPath): PathValue<TForm, TPath>;
   getFieldOriginalValue<TPath extends Path<TForm>>(path: TPath): PathValue<TForm, TPath>;
@@ -54,6 +57,7 @@ export interface BaseFormContext<TForm extends FormObject = FormObject> {
   setValues: (newValues: Partial<TForm>, opts?: SetValueOptions) => void;
   revertValues: () => void;
   revertTouched: () => void;
+  revertDirty: () => void;
   isPathDisabled: (path: Path<TForm>) => boolean;
 }
 
@@ -65,6 +69,7 @@ export interface FormContextCreateOptions<TForm extends FormObject = FormObject,
   id: string;
   values: TForm;
   touched: TouchedSchema<TForm>;
+  dirty: DirtySchema<TForm>;
   disabled: DisabledSchema<TForm>;
   errors: Ref<ErrorsSchema<TForm>>;
   submitErrors: Ref<ErrorsSchema<TForm>>;
@@ -72,6 +77,7 @@ export interface FormContextCreateOptions<TForm extends FormObject = FormObject,
   snapshots: {
     values: FormSnapshot<TForm>;
     touched: FormSnapshot<TouchedSchema<TForm>>;
+    dirty: FormSnapshot<DirtySchema<TForm>>;
   };
 }
 
@@ -80,6 +86,7 @@ export function createFormContext<TForm extends FormObject = FormObject, TOutput
   values,
   disabled,
   errors,
+  dirty,
   submitErrors,
   schema,
   touched,
@@ -123,10 +130,24 @@ export function createFormContext<TForm extends FormObject = FormObject, TOutput
 
   function isDirty<TPath extends Path<TForm>>(path?: TPath) {
     if (!path) {
-      return !isEqual(values, snapshots.values.originals.value);
+      return !!findLeaf(dirty, l => l === true);
     }
 
-    return !isEqual(getValue(path), getFieldOriginalValue(path));
+    return !!getFromPath(dirty, path);
+  }
+
+  function setDirty(value: boolean): void;
+  function setDirty<TPath extends Path<TForm>>(path: TPath, value: boolean): void;
+  function setDirty<TPath extends Path<TForm>>(pathOrValue: TPath | boolean, valueOrUndefined?: boolean) {
+    if (typeof pathOrValue === 'boolean') {
+      for (const key in dirty) {
+        setInPath(dirty, key, pathOrValue, true);
+      }
+
+      return;
+    }
+
+    setInPath(dirty, pathOrValue, valueOrUndefined, true);
   }
 
   function isFieldSet<TPath extends Path<TForm>>(path: TPath) {
@@ -267,6 +288,21 @@ export function createFormContext<TForm extends FormObject = FormObject, TOutput
     merge(touched, newTouched);
   }
 
+  function updateDirty(newDirty: Partial<DirtySchema<TForm>>, opts?: SetValueOptions) {
+    if (opts?.behavior === 'merge') {
+      merge(dirty, newDirty);
+
+      return;
+    }
+
+    // Delete all keys, then set new values
+    Object.keys(dirty).forEach(key => {
+      delete dirty[key as keyof typeof dirty];
+    });
+
+    merge(dirty, newDirty);
+  }
+
   function clearErrors(path?: string) {
     if (!path) {
       errors.value = {} as ErrorsSchema<TForm>;
@@ -301,6 +337,10 @@ export function createFormContext<TForm extends FormObject = FormObject, TOutput
     updateTouched(cloneDeep(snapshots.touched.originals.value), { behavior: 'replace' });
   }
 
+  function revertDirty() {
+    updateDirty(cloneDeep(snapshots.dirty.originals.value), { behavior: 'replace' });
+  }
+
   function getValidationMode(): FormValidationMode {
     return schema ? 'schema' : 'aggregate';
   }
@@ -314,6 +354,7 @@ export function createFormContext<TForm extends FormObject = FormObject, TOutput
     getValue,
     isTouched,
     isDirty,
+    setDirty,
     isFieldSet,
     destroyPath,
     unsetPath,
@@ -322,6 +363,7 @@ export function createFormContext<TForm extends FormObject = FormObject, TOutput
     revertValues,
     revertTouched,
     setInitialValues,
+    revertDirty,
     setInitialTouched,
     getFieldOriginalValue,
     setFieldDisabled,

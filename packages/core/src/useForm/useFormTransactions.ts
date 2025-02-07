@@ -2,13 +2,17 @@ import { nextTick } from 'vue';
 import { FormObject, Path, PathValue } from '../types';
 import { BaseFormContext } from './formContext';
 
-interface SetPathStateTransaction<TForm extends FormObject> {
-  kind: 2;
+interface BaseStateTransaction<TForm extends FormObject> {
   path: Path<TForm>;
   value: PathValue<TForm, Path<TForm>>;
   touched: boolean;
+  dirty: boolean;
   disabled: boolean;
   errors: string[];
+}
+
+interface SetPathStateTransaction<TForm extends FormObject> extends BaseStateTransaction<TForm> {
+  kind: 2;
 }
 
 interface UnsetPathStateTransaction<TForm extends FormObject> {
@@ -21,13 +25,8 @@ interface DestroyPathStateTransaction<TForm extends FormObject> {
   path: Path<TForm>;
 }
 
-interface InitializeFieldTransaction<TForm extends FormObject> {
+interface InitializeFieldTransaction<TForm extends FormObject> extends BaseStateTransaction<TForm> {
   kind: 3;
-  path: Path<TForm>;
-  value: PathValue<TForm, Path<TForm>>;
-  touched: boolean;
-  disabled: boolean;
-  errors: string[];
 }
 
 export type FormTransaction<TForm extends FormObject> =
@@ -49,7 +48,10 @@ const TransactionKind = {
 export interface FormTransactionManager<TForm extends FormObject> {
   transaction(
     tr: (
-      formCtx: Pick<BaseFormContext<TForm>, 'getValues' | 'getValue' | 'isFieldSet' | 'isTouched' | 'getErrors'>,
+      formCtx: Pick<
+        BaseFormContext<TForm>,
+        'getValues' | 'getValue' | 'isFieldSet' | 'isTouched' | 'getErrors' | 'isDirty'
+      >,
       codes: typeof TransactionKind,
     ) => FormTransaction<TForm> | null,
   ): void;
@@ -89,6 +91,7 @@ export function useFormTransactions<TForm extends FormObject>(form: BaseFormCont
       if (tr.kind === TransactionKind.SET_PATH) {
         form.setValue(tr.path, tr.value);
         form.setTouched(tr.path, tr.touched);
+        form.setDirty(tr.path, tr.dirty);
         form.setFieldDisabled(tr.path, tr.disabled);
         form.setErrors(tr.path, tr.errors);
         continue;
@@ -109,6 +112,7 @@ export function useFormTransactions<TForm extends FormObject>(form: BaseFormCont
         form.setValue(tr.path, tr.value ?? formInit);
         form.setFieldDisabled(tr.path, tr.disabled);
         form.setTouched(tr.path, tr.touched);
+        form.setDirty(tr.path, tr.dirty);
         form.unsetInitialValue(tr.path);
         form.setErrors(tr.path, tr.errors);
         continue;
