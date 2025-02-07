@@ -31,6 +31,7 @@ export interface BaseFormContext<TForm extends FormObject = FormObject> {
   setValue<TPath extends Path<TForm>>(path: TPath, value: PathValue<TForm, TPath> | undefined): void;
   destroyPath<TPath extends Path<TForm>>(path: TPath): void;
   unsetPath<TPath extends Path<TForm>>(path: TPath): void;
+  setTouched(value: boolean): void;
   setTouched<TPath extends Path<TForm>>(path: TPath, value: boolean): void;
   isTouched<TPath extends Path<TForm>>(path?: TPath): boolean;
   isDirty<TPath extends Path<TForm>>(path?: TPath): boolean;
@@ -88,8 +89,19 @@ export function createFormContext<TForm extends FormObject = FormObject, TOutput
     setInPath(values, path, cloneDeep(value));
   }
 
-  function setTouched<TPath extends Path<TForm>>(path: TPath, value: boolean) {
-    setInPath(touched, path, value, true);
+  function setTouched(value: boolean);
+  function setTouched<TPath extends Path<TForm>>(path: TPath, value: boolean);
+  function setTouched<TPath extends Path<TForm>>(pathOrValue: TPath | boolean, valueOrUndefined?: boolean) {
+    // If the pathOrValue is a boolean, we want to set all touched fields to that value
+    if (typeof pathOrValue === 'boolean') {
+      for (const key in touched) {
+        setInPath(touched, key, pathOrValue, true);
+      }
+
+      return;
+    }
+
+    setInPath(touched, pathOrValue, valueOrUndefined, true);
   }
 
   function getValue<TPath extends Path<TForm>>(path: TPath) {
