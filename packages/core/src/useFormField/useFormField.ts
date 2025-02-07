@@ -70,16 +70,6 @@ export function useFormField<TValue = unknown>(opts?: Partial<FormFieldOptions<T
     return !isEqual(fieldValue.value, form.getFieldOriginalValue(path));
   });
 
-  // Keeps the form's dirty state in sync with the field's dirty state.
-  watch(isDirty, dirty => {
-    const path = getPath();
-    if (!path) {
-      return;
-    }
-
-    form?.setDirty(path, dirty);
-  });
-
   if (opts?.syncModel ?? true) {
     useSyncModel({
       model: fieldValue,

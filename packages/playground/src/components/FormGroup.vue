@@ -4,6 +4,8 @@
       <h2 v-bind="labelProps" class="text-2xl font-semibold text-white">{{ label }}</h2>
     </div>
 
+    {{ { isDirty, isTouched } }}
+
     <div class="flex flex-col gap-2 p-8">
       <slot :display-error="displayError" :get-error="getError" :isTouched="isTouched" />
     </div>

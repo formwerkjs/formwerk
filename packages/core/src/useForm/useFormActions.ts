@@ -165,6 +165,7 @@ export function useFormActions<TForm extends FormObject = FormObject, TOutput ex
 
     form.revertValues();
     form.revertTouched();
+    form.revertDirty();
     submitAttemptsCount.value = 0;
     isSubmitAttempted.value = false;
 

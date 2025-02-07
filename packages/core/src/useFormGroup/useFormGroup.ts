@@ -9,7 +9,7 @@ import {
   StandardSchema,
   ValidationResult,
 } from '../types';
-import { isEqual, normalizeProps, useUniqId, warn, withRefCapture } from '../utils/common';
+import { normalizeProps, useUniqId, warn, withRefCapture } from '../utils/common';
 import { FormKey } from '../useForm';
 import { useValidationProvider } from '../validation/useValidationProvider';
 import { FormValidationMode } from '../useForm/formContext';
@@ -137,16 +137,16 @@ export function useFormGroup<TInput extends FormObject = FormObject, TOutput ext
   }
 
   function getValue(path?: string) {
-    return form?.getValue(prefixPath(path) ?? '');
+    if (!path) {
+      return form?.getValue(getPath()) ?? {};
+    }
+
+    return form?.getValue(prefixPath(path) || '');
   }
 
   const isValid = computed(() => getErrors().length === 0);
   const isTouched = computed(() => form?.isTouched(getPath()) ?? false);
-  const isDirty = computed(() => {
-    const path = getPath();
-
-    return !isEqual(getValue(), form?.getFieldOriginalValue(path) ?? {});
-  });
+  const isDirty = computed(() => form?.isDirty(getPath()) ?? false);
 
   function getError(path: string) {
     return form?.getErrors(prefixPath(path) ?? '')?.[0];
@@ -236,6 +236,11 @@ export function useFormGroup<TInput extends FormObject = FormObject, TOutput ext
      * Gets the group's value, passing in a path will return the value of that field.
      */
     getValue,
+    /**
+     * Gets the values for the form group.
+     * @deprecated Use `getValue` without arguments instead.
+     */
+    getValues: () => getValue(),
     /**
      * Gets the error for a given field.
      */

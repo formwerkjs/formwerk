@@ -11,7 +11,7 @@ import {
   IssueCollection,
   DirtySchema,
 } from '../types';
-import { cloneDeep, normalizeArrayable } from '../utils/common';
+import { cloneDeep, isEqual, normalizeArrayable } from '../utils/common';
 import {
   escapePath,
   findLeaf,
@@ -94,6 +94,8 @@ export function createFormContext<TForm extends FormObject = FormObject, TOutput
 }: FormContextCreateOptions<TForm, TOutput>): BaseFormContext<TForm> {
   function setValue<TPath extends Path<TForm>>(path: TPath, value: PathValue<TForm, TPath> | undefined) {
     setInPath(values, path, cloneDeep(value));
+    const oldValue = getFieldOriginalValue(path);
+    setDirty(path, !isEqual(oldValue, value));
   }
 
   function setTouched(value: boolean): void;
@@ -133,7 +135,12 @@ export function createFormContext<TForm extends FormObject = FormObject, TOutput
       return !!findLeaf(dirty, l => l === true);
     }
 
-    return !!getFromPath(dirty, path);
+    const value = getFromPath(dirty, path);
+    if (isObject(value)) {
+      return !!findLeaf(value, v => !!v);
+    }
+
+    return !!value;
   }
 
   function setDirty(value: boolean): void;

@@ -24,5 +24,10 @@ const { isDirty } = useForm({
 
     <InputText name="name" label="Your Name" />
     <InputText name="account.name" label="Account Name" />
+
+    <FormGroup name="company" label="Company">
+      <InputText name="name" label="Account Name" />
+      <InputText name="address" label="Address" />
+    </FormGroup>
   </div>
 </template>
