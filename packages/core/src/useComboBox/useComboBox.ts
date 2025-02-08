@@ -18,6 +18,7 @@ import { useListBox } from '../useListBox';
 import { useErrorMessage } from '../a11y/useErrorMessage';
 import { useInputValidity } from '../validation';
 import { FilterFn } from '../collections';
+import { useControlButtonProps } from '../helpers/useControlButtonProps';
 
 export interface ComboBoxProps<TOption, TValue = TOption> {
   /**
@@ -315,24 +316,15 @@ export function useComboBox<TOption, TValue = TOption>(
     isPopupOpen.value = !isPopupOpen.value;
   }
 
-  const buttonProps = computed(() => {
-    const isButton = buttonEl.value?.tagName === 'BUTTON';
-
-    return withRefCapture(
-      {
-        id: inputId,
-        role: isButton ? undefined : 'button',
-        [isButton ? 'disabled' : 'aria-disabled']: isDisabled.value || undefined,
-        tabindex: '-1',
-        type: 'button' as const,
-        'aria-haspopup': 'listbox' as const,
-        'aria-expanded': isPopupOpen.value,
-        'aria-activedescendant': findFocusedOption()?.id ?? undefined,
-        'aria-controls': listBoxId,
-        onClick: onButtonClick,
-      },
-      buttonEl,
-    );
+  const buttonProps = useControlButtonProps({
+    id: `${inputId}-btn`,
+    disabled: isDisabled.value,
+    type: 'button' as const,
+    'aria-haspopup': 'listbox' as const,
+    'aria-expanded': isPopupOpen.value,
+    'aria-activedescendant': findFocusedOption()?.id ?? undefined,
+    'aria-controls': listBoxId,
+    onClick: onButtonClick,
   });
 
   // https://www.w3.org/WAI/ARIA/apg/patterns/combobox/examples/combobox-autocomplete-list/#rps_label_textbox
