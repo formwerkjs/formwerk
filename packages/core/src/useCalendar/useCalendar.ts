@@ -1,13 +1,15 @@
 import { computed, InjectionKey, MaybeRefOrGetter, nextTick, provide, ref, Ref, shallowRef, toValue, watch } from 'vue';
 import { Temporal } from '@js-temporal/polyfill';
 import { CalendarDay, CalendarIdentifier } from './types';
-import { hasKeyCode, isButtonElement, normalizeProps, useUniqId, withRefCapture } from '../utils/common';
+import { hasKeyCode, normalizeProps, useUniqId, withRefCapture } from '../utils/common';
 import { Reactivify } from '../types';
 import { useDateFormatter, useLocale } from '../i18n';
 import { WeekInfo } from '../i18n/getWeekInfo';
 import { FieldTypePrefixes } from '../constants';
 import { usePopoverController } from '../helpers/usePopoverController';
 import { blockEvent } from '../utils/events';
+import { useLabel } from '../a11y';
+import { useControlButtonProps } from '../helpers/useControlButtonProps';
 
 export interface CalendarProps {
   /**
@@ -44,6 +46,11 @@ export interface CalendarProps {
    * The label for the previous month button.
    */
   previousMonthButtonLabel?: string;
+
+  /**
+   * The format options for the month and year label.
+   */
+  monthYearFormatOptions?: Intl.DateTimeFormatOptions;
 }
 
 interface CalendarContext {
@@ -61,15 +68,18 @@ export const CalendarContextKey: InjectionKey<CalendarContext> = Symbol('Calenda
 export function useCalendar(_props: Reactivify<CalendarProps, 'onDaySelected'> = {}) {
   const props = normalizeProps(_props, ['onDaySelected']);
   const calendarId = useUniqId(FieldTypePrefixes.Calendar);
+  const gridId = `${calendarId}-g`;
   const pickerEl = ref<HTMLElement>();
   const gridEl = ref<HTMLElement>();
-  const buttonEl = ref<HTMLElement>();
   const calendarLabelEl = ref<HTMLElement>();
   const { weekInfo, locale, calendar } = useLocale(props.locale, {
     calendar: () => toValue(props.calendar),
   });
 
-  const formatter = useDateFormatter(locale, { month: 'long', year: 'numeric' });
+  const formatter = useDateFormatter(
+    locale,
+    () => toValue(props.monthYearFormatOptions) ?? { month: 'long', year: 'numeric' },
+  );
   const selectedDate = computed(() => toValue(props.currentDate) ?? Temporal.Now.zonedDateTime(calendar.value));
   const focusedDay = shallowRef<Temporal.ZonedDateTime>();
   const { isOpen } = usePopoverController(pickerEl, { disabled: props.disabled });
@@ -102,20 +112,10 @@ export function useCalendar(_props: Reactivify<CalendarProps, 'onDaySelected'> =
   const { daysOfTheWeek } = useDaysOfTheWeek(context);
   const { days } = useCalendarDays(context);
 
-  const buttonProps = computed(() => {
-    const isBtn = isButtonElement(buttonEl.value);
-
-    return withRefCapture(
-      {
-        type: isBtn ? ('button' as const) : undefined,
-        role: isBtn ? undefined : 'button',
-        tabindex: '-1',
-        onClick: () => {
-          isOpen.value = true;
-        },
-      },
-      buttonEl,
-    );
+  const buttonProps = useControlButtonProps({
+    onClick: () => {
+      isOpen.value = true;
+    },
   });
 
   const pickerHandlers = {
@@ -170,6 +170,40 @@ export function useCalendar(_props: Reactivify<CalendarProps, 'onDaySelected'> =
     );
   });
 
+  const nextMonthButtonProps = useControlButtonProps({
+    id: `${calendarId}-next-month`,
+    onClick: () => {
+      context.setFocusedDay(context.getFocusedDate().add({ months: 1 }));
+    },
+  });
+
+  const previousMonthButtonProps = useControlButtonProps({
+    id: `${calendarId}-previous-month`,
+    onClick: () => {
+      context.setFocusedDay(context.getFocusedDate().subtract({ months: 1 }));
+    },
+  });
+
+  const monthYearLabel = computed(() => {
+    return formatter.value.format(context.getFocusedDate().toPlainDateTime());
+  });
+
+  const { labelProps: monthYearLabelBaseProps } = useLabel({
+    targetRef: gridEl,
+    for: gridId,
+    label: monthYearLabel,
+  });
+
+  const monthYearLabelProps = computed(() => {
+    return withRefCapture(
+      {
+        ...monthYearLabelBaseProps.value,
+        'aria-live': 'polite' as const,
+      },
+      calendarLabelEl,
+    );
+  });
+
   const gridProps = computed(() => {
     return withRefCapture(
       {
@@ -178,58 +212,6 @@ export function useCalendar(_props: Reactivify<CalendarProps, 'onDaySelected'> =
       },
       gridEl,
     );
-  });
-
-  const monthYearLabelProps = computed(() => {
-    return withRefCapture(
-      {
-        id: `${calendarId}-label`,
-        'aria-live': 'polite' as const,
-      },
-      calendarLabelEl,
-    );
-  });
-
-  const nextMonthBtn = ref<HTMLElement>();
-
-  const nextMonthButtonProps = computed(() => {
-    const isBtn = isButtonElement(nextMonthBtn.value);
-
-    return withRefCapture(
-      {
-        id: `${calendarId}-next-month`,
-        type: isBtn ? ('button' as const) : undefined,
-        role: isBtn ? undefined : 'button',
-        tabindex: '-1',
-        onClick: () => {
-          context.setFocusedDay(context.getFocusedDate().add({ months: 1 }));
-        },
-      },
-      nextMonthBtn,
-    );
-  });
-
-  const previousMonthBtn = ref<HTMLElement>();
-
-  const previousMonthButtonProps = computed(() => {
-    const isBtn = isButtonElement(previousMonthBtn.value);
-
-    return withRefCapture(
-      {
-        id: `${calendarId}-previous-month`,
-        type: isBtn ? ('button' as const) : undefined,
-        role: isBtn ? undefined : 'button',
-        tabindex: '-1',
-        onClick: () => {
-          context.setFocusedDay(context.getFocusedDate().subtract({ months: 1 }));
-        },
-      },
-      previousMonthBtn,
-    );
-  });
-
-  const monthYearLabel = computed(() => {
-    return formatter.value.format(context.getFocusedDate().toPlainDateTime());
   });
 
   provide(CalendarContextKey, context);
