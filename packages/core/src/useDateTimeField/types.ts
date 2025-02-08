@@ -25,3 +25,10 @@ export type TemporalValue =
   | Temporal.ZonedDateTime;
 
 export type DateValue = Date | TemporalValue;
+
+export type TemporalPartial = Temporal.ZonedDateTime & {
+  [`~fw_temporal_partial`]: {
+    [key: string]: boolean | undefined;
+  };
+  [`~fw_temporal_full_partial`]?: true;
+};

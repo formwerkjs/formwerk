@@ -1,12 +1,18 @@
 import { InjectionKey, MaybeRefOrGetter, provide, ref, toValue, Ref, onBeforeUnmount, computed } from 'vue';
 import { Temporal, Intl as TemporalIntl } from '@js-temporal/polyfill';
-import { DateTimeSegmentType } from './types';
+import { DateTimeSegmentType, TemporalPartial } from './types';
 import { hasKeyCode } from '../utils/common';
 import { blockEvent } from '../utils/events';
 import { Direction, Maybe } from '../types';
 import { useEventListener } from '../helpers/useEventListener';
-import { isEditableSegmentType, segmentTypeToDurationLike } from './constants';
+import {
+  getSegmentTypePlaceholder,
+  isEditableSegmentType,
+  isOptionalSegmentType,
+  segmentTypeToDurationLike,
+} from './constants';
 import { NumberParserContext, useNumberParser } from '../i18n';
+import { isTemporalPartial, isTemporalPartSet, toTemporalPartial } from './temporalPartial';
 
 export interface DateTimeSegmentRegistration {
   id: string;
@@ -22,6 +28,7 @@ export interface DateTimeSegmentGroupContext {
     setValue(value: number): void;
     getMetadata(): { min: number | null; max: number | null; maxLength: number | null };
     onDone(): void;
+    clear(): void;
   };
 }
 
@@ -31,7 +38,7 @@ export interface DateTimeSegmentGroupProps {
   formatter: Ref<TemporalIntl.DateTimeFormat>;
   locale: MaybeRefOrGetter<string | undefined>;
   formatOptions: MaybeRefOrGetter<Maybe<Intl.DateTimeFormatOptions>>;
-  temporalValue: MaybeRefOrGetter<Temporal.ZonedDateTime>;
+  temporalValue: MaybeRefOrGetter<Temporal.ZonedDateTime | TemporalPartial>;
   direction?: MaybeRefOrGetter<Direction>;
   controlEl: Ref<HTMLElement | undefined>;
   onValueChange: (value: Temporal.ZonedDateTime) => void;
@@ -58,9 +65,51 @@ export function useDateTimeSegmentGroup({
 
   const segments = computed(() => {
     const date = toValue(temporalValue);
+    const parts = formatter.value.formatToParts(date.toPlainDateTime()) as {
+      type: DateTimeSegmentType;
+      value: string;
+    }[];
 
-    return formatter.value.formatToParts(date.toPlainDateTime()) as { type: DateTimeSegmentType; value: string }[];
+    if (isTemporalPartial(date)) {
+      for (const part of parts) {
+        if (!isEditableSegmentType(part.type)) {
+          continue;
+        }
+
+        if (!isTemporalPartSet(date, part.type)) {
+          part.value = getSegmentTypePlaceholder(part.type) ?? part.value;
+        }
+      }
+    }
+
+    return parts;
   });
+
+  function getRequiredParts() {
+    return segments.value
+      .filter(part => {
+        return isEditableSegmentType(part.type) || isOptionalSegmentType(part.type);
+      })
+      .map(part => part.type);
+  }
+
+  function isAllPartsSet(value: TemporalPartial) {
+    return segments.value.every(part => {
+      if (!isEditableSegmentType(part.type) || isOptionalSegmentType(part.type)) {
+        return true;
+      }
+
+      return isTemporalPartSet(value, part.type);
+    });
+  }
+
+  function withAllPartsSet(value: Temporal.ZonedDateTime) {
+    if (isTemporalPartial(value) && isAllPartsSet(value)) {
+      return Temporal.ZonedDateTime.from(value); // clones the value and drops the partial flag
+    }
+
+    return value;
+  }
 
   function onSegmentDone() {
     focusNextSegment();
@@ -76,21 +125,21 @@ export function useDateTimeSegmentGroup({
       const type = segment.getType();
       const date = addToPart(type, 1);
 
-      onValueChange(date);
+      onValueChange(withAllPartsSet(date));
     }
 
     function decrement() {
       const type = segment.getType();
       const date = addToPart(type, -1);
 
-      onValueChange(date);
+      onValueChange(withAllPartsSet(date));
     }
 
     function setValue(value: number) {
       const type = segment.getType();
       const date = setPart(type, value);
 
-      onValueChange(date);
+      onValueChange(withAllPartsSet(date));
     }
 
     function getMetadata() {
@@ -130,6 +179,15 @@ export function useDateTimeSegmentGroup({
       };
     }
 
+    function clear() {
+      const type = segment.getType();
+      const date = toValue(temporalValue);
+      const next = toTemporalPartial(date, !isTemporalPartial(date) ? getRequiredParts() : []);
+      next['~fw_temporal_partial'][type] = false;
+
+      onValueChange(next);
+    }
+
     return {
       increment,
       decrement,
@@ -138,6 +196,7 @@ export function useDateTimeSegmentGroup({
       onSegmentDone,
       getMetadata,
       onDone: onSegmentDone,
+      clear,
     };
   }
 
@@ -217,7 +276,7 @@ export function useDateTimeSegmentGroup({
 }
 
 interface ArithmeticInit {
-  currentDate: MaybeRefOrGetter<Temporal.ZonedDateTime>;
+  currentDate: MaybeRefOrGetter<Temporal.ZonedDateTime | TemporalPartial>;
 }
 
 function useDateArithmetic({ currentDate }: ArithmeticInit) {
@@ -231,14 +290,22 @@ function useDateArithmetic({ currentDate }: ArithmeticInit) {
       return date;
     }
 
-    return date.with({
+    const newDate = date.with({
       [part]: value,
     });
+
+    if (isTemporalPartial(date)) {
+      newDate['~fw_temporal_partial'] = {
+        ...date['~fw_temporal_partial'],
+        [part]: true,
+      };
+    }
+
+    return newDate;
   }
 
   function addToPart(part: DateTimeSegmentType, diff: number) {
     const date = toValue(currentDate);
-
     if (!isEditableSegmentType(part)) {
       return date;
     }
@@ -250,6 +317,29 @@ function useDateArithmetic({ currentDate }: ArithmeticInit) {
     const durationPart = segmentTypeToDurationLike(part);
     if (!durationPart) {
       return date;
+    }
+
+    if (isTemporalPartial(date)) {
+      let newDate: Temporal.ZonedDateTime | TemporalPartial = date;
+      if (isTemporalPartSet(date, part)) {
+        newDate = date.add({
+          [durationPart]: diff,
+        });
+      } else {
+        newDate =
+          part === 'dayPeriod'
+            ? date
+            : date.with({
+                [part]: part === 'year' ? date.year : 1,
+              });
+      }
+
+      newDate['~fw_temporal_partial'] = {
+        ...date['~fw_temporal_partial'],
+        [part]: true,
+      };
+
+      return newDate;
     }
 
     // Preserves the day, month, and year when adding to the part so it doesn't overflow.

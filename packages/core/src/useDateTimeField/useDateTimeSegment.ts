@@ -44,11 +44,12 @@ export function useDateTimeSegment(_props: Reactivify<DateTimeSegmentProps>) {
     throw new Error('DateTimeSegmentGroup is not provided');
   }
 
-  const { increment, decrement, setValue, getMetadata, onDone, parser } = segmentGroup.useDateSegmentRegistration({
-    id,
-    getElem: () => segmentEl.value,
-    getType: () => toValue(props.type),
-  });
+  const { increment, decrement, setValue, getMetadata, onDone, parser, clear } =
+    segmentGroup.useDateSegmentRegistration({
+      id,
+      getElem: () => segmentEl.value,
+      getType: () => toValue(props.type),
+    });
 
   const isNumeric = computed(() => parser.isValidNumberPart(toValue(props.value)));
 
@@ -123,6 +124,13 @@ export function useDateTimeSegment(_props: Reactivify<DateTimeSegmentProps>) {
           decrement();
         }
         return;
+      }
+
+      if (hasKeyCode(evt, 'Backspace') || hasKeyCode(evt, 'Delete')) {
+        blockEvent(evt);
+        if (!isNonEditable()) {
+          clear();
+        }
       }
     },
   };
