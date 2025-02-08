@@ -65,7 +65,7 @@ const {
         <CalendarCell
           v-for="day in days"
           v-bind="day"
-          class="flex flex-col items-center justify-center aria-selected:bg-emerald-600 aria-selected:text-white aria-selected:font-medium border-2 focus:border-emerald-600 focus:outline-none"
+          class="flex flex-col items-center justify-center aria-selected:bg-emerald-600 aria-selected:text-white aria-selected:font-medium border-2 focus:border-emerald-600 focus:outline-none aria-disabled:cursor-not-allowed aria-disabled:opacity-50"
           :class="{
             'text-zinc-500': day.isOutsideMonth,
             'text-white': !day.isOutsideMonth,

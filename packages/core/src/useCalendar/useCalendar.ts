@@ -51,6 +51,16 @@ export interface CalendarProps {
    * The format options for the month and year label.
    */
   monthYearFormatOptions?: Intl.DateTimeFormatOptions;
+
+  /**
+   * The minimum date to use for the calendar.
+   */
+  minDate?: Temporal.ZonedDateTime;
+
+  /**
+   * The maximum date to use for the calendar.
+   */
+  maxDate?: Temporal.ZonedDateTime;
 }
 
 interface CalendarContext {
@@ -58,6 +68,8 @@ interface CalendarContext {
   weekInfo: Ref<WeekInfo>;
   calendar: Ref<CalendarIdentifier>;
   selectedDate: MaybeRefOrGetter<Temporal.ZonedDateTime>;
+  getMinDate: () => Temporal.ZonedDateTime | undefined;
+  getMaxDate: () => Temporal.ZonedDateTime | undefined;
   getFocusedDate: () => Temporal.ZonedDateTime;
   setDay: (date: Temporal.ZonedDateTime) => void;
   setFocusedDay: (date: Temporal.ZonedDateTime) => void;
@@ -106,6 +118,8 @@ export function useCalendar(_props: Reactivify<CalendarProps, 'onDaySelected'> =
       await nextTick();
       focusCurrent();
     },
+    getMinDate: () => toValue(props.minDate),
+    getMaxDate: () => toValue(props.maxDate),
   };
 
   const handleKeyDown = useCalendarKeyboard(context);
@@ -305,7 +319,14 @@ function useDaysOfTheWeek({ weekInfo, locale, getFocusedDate }: CalendarContext)
   return { daysOfTheWeek };
 }
 
-function useCalendarDays({ weekInfo, getFocusedDate, calendar, selectedDate }: CalendarContext) {
+function useCalendarDays({
+  weekInfo,
+  getFocusedDate,
+  calendar,
+  selectedDate,
+  getMinDate,
+  getMaxDate,
+}: CalendarContext) {
   const days = computed<CalendarDay[]>(() => {
     const current = toValue(selectedDate);
     const focused = getFocusedDate();
@@ -321,9 +342,20 @@ function useCalendarDays({ weekInfo, getFocusedDate, calendar, selectedDate }: C
     // Always use 6 weeks (42 days) for consistent layout
     const gridDays = 42;
     const now = Temporal.Now.zonedDateTime(calendar.value);
+    const minDate = getMinDate();
+    const maxDate = getMaxDate();
 
     return Array.from({ length: gridDays }, (_, i) => {
       const dayOfMonth = firstDay.add({ days: i });
+      let disabled = false;
+
+      if (minDate && Temporal.ZonedDateTime.compare(dayOfMonth, minDate) < 0) {
+        disabled = true;
+      }
+
+      if (maxDate && Temporal.ZonedDateTime.compare(dayOfMonth, maxDate) > 0) {
+        disabled = true;
+      }
 
       return {
         value: dayOfMonth,
@@ -332,8 +364,7 @@ function useCalendarDays({ weekInfo, getFocusedDate, calendar, selectedDate }: C
         selected: current.equals(dayOfMonth),
         isOutsideMonth: dayOfMonth.monthCode !== focused.monthCode,
         focused: focused.equals(dayOfMonth),
-        // TODO: Figure out when to disable days
-        disabled: false,
+        disabled,
       } as CalendarDay;
     });
   });
@@ -347,6 +378,26 @@ interface ShortcutDefinition {
 }
 
 export function useCalendarKeyboard(context: CalendarContext) {
+  function withCheckedBounds(fn: () => Temporal.ZonedDateTime | undefined) {
+    const date = fn();
+    if (!date) {
+      return undefined;
+    }
+
+    const minDate = context.getMinDate();
+    const maxDate = context.getMaxDate();
+
+    if (
+      date &&
+      ((minDate && Temporal.ZonedDateTime.compare(date, minDate) < 0) ||
+        (maxDate && Temporal.ZonedDateTime.compare(date, maxDate) > 0))
+    ) {
+      return undefined;
+    }
+
+    return date;
+  }
+
   const shortcuts: Partial<Record<string, ShortcutDefinition>> = {
     ArrowLeft: {
       fn: () => context.getFocusedDate().subtract({ days: 1 }),
@@ -418,7 +469,7 @@ export function useCalendarKeyboard(context: CalendarContext) {
       return false;
     }
 
-    const newDate = shortcut.fn();
+    const newDate = withCheckedBounds(shortcut.fn);
     if (!newDate) {
       return false;
     }
