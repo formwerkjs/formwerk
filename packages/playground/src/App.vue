@@ -1,5 +1,8 @@
 <script setup lang="ts">
 import DateField from '@/components/DateField.vue';
+
+const minDate = new Date('2025-01-01');
+const maxDate = new Date('2025-01-31');
 </script>
 
 <template>
@@ -7,6 +10,8 @@ import DateField from '@/components/DateField.vue';
     <DateField
       name="date"
       label="Date"
+      :min-date="minDate"
+      :max-date="maxDate"
       :format-options="{
         day: '2-digit',
         month: '2-digit',

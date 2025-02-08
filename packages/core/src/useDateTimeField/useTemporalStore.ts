@@ -9,7 +9,7 @@ import { isNullOrUndefined } from '../utils/common';
 interface TemporalValueStoreInit {
   model: {
     get: () => Maybe<Date>;
-    set: (value: Maybe<Date>) => void;
+    set?: (value: Maybe<Date>) => void;
   };
   locale: MaybeRefOrGetter<string>;
   timeZone: MaybeRefOrGetter<string>;
@@ -77,7 +77,7 @@ export function useTemporalStore(init: TemporalValueStoreInit) {
   const temporalValue = computed({
     get: () => toZonedDateTime(model.get()),
     set: value => {
-      model.set(toDate(value));
+      model.set?.(toDate(value));
     },
   });
 

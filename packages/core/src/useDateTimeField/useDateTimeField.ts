@@ -99,6 +99,24 @@ export function useDateTimeField(_props: Reactivify<DateTimeFieldProps, 'schema'
     schema: props.schema,
   });
 
+  const minDate = useTemporalStore({
+    calendar: calendar,
+    timeZone: timeZone,
+    locale: locale,
+    model: {
+      get: () => toValue(props.minDate),
+    },
+  });
+
+  const maxDate = useTemporalStore({
+    calendar: calendar,
+    timeZone: timeZone,
+    locale: locale,
+    model: {
+      get: () => toValue(props.maxDate),
+    },
+  });
+
   const temporalValue = useTemporalStore({
     calendar: calendar,
     timeZone: timeZone,
@@ -142,6 +160,8 @@ export function useDateTimeField(_props: Reactivify<DateTimeFieldProps, 'schema'
     locale: () => locale.value,
     currentDate: temporalValue,
     onDaySelected: onValueChange,
+    minDate,
+    maxDate,
   };
 
   const controlProps = computed(() => {

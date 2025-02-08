@@ -10,17 +10,24 @@ export function useCalendarCell(_props: Reactivify<CalendarDay>) {
   const calendarCtx = inject(CalendarContextKey, null);
 
   function handleClick() {
+    if (toValue(props.disabled)) {
+      return;
+    }
+
     calendarCtx?.setDay(toValue(props.value));
   }
 
   const cellProps = computed(() => {
+    const isDisabled = toValue(props.disabled);
+    const isFocused = toValue(props.focused);
+
     return withRefCapture(
       {
         key: toValue(props.value).toString(),
-        onClick: handleClick,
+        onClick: isDisabled ? undefined : handleClick,
         'aria-selected': toValue(props.selected),
-        'aria-disabled': toValue(props.disabled),
-        tabindex: toValue(props.disabled) || !toValue(props.focused) ? '-1' : '0',
+        'aria-disabled': isDisabled,
+        tabindex: isDisabled || !isFocused ? '-1' : '0',
       },
       cellEl,
     );
@@ -32,6 +39,7 @@ export function useCalendarCell(_props: Reactivify<CalendarDay>) {
 }
 
 export const CalendarCell = defineComponent({
+  name: 'CalendarCell',
   props: ['value', 'dayOfMonth', 'isToday', 'selected', 'isOutsideMonth', 'disabled', 'focused'],
   setup(props) {
     const { cellProps } = useCalendarCell(props);
