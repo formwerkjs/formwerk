@@ -95,7 +95,7 @@ export function useDateTimeField(_props: Reactivify<DateTimeFieldProps, 'schema'
   const field = useFormField<Maybe<Date>>({
     path: props.name,
     disabled: props.disabled,
-    initialValue: toValue(props.modelValue) ?? toValue(props.value) ?? new Date(),
+    initialValue: toValue(props.modelValue) ?? toValue(props.value),
     schema: props.schema,
   });
 

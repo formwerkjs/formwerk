@@ -1,10 +1,11 @@
-import { MaybeRefOrGetter, computed, toValue } from 'vue';
+import { MaybeRefOrGetter, computed, shallowRef, toValue, watch } from 'vue';
 import { CalendarIdentifier } from '../useCalendar';
-import { DateValue } from './types';
+import { DateValue, TemporalPartial } from './types';
 import { toTemporalInstant } from '@js-temporal/polyfill';
 import { Maybe } from '../types';
 import { Temporal } from '@js-temporal/polyfill';
 import { isNullOrUndefined } from '../utils/common';
+import { createTemporalPartial, isTemporalPartial } from './temporalPartial';
 
 interface TemporalValueStoreInit {
   model: {
@@ -18,10 +19,17 @@ interface TemporalValueStoreInit {
 
 export function useTemporalStore(init: TemporalValueStoreInit) {
   const model = init.model;
+  const temporalVal = shallowRef<Temporal.ZonedDateTime | TemporalPartial>(
+    toZonedDateTime(model.get()) ?? createTemporalPartial(toValue(init.calendar), toValue(init.timeZone)),
+  );
 
-  function toZonedDateTime(value: Maybe<DateValue>): Temporal.ZonedDateTime {
+  watch(model.get, value => {
+    temporalVal.value = toZonedDateTime(value) ?? createTemporalPartial(toValue(init.calendar), toValue(init.timeZone));
+  });
+
+  function toZonedDateTime(value: Maybe<DateValue>): Maybe<Temporal.ZonedDateTime> {
     if (isNullOrUndefined(value)) {
-      return Temporal.Now.zonedDateTime(toValue(init.calendar), toValue(init.timeZone));
+      return value;
     }
 
     if (value instanceof Date) {
@@ -62,22 +70,30 @@ export function useTemporalStore(init: TemporalValueStoreInit) {
     return value;
   }
 
-  function toDate(value: Maybe<DateValue>): Date {
+  function toDate(value: Maybe<DateValue>): Maybe<Date> {
     if (isNullOrUndefined(value)) {
-      return new Date();
+      return value;
     }
 
     if (value instanceof Date) {
       return value;
     }
 
-    return new Date(toZonedDateTime(value).epochMilliseconds);
+    const zonedDateTime = toZonedDateTime(value);
+    if (!zonedDateTime) {
+      return zonedDateTime;
+    }
+
+    return new Date(zonedDateTime.epochMilliseconds);
   }
 
   const temporalValue = computed({
-    get: () => toZonedDateTime(model.get()),
+    get: () => temporalVal.value,
     set: value => {
-      model.set?.(toDate(value));
+      temporalVal.value = value;
+      if (!isTemporalPartial(value)) {
+        model.set?.(toDate(value));
+      }
     },
   });
 

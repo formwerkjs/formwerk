@@ -2,7 +2,7 @@ import { computed, InjectionKey, MaybeRefOrGetter, nextTick, provide, ref, Ref, 
 import { Temporal } from '@js-temporal/polyfill';
 import { CalendarDay, CalendarIdentifier } from './types';
 import { hasKeyCode, normalizeProps, useUniqId, withRefCapture } from '../utils/common';
-import { Reactivify } from '../types';
+import { Maybe, Reactivify } from '../types';
 import { useDateFormatter, useLocale } from '../i18n';
 import { WeekInfo } from '../i18n/getWeekInfo';
 import { FieldTypePrefixes } from '../constants';
@@ -55,12 +55,12 @@ export interface CalendarProps {
   /**
    * The minimum date to use for the calendar.
    */
-  minDate?: Temporal.ZonedDateTime;
+  minDate?: Maybe<Temporal.ZonedDateTime>;
 
   /**
    * The maximum date to use for the calendar.
    */
-  maxDate?: Temporal.ZonedDateTime;
+  maxDate?: Maybe<Temporal.ZonedDateTime>;
 }
 
 interface CalendarContext {
@@ -68,8 +68,8 @@ interface CalendarContext {
   weekInfo: Ref<WeekInfo>;
   calendar: Ref<CalendarIdentifier>;
   selectedDate: MaybeRefOrGetter<Temporal.ZonedDateTime>;
-  getMinDate: () => Temporal.ZonedDateTime | undefined;
-  getMaxDate: () => Temporal.ZonedDateTime | undefined;
+  getMinDate: () => Maybe<Temporal.ZonedDateTime>;
+  getMaxDate: () => Maybe<Temporal.ZonedDateTime>;
   getFocusedDate: () => Temporal.ZonedDateTime;
   setDay: (date: Temporal.ZonedDateTime) => void;
   setFocusedDay: (date: Temporal.ZonedDateTime) => void;
