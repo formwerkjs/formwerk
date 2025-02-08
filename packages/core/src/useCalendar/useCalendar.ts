@@ -112,11 +112,11 @@ export function useCalendar(_props: Reactivify<CalendarProps, 'onDaySelected'> =
   const { daysOfTheWeek } = useDaysOfTheWeek(context);
   const { days } = useCalendarDays(context);
 
-  const buttonProps = useControlButtonProps({
+  const buttonProps = useControlButtonProps(() => ({
     onClick: () => {
       isOpen.value = true;
     },
-  });
+  }));
 
   const pickerHandlers = {
     onKeydown(e: KeyboardEvent) {
@@ -170,19 +170,19 @@ export function useCalendar(_props: Reactivify<CalendarProps, 'onDaySelected'> =
     );
   });
 
-  const nextMonthButtonProps = useControlButtonProps({
+  const nextMonthButtonProps = useControlButtonProps(() => ({
     id: `${calendarId}-next-month`,
     onClick: () => {
       context.setFocusedDay(context.getFocusedDate().add({ months: 1 }));
     },
-  });
+  }));
 
-  const previousMonthButtonProps = useControlButtonProps({
+  const previousMonthButtonProps = useControlButtonProps(() => ({
     id: `${calendarId}-previous-month`,
     onClick: () => {
       context.setFocusedDay(context.getFocusedDate().subtract({ months: 1 }));
     },
-  });
+  }));
 
   const monthYearLabel = computed(() => {
     return formatter.value.format(context.getFocusedDate().toPlainDateTime());
