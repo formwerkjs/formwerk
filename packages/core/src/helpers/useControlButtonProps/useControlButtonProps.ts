@@ -6,12 +6,12 @@ interface ControlButtonProps {
   disabled?: boolean;
 }
 
-export function useControlButtonProps(props: ControlButtonProps) {
+export function useControlButtonProps(props: () => ControlButtonProps) {
   const buttonEl = shallowRef<HTMLElement>();
 
   const buttonProps = computed(() => {
     const isBtn = isButtonElement(buttonEl.value);
-    const { disabled, ...rest } = props;
+    const { disabled, ...rest } = props();
 
     return withRefCapture(
       {

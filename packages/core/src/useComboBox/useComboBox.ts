@@ -316,7 +316,7 @@ export function useComboBox<TOption, TValue = TOption>(
     isPopupOpen.value = !isPopupOpen.value;
   }
 
-  const buttonProps = useControlButtonProps({
+  const buttonProps = useControlButtonProps(() => ({
     id: `${inputId}-btn`,
     disabled: isDisabled.value,
     type: 'button' as const,
@@ -325,7 +325,7 @@ export function useComboBox<TOption, TValue = TOption>(
     'aria-activedescendant': findFocusedOption()?.id ?? undefined,
     'aria-controls': listBoxId,
     onClick: onButtonClick,
-  });
+  }));
 
   // https://www.w3.org/WAI/ARIA/apg/patterns/combobox/examples/combobox-autocomplete-list/#rps_label_textbox
   const inputProps = computed(() => {
