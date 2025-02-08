@@ -4,17 +4,17 @@ import { CalendarIdentifier } from '../useCalendar';
 import { isObject } from '../../../shared/src';
 
 export function createTemporalPartial(calendar: CalendarIdentifier, timeZone: string) {
-  const zonedDateTime = Temporal.Now.zonedDateTime(calendar, timeZone);
+  const zonedDateTime = Temporal.Now.zonedDateTime(calendar, timeZone) as TemporalPartial;
   zonedDateTime['~fw_temporal_partial'] = {};
 
-  return zonedDateTime as TemporalPartial;
+  return zonedDateTime;
 }
 
 export function toTemporalPartial(
   value: Temporal.ZonedDateTime | TemporalPartial,
   setParts?: DateTimeSegmentType[],
 ): TemporalPartial {
-  const clone = Temporal.ZonedDateTime.from(value);
+  const clone = Temporal.ZonedDateTime.from(value) as TemporalPartial;
   clone['~fw_temporal_partial'] = isTemporalPartial(value) ? value['~fw_temporal_partial'] : {};
   if (setParts) {
     setParts.forEach(part => {
@@ -22,11 +22,11 @@ export function toTemporalPartial(
     });
   }
 
-  return clone as TemporalPartial;
+  return clone;
 }
 
 export function isTemporalPartial(value: Temporal.ZonedDateTime): value is TemporalPartial {
-  return isObject(value['~fw_temporal_partial']);
+  return isObject((value as TemporalPartial)['~fw_temporal_partial']);
 }
 
 export function isTemporalPartSet(value: TemporalPartial, part: DateTimeSegmentType): boolean {

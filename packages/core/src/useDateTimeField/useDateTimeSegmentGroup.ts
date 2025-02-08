@@ -295,7 +295,7 @@ function useDateArithmetic({ currentDate }: ArithmeticInit) {
     });
 
     if (isTemporalPartial(date)) {
-      newDate['~fw_temporal_partial'] = {
+      (newDate as TemporalPartial)['~fw_temporal_partial'] = {
         ...date['~fw_temporal_partial'],
         [part]: true,
       };
@@ -334,7 +334,7 @@ function useDateArithmetic({ currentDate }: ArithmeticInit) {
               });
       }
 
-      newDate['~fw_temporal_partial'] = {
+      (newDate as TemporalPartial)['~fw_temporal_partial'] = {
         ...date['~fw_temporal_partial'],
         [part]: true,
       };
