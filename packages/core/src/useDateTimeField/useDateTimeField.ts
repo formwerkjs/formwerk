@@ -9,6 +9,7 @@ import { useDateFormatter, useLocale } from '../i18n';
 import { useErrorMessage, useLabel } from '../a11y';
 import { useTemporalStore } from './useTemporalStore';
 import { Temporal } from '@js-temporal/polyfill';
+import { isTemporalPartial } from './temporalPartial';
 
 export interface DateTimeFieldProps {
   /**
@@ -160,8 +161,8 @@ export function useDateTimeField(_props: Reactivify<DateTimeFieldProps, 'schema'
     locale: () => locale.value,
     currentDate: temporalValue,
     onDaySelected: onValueChange,
-    minDate,
-    maxDate,
+    minDate: () => (isTemporalPartial(minDate.value) ? undefined : minDate.value),
+    maxDate: () => (isTemporalPartial(maxDate.value) ? undefined : maxDate.value),
   };
 
   const controlProps = computed(() => {

@@ -10,8 +10,6 @@ const maxDate = new Date('2025-01-31');
     <DateField
       name="date"
       label="Date"
-      :min-date="minDate"
-      :max-date="maxDate"
       :format-options="{
         day: '2-digit',
         month: '2-digit',

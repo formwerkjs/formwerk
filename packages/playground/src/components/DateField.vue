@@ -16,8 +16,6 @@ const {
 } = useDateTimeField(props);
 
 const {
-  days,
-  daysOfTheWeek,
   pickerProps,
   gridProps,
   buttonProps,
@@ -25,6 +23,7 @@ const {
   previousMonthButtonProps,
   monthYearLabelProps: calendarLabelProps,
   monthYearLabel,
+  currentPanel,
 } = useCalendar(calendarProps);
 </script>
 
@@ -53,28 +52,50 @@ const {
         <button v-bind="nextMonthButtonProps">⬇️</button>
       </div>
 
-      <div class="grid grid-cols-7 gap-4" :dir="direction" v-bind="gridProps">
-        <div
-          v-for="day in daysOfTheWeek"
-          :key="day.long"
-          class="flex flex-col items-center justify-center text-white font-bold"
-        >
-          {{ day.short }}
-        </div>
+      <div class="gap-4" :dir="direction" v-bind="gridProps">
+        <template v-if="currentPanel.type === 'day'">
+          <div
+            v-for="day in currentPanel.daysOfTheWeek"
+            :key="day"
+            class="flex flex-col items-center justify-center text-white font-bold"
+          >
+            {{ day }}
+          </div>
 
-        <CalendarCell
-          v-for="day in days"
-          v-bind="day"
-          class="flex flex-col items-center justify-center aria-selected:bg-emerald-600 aria-selected:text-white aria-selected:font-medium border-2 focus:border-emerald-600 focus:outline-none aria-disabled:cursor-not-allowed aria-disabled:opacity-50"
-          :class="{
-            'text-zinc-500': day.isOutsideMonth,
-            'text-white': !day.isOutsideMonth,
-            'border-transparent': !day.isToday,
-            'border-emerald-600': day.isToday,
-          }"
-        >
-          {{ day.dayOfMonth }}
-        </CalendarCell>
+          <CalendarCell
+            v-for="day in currentPanel.days"
+            v-bind="day"
+            class="flex flex-col items-center justify-center aria-selected:bg-emerald-600 aria-selected:text-white aria-selected:font-medium border-2 focus:border-emerald-600 focus:outline-none aria-disabled:cursor-not-allowed aria-disabled:opacity-50"
+            :class="{
+              'text-zinc-500': day.isOutsideMonth,
+              'text-white': !day.isOutsideMonth,
+              'border-transparent': !day.isToday,
+              'border-emerald-600': day.isToday,
+            }"
+          >
+            {{ day.label }}
+          </CalendarCell>
+        </template>
+
+        <template v-if="currentPanel.type === 'month'">
+          <CalendarCell
+            v-for="month in currentPanel.months"
+            v-bind="month"
+            class="flex flex-col items-center justify-center aria-selected:bg-emerald-600 aria-selected:text-white aria-selected:font-medium border-2 focus:border-emerald-600 focus:outline-none aria-disabled:cursor-not-allowed aria-disabled:opacity-50"
+          >
+            {{ month.label }}
+          </CalendarCell>
+        </template>
+
+        <template v-if="currentPanel.type === 'year'">
+          <CalendarCell
+            v-for="year in currentPanel.years"
+            v-bind="year"
+            class="flex flex-col items-center justify-center aria-selected:bg-emerald-600 aria-selected:text-white aria-selected:font-medium border-2 focus:border-emerald-600 focus:outline-none aria-disabled:cursor-not-allowed aria-disabled:opacity-50"
+          >
+            {{ year.label }}
+          </CalendarCell>
+        </template>
       </div>
     </div>
 
