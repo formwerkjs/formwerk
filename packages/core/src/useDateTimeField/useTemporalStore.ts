@@ -24,6 +24,10 @@ export function useTemporalStore(init: TemporalValueStoreInit) {
   );
 
   watch(model.get, value => {
+    if (!value && isTemporalPartial(temporalVal.value)) {
+      return;
+    }
+
     temporalVal.value = toZonedDateTime(value) ?? createTemporalPartial(toValue(init.calendar), toValue(init.timeZone));
   });
 
@@ -91,9 +95,7 @@ export function useTemporalStore(init: TemporalValueStoreInit) {
     get: () => temporalVal.value,
     set: value => {
       temporalVal.value = value;
-      if (!isTemporalPartial(value)) {
-        model.set?.(toDate(value));
-      }
+      model.set?.(isTemporalPartial(value) ? undefined : toDate(value));
     },
   });
 
