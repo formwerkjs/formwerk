@@ -15,6 +15,7 @@ interface TemporalValueStoreInit {
   locale: MaybeRefOrGetter<string>;
   timeZone: MaybeRefOrGetter<string>;
   calendar: MaybeRefOrGetter<CalendarIdentifier>;
+  allowPartial?: boolean;
 }
 
 export function useTemporalStore(init: TemporalValueStoreInit) {

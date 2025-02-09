@@ -1,15 +1,16 @@
-import { computed, InjectionKey, MaybeRefOrGetter, nextTick, provide, ref, Ref, shallowRef, toValue, watch } from 'vue';
+import { computed, nextTick, provide, Ref, ref, shallowRef, toValue, watch } from 'vue';
 import { Temporal } from '@js-temporal/polyfill';
-import { CalendarDay, CalendarIdentifier } from './types';
+import { CalendarContext, CalendarIdentifier, CalendarPanelType } from './types';
 import { hasKeyCode, normalizeProps, useUniqId, withRefCapture } from '../utils/common';
 import { Maybe, Reactivify } from '../types';
-import { useDateFormatter, useLocale } from '../i18n';
-import { WeekInfo } from '../i18n/getWeekInfo';
+import { useLocale } from '../i18n';
 import { FieldTypePrefixes } from '../constants';
 import { usePopoverController } from '../helpers/usePopoverController';
 import { blockEvent } from '../utils/events';
 import { useLabel } from '../a11y';
 import { useControlButtonProps } from '../helpers/useControlButtonProps';
+import { CalendarContextKey } from './constants';
+import { CalendarPanel, useCalendarPanel } from './useCalendarPanel';
 
 export interface CalendarProps {
   /**
@@ -48,11 +49,6 @@ export interface CalendarProps {
   previousMonthButtonLabel?: string;
 
   /**
-   * The format options for the month and year label.
-   */
-  monthYearFormatOptions?: Intl.DateTimeFormatOptions;
-
-  /**
    * The minimum date to use for the calendar.
    */
   minDate?: Maybe<Temporal.ZonedDateTime>;
@@ -61,21 +57,22 @@ export interface CalendarProps {
    * The maximum date to use for the calendar.
    */
   maxDate?: Maybe<Temporal.ZonedDateTime>;
-}
 
-interface CalendarContext {
-  locale: Ref<string>;
-  weekInfo: Ref<WeekInfo>;
-  calendar: Ref<CalendarIdentifier>;
-  selectedDate: MaybeRefOrGetter<Temporal.ZonedDateTime>;
-  getMinDate: () => Maybe<Temporal.ZonedDateTime>;
-  getMaxDate: () => Maybe<Temporal.ZonedDateTime>;
-  getFocusedDate: () => Temporal.ZonedDateTime;
-  setDay: (date: Temporal.ZonedDateTime) => void;
-  setFocusedDay: (date: Temporal.ZonedDateTime) => void;
-}
+  /**
+   * The format options for the days of the week.
+   */
+  daysOfWeekFormat?: Intl.DateTimeFormatOptions['weekday'];
 
-export const CalendarContextKey: InjectionKey<CalendarContext> = Symbol('CalendarContext');
+  /**
+   * The format options for the month.
+   */
+  monthFormat?: Intl.DateTimeFormatOptions['month'];
+
+  /**
+   * The format options for the year.
+   */
+  yearFormat?: Intl.DateTimeFormatOptions['year'];
+}
 
 export function useCalendar(_props: Reactivify<CalendarProps, 'onDaySelected'> = {}) {
   const props = normalizeProps(_props, ['onDaySelected']);
@@ -88,10 +85,6 @@ export function useCalendar(_props: Reactivify<CalendarProps, 'onDaySelected'> =
     calendar: () => toValue(props.calendar),
   });
 
-  const formatter = useDateFormatter(
-    locale,
-    () => toValue(props.monthYearFormatOptions) ?? { month: 'long', year: 'numeric' },
-  );
   const selectedDate = computed(() => toValue(props.currentDate) ?? Temporal.Now.zonedDateTime(calendar.value));
   const focusedDay = shallowRef<Temporal.ZonedDateTime>();
   const { isOpen } = usePopoverController(pickerEl, { disabled: props.disabled });
@@ -110,10 +103,16 @@ export function useCalendar(_props: Reactivify<CalendarProps, 'onDaySelected'> =
     calendar,
     selectedDate,
     getFocusedDate: getFocusedOrSelected,
-    setDay: (date: Temporal.ZonedDateTime) => {
+    setDate: (date: Temporal.ZonedDateTime, panel?: CalendarPanelType) => {
       props.onDaySelected?.(date);
+      if (panel) {
+        switchPanel(panel);
+      } else if (currentPanel.value.type === 'day') {
+        // Automatically close the calendar when a day is selected
+        isOpen.value = false;
+      }
     },
-    setFocusedDay: async (date: Temporal.ZonedDateTime) => {
+    setFocusedDate: async (date: Temporal.ZonedDateTime) => {
       focusedDay.value = date;
       await nextTick();
       focusCurrent();
@@ -122,10 +121,18 @@ export function useCalendar(_props: Reactivify<CalendarProps, 'onDaySelected'> =
     getMaxDate: () => toValue(props.maxDate),
   };
 
-  const handleKeyDown = useCalendarKeyboard(context);
-  const { daysOfTheWeek } = useDaysOfTheWeek(context);
-  const { days } = useCalendarDays(context);
+  provide(CalendarContextKey, context);
 
+  const { currentPanel, switchPanel, panelLabel } = useCalendarPanel(
+    {
+      daysOfWeekFormat: props.daysOfWeekFormat,
+      monthFormat: props.monthFormat,
+      yearFormat: props.yearFormat,
+    },
+    context,
+  );
+
+  const handleKeyDown = useCalendarKeyboard(context, currentPanel);
   const buttonProps = useControlButtonProps(() => ({
     onClick: () => {
       isOpen.value = true;
@@ -163,6 +170,7 @@ export function useCalendar(_props: Reactivify<CalendarProps, 'onDaySelected'> =
   watch(isOpen, async value => {
     if (!value) {
       focusedDay.value = undefined;
+      switchPanel('day');
       return;
     }
 
@@ -187,25 +195,21 @@ export function useCalendar(_props: Reactivify<CalendarProps, 'onDaySelected'> =
   const nextMonthButtonProps = useControlButtonProps(() => ({
     id: `${calendarId}-next-month`,
     onClick: () => {
-      context.setFocusedDay(context.getFocusedDate().add({ months: 1 }));
+      context.setFocusedDate(context.getFocusedDate().add({ months: 1 }));
     },
   }));
 
   const previousMonthButtonProps = useControlButtonProps(() => ({
     id: `${calendarId}-previous-month`,
     onClick: () => {
-      context.setFocusedDay(context.getFocusedDate().subtract({ months: 1 }));
+      context.setFocusedDate(context.getFocusedDate().subtract({ months: 1 }));
     },
   }));
-
-  const monthYearLabel = computed(() => {
-    return formatter.value.format(context.getFocusedDate().toPlainDateTime());
-  });
 
   const { labelProps: monthYearLabelBaseProps } = useLabel({
     targetRef: gridEl,
     for: gridId,
-    label: monthYearLabel,
+    label: panelLabel,
   });
 
   const monthYearLabelProps = computed(() => {
@@ -213,6 +217,19 @@ export function useCalendar(_props: Reactivify<CalendarProps, 'onDaySelected'> =
       {
         ...monthYearLabelBaseProps.value,
         'aria-live': 'polite' as const,
+        tabindex: '-1',
+        onClick: () => {
+          if (currentPanel.value.type === 'day') {
+            switchPanel('month');
+
+            return;
+          }
+
+          if (currentPanel.value.type === 'month') {
+            switchPanel('year');
+            return;
+          }
+        },
       },
       calendarLabelEl,
     );
@@ -223,12 +240,14 @@ export function useCalendar(_props: Reactivify<CalendarProps, 'onDaySelected'> =
       {
         id: `${calendarId}-g`,
         role: 'grid',
+        style: {
+          display: 'grid',
+          gridTemplateColumns: `repeat(${currentPanel.value.type === 'day' ? currentPanel.value.daysOfTheWeek.length : 3}, 1fr)`,
+        },
       },
       gridEl,
     );
   });
-
-  provide(CalendarContextKey, context);
 
   return {
     /**
@@ -256,13 +275,13 @@ export function useCalendar(_props: Reactivify<CalendarProps, 'onDaySelected'> =
      */
     gridEl,
     /**
-     * The days of the week.
+     * The current panel.
      */
-    daysOfTheWeek,
+    currentPanel,
     /**
-     * The days of the month.
+     * Switches the current panel from day to month or year.
      */
-    days,
+    switchPanel,
     /**
      * The props for the month and year label element.
      */
@@ -278,98 +297,8 @@ export function useCalendar(_props: Reactivify<CalendarProps, 'onDaySelected'> =
     /**
      * The month and year label.
      */
-    monthYearLabel,
+    monthYearLabel: panelLabel,
   };
-}
-
-function useDaysOfTheWeek({ weekInfo, locale, getFocusedDate }: CalendarContext) {
-  const longFormatter = useDateFormatter(locale, { weekday: 'long' });
-  const shortFormatter = useDateFormatter(locale, { weekday: 'short' });
-  const narrowFormatter = useDateFormatter(locale, { weekday: 'narrow' });
-
-  const daysOfTheWeek = computed(() => {
-    let focused = getFocusedDate();
-    const daysPerWeek = focused.daysInWeek;
-    const firstDayOfWeek = weekInfo.value.firstDay;
-    // Get the current date's day of week (0-6)
-    const currentDayOfWeek = focused.dayOfWeek;
-
-    // Calculate how many days to go back to reach first day of week
-    const daysToSubtract = (currentDayOfWeek - firstDayOfWeek + 7) % 7;
-
-    // Move current date back to first day of week
-    focused = focused.subtract({ days: daysToSubtract });
-
-    const days: {
-      long: string;
-      short: string;
-      narrow: string;
-    }[] = [];
-    for (let i = 0; i < daysPerWeek; i++) {
-      days.push({
-        long: longFormatter.value.format(focused.add({ days: i }).toPlainDateTime()),
-        short: shortFormatter.value.format(focused.add({ days: i }).toPlainDateTime()),
-        narrow: narrowFormatter.value.format(focused.add({ days: i }).toPlainDateTime()),
-      });
-    }
-
-    return days;
-  });
-
-  return { daysOfTheWeek };
-}
-
-function useCalendarDays({
-  weekInfo,
-  getFocusedDate,
-  calendar,
-  selectedDate,
-  getMinDate,
-  getMaxDate,
-}: CalendarContext) {
-  const days = computed<CalendarDay[]>(() => {
-    const current = toValue(selectedDate);
-    const focused = getFocusedDate();
-    const startOfMonth = focused.with({ day: 1 });
-
-    const firstDayOfWeek = weekInfo.value.firstDay;
-    const startDayOfWeek = startOfMonth.dayOfWeek;
-    const daysToSubtract = (startDayOfWeek - firstDayOfWeek + 7) % 7;
-
-    // Move to first day of week
-    const firstDay = startOfMonth.subtract({ days: daysToSubtract });
-
-    // Always use 6 weeks (42 days) for consistent layout
-    const gridDays = 42;
-    const now = Temporal.Now.zonedDateTime(calendar.value);
-    const minDate = getMinDate();
-    const maxDate = getMaxDate();
-
-    return Array.from({ length: gridDays }, (_, i) => {
-      const dayOfMonth = firstDay.add({ days: i });
-      let disabled = false;
-
-      if (minDate && Temporal.ZonedDateTime.compare(dayOfMonth, minDate) < 0) {
-        disabled = true;
-      }
-
-      if (maxDate && Temporal.ZonedDateTime.compare(dayOfMonth, maxDate) > 0) {
-        disabled = true;
-      }
-
-      return {
-        value: dayOfMonth,
-        dayOfMonth: dayOfMonth.day,
-        isToday: dayOfMonth.equals(now),
-        selected: current.equals(dayOfMonth),
-        isOutsideMonth: dayOfMonth.monthCode !== focused.monthCode,
-        focused: focused.equals(dayOfMonth),
-        disabled,
-      } as CalendarDay;
-    });
-  });
-
-  return { days };
 }
 
 interface ShortcutDefinition {
@@ -377,7 +306,7 @@ interface ShortcutDefinition {
   type: 'focus' | 'select';
 }
 
-export function useCalendarKeyboard(context: CalendarContext) {
+export function useCalendarKeyboard(context: CalendarContext, currentPanel: Ref<CalendarPanel>) {
   function withCheckedBounds(fn: () => Temporal.ZonedDateTime | undefined) {
     const date = fn();
     if (!date) {
@@ -398,21 +327,46 @@ export function useCalendarKeyboard(context: CalendarContext) {
     return date;
   }
 
+  function getIncrement(direction: 'up' | 'down' | 'left' | 'right') {
+    const panelType = currentPanel.value.type;
+    if (panelType === 'day') {
+      if (direction === 'up' || direction === 'down') {
+        return { weeks: 1 };
+      }
+
+      return { days: 1 };
+    }
+
+    if (panelType === 'month') {
+      if (direction === 'up' || direction === 'down') {
+        return { months: 3 };
+      }
+
+      return { months: 1 };
+    }
+
+    if (direction === 'up' || direction === 'down') {
+      return { years: 3 };
+    }
+
+    return { years: 1 };
+  }
+
   const shortcuts: Partial<Record<string, ShortcutDefinition>> = {
     ArrowLeft: {
-      fn: () => context.getFocusedDate().subtract({ days: 1 }),
+      fn: () => context.getFocusedDate().subtract(getIncrement('left')),
       type: 'focus',
     },
     ArrowRight: {
-      fn: () => context.getFocusedDate().add({ days: 1 }),
+      fn: () => context.getFocusedDate().add(getIncrement('right')),
       type: 'focus',
     },
     ArrowUp: {
-      fn: () => context.getFocusedDate().subtract({ weeks: 1 }),
+      fn: () => context.getFocusedDate().subtract(getIncrement('up')),
       type: 'focus',
     },
     ArrowDown: {
-      fn: () => context.getFocusedDate().add({ weeks: 1 }),
+      fn: () => context.getFocusedDate().add(getIncrement('down')),
       type: 'focus',
     },
     Enter: {
@@ -420,15 +374,31 @@ export function useCalendarKeyboard(context: CalendarContext) {
       type: 'select',
     },
     PageDown: {
-      fn: () => context.getFocusedDate().add({ months: 1 }),
+      fn: () => {
+        if (currentPanel.value.type !== 'day') {
+          return undefined;
+        }
+
+        return context.getFocusedDate().add({ months: 1 });
+      },
       type: 'focus',
     },
     PageUp: {
-      fn: () => context.getFocusedDate().subtract({ months: 1 }),
+      fn: () => {
+        if (currentPanel.value.type !== 'day') {
+          return undefined;
+        }
+
+        return context.getFocusedDate().subtract({ months: 1 });
+      },
       type: 'focus',
     },
     Home: {
       fn: () => {
+        if (currentPanel.value.type !== 'day') {
+          return undefined;
+        }
+
         const current = context.getFocusedDate();
         if (current.day === 1) {
           return current.subtract({ months: 1 }).with({ day: 1 });
@@ -441,6 +411,10 @@ export function useCalendarKeyboard(context: CalendarContext) {
     End: {
       type: 'focus',
       fn: () => {
+        if (currentPanel.value.type !== 'day') {
+          return undefined;
+        }
+
         const current = context.getFocusedDate();
         if (current.day === current.daysInMonth) {
           return current.add({ months: 1 }).with({ day: 1 });
@@ -475,9 +449,9 @@ export function useCalendarKeyboard(context: CalendarContext) {
     }
 
     if (shortcut.type === 'focus') {
-      context.setFocusedDay(newDate);
+      context.setFocusedDate(newDate);
     } else {
-      context.setDay(newDate);
+      context.setDate(newDate);
     }
 
     return true;
