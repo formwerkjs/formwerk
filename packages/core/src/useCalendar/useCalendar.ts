@@ -192,17 +192,37 @@ export function useCalendar(_props: Reactivify<CalendarProps, 'onDaySelected'> =
     );
   });
 
-  const nextMonthButtonProps = useControlButtonProps(() => ({
-    id: `${calendarId}-next-month`,
+  const nextPanelButtonProps = useControlButtonProps(() => ({
+    id: `${calendarId}-next`,
     onClick: () => {
-      context.setFocusedDate(context.getFocusedDate().add({ months: 1 }));
+      if (currentPanel.value.type === 'day') {
+        context.setFocusedDate(context.getFocusedDate().add({ months: 1 }));
+        return;
+      }
+
+      if (currentPanel.value.type === 'month') {
+        context.setFocusedDate(context.getFocusedDate().add({ years: 1 }));
+        return;
+      }
+
+      context.setFocusedDate(currentPanel.value.years[currentPanel.value.years.length - 1].value.add({ years: 1 }));
     },
   }));
 
-  const previousMonthButtonProps = useControlButtonProps(() => ({
-    id: `${calendarId}-previous-month`,
+  const previousPanelButtonProps = useControlButtonProps(() => ({
+    id: `${calendarId}-previous`,
     onClick: () => {
-      context.setFocusedDate(context.getFocusedDate().subtract({ months: 1 }));
+      if (currentPanel.value.type === 'day') {
+        context.setFocusedDate(context.getFocusedDate().subtract({ months: 1 }));
+        return;
+      }
+
+      if (currentPanel.value.type === 'month') {
+        context.setFocusedDate(context.getFocusedDate().subtract({ years: 1 }));
+        return;
+      }
+
+      context.setFocusedDate(currentPanel.value.years[0].value.subtract({ years: 1 }));
     },
   }));
 
@@ -212,7 +232,7 @@ export function useCalendar(_props: Reactivify<CalendarProps, 'onDaySelected'> =
     label: panelLabel,
   });
 
-  const monthYearLabelProps = computed(() => {
+  const panelLabelProps = computed(() => {
     return withRefCapture(
       {
         ...monthYearLabelBaseProps.value,
@@ -235,7 +255,7 @@ export function useCalendar(_props: Reactivify<CalendarProps, 'onDaySelected'> =
     );
   });
 
-  const gridProps = computed(() => {
+  const panelGridProps = computed(() => {
     return withRefCapture(
       {
         id: `${calendarId}-g`,
@@ -259,9 +279,9 @@ export function useCalendar(_props: Reactivify<CalendarProps, 'onDaySelected'> =
      */
     pickerProps,
     /**
-     * The props for the grid element.
+     * The props for the grid element that displays the panel values.
      */
-    gridProps,
+    panelGridProps,
     /**
      * The props for the button element.
      */
@@ -271,10 +291,6 @@ export function useCalendar(_props: Reactivify<CalendarProps, 'onDaySelected'> =
      */
     selectedDate,
     /**
-     * The grid element.
-     */
-    gridEl,
-    /**
      * The current panel.
      */
     currentPanel,
@@ -283,21 +299,21 @@ export function useCalendar(_props: Reactivify<CalendarProps, 'onDaySelected'> =
      */
     switchPanel,
     /**
-     * The props for the month and year label element.
+     * The props for the panel label element.
      */
-    monthYearLabelProps,
+    panelLabelProps,
     /**
-     * The props for the next month button.
+     * The props for the next panel values button. if it is a day panel, the button will move the panel to the next month. If it is a month panel, the button will move the panel to the next year. If it is a year panel, the button will move the panel to the next set of years.
      */
-    nextMonthButtonProps,
+    nextPanelButtonProps,
     /**
-     * The props for the previous month button.
+     * The props for the previous panel values button. If it is a day panel, the button will move the panel to the previous month. If it is a month panel, the button will move the panel to the previous year. If it is a year panel, the button will move the panel to the previous set of years.
      */
-    previousMonthButtonProps,
+    previousPanelButtonProps,
     /**
-     * The month and year label.
+     * The label for the current panel. If it is a day panel, the label will be the month and year. If it is a month panel, the label will be the year. If it is a year panel, the label will be the range of years currently being displayed.
      */
-    monthYearLabel: panelLabel,
+    panelLabel,
   };
 }
 

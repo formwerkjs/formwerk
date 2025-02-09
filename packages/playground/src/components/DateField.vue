@@ -17,12 +17,12 @@ const {
 
 const {
   pickerProps,
-  gridProps,
+  panelGridProps,
   buttonProps,
-  nextMonthButtonProps,
-  previousMonthButtonProps,
-  monthYearLabelProps: calendarLabelProps,
-  monthYearLabel,
+  nextPanelButtonProps,
+  previousPanelButtonProps,
+  panelLabelProps,
+  panelLabel,
   currentPanel,
 } = useCalendar(calendarProps);
 </script>
@@ -43,16 +43,16 @@ const {
 
     <div popover class="bg-zinc-800 px-4 py-4" v-bind="pickerProps">
       <div class="flex items-center justify-between text-white my-4">
-        <button v-bind="previousMonthButtonProps">⬆️</button>
+        <button v-bind="previousPanelButtonProps">⬆️</button>
 
-        <span v-bind="calendarLabelProps">
-          {{ monthYearLabel }}
+        <span v-bind="panelLabelProps">
+          {{ panelLabel }}
         </span>
 
-        <button v-bind="nextMonthButtonProps">⬇️</button>
+        <button v-bind="nextPanelButtonProps">⬇️</button>
       </div>
 
-      <div class="gap-4" :dir="direction" v-bind="gridProps">
+      <div class="gap-4" :dir="direction" v-bind="panelGridProps">
         <template v-if="currentPanel.type === 'day'">
           <div
             v-for="day in currentPanel.daysOfTheWeek"
