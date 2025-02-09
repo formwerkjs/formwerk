@@ -71,7 +71,7 @@ export function useCalendarPanel(_props: Reactivify<CalendarPanelProps>, context
       return yearFormatter.value.format(context.getFocusedDate().toPlainDateTime());
     }
 
-    return `${yearFormatter.value.format(context.getFocusedDate().subtract({ years: 4 }).toPlainDateTime())} - ${yearFormatter.value.format(context.getFocusedDate().add({ years: 4 }).toPlainDateTime())}`;
+    return `${yearFormatter.value.format(years.value[0].value.toPlainDateTime())} - ${yearFormatter.value.format(years.value[years.value.length - 1].value.toPlainDateTime())}`;
   });
 
   return { currentPanel, switchPanel, panelLabel };
