@@ -9,7 +9,7 @@ import { usePopoverController } from '../helpers/usePopoverController';
 import { blockEvent } from '../utils/events';
 import { useLabel } from '../a11y';
 import { useControlButtonProps } from '../helpers/useControlButtonProps';
-import { CalendarContextKey } from './constants';
+import { CalendarContextKey, MONTHS_COLUMNS_COUNT, YEAR_CELLS_COUNT, YEARS_COLUMNS_COUNT } from './constants';
 import { CalendarPanel, useCalendarPanel } from './useCalendarPanel';
 
 export interface CalendarProps {
@@ -101,7 +101,7 @@ export function useCalendar(_props: Reactivify<CalendarProps, 'onDaySelected'> =
     weekInfo,
     locale,
     calendar,
-    selectedDate,
+    getSelectedDate: () => selectedDate.value,
     getFocusedDate: getFocusedOrSelected,
     setDate: (date: Temporal.ZonedDateTime, panel?: CalendarPanelType) => {
       props.onDaySelected?.(date);
@@ -256,13 +256,21 @@ export function useCalendar(_props: Reactivify<CalendarProps, 'onDaySelected'> =
   });
 
   const panelGridProps = computed(() => {
+    const panelType = currentPanel.value.type;
+    const columns =
+      panelType === 'day'
+        ? currentPanel.value.daysOfTheWeek.length
+        : panelType === 'month'
+          ? MONTHS_COLUMNS_COUNT
+          : YEARS_COLUMNS_COUNT;
+
     return withRefCapture(
       {
         id: `${calendarId}-g`,
         role: 'grid',
         style: {
           display: 'grid',
-          gridTemplateColumns: `repeat(${currentPanel.value.type === 'day' ? currentPanel.value.daysOfTheWeek.length : 3}, 1fr)`,
+          gridTemplateColumns: `repeat(${columns}, 1fr)`,
         },
       },
       gridEl,
@@ -391,61 +399,94 @@ export function useCalendarKeyboard(context: CalendarContext, currentPanel: Ref<
     },
     PageDown: {
       fn: () => {
-        if (currentPanel.value.type !== 'day') {
-          return undefined;
+        const type = currentPanel.value.type;
+        if (type === 'day') {
+          return context.getFocusedDate().add({ months: 1 });
         }
 
-        return context.getFocusedDate().add({ months: 1 });
+        if (type === 'month') {
+          return context.getFocusedDate().add({ years: 1 });
+        }
+
+        return context.getFocusedDate().add({ years: YEAR_CELLS_COUNT });
       },
       type: 'focus',
     },
     PageUp: {
       fn: () => {
-        if (currentPanel.value.type !== 'day') {
-          return undefined;
+        const type = currentPanel.value.type;
+        if (type === 'day') {
+          return context.getFocusedDate().subtract({ months: 1 });
         }
 
-        return context.getFocusedDate().subtract({ months: 1 });
+        if (type === 'month') {
+          return context.getFocusedDate().subtract({ years: 1 });
+        }
+
+        return context.getFocusedDate().subtract({ years: YEAR_CELLS_COUNT });
       },
       type: 'focus',
     },
     Home: {
       fn: () => {
-        if (currentPanel.value.type !== 'day') {
-          return undefined;
-        }
-
         const current = context.getFocusedDate();
-        if (current.day === 1) {
-          return current.subtract({ months: 1 }).with({ day: 1 });
+        const type = currentPanel.value.type;
+        if (type === 'day') {
+          if (current.day === 1) {
+            return current.subtract({ months: 1 }).with({ day: 1 });
+          }
+
+          return current.with({ day: 1 });
         }
 
-        return current.with({ day: 1 });
+        if (type === 'month') {
+          if (current.month === 1) {
+            return current.subtract({ years: 1 }).with({ month: 1 });
+          }
+
+          return current.with({ month: 1 });
+        }
+
+        return current.with({ year: current.year - YEAR_CELLS_COUNT });
       },
       type: 'focus',
     },
     End: {
       type: 'focus',
       fn: () => {
-        if (currentPanel.value.type !== 'day') {
-          return undefined;
-        }
-
+        const type = currentPanel.value.type;
         const current = context.getFocusedDate();
-        if (current.day === current.daysInMonth) {
-          return current.add({ months: 1 }).with({ day: 1 });
+        if (type === 'day') {
+          if (current.day === current.daysInMonth) {
+            return current.add({ months: 1 }).with({ day: 1 });
+          }
+
+          return current.with({ day: current.daysInMonth });
         }
 
-        return current.with({ day: current.daysInMonth });
+        if (type === 'month') {
+          if (current.month === current.monthsInYear) {
+            return current.add({ years: 1 }).with({ month: 1 });
+          }
+
+          return current.with({ month: current.monthsInYear });
+        }
+
+        const selected = context.getSelectedDate();
+        if (selected.year !== current.year) {
+          return selected.with({ year: current.year });
+        }
+
+        return current.with({ year: current.year + YEAR_CELLS_COUNT });
       },
     },
     Escape: {
       type: 'focus',
       fn: () => {
-        const selected = toValue(context.selectedDate).toPlainDateTime();
+        const selected = context.getSelectedDate().toPlainDateTime();
         const focused = context.getFocusedDate().toPlainDateTime();
         if (!selected.equals(focused)) {
-          return Temporal.ZonedDateTime.from(toValue(context.selectedDate));
+          return context.getSelectedDate();
         }
 
         return undefined;
