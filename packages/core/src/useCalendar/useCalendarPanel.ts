@@ -4,6 +4,7 @@ import { useDateFormatter } from '../i18n';
 import { Temporal } from '@js-temporal/polyfill';
 import { Reactivify } from '../types';
 import { normalizeProps } from '../utils/common';
+import { YEAR_CELLS_COUNT } from './constants';
 
 export interface CalendarDayPanel {
   type: 'day';
@@ -64,7 +65,7 @@ export function useCalendarPanel(_props: Reactivify<CalendarPanelProps>, context
 
   const panelLabel = computed(() => {
     if (panelType.value === 'day') {
-      return monthFormatter.value.format(context.getFocusedDate().toPlainDateTime());
+      return `${monthFormatter.value.format(context.getFocusedDate().toPlainDateTime())} ${yearFormatter.value.format(context.getFocusedDate().toPlainDateTime())}`;
     }
 
     if (panelType.value === 'month') {
@@ -78,13 +79,13 @@ export function useCalendarPanel(_props: Reactivify<CalendarPanelProps>, context
 }
 
 function useCalendarDaysPanel(
-  { weekInfo, getFocusedDate, calendar, selectedDate, locale, getMinDate, getMaxDate }: CalendarContext,
+  { weekInfo, getFocusedDate, calendar, getSelectedDate, locale, getMinDate, getMaxDate }: CalendarContext,
   daysOfWeekFormat?: MaybeRefOrGetter<Intl.DateTimeFormatOptions['weekday']>,
 ) {
   const dayFormatter = useDateFormatter(locale, () => ({ weekday: toValue(daysOfWeekFormat) ?? 'short' }));
 
   const days = computed<CalendarDayCell[]>(() => {
-    const current = toValue(selectedDate);
+    const current = getSelectedDate();
     const focused = getFocusedDate();
     const startOfMonth = focused.with({ day: 1 });
 
@@ -152,14 +153,14 @@ function useCalendarDaysPanel(
 }
 
 function useCalendarMonthsPanel(
-  { getFocusedDate, locale, selectedDate, getMinDate, getMaxDate }: CalendarContext,
+  { getFocusedDate, locale, getSelectedDate, getMinDate, getMaxDate }: CalendarContext,
   monthFormat?: MaybeRefOrGetter<Intl.DateTimeFormatOptions['month']>,
 ) {
   const monthFormatter = useDateFormatter(locale, () => ({ month: toValue(monthFormat) ?? 'long' }));
 
   const months = computed<CalendarMonthCell[]>(() => {
     const focused = getFocusedDate();
-    const current = toValue(selectedDate);
+    const current = getSelectedDate();
     const minDate = getMinDate();
     const maxDate = getMaxDate();
 
@@ -193,19 +194,19 @@ function useCalendarMonthsPanel(
 }
 
 function useCalendarYearsPanel(
-  { getFocusedDate, locale, selectedDate, getMinDate, getMaxDate }: CalendarContext,
+  { getFocusedDate, locale, getSelectedDate, getMinDate, getMaxDate }: CalendarContext,
   yearFormat?: MaybeRefOrGetter<Intl.DateTimeFormatOptions['year']>,
 ) {
   const yearFormatter = useDateFormatter(locale, () => ({ year: toValue(yearFormat) ?? 'numeric' }));
 
   const years = computed<CalendarYearCell[]>(() => {
     const focused = getFocusedDate();
-    const current = toValue(selectedDate);
+    const current = getSelectedDate();
     const minDate = getMinDate();
     const maxDate = getMaxDate();
 
-    return Array.from({ length: 9 }, (_, i) => {
-      const startYear = Math.floor(focused.year / 9) * 9;
+    return Array.from({ length: YEAR_CELLS_COUNT }, (_, i) => {
+      const startYear = Math.floor(focused.year / YEAR_CELLS_COUNT) * YEAR_CELLS_COUNT;
       const date = focused.with({ year: startYear + i, month: 1, day: 1 });
       let disabled = false;
 

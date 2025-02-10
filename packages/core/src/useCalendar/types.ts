@@ -1,5 +1,4 @@
 import { Temporal } from '@js-temporal/polyfill';
-import { MaybeRefOrGetter } from 'vue';
 import { WeekInfo } from '../i18n/getWeekInfo';
 import { Ref } from 'vue';
 import { Maybe } from '../types';
@@ -64,7 +63,7 @@ export interface CalendarContext {
   locale: Ref<string>;
   weekInfo: Ref<WeekInfo>;
   calendar: Ref<CalendarIdentifier>;
-  selectedDate: MaybeRefOrGetter<Temporal.ZonedDateTime>;
+  getSelectedDate: () => Temporal.ZonedDateTime;
   getMinDate: () => Maybe<Temporal.ZonedDateTime>;
   getMaxDate: () => Maybe<Temporal.ZonedDateTime>;
   getFocusedDate: () => Temporal.ZonedDateTime;
