@@ -75,12 +75,12 @@ export interface DateTimeFieldProps {
   /**
    * The minimum date to use for the field.
    */
-  minDate?: Date;
+  min?: Date;
 
   /**
    * The maximum date to use for the field.
    */
-  maxDate?: Date;
+  max?: Date;
 }
 
 export function useDateTimeField(_props: Reactivify<DateTimeFieldProps, 'schema'>) {
@@ -105,7 +105,7 @@ export function useDateTimeField(_props: Reactivify<DateTimeFieldProps, 'schema'
     timeZone: timeZone,
     locale: locale,
     model: {
-      get: () => toValue(props.minDate),
+      get: () => toValue(props.min),
     },
   });
 
@@ -114,7 +114,7 @@ export function useDateTimeField(_props: Reactivify<DateTimeFieldProps, 'schema'
     timeZone: timeZone,
     locale: locale,
     model: {
-      get: () => toValue(props.maxDate),
+      get: () => toValue(props.max),
     },
   });
 
@@ -160,6 +160,7 @@ export function useDateTimeField(_props: Reactivify<DateTimeFieldProps, 'schema'
   const calendarProps: Reactivify<CalendarProps, 'onDaySelected'> = {
     locale: () => locale.value,
     currentDate: temporalValue,
+    calendar: calendar,
     onDaySelected: onValueChange,
     minDate: () => (isTemporalPartial(minDate.value) ? undefined : minDate.value),
     maxDate: () => (isTemporalPartial(maxDate.value) ? undefined : maxDate.value),

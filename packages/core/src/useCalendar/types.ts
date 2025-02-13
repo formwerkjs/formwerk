@@ -43,6 +43,7 @@ export interface CalendarContext {
   locale: Ref<string>;
   weekInfo: Ref<WeekInfo>;
   calendar: Ref<Calendar>;
+  timeZone: Ref<string>;
   getSelectedDate: () => ZonedDateTime;
   getMinDate: () => Maybe<ZonedDateTime>;
   getMaxDate: () => Maybe<ZonedDateTime>;

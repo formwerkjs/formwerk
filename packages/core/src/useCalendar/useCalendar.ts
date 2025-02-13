@@ -10,7 +10,7 @@ import { useLabel } from '../a11y';
 import { useControlButtonProps } from '../helpers/useControlButtonProps';
 import { CalendarContextKey, MONTHS_COLUMNS_COUNT, YEAR_CELLS_COUNT, YEARS_COLUMNS_COUNT } from './constants';
 import { CalendarPanel, useCalendarPanel } from './useCalendarPanel';
-import { Calendar, ZonedDateTime, fromDate, now } from '@internationalized/date';
+import { Calendar, ZonedDateTime, now, toCalendar } from '@internationalized/date';
 
 export interface CalendarProps {
   /**
@@ -85,7 +85,7 @@ export function useCalendar(_props: Reactivify<CalendarProps, 'onDaySelected'> =
     calendar: () => toValue(props.calendar),
   });
 
-  const selectedDate = computed(() => toValue(props.currentDate) ?? now(toValue(timeZone)));
+  const selectedDate = computed(() => toValue(props.currentDate) ?? toCalendar(now(toValue(timeZone)), calendar.value));
   const focusedDay = shallowRef<ZonedDateTime>();
   const { isOpen } = usePopoverController(pickerEl, { disabled: props.disabled });
 
@@ -101,6 +101,7 @@ export function useCalendar(_props: Reactivify<CalendarProps, 'onDaySelected'> =
     weekInfo,
     locale,
     calendar,
+    timeZone,
     getSelectedDate: () => selectedDate.value,
     getFocusedDate: getFocusedOrSelected,
     setDate: (date: ZonedDateTime, panel?: CalendarPanelType) => {
@@ -175,7 +176,7 @@ export function useCalendar(_props: Reactivify<CalendarProps, 'onDaySelected'> =
     }
 
     if (!focusedDay.value) {
-      focusedDay.value = fromDate(selectedDate.value.toDate(), selectedDate.value.timeZone);
+      focusedDay.value = selectedDate.value.copy();
     }
 
     await nextTick();

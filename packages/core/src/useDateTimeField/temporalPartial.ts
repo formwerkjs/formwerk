@@ -1,9 +1,9 @@
 import { DateTimeSegmentType, TemporalPartial } from './types';
 import { isObject } from '../../../shared/src';
-import { Calendar, ZonedDateTime, fromDate, now } from '@internationalized/date';
+import { Calendar, ZonedDateTime, now, toCalendar } from '@internationalized/date';
 
 export function createTemporalPartial(calendar: Calendar, timeZone: string) {
-  const zonedDateTime = now(timeZone) as TemporalPartial;
+  const zonedDateTime = toCalendar(now(timeZone), calendar) as TemporalPartial;
   zonedDateTime['~fw_temporal_partial'] = {};
 
   return zonedDateTime;
@@ -13,7 +13,7 @@ export function toTemporalPartial(
   value: ZonedDateTime | TemporalPartial,
   setParts?: DateTimeSegmentType[],
 ): TemporalPartial {
-  const clone = fromDate(value.toDate(), value.timeZone) as TemporalPartial;
+  const clone = value.copy() as TemporalPartial;
   clone['~fw_temporal_partial'] = isTemporalPartial(value) ? value['~fw_temporal_partial'] : {};
   if (setParts) {
     setParts.forEach(part => {

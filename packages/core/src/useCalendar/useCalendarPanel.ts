@@ -4,7 +4,7 @@ import { useDateFormatter } from '../i18n';
 import { Reactivify } from '../types';
 import { normalizeProps } from '../utils/common';
 import { YEAR_CELLS_COUNT } from './constants';
-import { now } from '@internationalized/date';
+import { now, toCalendar } from '@internationalized/date';
 
 export interface CalendarDayPanel {
   type: 'day';
@@ -79,7 +79,7 @@ export function useCalendarPanel(_props: Reactivify<CalendarPanelProps>, context
 }
 
 function useCalendarDaysPanel(
-  { weekInfo, getFocusedDate, getSelectedDate, locale, getMinDate, getMaxDate }: CalendarContext,
+  { weekInfo, getFocusedDate, getSelectedDate, locale, timeZone, calendar, getMinDate, getMaxDate }: CalendarContext,
   daysOfWeekFormat?: MaybeRefOrGetter<Intl.DateTimeFormatOptions['weekday']>,
 ) {
   const dayFormatter = useDateFormatter(locale, () => ({ weekday: toValue(daysOfWeekFormat) ?? 'short' }));
@@ -98,7 +98,7 @@ function useCalendarDaysPanel(
 
     // Always use 6 weeks (42 days) for consistent layout
     const gridDays = 42;
-    const rightNow = now(focused.timeZone);
+    const rightNow = toCalendar(now(timeZone.value), calendar.value);
     const minDate = getMinDate();
     const maxDate = getMaxDate();
 

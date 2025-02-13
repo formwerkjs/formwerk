@@ -8,7 +8,6 @@ const dateFormatterCache = new Map<string, DateFormatter>();
 
 function getFormatter(locale: string, options: Intl.DateTimeFormatOptions = {}) {
   const cacheKey = locale + JSON.stringify(options);
-  console.log(cacheKey);
   let formatter = dateFormatterCache.get(cacheKey);
   if (!formatter) {
     formatter = new DateFormatter(locale, options);

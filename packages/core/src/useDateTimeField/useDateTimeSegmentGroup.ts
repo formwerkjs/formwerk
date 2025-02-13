@@ -12,7 +12,7 @@ import {
 } from './constants';
 import { NumberParserContext, useNumberParser } from '../i18n';
 import { isTemporalPartial, isTemporalPartSet, toTemporalPartial } from './temporalPartial';
-import { ZonedDateTime, DateFormatter, fromDate } from '@internationalized/date';
+import { ZonedDateTime, DateFormatter } from '@internationalized/date';
 
 export interface DateTimeSegmentRegistration {
   id: string;
@@ -105,7 +105,7 @@ export function useDateTimeSegmentGroup({
 
   function withAllPartsSet(value: ZonedDateTime) {
     if (isTemporalPartial(value) && isAllPartsSet(value)) {
-      return fromDate(value.toDate(), value.timeZone); // clones the value and drops the partial flag
+      return value.copy(); // clones the value and drops the partial flag
     }
 
     return value;

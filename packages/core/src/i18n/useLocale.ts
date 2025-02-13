@@ -3,8 +3,7 @@ import { getConfig } from '../config';
 import { getDirection } from './getDirection';
 import { getWeekInfo } from './getWeekInfo';
 import { Maybe, Reactivify } from '../types';
-import { getCalendar } from './getCalendar';
-import { Calendar } from '@internationalized/date';
+import { Calendar, GregorianCalendar } from '@internationalized/date';
 import { getTimeZone } from './getTimezone';
 
 export type NumberLocaleExtension = `nu-${string}`;
@@ -49,7 +48,7 @@ export function useLocale(
   const localeInstance = computed(() => new Intl.Locale(localeString.value));
   const direction = computed(() => getDirection(localeInstance.value));
   const weekInfo = computed(() => getWeekInfo(localeInstance.value));
-  const calendar = computed(() => getCalendar(localeInstance.value));
+  const calendar = computed(() => toValue(extensions.calendar) ?? (new GregorianCalendar() as Calendar));
   const timeZone = computed(() => getTimeZone(localeInstance.value));
   const locale = computed(() => localeInstance.value.toString());
 
