@@ -1,5 +1,5 @@
-import { Temporal } from '@js-temporal/polyfill';
 import { DateTimeSegmentType } from './types';
+import type { DateTimeDuration } from '@internationalized/date';
 
 export function isEditableSegmentType(type: DateTimeSegmentType) {
   return !['era', 'timeZoneName', 'literal'].includes(type);
@@ -11,8 +11,8 @@ export function isOptionalSegmentType(type: DateTimeSegmentType) {
   return optionalTypes.includes(type);
 }
 
-export function segmentTypeToDurationLike(type: DateTimeSegmentType): keyof Temporal.DurationLike | undefined {
-  const map: Partial<Record<DateTimeSegmentType, keyof Temporal.DurationLike>> = {
+export function segmentTypeToDurationLike(type: DateTimeSegmentType): keyof DateTimeDuration | undefined {
+  const map: Partial<Record<DateTimeSegmentType, keyof DateTimeDuration>> = {
     year: 'years',
     month: 'months',
     day: 'days',

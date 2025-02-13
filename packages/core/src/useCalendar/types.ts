@@ -1,31 +1,11 @@
-import { Temporal } from '@js-temporal/polyfill';
 import { WeekInfo } from '../i18n/getWeekInfo';
 import { Ref } from 'vue';
 import { Maybe } from '../types';
-
-export type CalendarIdentifier =
-  | 'buddhist'
-  | 'chinese'
-  | 'coptic'
-  | 'dangi'
-  | 'ethioaa'
-  | 'ethiopic'
-  | 'gregory'
-  | 'hebrew'
-  | 'indian'
-  | 'islamic'
-  | 'islamic-umalqura'
-  | 'islamic-tbla'
-  | 'islamic-civil'
-  | 'islamic-rgsa'
-  | 'iso8601'
-  | 'japanese'
-  | 'persian'
-  | 'roc';
+import type { ZonedDateTime, Calendar } from '@internationalized/date';
 
 export interface CalendarDayCell {
   type: 'day';
-  value: Temporal.ZonedDateTime;
+  value: ZonedDateTime;
   dayOfMonth: number;
   label: string;
   isToday: boolean;
@@ -38,7 +18,7 @@ export interface CalendarDayCell {
 export interface CalendarMonthCell {
   type: 'month';
   label: string;
-  value: Temporal.ZonedDateTime;
+  value: ZonedDateTime;
   monthOfYear: number;
   selected: boolean;
   disabled: boolean;
@@ -48,7 +28,7 @@ export interface CalendarMonthCell {
 export interface CalendarYearCell {
   type: 'year';
   label: string;
-  value: Temporal.ZonedDateTime;
+  value: ZonedDateTime;
   year: number;
   selected: boolean;
   disabled: boolean;
@@ -62,11 +42,11 @@ export type CalendarPanelType = 'day' | 'month' | 'year';
 export interface CalendarContext {
   locale: Ref<string>;
   weekInfo: Ref<WeekInfo>;
-  calendar: Ref<CalendarIdentifier>;
-  getSelectedDate: () => Temporal.ZonedDateTime;
-  getMinDate: () => Maybe<Temporal.ZonedDateTime>;
-  getMaxDate: () => Maybe<Temporal.ZonedDateTime>;
-  getFocusedDate: () => Temporal.ZonedDateTime;
-  setFocusedDate: (date: Temporal.ZonedDateTime) => void;
-  setDate: (date: Temporal.ZonedDateTime, panel?: CalendarPanelType) => void;
+  calendar: Ref<Calendar>;
+  getSelectedDate: () => ZonedDateTime;
+  getMinDate: () => Maybe<ZonedDateTime>;
+  getMaxDate: () => Maybe<ZonedDateTime>;
+  getFocusedDate: () => ZonedDateTime;
+  setFocusedDate: (date: ZonedDateTime) => void;
+  setDate: (date: ZonedDateTime, panel?: CalendarPanelType) => void;
 }

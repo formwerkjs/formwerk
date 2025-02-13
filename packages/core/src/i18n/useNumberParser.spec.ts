@@ -1,4 +1,4 @@
-import { useNumberParser } from '.';
+import { useNumberParser } from './useNumberParser';
 
 const enNumber = 1234567890.12;
 

@@ -1,10 +1,10 @@
 import { computed, MaybeRefOrGetter, shallowRef, toValue } from 'vue';
 import { CalendarContext, CalendarDayCell, CalendarMonthCell, CalendarPanelType, CalendarYearCell } from './types';
 import { useDateFormatter } from '../i18n';
-import { Temporal } from '@js-temporal/polyfill';
 import { Reactivify } from '../types';
 import { normalizeProps } from '../utils/common';
 import { YEAR_CELLS_COUNT } from './constants';
+import { now } from '@internationalized/date';
 
 export interface CalendarDayPanel {
   type: 'day';
@@ -65,21 +65,21 @@ export function useCalendarPanel(_props: Reactivify<CalendarPanelProps>, context
 
   const panelLabel = computed(() => {
     if (panelType.value === 'day') {
-      return `${monthFormatter.value.format(context.getFocusedDate().toPlainDateTime())} ${yearFormatter.value.format(context.getFocusedDate().toPlainDateTime())}`;
+      return `${monthFormatter.value.format(context.getFocusedDate().toDate())} ${yearFormatter.value.format(context.getFocusedDate().toDate())}`;
     }
 
     if (panelType.value === 'month') {
-      return yearFormatter.value.format(context.getFocusedDate().toPlainDateTime());
+      return yearFormatter.value.format(context.getFocusedDate().toDate());
     }
 
-    return `${yearFormatter.value.format(years.value[0].value.toPlainDateTime())} - ${yearFormatter.value.format(years.value[years.value.length - 1].value.toPlainDateTime())}`;
+    return `${yearFormatter.value.format(years.value[0].value.toDate())} - ${yearFormatter.value.format(years.value[years.value.length - 1].value.toDate())}`;
   });
 
   return { currentPanel, switchPanel, panelLabel };
 }
 
 function useCalendarDaysPanel(
-  { weekInfo, getFocusedDate, calendar, getSelectedDate, locale, getMinDate, getMaxDate }: CalendarContext,
+  { weekInfo, getFocusedDate, getSelectedDate, locale, getMinDate, getMaxDate }: CalendarContext,
   daysOfWeekFormat?: MaybeRefOrGetter<Intl.DateTimeFormatOptions['weekday']>,
 ) {
   const dayFormatter = useDateFormatter(locale, () => ({ weekday: toValue(daysOfWeekFormat) ?? 'short' }));
@@ -87,10 +87,10 @@ function useCalendarDaysPanel(
   const days = computed<CalendarDayCell[]>(() => {
     const current = getSelectedDate();
     const focused = getFocusedDate();
-    const startOfMonth = focused.with({ day: 1 });
+    const startOfMonth = focused.set({ day: 1 });
 
     const firstDayOfWeek = weekInfo.value.firstDay;
-    const startDayOfWeek = startOfMonth.dayOfWeek;
+    const startDayOfWeek = startOfMonth.toDate().getDay();
     const daysToSubtract = (startDayOfWeek - firstDayOfWeek + 7) % 7;
 
     // Move to first day of week
@@ -98,7 +98,7 @@ function useCalendarDaysPanel(
 
     // Always use 6 weeks (42 days) for consistent layout
     const gridDays = 42;
-    const now = Temporal.Now.zonedDateTime(calendar.value);
+    const rightNow = now(focused.timeZone);
     const minDate = getMinDate();
     const maxDate = getMaxDate();
 
@@ -106,11 +106,11 @@ function useCalendarDaysPanel(
       const dayOfMonth = firstDay.add({ days: i });
       let disabled = false;
 
-      if (minDate && Temporal.ZonedDateTime.compare(dayOfMonth, minDate) < 0) {
+      if (minDate && dayOfMonth.compare(minDate) < 0) {
         disabled = true;
       }
 
-      if (maxDate && Temporal.ZonedDateTime.compare(dayOfMonth, maxDate) > 0) {
+      if (maxDate && dayOfMonth.compare(maxDate) > 0) {
         disabled = true;
       }
 
@@ -118,10 +118,10 @@ function useCalendarDaysPanel(
         value: dayOfMonth,
         label: String(dayOfMonth.day),
         dayOfMonth: dayOfMonth.day,
-        isToday: dayOfMonth.equals(now),
-        selected: current.equals(dayOfMonth),
-        isOutsideMonth: dayOfMonth.monthCode !== focused.monthCode,
-        focused: focused.equals(dayOfMonth),
+        isToday: dayOfMonth.compare(rightNow) === 0,
+        selected: current.compare(dayOfMonth) === 0,
+        isOutsideMonth: dayOfMonth.month !== focused.month,
+        focused: focused.compare(dayOfMonth) === 0,
         disabled,
         type: 'day',
       } as CalendarDayCell;
@@ -130,10 +130,10 @@ function useCalendarDaysPanel(
 
   const daysOfTheWeek = computed(() => {
     let focused = getFocusedDate();
-    const daysPerWeek = focused.daysInWeek;
+    const daysPerWeek = 7;
     const firstDayOfWeek = weekInfo.value.firstDay;
     // Get the current date's day of week (0-6)
-    const currentDayOfWeek = focused.dayOfWeek;
+    const currentDayOfWeek = focused.toDate().getDay();
 
     // Calculate how many days to go back to reach first day of week
     const daysToSubtract = (currentDayOfWeek - firstDayOfWeek + 7) % 7;
@@ -143,7 +143,7 @@ function useCalendarDaysPanel(
 
     const days: string[] = [];
     for (let i = 0; i < daysPerWeek; i++) {
-      days.push(dayFormatter.value.format(focused.add({ days: i }).toPlainDateTime()));
+      days.push(dayFormatter.value.format(focused.add({ days: i }).toDate()));
     }
 
     return days;
@@ -164,8 +164,8 @@ function useCalendarMonthsPanel(
     const minDate = getMinDate();
     const maxDate = getMaxDate();
 
-    return Array.from({ length: focused.monthsInYear }, (_, i) => {
-      const date = focused.with({ month: i + 1, day: 1 });
+    return Array.from({ length: focused.calendar.getMonthsInYear(focused) }, (_, i) => {
+      const date = focused.set({ month: i + 1, day: 1 });
       let disabled = false;
 
       if (minDate && minDate.month < date.month) {
@@ -178,11 +178,11 @@ function useCalendarMonthsPanel(
 
       const cell: CalendarMonthCell = {
         type: 'month',
-        label: monthFormatter.value.format(date.toPlainDateTime()),
+        label: monthFormatter.value.format(date.toDate()),
         value: date,
         monthOfYear: date.month,
         selected: date.month === current.month && date.year === current.year,
-        focused: focused.monthCode === date.monthCode && focused.year === date.year,
+        focused: focused.month === date.month && focused.year === date.year,
         disabled,
       };
 
@@ -207,7 +207,7 @@ function useCalendarYearsPanel(
 
     return Array.from({ length: YEAR_CELLS_COUNT }, (_, i) => {
       const startYear = Math.floor(focused.year / YEAR_CELLS_COUNT) * YEAR_CELLS_COUNT;
-      const date = focused.with({ year: startYear + i, month: 1, day: 1 });
+      const date = focused.set({ year: startYear + i, month: 1, day: 1 });
       let disabled = false;
 
       if (minDate && minDate.year < date.year) {
@@ -220,7 +220,7 @@ function useCalendarYearsPanel(
 
       const cell: CalendarYearCell = {
         type: 'year',
-        label: yearFormatter.value.format(date.toPlainDateTime()),
+        label: yearFormatter.value.format(date.toDate()),
         value: date,
         year: date.year,
         selected: date.year === current.year,

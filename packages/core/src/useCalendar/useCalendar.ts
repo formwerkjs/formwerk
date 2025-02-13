@@ -1,6 +1,5 @@
 import { computed, nextTick, provide, Ref, ref, shallowRef, toValue, watch } from 'vue';
-import { Temporal } from '@js-temporal/polyfill';
-import { CalendarContext, CalendarIdentifier, CalendarPanelType } from './types';
+import { CalendarContext, CalendarPanelType } from './types';
 import { hasKeyCode, normalizeProps, useUniqId, withRefCapture } from '../utils/common';
 import { Maybe, Reactivify } from '../types';
 import { useLocale } from '../i18n';
@@ -11,6 +10,7 @@ import { useLabel } from '../a11y';
 import { useControlButtonProps } from '../helpers/useControlButtonProps';
 import { CalendarContextKey, MONTHS_COLUMNS_COUNT, YEAR_CELLS_COUNT, YEARS_COLUMNS_COUNT } from './constants';
 import { CalendarPanel, useCalendarPanel } from './useCalendarPanel';
+import { Calendar, ZonedDateTime, fromDate, now } from '@internationalized/date';
 
 export interface CalendarProps {
   /**
@@ -21,17 +21,17 @@ export interface CalendarProps {
   /**
    * The current date to use for the calendar.
    */
-  currentDate?: Temporal.ZonedDateTime;
+  currentDate?: ZonedDateTime;
 
   /**
    * The callback to call when a day is selected.
    */
-  onDaySelected?: (day: Temporal.ZonedDateTime) => void;
+  onDaySelected?: (day: ZonedDateTime) => void;
 
   /**
    * The calendar type to use for the calendar, e.g. `gregory`, `islamic-umalqura`, etc.
    */
-  calendar?: CalendarIdentifier;
+  calendar?: Calendar;
 
   /**
    * Whether the calendar is disabled.
@@ -51,12 +51,12 @@ export interface CalendarProps {
   /**
    * The minimum date to use for the calendar.
    */
-  minDate?: Maybe<Temporal.ZonedDateTime>;
+  minDate?: Maybe<ZonedDateTime>;
 
   /**
    * The maximum date to use for the calendar.
    */
-  maxDate?: Maybe<Temporal.ZonedDateTime>;
+  maxDate?: Maybe<ZonedDateTime>;
 
   /**
    * The format options for the days of the week.
@@ -81,12 +81,12 @@ export function useCalendar(_props: Reactivify<CalendarProps, 'onDaySelected'> =
   const pickerEl = ref<HTMLElement>();
   const gridEl = ref<HTMLElement>();
   const calendarLabelEl = ref<HTMLElement>();
-  const { weekInfo, locale, calendar } = useLocale(props.locale, {
+  const { weekInfo, locale, calendar, timeZone } = useLocale(props.locale, {
     calendar: () => toValue(props.calendar),
   });
 
-  const selectedDate = computed(() => toValue(props.currentDate) ?? Temporal.Now.zonedDateTime(calendar.value));
-  const focusedDay = shallowRef<Temporal.ZonedDateTime>();
+  const selectedDate = computed(() => toValue(props.currentDate) ?? now(toValue(timeZone)));
+  const focusedDay = shallowRef<ZonedDateTime>();
   const { isOpen } = usePopoverController(pickerEl, { disabled: props.disabled });
 
   function getFocusedOrSelected() {
@@ -103,7 +103,7 @@ export function useCalendar(_props: Reactivify<CalendarProps, 'onDaySelected'> =
     calendar,
     getSelectedDate: () => selectedDate.value,
     getFocusedDate: getFocusedOrSelected,
-    setDate: (date: Temporal.ZonedDateTime, panel?: CalendarPanelType) => {
+    setDate: (date: ZonedDateTime, panel?: CalendarPanelType) => {
       props.onDaySelected?.(date);
       if (panel) {
         switchPanel(panel);
@@ -112,7 +112,7 @@ export function useCalendar(_props: Reactivify<CalendarProps, 'onDaySelected'> =
         isOpen.value = false;
       }
     },
-    setFocusedDate: async (date: Temporal.ZonedDateTime) => {
+    setFocusedDate: async (date: ZonedDateTime) => {
       focusedDay.value = date;
       await nextTick();
       focusCurrent();
@@ -175,7 +175,7 @@ export function useCalendar(_props: Reactivify<CalendarProps, 'onDaySelected'> =
     }
 
     if (!focusedDay.value) {
-      focusedDay.value = Temporal.ZonedDateTime.from(selectedDate.value);
+      focusedDay.value = fromDate(selectedDate.value.toDate(), selectedDate.value.timeZone);
     }
 
     await nextTick();
@@ -326,12 +326,12 @@ export function useCalendar(_props: Reactivify<CalendarProps, 'onDaySelected'> =
 }
 
 interface ShortcutDefinition {
-  fn: () => Temporal.ZonedDateTime | undefined;
+  fn: () => ZonedDateTime | undefined;
   type: 'focus' | 'select';
 }
 
 export function useCalendarKeyboard(context: CalendarContext, currentPanel: Ref<CalendarPanel>) {
-  function withCheckedBounds(fn: () => Temporal.ZonedDateTime | undefined) {
+  function withCheckedBounds(fn: () => ZonedDateTime | undefined) {
     const date = fn();
     if (!date) {
       return undefined;
@@ -340,11 +340,7 @@ export function useCalendarKeyboard(context: CalendarContext, currentPanel: Ref<
     const minDate = context.getMinDate();
     const maxDate = context.getMaxDate();
 
-    if (
-      date &&
-      ((minDate && Temporal.ZonedDateTime.compare(date, minDate) < 0) ||
-        (maxDate && Temporal.ZonedDateTime.compare(date, maxDate) > 0))
-    ) {
+    if (date && ((minDate && date.compare(minDate) < 0) || (maxDate && date.compare(maxDate) > 0))) {
       return undefined;
     }
 
@@ -433,21 +429,21 @@ export function useCalendarKeyboard(context: CalendarContext, currentPanel: Ref<
         const type = currentPanel.value.type;
         if (type === 'day') {
           if (current.day === 1) {
-            return current.subtract({ months: 1 }).with({ day: 1 });
+            return current.subtract({ months: 1 }).set({ day: 1 });
           }
 
-          return current.with({ day: 1 });
+          return current.set({ day: 1 });
         }
 
         if (type === 'month') {
           if (current.month === 1) {
-            return current.subtract({ years: 1 }).with({ month: 1 });
+            return current.subtract({ years: 1 }).set({ month: 1 });
           }
 
-          return current.with({ month: 1 });
+          return current.set({ month: 1 });
         }
 
-        return current.with({ year: current.year - YEAR_CELLS_COUNT });
+        return current.set({ year: current.year - YEAR_CELLS_COUNT });
       },
       type: 'focus',
     },
@@ -457,35 +453,35 @@ export function useCalendarKeyboard(context: CalendarContext, currentPanel: Ref<
         const type = currentPanel.value.type;
         const current = context.getFocusedDate();
         if (type === 'day') {
-          if (current.day === current.daysInMonth) {
-            return current.add({ months: 1 }).with({ day: 1 });
+          if (current.day === current.calendar.getDaysInMonth(current)) {
+            return current.add({ months: 1 }).set({ day: 1 });
           }
 
-          return current.with({ day: current.daysInMonth });
+          return current.set({ day: current.calendar.getDaysInMonth(current) });
         }
 
         if (type === 'month') {
-          if (current.month === current.monthsInYear) {
-            return current.add({ years: 1 }).with({ month: 1 });
+          if (current.month === current.calendar.getMonthsInYear(current)) {
+            return current.add({ years: 1 }).set({ month: 1 });
           }
 
-          return current.with({ month: current.monthsInYear });
+          return current.set({ month: current.calendar.getMonthsInYear(current) });
         }
 
         const selected = context.getSelectedDate();
         if (selected.year !== current.year) {
-          return selected.with({ year: current.year });
+          return selected.set({ year: current.year });
         }
 
-        return current.with({ year: current.year + YEAR_CELLS_COUNT });
+        return current.set({ year: current.year + YEAR_CELLS_COUNT });
       },
     },
     Escape: {
       type: 'focus',
       fn: () => {
-        const selected = context.getSelectedDate().toPlainDateTime();
-        const focused = context.getFocusedDate().toPlainDateTime();
-        if (!selected.equals(focused)) {
+        const selected = context.getSelectedDate();
+        const focused = context.getFocusedDate();
+        if (selected.compare(focused) !== 0) {
           return context.getSelectedDate();
         }
 

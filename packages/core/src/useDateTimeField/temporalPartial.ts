@@ -1,20 +1,19 @@
-import { Temporal } from '@js-temporal/polyfill';
 import { DateTimeSegmentType, TemporalPartial } from './types';
-import { CalendarIdentifier } from '../useCalendar';
 import { isObject } from '../../../shared/src';
+import { Calendar, ZonedDateTime, fromDate, now } from '@internationalized/date';
 
-export function createTemporalPartial(calendar: CalendarIdentifier, timeZone: string) {
-  const zonedDateTime = Temporal.Now.zonedDateTime(calendar, timeZone) as TemporalPartial;
+export function createTemporalPartial(calendar: Calendar, timeZone: string) {
+  const zonedDateTime = now(timeZone) as TemporalPartial;
   zonedDateTime['~fw_temporal_partial'] = {};
 
   return zonedDateTime;
 }
 
 export function toTemporalPartial(
-  value: Temporal.ZonedDateTime | TemporalPartial,
+  value: ZonedDateTime | TemporalPartial,
   setParts?: DateTimeSegmentType[],
 ): TemporalPartial {
-  const clone = Temporal.ZonedDateTime.from(value) as TemporalPartial;
+  const clone = fromDate(value.toDate(), value.timeZone) as TemporalPartial;
   clone['~fw_temporal_partial'] = isTemporalPartial(value) ? value['~fw_temporal_partial'] : {};
   if (setParts) {
     setParts.forEach(part => {
@@ -22,10 +21,10 @@ export function toTemporalPartial(
     });
   }
 
-  return clone;
+  return clone as TemporalPartial;
 }
 
-export function isTemporalPartial(value: Temporal.ZonedDateTime): value is TemporalPartial {
+export function isTemporalPartial(value: ZonedDateTime): value is TemporalPartial {
   return isObject((value as TemporalPartial)['~fw_temporal_partial']);
 }
 

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import DateField from '@/components/DateField.vue';
+import { createCalendar } from '@internationalized/date';
 
 const minDate = new Date('2025-01-01');
 const maxDate = new Date('2025-01-31');
@@ -10,6 +11,7 @@ const maxDate = new Date('2025-01-31');
     <DateField
       name="date"
       label="Date"
+      :calendar="createCalendar('islamic-umalqura')"
       :format-options="{
         day: '2-digit',
         month: '2-digit',

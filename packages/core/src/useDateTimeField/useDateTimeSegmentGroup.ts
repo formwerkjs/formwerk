@@ -1,5 +1,4 @@
 import { InjectionKey, MaybeRefOrGetter, provide, ref, toValue, Ref, onBeforeUnmount, computed } from 'vue';
-import { Temporal, Intl as TemporalIntl } from '@js-temporal/polyfill';
 import { DateTimeSegmentType, TemporalPartial } from './types';
 import { hasKeyCode } from '../utils/common';
 import { blockEvent } from '../utils/events';
@@ -13,6 +12,7 @@ import {
 } from './constants';
 import { NumberParserContext, useNumberParser } from '../i18n';
 import { isTemporalPartial, isTemporalPartSet, toTemporalPartial } from './temporalPartial';
+import { ZonedDateTime, DateFormatter, fromDate } from '@internationalized/date';
 
 export interface DateTimeSegmentRegistration {
   id: string;
@@ -35,13 +35,13 @@ export interface DateTimeSegmentGroupContext {
 export const DateTimeSegmentGroupKey: InjectionKey<DateTimeSegmentGroupContext> = Symbol('DateTimeSegmentGroupKey');
 
 export interface DateTimeSegmentGroupProps {
-  formatter: Ref<TemporalIntl.DateTimeFormat>;
+  formatter: Ref<DateFormatter>;
   locale: MaybeRefOrGetter<string | undefined>;
   formatOptions: MaybeRefOrGetter<Maybe<Intl.DateTimeFormatOptions>>;
-  temporalValue: MaybeRefOrGetter<Temporal.ZonedDateTime | TemporalPartial>;
+  temporalValue: MaybeRefOrGetter<ZonedDateTime | TemporalPartial>;
   direction?: MaybeRefOrGetter<Direction>;
   controlEl: Ref<HTMLElement | undefined>;
-  onValueChange: (value: Temporal.ZonedDateTime) => void;
+  onValueChange: (value: ZonedDateTime) => void;
 }
 
 export function useDateTimeSegmentGroup({
@@ -65,7 +65,7 @@ export function useDateTimeSegmentGroup({
 
   const segments = computed(() => {
     const date = toValue(temporalValue);
-    const parts = formatter.value.formatToParts(date.toPlainDateTime()) as {
+    const parts = formatter.value.formatToParts(date.toDate()) as {
       type: DateTimeSegmentType;
       value: string;
     }[];
@@ -103,9 +103,9 @@ export function useDateTimeSegmentGroup({
     });
   }
 
-  function withAllPartsSet(value: Temporal.ZonedDateTime) {
+  function withAllPartsSet(value: ZonedDateTime) {
     if (isTemporalPartial(value) && isAllPartsSet(value)) {
-      return Temporal.ZonedDateTime.from(value); // clones the value and drops the partial flag
+      return fromDate(value.toDate(), value.timeZone); // clones the value and drops the partial flag
     }
 
     return value;
@@ -146,8 +146,8 @@ export function useDateTimeSegmentGroup({
       const type = segment.getType();
       const date = toValue(temporalValue);
       const maxPartsRecord: Partial<Record<DateTimeSegmentType, number>> = {
-        day: date.daysInMonth,
-        month: date.monthsInYear,
+        day: date.calendar.getDaysInMonth(date),
+        month: date.calendar.getMonthsInYear(date),
         year: 9999,
         hour: toValue(formatOptions)?.hour12 ? 12 : 23,
         minute: 59,
@@ -276,7 +276,7 @@ export function useDateTimeSegmentGroup({
 }
 
 interface ArithmeticInit {
-  currentDate: MaybeRefOrGetter<Temporal.ZonedDateTime | TemporalPartial>;
+  currentDate: MaybeRefOrGetter<ZonedDateTime | TemporalPartial>;
 }
 
 function useDateArithmetic({ currentDate }: ArithmeticInit) {
@@ -290,7 +290,7 @@ function useDateArithmetic({ currentDate }: ArithmeticInit) {
       return date;
     }
 
-    const newDate = date.with({
+    const newDate = date.set({
       [part]: value,
     });
 
@@ -320,7 +320,7 @@ function useDateArithmetic({ currentDate }: ArithmeticInit) {
     }
 
     if (isTemporalPartial(date)) {
-      let newDate: Temporal.ZonedDateTime | TemporalPartial = date;
+      let newDate: ZonedDateTime | TemporalPartial = date;
       if (isTemporalPartSet(date, part)) {
         newDate = date.add({
           [durationPart]: diff,
@@ -329,7 +329,7 @@ function useDateArithmetic({ currentDate }: ArithmeticInit) {
         newDate =
           part === 'dayPeriod'
             ? date
-            : date.with({
+            : date.set({
                 [part]: part === 'year' ? date.year : 1,
               });
       }
@@ -351,7 +351,7 @@ function useDateArithmetic({ currentDate }: ArithmeticInit) {
       .add({
         [durationPart]: diff,
       })
-      .with({
+      .set({
         day: part !== 'day' && part !== 'weekday' ? day : undefined,
         month: part !== 'month' ? month : undefined,
         year: part !== 'year' ? year : undefined,

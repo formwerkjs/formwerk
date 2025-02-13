@@ -1,11 +1,9 @@
 import { MaybeRefOrGetter, computed, shallowRef, toValue, watch } from 'vue';
-import { CalendarIdentifier } from '../useCalendar';
 import { DateValue, TemporalPartial } from './types';
-import { toTemporalInstant } from '@js-temporal/polyfill';
 import { Maybe } from '../types';
-import { Temporal } from '@js-temporal/polyfill';
 import { isNullOrUndefined } from '../utils/common';
 import { createTemporalPartial, isTemporalPartial } from './temporalPartial';
+import { Calendar, fromDate, type ZonedDateTime } from '@internationalized/date';
 
 interface TemporalValueStoreInit {
   model: {
@@ -14,13 +12,13 @@ interface TemporalValueStoreInit {
   };
   locale: MaybeRefOrGetter<string>;
   timeZone: MaybeRefOrGetter<string>;
-  calendar: MaybeRefOrGetter<CalendarIdentifier>;
+  calendar: MaybeRefOrGetter<Calendar>;
   allowPartial?: boolean;
 }
 
 export function useTemporalStore(init: TemporalValueStoreInit) {
   const model = init.model;
-  const temporalVal = shallowRef<Temporal.ZonedDateTime | TemporalPartial>(
+  const temporalVal = shallowRef<ZonedDateTime | TemporalPartial>(
     toZonedDateTime(model.get()) ?? createTemporalPartial(toValue(init.calendar), toValue(init.timeZone)),
   );
 
@@ -32,44 +30,13 @@ export function useTemporalStore(init: TemporalValueStoreInit) {
     temporalVal.value = toZonedDateTime(value) ?? createTemporalPartial(toValue(init.calendar), toValue(init.timeZone));
   });
 
-  function toZonedDateTime(value: Maybe<DateValue>): Maybe<Temporal.ZonedDateTime> {
+  function toZonedDateTime(value: Maybe<DateValue>): Maybe<ZonedDateTime> {
     if (isNullOrUndefined(value)) {
       return value;
     }
 
     if (value instanceof Date) {
-      value = toTemporalInstant.call(value);
-    }
-
-    if (value instanceof Temporal.Instant) {
-      return value.toZonedDateTime({
-        timeZone: toValue(init.timeZone),
-        calendar: toValue(init.calendar),
-      });
-    }
-
-    if (value instanceof Temporal.PlainDate) {
-      return value.toZonedDateTime({
-        timeZone: toValue(init.timeZone),
-      });
-    }
-
-    if (value instanceof Temporal.PlainDateTime) {
-      return value.toZonedDateTime(toValue(init.timeZone));
-    }
-
-    if (value instanceof Temporal.PlainTime) {
-      return value.toZonedDateTime({
-        plainDate: Temporal.Now.plainDate(toValue(init.calendar)),
-        timeZone: toValue(init.timeZone),
-      });
-    }
-
-    if (value instanceof Temporal.PlainYearMonth) {
-      return Temporal.Now.zonedDateTime(toValue(init.calendar), toValue(init.timeZone)).with({
-        year: value.year,
-        month: value.month,
-      });
+      value = fromDate(value, toValue(init.timeZone));
     }
 
     return value;
@@ -89,7 +56,7 @@ export function useTemporalStore(init: TemporalValueStoreInit) {
       return zonedDateTime;
     }
 
-    return new Date(zonedDateTime.epochMilliseconds);
+    return zonedDateTime.toDate();
   }
 
   const temporalValue = computed({

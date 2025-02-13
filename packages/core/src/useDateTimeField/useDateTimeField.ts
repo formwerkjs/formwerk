@@ -1,5 +1,5 @@
 import { Maybe, Reactivify, StandardSchema } from '../types';
-import { CalendarIdentifier, CalendarProps } from '../useCalendar';
+import { CalendarProps } from '../useCalendar';
 import { createDescribedByProps, normalizeProps, useUniqId, withRefCapture } from '../utils/common';
 import { computed, shallowRef, toValue } from 'vue';
 import { exposeField, useFormField } from '../useFormField';
@@ -8,7 +8,7 @@ import { FieldTypePrefixes } from '../constants';
 import { useDateFormatter, useLocale } from '../i18n';
 import { useErrorMessage, useLabel } from '../a11y';
 import { useTemporalStore } from './useTemporalStore';
-import { Temporal } from '@js-temporal/polyfill';
+import { ZonedDateTime, Calendar } from '@internationalized/date';
 import { isTemporalPartial } from './temporalPartial';
 
 export interface DateTimeFieldProps {
@@ -30,7 +30,7 @@ export interface DateTimeFieldProps {
   /**
    * The calendar type to use for the field, e.g. `gregory`, `islamic-umalqura`, etc.
    */
-  calendar?: CalendarIdentifier;
+  calendar?: Calendar;
 
   /**
    * The Intl.DateTimeFormatOptions to use for the field, used to format the date value.
@@ -87,7 +87,7 @@ export function useDateTimeField(_props: Reactivify<DateTimeFieldProps, 'schema'
   const props = normalizeProps(_props, ['schema']);
   const controlEl = shallowRef<HTMLInputElement>();
   const { locale, direction, timeZone, calendar } = useLocale(props.locale, {
-    calendar: () => toValue(props.calendar) ?? (toValue(props.formatOptions)?.calendar as CalendarIdentifier),
+    calendar: () => toValue(props.calendar),
   });
 
   const formatter = useDateFormatter(locale, props.formatOptions);
@@ -128,7 +128,7 @@ export function useDateTimeField(_props: Reactivify<DateTimeFieldProps, 'schema'
     },
   });
 
-  function onValueChange(value: Temporal.ZonedDateTime) {
+  function onValueChange(value: ZonedDateTime) {
     temporalValue.value = value;
   }
 

@@ -4,14 +4,14 @@ import { getDirection } from './getDirection';
 import { getWeekInfo } from './getWeekInfo';
 import { Maybe, Reactivify } from '../types';
 import { getCalendar } from './getCalendar';
-import { CalendarIdentifier } from '../useCalendar';
+import { Calendar } from '@internationalized/date';
 import { getTimeZone } from './getTimezone';
 
 export type NumberLocaleExtension = `nu-${string}`;
 
 export interface LocaleExtension {
   number: Maybe<NumberLocaleExtension>;
-  calendar: Maybe<CalendarIdentifier>;
+  calendar: Maybe<Calendar>;
 }
 
 /**
@@ -37,8 +37,8 @@ export function useLocale(
     }
 
     // Add the calendar locale extension if it's not already present
-    if (!code.includes('-ca-') && calExt) {
-      code += `-ca-${calExt}`;
+    if (!code.includes('-ca-') && calExt?.identifier) {
+      code += `-ca-${calExt.identifier}`;
     }
 
     code = code.replaceAll('--', '-');
