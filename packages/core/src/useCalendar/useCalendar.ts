@@ -148,7 +148,7 @@ export function useCalendar(_props: Reactivify<CalendarProps, 'onDaySelected'> =
         return;
       }
 
-      if (e.key === 'Escape') {
+      if (hasKeyCode(e, 'Escape')) {
         isOpen.value = false;
         return;
       }
@@ -299,6 +299,10 @@ export function useCalendar(_props: Reactivify<CalendarProps, 'onDaySelected'> =
      * The current date.
      */
     selectedDate,
+    /**
+     * The focused date.
+     */
+    focusedDate: focusedDay,
     /**
      * The current panel.
      */
@@ -469,11 +473,6 @@ export function useCalendarKeyboard(context: CalendarContext, currentPanel: Ref<
           return current.set({ month: current.calendar.getMonthsInYear(current) });
         }
 
-        const selected = context.getSelectedDate();
-        if (selected.year !== current.year) {
-          return selected.set({ year: current.year });
-        }
-
         return current.set({ year: current.year + YEAR_CELLS_COUNT });
       },
     },
@@ -492,7 +491,7 @@ export function useCalendarKeyboard(context: CalendarContext, currentPanel: Ref<
   };
 
   function handleKeyDown(e: KeyboardEvent): boolean {
-    const shortcut = shortcuts[e.key];
+    const shortcut = shortcuts[e.code];
     if (!shortcut) {
       return false;
     }
@@ -505,7 +504,8 @@ export function useCalendarKeyboard(context: CalendarContext, currentPanel: Ref<
     if (shortcut.type === 'focus') {
       context.setFocusedDate(newDate);
     } else {
-      context.setDate(newDate);
+      const panelType = currentPanel.value.type;
+      context.setDate(newDate, panelType === 'year' ? 'month' : panelType === 'month' ? 'day' : undefined);
     }
 
     return true;
