@@ -26,6 +26,8 @@ const t2 = useThumbMetadata(1);
 </template>
 
 <style scoped>
+@reference "../style.css";
+
 .slider {
   --track-width: 300px;
 

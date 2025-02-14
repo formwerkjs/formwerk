@@ -37,6 +37,8 @@ const { inputProps, labelProps, fieldValue, displayError, errorMessageProps, cle
 </template>
 
 <style scoped lang="postcss">
+@reference "../style.css";
+
 .InputSearch {
   font-family: 'Monaspace Neon Var';
   @apply relative w-full max-w-xs;
@@ -47,7 +49,7 @@ const { inputProps, labelProps, fieldValue, displayError, errorMessageProps, cle
   }
 
   input {
-    @apply rounded-md border-2 border-transparent py-3 w-full bg-zinc-800 focus:bg-zinc-900 focus:outline-none transition-colors duration-200 focus:border-emerald-500 disabled:cursor-not-allowed text-white font-medium;
+    @apply rounded-md border-2 border-transparent py-3 w-full bg-zinc-800 focus:bg-zinc-900 focus:outline-hidden transition-colors duration-200 focus:border-emerald-500 disabled:cursor-not-allowed text-white font-medium;
     @apply px-10;
 
     &::-webkit-search-cancel-button,

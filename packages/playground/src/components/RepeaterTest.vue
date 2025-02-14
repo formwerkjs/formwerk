@@ -4,12 +4,12 @@
       <div v-for="(field, idx) in fields" :key="field.id" class="flex items-center">
         <InputText :name="`field[${idx}]`" :label="`Field ${idx}`" />
 
-        <button type="button" class="bg-red-500 rounded text-white p-2" @click="fields.splice(idx, 1)">X</button>
+        <button type="button" class="bg-red-500 rounded-sm text-white p-2" @click="fields.splice(idx, 1)">X</button>
       </div>
 
-      <button class="bg-zinc-700 text-white rounded p-1" type="button" @click="add">+ Add Field</button>
-      <button class="bg-zinc-700 text-white rounded p-1" type="button" @click="swap">Swap</button>
-      <button class="bg-zinc-700 text-white rounded p-1" type="button" @click="reverse">Reverse</button>
+      <button class="bg-zinc-700 text-white rounded-sm p-1" type="button" @click="add">+ Add Field</button>
+      <button class="bg-zinc-700 text-white rounded-sm p-1" type="button" @click="swap">Swap</button>
+      <button class="bg-zinc-700 text-white rounded-sm p-1" type="button" @click="reverse">Reverse</button>
 
       <!-- <InputSearch name="search" label="Search" :min-length="10" @submit="onSearchSubmit" /> -->
     </form>

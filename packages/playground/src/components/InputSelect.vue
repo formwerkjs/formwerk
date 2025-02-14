@@ -80,6 +80,8 @@ const {
 </template>
 
 <style scoped lang="postcss">
+@reference "../style.css";
+
 .InputSelect {
   font-family: 'Monaspace Neon Var';
   @apply relative w-full max-w-xs;
@@ -94,7 +96,7 @@ const {
     anchor-name: --trigger;
 
     &:focus {
-      @apply outline-none border-emerald-500;
+      @apply outline-hidden border-emerald-500;
     }
 
     &:hover {

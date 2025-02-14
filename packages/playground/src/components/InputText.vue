@@ -19,6 +19,8 @@ const { inputProps, labelProps, errorMessageProps, isTouched, displayError } = u
 </template>
 
 <style scoped lang="postcss">
+@reference "../style.css";
+
 .InputText {
   font-family: 'Monaspace Neon Var';
   @apply relative w-full;
@@ -29,7 +31,7 @@ const { inputProps, labelProps, errorMessageProps, isTouched, displayError } = u
   }
 
   input {
-    @apply max-w-xs rounded-md border-2 border-transparent py-3 px-4 w-full bg-zinc-800 focus:bg-zinc-900 focus:outline-none transition-colors duration-200 focus:border-emerald-500 disabled:cursor-not-allowed text-white font-medium;
+    @apply max-w-xs rounded-md border-2 border-transparent py-3 px-4 w-full bg-zinc-800 focus:bg-zinc-900 focus:outline-hidden transition-colors duration-200 focus:border-emerald-500 disabled:cursor-not-allowed text-white font-medium;
   }
 
   .error-message {

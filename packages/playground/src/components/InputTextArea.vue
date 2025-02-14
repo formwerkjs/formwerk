@@ -19,6 +19,8 @@ const { inputProps, labelProps, errorMessage, errorMessageProps } = useTextField
 </template>
 
 <style scoped lang="postcss">
+@reference "../style.css";
+
 .InputText {
   @apply relative w-full;
   margin-bottom: calc(1em * 1.5);
@@ -28,7 +30,7 @@ const { inputProps, labelProps, errorMessage, errorMessageProps } = useTextField
   }
 
   textarea {
-    @apply text-gray-800 rounded-md border-2 border-transparent py-3 px-4 w-full bg-gray-100 focus:outline-none transition-colors duration-200 focus:border-blue-500;
+    @apply text-gray-800 rounded-md border-2 border-transparent py-3 px-4 w-full bg-gray-100 focus:outline-hidden transition-colors duration-200 focus:border-blue-500;
   }
   .error-message {
     @apply absolute left-0 text-sm text-red-500;

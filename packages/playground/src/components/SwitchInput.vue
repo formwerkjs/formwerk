@@ -15,7 +15,7 @@ const { inputProps, isPressed } = useSwitch(props);
       <input v-bind="inputProps" type="checkbox" class="sr-only" />
 
       <div
-        class="rounded-full w-3 h-3 flex-shrink-0 bg-white origin-center transition-transform duration-200"
+        class="rounded-full w-3 h-3 shrink-0 bg-white origin-center transition-transform duration-200"
         :class="{ 'translate-x-4': isPressed }"
       ></div>
     </div>

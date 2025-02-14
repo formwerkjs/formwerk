@@ -60,7 +60,7 @@ const { items, addButtonProps, Iteration } = useFormRepeater(props);
 
     <button
       v-bind="addButtonProps"
-      class="bg-zinc-900 gap-2 flex items-center max-w-max font-medium text-white py-2 px-4 rounded"
+      class="bg-zinc-900 gap-2 flex items-center max-w-max font-medium text-white py-2 px-4 rounded-sm"
     >
       <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 fill-current text-zinc-400" viewBox="0 0 256 256">
         <path
@@ -74,6 +74,8 @@ const { items, addButtonProps, Iteration } = useFormRepeater(props);
 </template>
 
 <style scoped>
+@reference "../style.css";
+
 .repeater-container {
   display: flex;
   flex-direction: column;

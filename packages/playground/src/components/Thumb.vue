@@ -13,6 +13,8 @@ const { thumbProps, currentValue } = useSliderThumb(props);
 </script>
 
 <style scoped>
+@reference "../style.css";
+
 .thumb {
   @apply bg-emerald-500 w-5 h-5 rounded-full;
 
@@ -35,7 +37,7 @@ const { thumbProps, currentValue } = useSliderThumb(props);
 
   &:focus,
   &:active {
-    @apply outline-none bg-emerald-600;
+    @apply outline-hidden bg-emerald-600;
 
     .tooltip {
       display: block;

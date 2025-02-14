@@ -25,6 +25,8 @@ const { groupProps, labelProps, descriptionProps, errorMessageProps, errorMessag
 </template>
 
 <style scoped>
+@reference "../style.css";
+
 .radio-group {
   display: flex;
   flex-direction: column;

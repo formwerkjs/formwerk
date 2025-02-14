@@ -37,6 +37,8 @@ const { inputProps, labelProps, errorMessage, errorMessageProps, incrementButton
 </template>
 
 <style scoped lang="postcss">
+@reference "../style.css";
+
 .InputNumber {
   font-family: 'Monaspace Neon Var';
   @apply relative w-full max-w-xs;
@@ -47,7 +49,7 @@ const { inputProps, labelProps, errorMessage, errorMessageProps, incrementButton
   }
 
   input {
-    @apply py-3 px-4 w-full bg-zinc-800 focus:bg-zinc-900 focus:outline-none transition-colors duration-200 focus:border-emerald-500 disabled:cursor-not-allowed text-white font-medium text-xl;
+    @apply py-3 px-4 w-full bg-zinc-800 focus:bg-zinc-900 focus:outline-hidden transition-colors duration-200 focus:border-emerald-500 disabled:cursor-not-allowed text-white font-medium text-xl;
   }
 
   .wrapper {

@@ -19,6 +19,8 @@ const { labelProps, inputProps } = useRadio(props);
 </template>
 
 <style scoped>
+@reference "../style.css";
+
 .radio-item {
   @apply text-white font-medium flex items-center gap-2;
 
@@ -41,7 +43,7 @@ const { labelProps, inputProps } = useRadio(props);
   }
 
   &:focus {
-    @apply outline-none;
+    @apply outline-hidden;
 
     .radio-item-inner {
       @apply border-emerald-500;

@@ -2,7 +2,7 @@
   <div v-bind="groupProps" class="">
     <p
       v-bind="labelProps"
-      class="bg-gradient-to-r from-zinc-700 to-zinc-900 text-white px-2 py-1 select-none sticky top-0 font-medium"
+      class="bg-linear-to-r from-zinc-700 to-zinc-900 text-white px-2 py-1 select-none sticky top-0 font-medium"
     >
       {{ label }}
     </p>
