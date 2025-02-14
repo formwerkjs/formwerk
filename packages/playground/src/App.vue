@@ -12,11 +12,9 @@ const maxDate = new Date('2025-01-31');
     <DateField
       name="date"
       label="Date"
-      :value="today"
-      locale="ar"
       :format-options="{
         day: '2-digit',
-        month: 'long',
+        month: 'numeric',
         year: 'numeric',
         hour: '2-digit',
         hour12: true,

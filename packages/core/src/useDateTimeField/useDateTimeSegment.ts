@@ -44,7 +44,7 @@ export function useDateTimeSegment(_props: Reactivify<DateTimeSegmentProps>) {
     throw new Error('DateTimeSegmentGroup is not provided');
   }
 
-  const { increment, decrement, setValue, getMetadata, onDone, parser, clear } =
+  const { increment, decrement, setValue, getMetadata, onDone, parser, clear, isPlaceholder } =
     segmentGroup.useDateSegmentRegistration({
       id,
       getElem: () => segmentEl.value,
@@ -67,7 +67,7 @@ export function useDateTimeSegment(_props: Reactivify<DateTimeSegmentProps>) {
       }
 
       blockEvent(evt);
-      if (!isNumeric.value) {
+      if (!isNumeric.value && !isPlaceholder()) {
         return;
       }
 

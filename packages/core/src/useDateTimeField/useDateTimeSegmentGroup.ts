@@ -29,6 +29,7 @@ export interface DateTimeSegmentGroupContext {
     getMetadata(): { min: number | null; max: number | null; maxLength: number | null };
     onDone(): void;
     clear(): void;
+    isPlaceholder(): boolean;
   };
 }
 
@@ -188,6 +189,13 @@ export function useDateTimeSegmentGroup({
       onValueChange(next);
     }
 
+    function isPlaceholder() {
+      const type = segment.getType();
+      const date = toValue(temporalValue);
+
+      return isTemporalPartial(date) && !isTemporalPartSet(date, type);
+    }
+
     return {
       increment,
       decrement,
@@ -197,6 +205,7 @@ export function useDateTimeSegmentGroup({
       getMetadata,
       onDone: onSegmentDone,
       clear,
+      isPlaceholder,
     };
   }
 
