@@ -3,7 +3,7 @@ import { DateValue, TemporalPartial } from './types';
 import { Maybe } from '../types';
 import { isNullOrUndefined } from '../utils/common';
 import { createTemporalPartial, isTemporalPartial } from './temporalPartial';
-import { Calendar, fromDate, type ZonedDateTime } from '@internationalized/date';
+import { Calendar, fromDate, toCalendar, toTimeZone, type ZonedDateTime } from '@internationalized/date';
 
 interface TemporalValueStoreInit {
   model: {
@@ -18,16 +18,26 @@ interface TemporalValueStoreInit {
 
 export function useTemporalStore(init: TemporalValueStoreInit) {
   const model = init.model;
-  const temporalVal = shallowRef<ZonedDateTime | TemporalPartial>(
-    toZonedDateTime(model.get()) ?? createTemporalPartial(toValue(init.calendar), toValue(init.timeZone)),
-  );
+  const temporalVal = shallowRef<ZonedDateTime | TemporalPartial>(fromDateToCalendarZonedDateTime(model.get()));
+
+  function fromDateToCalendarZonedDateTime(date: Maybe<Date>): ZonedDateTime {
+    const zonedDt = toZonedDateTime(date);
+    if (!zonedDt) {
+      return createTemporalPartial(toValue(init.calendar), toValue(init.timeZone));
+    }
+
+    const calendar = toValue(init.calendar);
+    const timeZone = toValue(init.timeZone);
+
+    return toCalendar(toTimeZone(zonedDt, timeZone), calendar);
+  }
 
   watch(model.get, value => {
     if (!value && isTemporalPartial(temporalVal.value)) {
       return;
     }
 
-    temporalVal.value = toZonedDateTime(value) ?? createTemporalPartial(toValue(init.calendar), toValue(init.timeZone));
+    temporalVal.value = fromDateToCalendarZonedDateTime(value);
   });
 
   function toZonedDateTime(value: Maybe<DateValue>): Maybe<ZonedDateTime> {
