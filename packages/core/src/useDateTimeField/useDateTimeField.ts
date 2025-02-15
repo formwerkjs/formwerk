@@ -10,6 +10,7 @@ import { useErrorMessage, useLabel } from '../a11y';
 import { useTemporalStore } from './useTemporalStore';
 import { ZonedDateTime, Calendar } from '@internationalized/date';
 import { isTemporalPartial } from './temporalPartial';
+import { useInputValidity } from '../validation';
 
 export interface DateTimeFieldProps {
   /**
@@ -31,6 +32,11 @@ export interface DateTimeFieldProps {
    * The calendar type to use for the field, e.g. `gregory`, `islamic-umalqura`, etc.
    */
   calendar?: Calendar;
+
+  /**
+   * The time zone to use for the field, e.g. `UTC`, `America/New_York`, etc.
+   */
+  timeZone?: string;
 
   /**
    * The Intl.DateTimeFormatOptions to use for the field, used to format the date value.
@@ -88,6 +94,7 @@ export function useDateTimeField(_props: Reactivify<DateTimeFieldProps, 'schema'
   const controlEl = shallowRef<HTMLInputElement>();
   const { locale, direction, timeZone, calendar } = useLocale(props.locale, {
     calendar: () => toValue(props.calendar),
+    timeZone: () => toValue(props.timeZone),
   });
 
   const formatter = useDateFormatter(locale, props.formatOptions);
@@ -99,6 +106,8 @@ export function useDateTimeField(_props: Reactivify<DateTimeFieldProps, 'schema'
     initialValue: toValue(props.modelValue) ?? toValue(props.value),
     schema: props.schema,
   });
+
+  useInputValidity({ field });
 
   const minDate = useTemporalStore({
     calendar: calendar,
@@ -170,6 +179,7 @@ export function useDateTimeField(_props: Reactivify<DateTimeFieldProps, 'schema'
     return withRefCapture(
       {
         id: controlId,
+        role: 'group',
         ...labelledByProps.value,
         ...describedByProps.value,
         ...accessibleErrorProps.value,
