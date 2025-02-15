@@ -195,6 +195,7 @@ export function useCalendar(_props: Reactivify<CalendarProps, 'onDaySelected'> =
 
   const nextPanelButtonProps = useControlButtonProps(() => ({
     id: `${calendarId}-next`,
+    'aria-label': 'Next',
     onClick: () => {
       if (currentPanel.value.type === 'day') {
         context.setFocusedDate(context.getFocusedDate().add({ months: 1 }));
@@ -212,6 +213,7 @@ export function useCalendar(_props: Reactivify<CalendarProps, 'onDaySelected'> =
 
   const previousPanelButtonProps = useControlButtonProps(() => ({
     id: `${calendarId}-previous`,
+    'aria-label': 'Previous',
     onClick: () => {
       if (currentPanel.value.type === 'day') {
         context.setFocusedDate(context.getFocusedDate().subtract({ months: 1 }));
@@ -227,7 +229,7 @@ export function useCalendar(_props: Reactivify<CalendarProps, 'onDaySelected'> =
     },
   }));
 
-  const { labelProps: monthYearLabelBaseProps } = useLabel({
+  const { labelProps: monthYearLabelBaseProps, labelledByProps } = useLabel({
     targetRef: gridEl,
     for: gridId,
     label: panelLabel,
@@ -267,8 +269,9 @@ export function useCalendar(_props: Reactivify<CalendarProps, 'onDaySelected'> =
 
     return withRefCapture(
       {
-        id: `${calendarId}-g`,
+        id: gridId,
         role: 'grid',
+        ...labelledByProps.value,
         style: {
           display: 'grid',
           gridTemplateColumns: `repeat(${columns}, 1fr)`,
