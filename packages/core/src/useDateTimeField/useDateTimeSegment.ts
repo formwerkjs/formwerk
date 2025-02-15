@@ -30,7 +30,12 @@ interface DateTimeSegmentDomProps {
   contenteditable: string | undefined;
   'aria-disabled': boolean | undefined;
   'data-segment-type': DateTimeSegmentType;
-  style?: CSSProperties;
+  style: CSSProperties;
+  'aria-label'?: string;
+  spellcheck?: boolean;
+  inputmode?: string;
+  autocorrect?: string;
+  enterkeyhint?: string;
 }
 
 export function useDateTimeSegment(_props: Reactivify<DateTimeSegmentProps>) {
@@ -44,14 +49,23 @@ export function useDateTimeSegment(_props: Reactivify<DateTimeSegmentProps>) {
     throw new Error('DateTimeSegmentGroup is not provided');
   }
 
-  const { increment, decrement, setValue, getMetadata, onDone, parser, clear, isPlaceholder, onTouched } =
-    segmentGroup.useDateSegmentRegistration({
-      id,
-      getElem: () => segmentEl.value,
-      getType: () => toValue(props.type),
-    });
-
-  const isNumeric = computed(() => parser.isValidNumberPart(toValue(props.value)));
+  const {
+    increment,
+    decrement,
+    setValue,
+    getMetadata,
+    onDone,
+    parser,
+    clear,
+    onTouched,
+    isLast,
+    focusNext,
+    isNumeric,
+  } = segmentGroup.useDateSegmentRegistration({
+    id,
+    getElem: () => segmentEl.value,
+    getType: () => toValue(props.type),
+  });
 
   let currentInput = '';
 
@@ -67,7 +81,7 @@ export function useDateTimeSegment(_props: Reactivify<DateTimeSegmentProps>) {
       }
 
       blockEvent(evt);
-      if (!isNumeric.value && !isPlaceholder()) {
+      if (!isNumeric()) {
         return;
       }
 
@@ -110,6 +124,12 @@ export function useDateTimeSegment(_props: Reactivify<DateTimeSegmentProps>) {
       currentInput = '';
     },
     onKeydown(evt: KeyboardEvent) {
+      if (hasKeyCode(evt, 'Enter')) {
+        blockEvent(evt);
+        focusNext();
+        return;
+      }
+
       if (hasKeyCode(evt, 'ArrowUp')) {
         blockEvent(evt);
         if (!isNonEditable()) {
@@ -142,11 +162,19 @@ export function useDateTimeSegment(_props: Reactivify<DateTimeSegmentProps>) {
       contenteditable: isNonEditable() ? undefined : 'plaintext-only',
       'aria-disabled': toValue(props.disabled),
       'data-segment-type': toValue(props.type),
+      'aria-label': isNonEditable() ? undefined : toValue(props.type),
+      autocorrect: isNonEditable() ? undefined : 'off',
+      spellcheck: isNonEditable() ? undefined : false,
+      enterkeyhint: isNonEditable() ? undefined : isLast() ? 'done' : 'next',
+      inputmode: isNonEditable() ? undefined : isNumeric() ? 'numeric' : 'none',
       ...handlers,
+      style: {
+        caretColor: 'transparent',
+      },
     };
 
     if (isNonEditable()) {
-      domProps.style = { pointerEvents: 'none' };
+      domProps.style.pointerEvents = 'none';
     }
 
     return withRefCapture(domProps, segmentEl);

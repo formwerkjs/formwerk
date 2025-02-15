@@ -7,6 +7,7 @@ import { useEventListener } from '../helpers/useEventListener';
 import {
   getSegmentTypePlaceholder,
   isEditableSegmentType,
+  isNumericByDefault,
   isOptionalSegmentType,
   segmentTypeToDurationLike,
 } from './constants';
@@ -29,8 +30,10 @@ export interface DateTimeSegmentGroupContext {
     getMetadata(): { min: number | null; max: number | null; maxLength: number | null };
     onDone(): void;
     clear(): void;
-    isPlaceholder(): boolean;
+    isNumeric(): boolean;
     onTouched(): void;
+    isLast(): boolean;
+    focusNext(): void;
   };
 }
 
@@ -192,11 +195,27 @@ export function useDateTimeSegmentGroup({
       onValueChange(next);
     }
 
-    function isPlaceholder() {
+    function isNumeric() {
       const type = segment.getType();
-      const date = toValue(temporalValue);
+      const options = toValue(formatOptions);
+      const optionFormat = options?.[type];
+      if (!optionFormat) {
+        return isNumericByDefault(type);
+      }
 
-      return isTemporalPartial(date) && !isTemporalPartSet(date, type);
+      return optionFormat === 'numeric' || optionFormat === '2-digit';
+    }
+
+    function isLast() {
+      return renderedSegments.value.at(-1)?.id === segment.id;
+    }
+
+    function focusNext() {
+      if (isLast()) {
+        return;
+      }
+
+      focusNextSegment();
     }
 
     return {
@@ -208,8 +227,10 @@ export function useDateTimeSegmentGroup({
       getMetadata,
       onDone: onSegmentDone,
       clear,
-      isPlaceholder,
       onTouched,
+      isLast,
+      focusNext,
+      isNumeric,
     };
   }
 

@@ -8,7 +8,7 @@ const maxDate = new Date('2025-01-31');
 </script>
 
 <template>
-  <div class="flex flex-col w-1/2 gap-4">
+  <div class="flex flex-col gap-4">
     <DateField
       name="date"
       label="Date"

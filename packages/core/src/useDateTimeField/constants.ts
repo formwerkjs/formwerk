@@ -40,3 +40,16 @@ export function getSegmentTypePlaceholder(type: DateTimeSegmentType) {
 
   return map[type];
 }
+
+export function isNumericByDefault(type: DateTimeSegmentType) {
+  const map: Partial<Record<DateTimeSegmentType, boolean>> = {
+    year: true,
+    month: true,
+    day: true,
+    hour: true,
+    minute: true,
+    second: true,
+  };
+
+  return map[type] ?? false;
+}
