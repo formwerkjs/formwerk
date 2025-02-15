@@ -34,6 +34,7 @@ describe('useDateTimeSegmentGroup', () => {
             locale,
             controlEl,
             onValueChange,
+            onTouched: () => {},
           });
 
           // Register a segment
@@ -82,6 +83,7 @@ describe('useDateTimeSegmentGroup', () => {
             locale,
             controlEl,
             onValueChange,
+            onTouched: () => {},
           });
 
           return {
@@ -132,6 +134,7 @@ describe('useDateTimeSegmentGroup', () => {
             locale,
             controlEl,
             onValueChange,
+            onTouched: () => {},
             direction: 'rtl',
           });
 
@@ -183,6 +186,7 @@ describe('useDateTimeSegmentGroup', () => {
             locale,
             controlEl,
             onValueChange,
+            onTouched: () => {},
           });
 
           const segment = {
@@ -217,6 +221,7 @@ describe('useDateTimeSegmentGroup', () => {
             locale,
             controlEl,
             onValueChange,
+            onTouched: () => {},
           });
 
           const segment = {
@@ -251,6 +256,7 @@ describe('useDateTimeSegmentGroup', () => {
             locale,
             controlEl,
             onValueChange,
+            onTouched: () => {},
           });
 
           const segment = {
@@ -285,6 +291,7 @@ describe('useDateTimeSegmentGroup', () => {
             locale,
             controlEl,
             onValueChange,
+            onTouched: () => {},
           });
 
           const segment = {
@@ -321,6 +328,7 @@ describe('useDateTimeSegmentGroup', () => {
             locale: 'de-DE',
             controlEl,
             onValueChange,
+            onTouched: () => {},
           });
 
           return {
@@ -360,6 +368,7 @@ describe('useDateTimeSegmentGroup', () => {
             locale,
             controlEl,
             onValueChange,
+            onTouched: () => {},
           });
 
           return {
@@ -420,6 +429,7 @@ describe('useDateTimeSegmentGroup', () => {
             locale,
             controlEl,
             onValueChange,
+            onTouched: () => {},
           });
 
           return {
@@ -481,6 +491,7 @@ describe('useDateTimeSegmentGroup', () => {
             locale,
             controlEl,
             onValueChange,
+            onTouched: () => {},
           });
 
           return {
@@ -536,6 +547,7 @@ describe('useDateTimeSegmentGroup', () => {
             locale,
             controlEl,
             onValueChange,
+            onTouched: () => {},
           });
 
           return {
@@ -608,6 +620,7 @@ describe('useDateTimeSegmentGroup', () => {
             locale,
             controlEl,
             onValueChange,
+            onTouched: () => {},
           });
 
           return {
@@ -704,6 +717,7 @@ describe('useDateTimeSegmentGroup', () => {
             locale,
             controlEl,
             onValueChange,
+            onTouched: () => {},
           });
 
           return {

@@ -6,6 +6,7 @@ import { createCalendar, now, toCalendar } from '@internationalized/date';
 import { DateTimeSegment } from './useDateTimeSegment';
 import { ref, toValue } from 'vue';
 import { StandardSchema } from '../types';
+import { fireEvent } from '@testing-library/vue';
 
 describe('useDateTimeField', () => {
   const currentDate = new Date('2024-03-15T12:00:00Z');
@@ -319,6 +320,51 @@ describe('useDateTimeField', () => {
       updateVal(new Date());
       await flush();
       expect(control).not.toHaveErrorMessage();
+    });
+
+    test('sets touched state when any segment is blurred', async () => {
+      await render({
+        components: { DateTimeSegment },
+        setup() {
+          const { segments, controlProps, labelProps, isTouched } = useDateTimeField({
+            label: 'Date',
+            name: 'date',
+          });
+
+          return {
+            segments,
+            controlProps,
+            labelProps,
+            isTouched,
+          };
+        },
+        template: `
+          <div>
+            <span v-bind="labelProps">Date</span>
+            <div v-bind="controlProps" :data-touched="isTouched">
+              <DateTimeSegment
+                v-for="segment in segments"
+                :key="segment.type"
+                v-bind="segment"
+                data-testid="segment"
+              />
+            </div>
+          </div>
+        `,
+      });
+
+      await flush();
+      const segments = screen.getAllByTestId('segment');
+      const control = screen.getByRole('group');
+
+      // Initially not touched
+      expect(control.dataset.touched).toBe('false');
+
+      // Blur month segment
+      const monthSegment = segments.find(el => el.dataset.segmentType === 'month')!;
+      await fireEvent.blur(monthSegment);
+      await flush();
+      expect(control.dataset.touched).toBe('true');
     });
   });
 

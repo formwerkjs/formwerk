@@ -148,6 +148,7 @@ export function useDateTimeField(_props: Reactivify<DateTimeFieldProps, 'schema'
     controlEl,
     temporalValue,
     onValueChange,
+    onTouched: () => field.setTouched(true),
   });
 
   const { labelProps, labelledByProps } = useLabel({

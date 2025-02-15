@@ -30,6 +30,7 @@ export interface DateTimeSegmentGroupContext {
     onDone(): void;
     clear(): void;
     isPlaceholder(): boolean;
+    onTouched(): void;
   };
 }
 
@@ -43,6 +44,7 @@ export interface DateTimeSegmentGroupProps {
   direction?: MaybeRefOrGetter<Direction>;
   controlEl: Ref<HTMLElement | undefined>;
   onValueChange: (value: ZonedDateTime) => void;
+  onTouched: () => void;
 }
 
 export function useDateTimeSegmentGroup({
@@ -53,6 +55,7 @@ export function useDateTimeSegmentGroup({
   locale,
   controlEl,
   onValueChange,
+  onTouched,
 }: DateTimeSegmentGroupProps) {
   const renderedSegments = ref<DateTimeSegmentRegistration[]>([]);
   const parser = useNumberParser(locale, {
@@ -206,6 +209,7 @@ export function useDateTimeSegmentGroup({
       onDone: onSegmentDone,
       clear,
       isPlaceholder,
+      onTouched,
     };
   }
 
