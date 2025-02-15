@@ -11,6 +11,7 @@ export type NumberLocaleExtension = `nu-${string}`;
 export interface LocaleExtension {
   number: Maybe<NumberLocaleExtension>;
   calendar: Maybe<Calendar>;
+  timeZone: Maybe<string>;
 }
 
 /**
@@ -49,7 +50,7 @@ export function useLocale(
   const direction = computed(() => getDirection(localeInstance.value));
   const weekInfo = computed(() => getWeekInfo(localeInstance.value));
   const calendar = computed(() => toValue(extensions.calendar) ?? (new GregorianCalendar() as Calendar));
-  const timeZone = computed(() => getTimeZone(localeInstance.value));
+  const timeZone = computed(() => toValue(extensions.timeZone) ?? getTimeZone(localeInstance.value));
   const locale = computed(() => localeInstance.value.toString());
 
   return { locale, direction, weekInfo, calendar, timeZone };
