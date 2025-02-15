@@ -37,7 +37,7 @@ export interface CalendarYearCell {
 
 export type CalendarCellProps = CalendarDayCell | CalendarMonthCell | CalendarYearCell;
 
-export type CalendarPanelType = 'day' | 'month' | 'year';
+export type CalendarPanelType = 'weeks' | 'months' | 'years';
 
 export interface CalendarContext {
   locale: Ref<string>;

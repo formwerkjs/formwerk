@@ -6,57 +6,68 @@ import { normalizeProps } from '../utils/common';
 import { YEAR_CELLS_COUNT } from './constants';
 import { now, toCalendar } from '@internationalized/date';
 
-export interface CalendarDayPanel {
-  type: 'day';
+export interface CalendarWeeksPanel {
+  type: 'weeks';
   days: CalendarDayCell[];
   weekDays: string[];
 }
 
-export interface CalendarMonthPanel {
-  type: 'month';
+export interface CalendarMonthsPanel {
+  type: 'months';
   months: CalendarMonthCell[];
 }
 
-export interface CalendarYearPanel {
-  type: 'year';
+export interface CalendarYearsPanel {
+  type: 'years';
   years: CalendarYearCell[];
 }
 
-export type CalendarPanel = CalendarDayPanel | CalendarMonthPanel | CalendarYearPanel;
+export type CalendarPanel = CalendarWeeksPanel | CalendarMonthsPanel | CalendarYearsPanel;
 
 export interface CalendarPanelProps {
-  daysOfWeekFormat?: Intl.DateTimeFormatOptions['weekday'];
+  /**
+   * The format option for the days of the week.
+   */
+  weekDayFormat?: Intl.DateTimeFormatOptions['weekday'];
+
+  /**
+   * The format option for the month.
+   */
   monthFormat?: Intl.DateTimeFormatOptions['month'];
+
+  /**
+   * The format option for the year.
+   */
   yearFormat?: Intl.DateTimeFormatOptions['year'];
 }
 
 export function useCalendarPanel(_props: Reactivify<CalendarPanelProps>, context: CalendarContext) {
   const props = normalizeProps(_props);
-  const panelType = shallowRef<CalendarPanelType>('day');
-  const { days, weekDays } = useCalendarDaysPanel(context, props.daysOfWeekFormat);
+  const panelType = shallowRef<CalendarPanelType>('weeks');
+  const { days, weekDays } = useCalendarDaysPanel(context, props.weekDayFormat);
   const { months, monthFormatter } = useCalendarMonthsPanel(context, props.monthFormat);
   const { years, yearFormatter } = useCalendarYearsPanel(context, props.yearFormat);
 
   const currentPanel = computed(() => {
-    if (panelType.value === 'day') {
+    if (panelType.value === 'weeks') {
       return {
-        type: 'day',
+        type: 'weeks',
         days: days.value,
         weekDays: weekDays.value,
-      } as CalendarDayPanel;
+      } as CalendarWeeksPanel;
     }
 
-    if (panelType.value === 'month') {
+    if (panelType.value === 'months') {
       return {
-        type: 'month',
+        type: 'months',
         months: months.value,
-      } as CalendarMonthPanel;
+      } as CalendarMonthsPanel;
     }
 
     return {
-      type: 'year',
+      type: 'years',
       years: years.value,
-    } as CalendarYearPanel;
+    } as CalendarYearsPanel;
   });
 
   function switchPanel(type: CalendarPanelType) {
@@ -64,11 +75,11 @@ export function useCalendarPanel(_props: Reactivify<CalendarPanelProps>, context
   }
 
   const panelLabel = computed(() => {
-    if (panelType.value === 'day') {
+    if (panelType.value === 'weeks') {
       return `${monthFormatter.value.format(context.getFocusedDate().toDate())} ${yearFormatter.value.format(context.getFocusedDate().toDate())}`;
     }
 
-    if (panelType.value === 'month') {
+    if (panelType.value === 'months') {
       return yearFormatter.value.format(context.getFocusedDate().toDate());
     }
 

@@ -15,7 +15,8 @@ export function useCalendarCell(_props: Reactivify<CalendarCellProps>) {
     }
 
     const type = toValue(props.type);
-    const nextPanel: CalendarPanelType | undefined = type === 'month' ? 'day' : type === 'year' ? 'month' : undefined;
+    const nextPanel: CalendarPanelType | undefined =
+      type === 'month' ? 'weeks' : type === 'year' ? 'months' : undefined;
     calendarCtx?.setDate(toValue(props.value), nextPanel);
   }
 

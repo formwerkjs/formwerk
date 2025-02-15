@@ -17,14 +17,14 @@ const {
 
 const {
   pickerProps,
-  panelGridProps,
+  gridProps,
   buttonProps,
-  nextPanelButtonProps,
-  previousPanelButtonProps,
-  panelLabelProps,
-  panelLabel,
+  nextButtonProps,
+  previousButtonProps,
+  gridLabelProps,
+  gridLabel,
   currentPanel,
-} = useCalendar(calendarProps);
+} = useCalendar({ ...calendarProps, allowedPanels: ['weeks', 'months', 'years'] });
 </script>
 
 <template>
@@ -43,59 +43,57 @@ const {
 
     <div popover class="bg-zinc-800 px-4 py-4" v-bind="pickerProps">
       <div class="flex items-center justify-between text-white my-4">
-        <button v-bind="previousPanelButtonProps">⬆️</button>
+        <button v-bind="previousButtonProps">⬆️</button>
 
-        <span v-bind="panelLabelProps">
-          {{ panelLabel }}
+        <span v-bind="gridLabelProps">
+          {{ gridLabel }}
         </span>
 
-        <button v-bind="nextPanelButtonProps">⬇️</button>
+        <button v-bind="nextButtonProps">⬇️</button>
       </div>
 
-      <div class="gap-4" :dir="direction" v-bind="panelGridProps">
-        <template v-if="currentPanel.type === 'day'">
-          <div
-            v-for="day in currentPanel.daysOfTheWeek"
-            :key="day"
-            class="flex flex-col items-center justify-center text-white font-bold"
-          >
-            {{ day }}
-          </div>
+      <div v-if="currentPanel.type === 'weeks'" v-bind="gridProps" class="grid grid-cols-7 gap-4">
+        <div
+          v-for="day in currentPanel.weekDays"
+          :key="day"
+          class="flex flex-col items-center justify-center text-white font-bold"
+        >
+          {{ day }}
+        </div>
 
-          <CalendarCell
-            v-for="day in currentPanel.days"
-            v-bind="day"
-            class="flex flex-col items-center justify-center aria-selected:bg-emerald-600 aria-selected:text-white aria-selected:font-medium border-2 focus:border-emerald-600 focus:outline-none aria-disabled:cursor-not-allowed aria-disabled:opacity-50"
-            :class="{
-              'text-zinc-500': day.isOutsideMonth,
-              'text-white': !day.isOutsideMonth,
-              'border-transparent': !day.isToday,
-              'border-emerald-600': day.isToday,
-            }"
-          >
-            {{ day.label }}
-          </CalendarCell>
-        </template>
+        <CalendarCell
+          v-for="day in currentPanel.days"
+          v-bind="day"
+          class="flex flex-col items-center justify-center aria-selected:bg-emerald-600 aria-selected:text-white aria-selected:font-medium border-2 focus:border-emerald-600 focus:outline-none aria-disabled:cursor-not-allowed aria-disabled:opacity-50"
+          :class="{
+            'text-zinc-500': day.isOutsideMonth,
+            'text-white': !day.isOutsideMonth,
+            'border-transparent': !day.isToday,
+            'border-emerald-600': day.isToday,
+          }"
+        >
+          {{ day.label }}
+        </CalendarCell>
+      </div>
 
-        <template v-if="currentPanel.type === 'month'">
-          <CalendarCell
-            v-for="month in currentPanel.months"
-            v-bind="month"
-            class="flex flex-col items-center justify-center aria-selected:bg-emerald-600 aria-selected:text-white aria-selected:font-medium border-2 focus:border-emerald-600 focus:outline-none aria-disabled:cursor-not-allowed aria-disabled:opacity-50"
-          >
-            {{ month.label }}
-          </CalendarCell>
-        </template>
+      <div v-if="currentPanel.type === 'months'" v-bind="gridProps" class="grid grid-cols-4 gap-4">
+        <CalendarCell
+          v-for="month in currentPanel.months"
+          v-bind="month"
+          class="flex flex-col items-center justify-center aria-selected:bg-emerald-600 aria-selected:text-white aria-selected:font-medium border-2 focus:border-emerald-600 focus:outline-none aria-disabled:cursor-not-allowed aria-disabled:opacity-50"
+        >
+          {{ month.label }}
+        </CalendarCell>
+      </div>
 
-        <template v-if="currentPanel.type === 'year'">
-          <CalendarCell
-            v-for="year in currentPanel.years"
-            v-bind="year"
-            class="flex flex-col items-center justify-center aria-selected:bg-emerald-600 aria-selected:text-white aria-selected:font-medium border-2 focus:border-emerald-600 focus:outline-none aria-disabled:cursor-not-allowed aria-disabled:opacity-50"
-          >
-            {{ year.label }}
-          </CalendarCell>
-        </template>
+      <div v-if="currentPanel.type === 'years'" v-bind="gridProps" class="grid grid-cols-4 gap-4">
+        <CalendarCell
+          v-for="year in currentPanel.years"
+          v-bind="year"
+          class="flex flex-col items-center justify-center aria-selected:bg-emerald-600 aria-selected:text-white aria-selected:font-medium border-2 focus:border-emerald-600 focus:outline-none aria-disabled:cursor-not-allowed aria-disabled:opacity-50"
+        >
+          {{ year.label }}
+        </CalendarCell>
       </div>
     </div>
 

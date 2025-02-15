@@ -8,7 +8,7 @@ import { usePopoverController } from '../helpers/usePopoverController';
 import { blockEvent } from '../utils/events';
 import { useLabel } from '../a11y';
 import { useControlButtonProps } from '../helpers/useControlButtonProps';
-import { CalendarContextKey, MONTHS_COLUMNS_COUNT, YEAR_CELLS_COUNT, YEARS_COLUMNS_COUNT } from './constants';
+import { CalendarContextKey, YEAR_CELLS_COUNT } from './constants';
 import { CalendarPanel, useCalendarPanel } from './useCalendarPanel';
 import { Calendar, ZonedDateTime, now, toCalendar } from '@internationalized/date';
 
@@ -59,19 +59,24 @@ export interface CalendarProps {
   maxDate?: Maybe<ZonedDateTime>;
 
   /**
-   * The format options for the days of the week.
+   * The format option for the days of the week.
    */
-  daysOfWeekFormat?: Intl.DateTimeFormatOptions['weekday'];
+  weekDayFormat?: Intl.DateTimeFormatOptions['weekday'];
 
   /**
-   * The format options for the month.
+   * The format option for the month.
    */
   monthFormat?: Intl.DateTimeFormatOptions['month'];
 
   /**
-   * The format options for the year.
+   * The format option for the year.
    */
   yearFormat?: Intl.DateTimeFormatOptions['year'];
+
+  /**
+   * The available panels to switch to and from in the calendar.
+   */
+  allowedPanels?: CalendarPanelType[];
 }
 
 export function useCalendar(_props: Reactivify<CalendarProps, 'onDaySelected'> = {}) {
@@ -108,7 +113,7 @@ export function useCalendar(_props: Reactivify<CalendarProps, 'onDaySelected'> =
       props.onDaySelected?.(date);
       if (panel) {
         switchPanel(panel);
-      } else if (currentPanel.value.type === 'day') {
+      } else if (currentPanel.value.type === 'weeks') {
         // Automatically close the calendar when a day is selected
         isOpen.value = false;
       }
@@ -124,9 +129,13 @@ export function useCalendar(_props: Reactivify<CalendarProps, 'onDaySelected'> =
 
   provide(CalendarContextKey, context);
 
-  const { currentPanel, switchPanel, panelLabel } = useCalendarPanel(
+  const {
+    currentPanel,
+    switchPanel,
+    panelLabel: gridLabel,
+  } = useCalendarPanel(
     {
-      daysOfWeekFormat: props.daysOfWeekFormat,
+      weekDayFormat: props.weekDayFormat,
       monthFormat: props.monthFormat,
       yearFormat: props.yearFormat,
     },
@@ -171,7 +180,7 @@ export function useCalendar(_props: Reactivify<CalendarProps, 'onDaySelected'> =
   watch(isOpen, async value => {
     if (!value) {
       focusedDay.value = undefined;
-      switchPanel('day');
+      switchPanel('weeks');
       return;
     }
 
@@ -193,16 +202,16 @@ export function useCalendar(_props: Reactivify<CalendarProps, 'onDaySelected'> =
     );
   });
 
-  const nextPanelButtonProps = useControlButtonProps(() => ({
+  const nextButtonProps = useControlButtonProps(() => ({
     id: `${calendarId}-next`,
     'aria-label': 'Next',
     onClick: () => {
-      if (currentPanel.value.type === 'day') {
+      if (currentPanel.value.type === 'weeks') {
         context.setFocusedDate(context.getFocusedDate().add({ months: 1 }));
         return;
       }
 
-      if (currentPanel.value.type === 'month') {
+      if (currentPanel.value.type === 'months') {
         context.setFocusedDate(context.getFocusedDate().add({ years: 1 }));
         return;
       }
@@ -211,16 +220,16 @@ export function useCalendar(_props: Reactivify<CalendarProps, 'onDaySelected'> =
     },
   }));
 
-  const previousPanelButtonProps = useControlButtonProps(() => ({
+  const previousButtonProps = useControlButtonProps(() => ({
     id: `${calendarId}-previous`,
     'aria-label': 'Previous',
     onClick: () => {
-      if (currentPanel.value.type === 'day') {
+      if (currentPanel.value.type === 'weeks') {
         context.setFocusedDate(context.getFocusedDate().subtract({ months: 1 }));
         return;
       }
 
-      if (currentPanel.value.type === 'month') {
+      if (currentPanel.value.type === 'months') {
         context.setFocusedDate(context.getFocusedDate().subtract({ years: 1 }));
         return;
       }
@@ -232,24 +241,33 @@ export function useCalendar(_props: Reactivify<CalendarProps, 'onDaySelected'> =
   const { labelProps: monthYearLabelBaseProps, labelledByProps } = useLabel({
     targetRef: gridEl,
     for: gridId,
-    label: panelLabel,
+    label: gridLabel,
   });
 
-  const panelLabelProps = computed(() => {
+  function isAllowedPanel(panel: CalendarPanelType) {
+    return toValue(props.allowedPanels)?.includes(panel) ?? true;
+  }
+
+  const gridLabelProps = computed(() => {
     return withRefCapture(
       {
         ...monthYearLabelBaseProps.value,
         'aria-live': 'polite' as const,
         tabindex: '-1',
         onClick: () => {
-          if (currentPanel.value.type === 'day') {
-            switchPanel('month');
+          if (currentPanel.value.type === 'weeks') {
+            if (isAllowedPanel('months')) {
+              switchPanel('months');
+            }
 
             return;
           }
 
-          if (currentPanel.value.type === 'month') {
-            switchPanel('year');
+          if (currentPanel.value.type === 'months') {
+            if (isAllowedPanel('years')) {
+              switchPanel('years');
+            }
+
             return;
           }
         },
@@ -258,24 +276,12 @@ export function useCalendar(_props: Reactivify<CalendarProps, 'onDaySelected'> =
     );
   });
 
-  const panelGridProps = computed(() => {
-    const panelType = currentPanel.value.type;
-    const columns =
-      panelType === 'day'
-        ? currentPanel.value.weekDays.length
-        : panelType === 'month'
-          ? MONTHS_COLUMNS_COUNT
-          : YEARS_COLUMNS_COUNT;
-
+  const gridProps = computed(() => {
     return withRefCapture(
       {
         id: gridId,
         role: 'grid',
         ...labelledByProps.value,
-        style: {
-          display: 'grid',
-          gridTemplateColumns: `repeat(${columns}, 1fr)`,
-        },
       },
       gridEl,
     );
@@ -293,7 +299,7 @@ export function useCalendar(_props: Reactivify<CalendarProps, 'onDaySelected'> =
     /**
      * The props for the grid element that displays the panel values.
      */
-    panelGridProps,
+    gridProps,
     /**
      * The props for the button element.
      */
@@ -317,19 +323,19 @@ export function useCalendar(_props: Reactivify<CalendarProps, 'onDaySelected'> =
     /**
      * The props for the panel label element.
      */
-    panelLabelProps,
+    gridLabelProps,
     /**
      * The props for the next panel values button. if it is a day panel, the button will move the panel to the next month. If it is a month panel, the button will move the panel to the next year. If it is a year panel, the button will move the panel to the next set of years.
      */
-    nextPanelButtonProps,
+    nextButtonProps,
     /**
      * The props for the previous panel values button. If it is a day panel, the button will move the panel to the previous month. If it is a month panel, the button will move the panel to the previous year. If it is a year panel, the button will move the panel to the previous set of years.
      */
-    previousPanelButtonProps,
+    previousButtonProps,
     /**
      * The label for the current panel. If it is a day panel, the label will be the month and year. If it is a month panel, the label will be the year. If it is a year panel, the label will be the range of years currently being displayed.
      */
-    panelLabel,
+    gridLabel,
   };
 }
 
@@ -357,7 +363,7 @@ export function useCalendarKeyboard(context: CalendarContext, currentPanel: Ref<
 
   function getIncrement(direction: 'up' | 'down' | 'left' | 'right') {
     const panelType = currentPanel.value.type;
-    if (panelType === 'day') {
+    if (panelType === 'weeks') {
       if (direction === 'up' || direction === 'down') {
         return { weeks: 1 };
       }
@@ -365,7 +371,7 @@ export function useCalendarKeyboard(context: CalendarContext, currentPanel: Ref<
       return { days: 1 };
     }
 
-    if (panelType === 'month') {
+    if (panelType === 'months') {
       if (direction === 'up' || direction === 'down') {
         return { months: 3 };
       }
@@ -404,11 +410,11 @@ export function useCalendarKeyboard(context: CalendarContext, currentPanel: Ref<
     PageDown: {
       fn: () => {
         const type = currentPanel.value.type;
-        if (type === 'day') {
+        if (type === 'weeks') {
           return context.getFocusedDate().add({ months: 1 });
         }
 
-        if (type === 'month') {
+        if (type === 'months') {
           return context.getFocusedDate().add({ years: 1 });
         }
 
@@ -419,11 +425,11 @@ export function useCalendarKeyboard(context: CalendarContext, currentPanel: Ref<
     PageUp: {
       fn: () => {
         const type = currentPanel.value.type;
-        if (type === 'day') {
+        if (type === 'weeks') {
           return context.getFocusedDate().subtract({ months: 1 });
         }
 
-        if (type === 'month') {
+        if (type === 'months') {
           return context.getFocusedDate().subtract({ years: 1 });
         }
 
@@ -435,7 +441,7 @@ export function useCalendarKeyboard(context: CalendarContext, currentPanel: Ref<
       fn: () => {
         const current = context.getFocusedDate();
         const type = currentPanel.value.type;
-        if (type === 'day') {
+        if (type === 'weeks') {
           if (current.day === 1) {
             return current.subtract({ months: 1 }).set({ day: 1 });
           }
@@ -443,7 +449,7 @@ export function useCalendarKeyboard(context: CalendarContext, currentPanel: Ref<
           return current.set({ day: 1 });
         }
 
-        if (type === 'month') {
+        if (type === 'months') {
           if (current.month === 1) {
             return current.subtract({ years: 1 }).set({ month: 1 });
           }
@@ -460,7 +466,7 @@ export function useCalendarKeyboard(context: CalendarContext, currentPanel: Ref<
       fn: () => {
         const type = currentPanel.value.type;
         const current = context.getFocusedDate();
-        if (type === 'day') {
+        if (type === 'weeks') {
           if (current.day === current.calendar.getDaysInMonth(current)) {
             return current.add({ months: 1 }).set({ day: 1 });
           }
@@ -468,7 +474,7 @@ export function useCalendarKeyboard(context: CalendarContext, currentPanel: Ref<
           return current.set({ day: current.calendar.getDaysInMonth(current) });
         }
 
-        if (type === 'month') {
+        if (type === 'months') {
           if (current.month === current.calendar.getMonthsInYear(current)) {
             return current.add({ years: 1 }).set({ month: 1 });
           }
@@ -508,7 +514,7 @@ export function useCalendarKeyboard(context: CalendarContext, currentPanel: Ref<
       context.setFocusedDate(newDate);
     } else {
       const panelType = currentPanel.value.type;
-      context.setDate(newDate, panelType === 'year' ? 'month' : panelType === 'month' ? 'day' : undefined);
+      context.setDate(newDate, panelType === 'years' ? 'months' : panelType === 'months' ? 'weeks' : undefined);
     }
 
     return true;
