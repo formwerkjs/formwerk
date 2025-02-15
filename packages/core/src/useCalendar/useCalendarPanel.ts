@@ -9,7 +9,7 @@ import { now, toCalendar } from '@internationalized/date';
 export interface CalendarDayPanel {
   type: 'day';
   days: CalendarDayCell[];
-  daysOfTheWeek: string[];
+  weekDays: string[];
 }
 
 export interface CalendarMonthPanel {
@@ -33,7 +33,7 @@ export interface CalendarPanelProps {
 export function useCalendarPanel(_props: Reactivify<CalendarPanelProps>, context: CalendarContext) {
   const props = normalizeProps(_props);
   const panelType = shallowRef<CalendarPanelType>('day');
-  const { days, daysOfTheWeek } = useCalendarDaysPanel(context, props.daysOfWeekFormat);
+  const { days, weekDays } = useCalendarDaysPanel(context, props.daysOfWeekFormat);
   const { months, monthFormatter } = useCalendarMonthsPanel(context, props.monthFormat);
   const { years, yearFormatter } = useCalendarYearsPanel(context, props.yearFormat);
 
@@ -42,7 +42,7 @@ export function useCalendarPanel(_props: Reactivify<CalendarPanelProps>, context
       return {
         type: 'day',
         days: days.value,
-        daysOfTheWeek: daysOfTheWeek.value,
+        weekDays: weekDays.value,
       } as CalendarDayPanel;
     }
 
@@ -128,7 +128,7 @@ function useCalendarDaysPanel(
     });
   });
 
-  const daysOfTheWeek = computed(() => {
+  const weekDays = computed(() => {
     let focused = getFocusedDate();
     const daysPerWeek = 7;
     const firstDayOfWeek = weekInfo.value.firstDay;
@@ -149,7 +149,7 @@ function useCalendarDaysPanel(
     return days;
   });
 
-  return { days, daysOfTheWeek, dayFormatter };
+  return { days, weekDays, dayFormatter };
 }
 
 function useCalendarMonthsPanel(

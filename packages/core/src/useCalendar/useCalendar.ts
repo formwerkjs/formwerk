@@ -260,7 +260,7 @@ export function useCalendar(_props: Reactivify<CalendarProps, 'onDaySelected'> =
     const panelType = currentPanel.value.type;
     const columns =
       panelType === 'day'
-        ? currentPanel.value.daysOfTheWeek.length
+        ? currentPanel.value.weekDays.length
         : panelType === 'month'
           ? MONTHS_COLUMNS_COUNT
           : YEARS_COLUMNS_COUNT;
