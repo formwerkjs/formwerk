@@ -198,6 +198,10 @@ export function useDateTimeSegmentGroup({
     function isNumeric() {
       const type = segment.getType();
       const options = toValue(formatOptions);
+      if (type === 'literal') {
+        return false;
+      }
+
       const optionFormat = options?.[type];
       if (!optionFormat) {
         return isNumericByDefault(type);
