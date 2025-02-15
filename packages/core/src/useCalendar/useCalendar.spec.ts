@@ -9,32 +9,26 @@ describe('useCalendar', () => {
     test('calendar should not have accessibility violations', async () => {
       await render({
         setup() {
-          const {
-            pickerProps,
-            panelGridProps,
-            buttonProps,
-            panelLabelProps,
-            nextPanelButtonProps,
-            previousPanelButtonProps,
-          } = useCalendar();
+          const { pickerProps, gridProps, buttonProps, gridLabelProps, nextButtonProps, previousButtonProps } =
+            useCalendar();
 
           return {
             pickerProps,
-            panelGridProps,
+            gridProps,
             buttonProps,
-            panelLabelProps,
-            nextPanelButtonProps,
-            previousPanelButtonProps,
+            gridLabelProps,
+            nextButtonProps,
+            previousButtonProps,
           };
         },
         template: `
           <div data-testid="fixture">
             <div v-bind="pickerProps">
               <button v-bind="buttonProps">Open Calendar</button>
-              <div v-bind="panelLabelProps">Month Year</div>
-              <button v-bind="previousPanelButtonProps">Previous</button>
-              <button v-bind="nextPanelButtonProps">Next</button>
-              <div v-bind="panelGridProps">
+              <div v-bind="gridLabelProps">Month Year</div>
+              <button v-bind="previousButtonProps">Previous</button>
+              <button v-bind="nextButtonProps">Next</button>
+              <div v-bind="gridProps">
                 <!-- Calendar grid content would go here -->
               </div>
             </div>
@@ -103,20 +97,20 @@ describe('useCalendar', () => {
     test('closes calendar when Tab is pressed', async () => {
       await render({
         setup() {
-          const { pickerProps, isOpen, buttonProps, panelGridProps } = useCalendar();
+          const { pickerProps, isOpen, buttonProps, gridProps } = useCalendar();
 
           return {
             pickerProps,
             isOpen,
             buttonProps,
-            panelGridProps,
+            gridProps,
           };
         },
         template: `
           <div data-testid="fixture">
             <button v-bind="buttonProps">Open Calendar</button>
             <div v-if="isOpen" v-bind="pickerProps">
-              <span v-bind="panelGridProps" tabindex="0">Calendar Content</span>
+              <span v-bind="gridProps" tabindex="0">Calendar Content</span>
             </div>
           </div>
         `,
@@ -245,7 +239,7 @@ describe('useCalendar', () => {
 
       await render({
         setup() {
-          const { pickerProps, buttonProps, isOpen, focusedDate, panelLabelProps, currentPanel } = useCalendar({
+          const { pickerProps, buttonProps, isOpen, focusedDate, gridLabelProps, currentPanel } = useCalendar({
             onDaySelected,
             currentDate,
           });
@@ -255,14 +249,14 @@ describe('useCalendar', () => {
             buttonProps,
             isOpen,
             focusedDate,
-            panelLabelProps,
+            gridLabelProps,
             currentPanel,
           };
         },
         template: `
           <div data-testid="fixture">
             <button v-bind="buttonProps">Open Calendar</button>
-            <div v-bind="panelLabelProps" data-testid="panel-label">{{ currentPanel.type }}</div>
+            <div v-bind="gridLabelProps" data-testid="panel-label">{{ currentPanel.type }}</div>
             <div v-if="isOpen" v-bind="pickerProps" data-testid="calendar">
               <div>{{ focusedDate?.toString() }}</div>
             </div>
@@ -283,13 +277,13 @@ describe('useCalendar', () => {
       // Switch to month panel
       await fireEvent.click(panelLabel);
       await fireEvent.keyDown(calendar, { code: 'Enter' });
-      expect(screen.getByTestId('panel-label')).toHaveTextContent('day'); // Should switch back to day panel
+      expect(screen.getByTestId('panel-label')).toHaveTextContent('weeks'); // Should switch back to day panel
 
       // Switch to year panel
       await fireEvent.click(panelLabel);
       await fireEvent.click(panelLabel);
       await fireEvent.keyDown(calendar, { code: 'Enter' });
-      expect(screen.getByTestId('panel-label')).toHaveTextContent('month'); // Should switch back to month panel
+      expect(screen.getByTestId('panel-label')).toHaveTextContent('months'); // Should switch back to month panel
     });
   });
 
@@ -297,29 +291,29 @@ describe('useCalendar', () => {
     test('switches between day, month, and year panels', async () => {
       await render({
         setup() {
-          const { panelLabelProps, currentPanel } = useCalendar();
+          const { gridLabelProps, currentPanel } = useCalendar();
 
           return {
-            panelLabelProps,
+            gridLabelProps,
             currentPanel,
           };
         },
         template: `
           <div data-testid="fixture">
-            <div v-bind="panelLabelProps" data-testid="panel-label">{{ currentPanel.type }}</div>
+            <div v-bind="gridLabelProps" data-testid="panel-label">{{ currentPanel.type }}</div>
           </div>
         `,
       });
 
       await flush();
       const panelLabel = screen.getByTestId('panel-label');
-      expect(panelLabel).toHaveTextContent('day');
+      expect(panelLabel).toHaveTextContent('weeks');
 
       await fireEvent.click(panelLabel);
-      expect(panelLabel).toHaveTextContent('month');
+      expect(panelLabel).toHaveTextContent('months');
 
       await fireEvent.click(panelLabel);
-      expect(panelLabel).toHaveTextContent('year');
+      expect(panelLabel).toHaveTextContent('years');
     });
 
     test('navigates to next/previous panels', async () => {
@@ -327,27 +321,27 @@ describe('useCalendar', () => {
 
       await render({
         setup() {
-          const { nextPanelButtonProps, previousPanelButtonProps, currentPanel } = useCalendar({
+          const { nextButtonProps, previousButtonProps, currentPanel } = useCalendar({
             onDaySelected,
           });
 
           return {
-            nextPanelButtonProps,
-            previousPanelButtonProps,
+            nextButtonProps,
+            previousButtonProps,
             currentPanel,
           };
         },
         template: `
           <div data-testid="fixture">
-            <button v-bind="previousPanelButtonProps">Previous</button>
+            <button v-bind="previousButtonProps">Previous</button>
             <div data-testid="panel-type">{{ currentPanel.type }}</div>
-            <button v-bind="nextPanelButtonProps">Next</button>
+            <button v-bind="nextButtonProps">Next</button>
           </div>
         `,
       });
 
       await flush();
-      expect(screen.getByTestId('panel-type')).toHaveTextContent('day');
+      expect(screen.getByTestId('panel-type')).toHaveTextContent('weeks');
 
       // Test navigation buttons
       await fireEvent.click(screen.getByText('Next'));
@@ -360,9 +354,9 @@ describe('useCalendar', () => {
       await render({
         setup() {
           const {
-            nextPanelButtonProps,
-            previousPanelButtonProps,
-            panelLabelProps,
+            nextButtonProps,
+            previousButtonProps,
+            gridLabelProps,
             focusedDate,
             pickerProps,
             isOpen,
@@ -372,9 +366,9 @@ describe('useCalendar', () => {
           });
 
           return {
-            nextPanelButtonProps,
-            previousPanelButtonProps,
-            panelLabelProps,
+            nextButtonProps,
+            previousButtonProps,
+            gridLabelProps,
             focusedDate,
             pickerProps,
             isOpen,
@@ -385,9 +379,9 @@ describe('useCalendar', () => {
           <div data-testid="fixture">
             <button v-bind="buttonProps">Open Calendar</button>
             <div v-if="isOpen" v-bind="pickerProps">
-              <div v-bind="panelLabelProps" data-testid="panel-label">Month Panel</div>
-              <button v-bind="previousPanelButtonProps">Previous</button>
-              <button v-bind="nextPanelButtonProps">Next</button>
+              <div v-bind="gridLabelProps" data-testid="panel-label">Month Panel</div>
+              <button v-bind="previousButtonProps">Previous</button>
+              <button v-bind="nextButtonProps">Next</button>
               <div>{{ focusedDate?.toString() }}</div>
             </div>
           </div>
@@ -424,9 +418,9 @@ describe('useCalendar', () => {
       await render({
         setup() {
           const {
-            nextPanelButtonProps,
-            previousPanelButtonProps,
-            panelLabelProps,
+            nextButtonProps,
+            previousButtonProps,
+            gridLabelProps,
             focusedDate,
             pickerProps,
             isOpen,
@@ -436,9 +430,9 @@ describe('useCalendar', () => {
           });
 
           return {
-            nextPanelButtonProps,
-            previousPanelButtonProps,
-            panelLabelProps,
+            nextButtonProps,
+            previousButtonProps,
+            gridLabelProps,
             focusedDate,
             pickerProps,
             isOpen,
@@ -449,9 +443,9 @@ describe('useCalendar', () => {
           <div data-testid="fixture">
             <button v-bind="buttonProps">Open Calendar</button>
             <div v-if="isOpen" v-bind="pickerProps">
-              <div v-bind="panelLabelProps" data-testid="panel-label">Year Panel</div>
-              <button v-bind="previousPanelButtonProps">Previous</button>
-              <button v-bind="nextPanelButtonProps">Next</button>
+              <div v-bind="gridLabelProps" data-testid="panel-label">Year Panel</div>
+              <button v-bind="previousButtonProps">Previous</button>
+              <button v-bind="nextButtonProps">Next</button>
               <div>{{ focusedDate?.toString() }}</div>
             </div>
           </div>
@@ -560,7 +554,7 @@ describe('useCalendar', () => {
 
       await render({
         setup() {
-          const { pickerProps, isOpen, buttonProps, selectedDate, focusedDate, panelLabelProps } = useCalendar({
+          const { pickerProps, isOpen, buttonProps, selectedDate, focusedDate, gridLabelProps } = useCalendar({
             currentDate,
           });
 
@@ -570,14 +564,14 @@ describe('useCalendar', () => {
             buttonProps,
             selectedDate,
             focusedDate,
-            panelLabelProps,
+            gridLabelProps,
           };
         },
         template: `
           <div data-testid="fixture">
             <button v-bind="buttonProps">Open Calendar</button>
             <div v-if="isOpen" v-bind="pickerProps" data-testid="calendar">
-              <div v-bind="panelLabelProps" data-testid="panel-label">Month Panel</div>
+              <div v-bind="gridLabelProps" data-testid="panel-label">Month Panel</div>
               <div>{{ focusedDate?.toString() }}</div>
             </div>
           </div>
@@ -632,7 +626,7 @@ describe('useCalendar', () => {
 
       await render({
         setup() {
-          const { pickerProps, isOpen, buttonProps, selectedDate, focusedDate, panelLabelProps } = useCalendar({
+          const { pickerProps, isOpen, buttonProps, selectedDate, focusedDate, gridLabelProps } = useCalendar({
             currentDate,
           });
 
@@ -642,14 +636,14 @@ describe('useCalendar', () => {
             buttonProps,
             selectedDate,
             focusedDate,
-            panelLabelProps,
+            gridLabelProps,
           };
         },
         template: `
           <div data-testid="fixture">
             <button v-bind="buttonProps">Open Calendar</button>
             <div v-if="isOpen" v-bind="pickerProps" data-testid="calendar">
-              <div v-bind="panelLabelProps" data-testid="panel-label">Year Panel</div>
+              <div v-bind="gridLabelProps" data-testid="panel-label">Year Panel</div>
               <div>{{ focusedDate?.toString() }}</div>
             </div>
           </div>
@@ -801,7 +795,7 @@ describe('useCalendar', () => {
 
       await render({
         setup() {
-          const { pickerProps, isOpen, buttonProps, focusedDate, panelLabelProps } = useCalendar({
+          const { pickerProps, isOpen, buttonProps, focusedDate, gridLabelProps } = useCalendar({
             currentDate,
           });
 
@@ -810,14 +804,14 @@ describe('useCalendar', () => {
             isOpen,
             buttonProps,
             focusedDate,
-            panelLabelProps,
+            gridLabelProps,
           };
         },
         template: `
           <div data-testid="fixture">
             <button v-bind="buttonProps">Open Calendar</button>
             <div v-if="isOpen" v-bind="pickerProps" data-testid="calendar">
-              <div v-bind="panelLabelProps" data-testid="panel-label">Month Panel</div>
+              <div v-bind="gridLabelProps" data-testid="panel-label">Month Panel</div>
               <div>{{ focusedDate?.toString() }}</div>
             </div>
           </div>
@@ -846,7 +840,7 @@ describe('useCalendar', () => {
 
       await render({
         setup() {
-          const { pickerProps, isOpen, buttonProps, focusedDate, panelLabelProps } = useCalendar({
+          const { pickerProps, isOpen, buttonProps, focusedDate, gridLabelProps } = useCalendar({
             currentDate,
           });
 
@@ -855,14 +849,14 @@ describe('useCalendar', () => {
             isOpen,
             buttonProps,
             focusedDate,
-            panelLabelProps,
+            gridLabelProps,
           };
         },
         template: `
           <div data-testid="fixture">
             <button v-bind="buttonProps">Open Calendar</button>
             <div v-if="isOpen" v-bind="pickerProps" data-testid="calendar">
-              <div v-bind="panelLabelProps" data-testid="panel-label">Month Panel</div>
+              <div v-bind="gridLabelProps" data-testid="panel-label">Month Panel</div>
               <div>{{ focusedDate?.toString() }}</div>
             </div>
           </div>
