@@ -10,7 +10,7 @@ describe('useCalendar', () => {
       await render({
         setup() {
           const { pickerProps, gridProps, buttonProps, gridLabelProps, nextButtonProps, previousButtonProps } =
-            useCalendar();
+            useCalendar({ label: 'Calendar' });
 
           return {
             pickerProps,
@@ -47,7 +47,7 @@ describe('useCalendar', () => {
     test('opens calendar when button is clicked', async () => {
       await render({
         setup() {
-          const { buttonProps, isOpen } = useCalendar();
+          const { buttonProps, isOpen } = useCalendar({ label: 'Calendar' });
 
           return {
             buttonProps,
@@ -71,7 +71,7 @@ describe('useCalendar', () => {
     test('closes calendar when Escape is pressed', async () => {
       await render({
         setup() {
-          const { pickerProps, isOpen, buttonProps } = useCalendar();
+          const { pickerProps, isOpen, buttonProps } = useCalendar({ label: 'Calendar' });
 
           return {
             pickerProps,
@@ -97,7 +97,7 @@ describe('useCalendar', () => {
     test('closes calendar when Tab is pressed', async () => {
       await render({
         setup() {
-          const { pickerProps, isOpen, buttonProps, gridProps } = useCalendar();
+          const { pickerProps, isOpen, buttonProps, gridProps } = useCalendar({ label: 'Calendar' });
 
           return {
             pickerProps,
@@ -125,8 +125,8 @@ describe('useCalendar', () => {
   });
 
   describe('date selection', () => {
-    test('calls onDaySelected when a date is selected', async () => {
-      const onDaySelected = vi.fn();
+    test('calls onUpdateModelValue when a date is selected', async () => {
+      const onUpdateModelValue = vi.fn();
       const currentDate = now('UTC');
 
       await render({
@@ -135,8 +135,9 @@ describe('useCalendar', () => {
         },
         setup() {
           const { pickerProps, buttonProps } = useCalendar({
-            onDaySelected,
-            currentDate,
+            label: 'Calendar',
+            onUpdateModelValue,
+            modelValue: currentDate,
           });
 
           return {
@@ -158,7 +159,7 @@ describe('useCalendar', () => {
       await flush();
       await fireEvent.click(screen.getByText('Select Date'));
       await flush();
-      expect(onDaySelected).toHaveBeenCalledWith(currentDate);
+      expect(onUpdateModelValue).toHaveBeenCalledWith(currentDate);
     });
 
     test('uses provided calendar type', async () => {
@@ -167,6 +168,7 @@ describe('useCalendar', () => {
       await render({
         setup() {
           const { selectedDate } = useCalendar({
+            label: 'Calendar',
             calendar,
           });
 
@@ -186,7 +188,7 @@ describe('useCalendar', () => {
     });
 
     test('handles Enter key on calendar cell', async () => {
-      const onDaySelected = vi.fn();
+      const onUpdateModelValue = vi.fn();
       const currentDate = now('UTC');
 
       await render({
@@ -195,8 +197,9 @@ describe('useCalendar', () => {
         },
         setup() {
           const { pickerProps, buttonProps, isOpen, focusedDate } = useCalendar({
-            onDaySelected,
-            currentDate,
+            label: 'Calendar',
+            onUpdateModelValue,
+            modelValue: currentDate,
           });
 
           return {
@@ -229,19 +232,20 @@ describe('useCalendar', () => {
 
       // Test Enter key selects the date
       await fireEvent.keyDown(cell, { code: 'Enter' });
-      expect(onDaySelected).toHaveBeenCalledWith(currentDate);
+      expect(onUpdateModelValue).toHaveBeenCalledWith(currentDate);
       expect(screen.queryByText(currentDate.toString())).not.toBeInTheDocument(); // Calendar should close after selection
     });
 
     test('handles Enter key in different panels', async () => {
-      const onDaySelected = vi.fn();
+      const onUpdateModelValue = vi.fn();
       const currentDate = now('UTC');
 
       await render({
         setup() {
           const { pickerProps, buttonProps, isOpen, focusedDate, gridLabelProps, currentPanel } = useCalendar({
-            onDaySelected,
-            currentDate,
+            label: 'Calendar',
+            onUpdateModelValue,
+            modelValue: currentDate,
           });
 
           return {
@@ -272,7 +276,7 @@ describe('useCalendar', () => {
 
       // Test Enter in day panel
       await fireEvent.keyDown(calendar, { code: 'Enter' });
-      expect(onDaySelected).toHaveBeenCalledWith(currentDate);
+      expect(onUpdateModelValue).toHaveBeenCalledWith(currentDate);
 
       // Switch to month panel
       await fireEvent.click(panelLabel);
@@ -291,7 +295,7 @@ describe('useCalendar', () => {
     test('switches between day, month, and year panels', async () => {
       await render({
         setup() {
-          const { gridLabelProps, currentPanel } = useCalendar();
+          const { gridLabelProps, currentPanel } = useCalendar({ label: 'Calendar' });
 
           return {
             gridLabelProps,
@@ -317,12 +321,13 @@ describe('useCalendar', () => {
     });
 
     test('navigates to next/previous panels', async () => {
-      const onDaySelected = vi.fn();
+      const onUpdateModelValue = vi.fn();
 
       await render({
         setup() {
           const { nextButtonProps, previousButtonProps, currentPanel } = useCalendar({
-            onDaySelected,
+            label: 'Calendar',
+            onUpdateModelValue,
           });
 
           return {
@@ -362,7 +367,8 @@ describe('useCalendar', () => {
             isOpen,
             buttonProps,
           } = useCalendar({
-            currentDate,
+            label: 'Calendar',
+            modelValue: currentDate,
           });
 
           return {
@@ -426,7 +432,8 @@ describe('useCalendar', () => {
             isOpen,
             buttonProps,
           } = useCalendar({
-            currentDate,
+            label: 'Calendar',
+            modelValue: currentDate,
           });
 
           return {
@@ -489,7 +496,8 @@ describe('useCalendar', () => {
       await render({
         setup() {
           const { pickerProps, isOpen, buttonProps, selectedDate, focusedDate } = useCalendar({
-            currentDate,
+            label: 'Calendar',
+            modelValue: currentDate,
           });
 
           return {
@@ -555,7 +563,8 @@ describe('useCalendar', () => {
       await render({
         setup() {
           const { pickerProps, isOpen, buttonProps, selectedDate, focusedDate, gridLabelProps } = useCalendar({
-            currentDate,
+            label: 'Calendar',
+            modelValue: currentDate,
           });
 
           return {
@@ -627,7 +636,8 @@ describe('useCalendar', () => {
       await render({
         setup() {
           const { pickerProps, isOpen, buttonProps, selectedDate, focusedDate, gridLabelProps } = useCalendar({
-            currentDate,
+            label: 'Calendar',
+            modelValue: currentDate,
           });
 
           return {
@@ -700,7 +710,8 @@ describe('useCalendar', () => {
       await render({
         setup() {
           const { pickerProps, isOpen, buttonProps, selectedDate, focusedDate } = useCalendar({
-            currentDate,
+            label: 'Calendar',
+            modelValue: currentDate,
             minDate,
             maxDate,
           });
@@ -743,7 +754,8 @@ describe('useCalendar', () => {
       await render({
         setup() {
           const { pickerProps, isOpen, buttonProps, focusedDate } = useCalendar({
-            currentDate,
+            label: 'Calendar',
+            modelValue: currentDate,
           });
 
           return {
@@ -796,7 +808,8 @@ describe('useCalendar', () => {
       await render({
         setup() {
           const { pickerProps, isOpen, buttonProps, focusedDate, gridLabelProps } = useCalendar({
-            currentDate,
+            label: 'Calendar',
+            modelValue: currentDate,
           });
 
           return {
@@ -841,7 +854,8 @@ describe('useCalendar', () => {
       await render({
         setup() {
           const { pickerProps, isOpen, buttonProps, focusedDate, gridLabelProps } = useCalendar({
-            currentDate,
+            label: 'Calendar',
+            modelValue: currentDate,
           });
 
           return {

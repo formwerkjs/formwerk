@@ -14,6 +14,16 @@ import { Calendar, ZonedDateTime, now, toCalendar } from '@internationalized/dat
 
 export interface CalendarProps {
   /**
+   * The field name of the calendar.
+   */
+  name?: string;
+
+  /**
+   * The label for the calendar.
+   */
+  label: string;
+
+  /**
    * The locale to use for the calendar.
    */
   locale?: string;
@@ -21,12 +31,12 @@ export interface CalendarProps {
   /**
    * The current date to use for the calendar.
    */
-  currentDate?: ZonedDateTime;
+  modelValue?: ZonedDateTime;
 
   /**
-   * The callback to call when a day is selected.
+   * The initial value to use for the calendar.
    */
-  onDaySelected?: (day: ZonedDateTime) => void;
+  value?: ZonedDateTime;
 
   /**
    * The calendar type to use for the calendar, e.g. `gregory`, `islamic-umalqura`, etc.
@@ -77,10 +87,15 @@ export interface CalendarProps {
    * The available panels to switch to and from in the calendar.
    */
   allowedPanels?: CalendarPanelType[];
+
+  /**
+   * The callback to call when the calendar value is updated.
+   */
+  onUpdateModelValue?: (value: ZonedDateTime) => void;
 }
 
-export function useCalendar(_props: Reactivify<CalendarProps, 'onDaySelected'> = {}) {
-  const props = normalizeProps(_props, ['onDaySelected']);
+export function useCalendar(_props: Reactivify<CalendarProps, 'onUpdateModelValue'>) {
+  const props = normalizeProps(_props, ['onUpdateModelValue']);
   const calendarId = useUniqId(FieldTypePrefixes.Calendar);
   const gridId = `${calendarId}-g`;
   const pickerEl = ref<HTMLElement>();
@@ -90,7 +105,7 @@ export function useCalendar(_props: Reactivify<CalendarProps, 'onDaySelected'> =
     calendar: () => toValue(props.calendar),
   });
 
-  const selectedDate = computed(() => toValue(props.currentDate) ?? toCalendar(now(toValue(timeZone)), calendar.value));
+  const selectedDate = computed(() => toValue(props.modelValue) ?? toCalendar(now(toValue(timeZone)), calendar.value));
   const focusedDay = shallowRef<ZonedDateTime>();
   const { isOpen } = usePopoverController(pickerEl, { disabled: props.disabled });
 
@@ -110,7 +125,7 @@ export function useCalendar(_props: Reactivify<CalendarProps, 'onDaySelected'> =
     getSelectedDate: () => selectedDate.value,
     getFocusedDate: getFocusedOrSelected,
     setDate: (date: ZonedDateTime, panel?: CalendarPanelType) => {
-      props.onDaySelected?.(date);
+      props.onUpdateModelValue?.(date);
       if (panel) {
         switchPanel(panel);
       } else if (currentPanel.value.type === 'weeks') {
