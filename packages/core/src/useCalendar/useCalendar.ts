@@ -198,6 +198,7 @@ export function useCalendar(_props: Reactivify<CalendarProps, 'field' | 'schema'
 
   function setDate(date: ZonedDateTime, view?: CalendarViewType) {
     temporalValue.value = date;
+    focusedDay.value = date;
     if (view) {
       setView(view);
     } else if (currentView.value.type === 'weeks') {
