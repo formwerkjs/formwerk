@@ -639,4 +639,164 @@ describe('useCalendar', () => {
       expect(screen.getByText(maxDate.toString())).toBeInTheDocument();
     });
   });
+
+  describe('disabled state', () => {
+    test('prevents all interactions when disabled', async () => {
+      const currentDate = now('UTC');
+
+      await render({
+        components: {
+          CalendarCell,
+        },
+        setup() {
+          const { calendarProps, gridLabelProps, nextButtonProps, previousButtonProps, focusedDate, currentView } =
+            useCalendar({
+              label: 'Calendar',
+              modelValue: currentDate.toDate(),
+              timeZone: 'UTC',
+              disabled: true,
+            });
+
+          return {
+            calendarProps,
+            gridLabelProps,
+            nextButtonProps,
+            previousButtonProps,
+            focusedDate,
+            currentView,
+            currentDate,
+          };
+        },
+        template: `
+          <div data-testid="fixture">
+            <div v-bind="calendarProps" data-testid="calendar">
+              <div v-bind="gridLabelProps" data-testid="panel-label">{{ currentView.type }}</div>
+              <button v-bind="previousButtonProps">Previous</button>
+              <button v-bind="nextButtonProps">Next</button>
+              <CalendarCell
+                label="Select Date"
+                type="day"
+                :value="currentDate"
+                data-testid="calendar-cell"
+              />
+              <div>{{ focusedDate?.toString() }}</div>
+            </div>
+          </div>
+        `,
+      });
+
+      await flush();
+
+      // Verify navigation buttons are disabled
+      expect(screen.getByText('Previous')).toBeDisabled();
+      expect(screen.getByText('Next')).toBeDisabled();
+
+      // Try to click navigation buttons
+      await fireEvent.click(screen.getByText('Previous'));
+      await fireEvent.click(screen.getByText('Next'));
+      expect(screen.getByText(currentDate.toString())).toBeInTheDocument();
+
+      // Try to change panel view
+      await fireEvent.click(screen.getByTestId('panel-label'));
+      expect(screen.getByTestId('panel-label')).toHaveTextContent('weeks');
+
+      // Try keyboard navigation
+      const calendar = screen.getByTestId('calendar');
+      await fireEvent.keyDown(calendar, { code: 'ArrowRight' });
+      await fireEvent.keyDown(calendar, { code: 'ArrowLeft' });
+      await fireEvent.keyDown(calendar, { code: 'ArrowUp' });
+      await fireEvent.keyDown(calendar, { code: 'ArrowDown' });
+      await fireEvent.keyDown(calendar, { code: 'PageUp' });
+      await fireEvent.keyDown(calendar, { code: 'PageDown' });
+      await fireEvent.keyDown(calendar, { code: 'Home' });
+      await fireEvent.keyDown(calendar, { code: 'End' });
+      expect(screen.getByText(currentDate.toString())).toBeInTheDocument();
+
+      // Try to select a date
+      const cell = screen.getByTestId('calendar-cell');
+      await fireEvent.click(cell);
+      await fireEvent.keyDown(cell, { code: 'Enter' });
+      expect(screen.getByText(currentDate.toString())).toBeInTheDocument();
+    });
+  });
+
+  describe('readonly state', () => {
+    test('prevents all interactions when readonly', async () => {
+      const currentDate = now('UTC');
+
+      await render({
+        components: {
+          CalendarCell,
+        },
+        setup() {
+          const { calendarProps, gridLabelProps, nextButtonProps, previousButtonProps, focusedDate, currentView } =
+            useCalendar({
+              label: 'Calendar',
+              modelValue: currentDate.toDate(),
+              timeZone: 'UTC',
+              readonly: true,
+            });
+
+          return {
+            calendarProps,
+            gridLabelProps,
+            nextButtonProps,
+            previousButtonProps,
+            focusedDate,
+            currentView,
+            currentDate,
+          };
+        },
+        template: `
+          <div data-testid="fixture">
+            <div v-bind="calendarProps" data-testid="calendar">
+              <div v-bind="gridLabelProps" data-testid="panel-label">{{ currentView.type }}</div>
+              <button v-bind="previousButtonProps">Previous</button>
+              <button v-bind="nextButtonProps">Next</button>
+              <CalendarCell
+                label="Select Date"
+                type="day"
+                :value="currentDate"
+                data-testid="calendar-cell"
+              />
+              <div>{{ focusedDate?.toString() }}</div>
+            </div>
+          </div>
+        `,
+      });
+
+      await flush();
+
+      // Verify navigation buttons are disabled
+      expect(screen.getByText('Previous')).toBeDisabled();
+      expect(screen.getByText('Next')).toBeDisabled();
+
+      // Try to click navigation buttons
+      await fireEvent.click(screen.getByText('Previous'));
+      await fireEvent.click(screen.getByText('Next'));
+      expect(screen.getByText(currentDate.toString())).toBeInTheDocument();
+
+      // Try to change panel view
+      await fireEvent.click(screen.getByTestId('panel-label'));
+      expect(screen.getByTestId('panel-label')).toHaveTextContent('weeks');
+
+      // Try keyboard navigation
+      const calendar = screen.getByTestId('calendar');
+      await fireEvent.keyDown(calendar, { code: 'ArrowRight' });
+      await fireEvent.keyDown(calendar, { code: 'ArrowLeft' });
+      await fireEvent.keyDown(calendar, { code: 'ArrowUp' });
+      await fireEvent.keyDown(calendar, { code: 'ArrowDown' });
+      await fireEvent.keyDown(calendar, { code: 'PageUp' });
+      await fireEvent.keyDown(calendar, { code: 'PageDown' });
+      await fireEvent.keyDown(calendar, { code: 'Home' });
+      await fireEvent.keyDown(calendar, { code: 'End' });
+      expect(screen.getByText(currentDate.toString())).toBeInTheDocument();
+
+      // Try to select a date
+      const cell = screen.getByTestId('calendar-cell');
+      await fireEvent.click(cell);
+      await fireEvent.keyDown(cell, { code: 'Enter' });
+      expect(screen.getByText(currentDate.toString())).toBeInTheDocument();
+    });
+  });
 });
