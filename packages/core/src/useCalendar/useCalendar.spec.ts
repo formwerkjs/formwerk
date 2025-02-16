@@ -712,8 +712,8 @@ describe('useCalendar', () => {
             label: 'Calendar',
             modelValue: currentDate.toDate(),
             timeZone: 'UTC',
-            minDate,
-            maxDate,
+            min: minDate.toDate(),
+            max: maxDate.toDate(),
           });
 
           return {

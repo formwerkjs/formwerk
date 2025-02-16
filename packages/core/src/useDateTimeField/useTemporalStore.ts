@@ -18,39 +18,17 @@ interface TemporalValueStoreInit {
 
 export function useTemporalStore(init: TemporalValueStoreInit) {
   const model = init.model;
-  const temporalVal = shallowRef<ZonedDateTime | TemporalPartial>(fromDateToCalendarZonedDateTime(model.get()));
-
-  function fromDateToCalendarZonedDateTime(date: Maybe<Date>): ZonedDateTime {
-    const zonedDt = toZonedDateTime(date);
-    if (!zonedDt) {
-      return createTemporalPartial(toValue(init.calendar), toValue(init.timeZone));
-    }
-
-    const calendar = toValue(init.calendar);
-    const timeZone = toValue(init.timeZone);
-
-    return toCalendar(toTimeZone(zonedDt, timeZone), calendar);
-  }
+  const temporalVal = shallowRef<ZonedDateTime | TemporalPartial>(
+    fromDateToCalendarZonedDateTime(model.get(), toValue(init.calendar), toValue(init.timeZone)),
+  );
 
   watch(model.get, value => {
     if (!value && isTemporalPartial(temporalVal.value)) {
       return;
     }
 
-    temporalVal.value = fromDateToCalendarZonedDateTime(value);
+    temporalVal.value = fromDateToCalendarZonedDateTime(value, toValue(init.calendar), toValue(init.timeZone));
   });
-
-  function toZonedDateTime(value: Maybe<DateValue>): Maybe<ZonedDateTime> {
-    if (isNullOrUndefined(value)) {
-      return value;
-    }
-
-    if (value instanceof Date) {
-      value = fromDate(value, toValue(init.timeZone));
-    }
-
-    return value;
-  }
 
   function toDate(value: Maybe<DateValue>): Maybe<Date> {
     if (isNullOrUndefined(value)) {
@@ -61,7 +39,7 @@ export function useTemporalStore(init: TemporalValueStoreInit) {
       return value;
     }
 
-    const zonedDateTime = toZonedDateTime(value);
+    const zonedDateTime = toZonedDateTime(value, toValue(init.timeZone));
     if (!zonedDateTime) {
       return zonedDateTime;
     }
@@ -78,4 +56,29 @@ export function useTemporalStore(init: TemporalValueStoreInit) {
   });
 
   return temporalValue;
+}
+
+export function fromDateToCalendarZonedDateTime(
+  date: Maybe<Date>,
+  calendar: Calendar,
+  timeZone: string,
+): ZonedDateTime {
+  const zonedDt = toZonedDateTime(date, timeZone);
+  if (!zonedDt) {
+    return createTemporalPartial(calendar, timeZone);
+  }
+
+  return toCalendar(toTimeZone(zonedDt, timeZone), calendar);
+}
+
+export function toZonedDateTime(value: Maybe<DateValue>, timeZone: string): Maybe<ZonedDateTime> {
+  if (isNullOrUndefined(value)) {
+    return value;
+  }
+
+  if (value instanceof Date) {
+    value = fromDate(value, timeZone);
+  }
+
+  return value;
 }

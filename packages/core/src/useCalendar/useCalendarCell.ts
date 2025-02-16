@@ -1,7 +1,7 @@
 import { Reactivify } from '../types';
 import { normalizeProps, withRefCapture } from '../utils/common';
 import { computed, defineComponent, h, inject, shallowRef, toValue } from 'vue';
-import { CalendarCellProps, CalendarPanelType } from './types';
+import { CalendarCellProps, CalendarViewType } from './types';
 import { CalendarContextKey } from './constants';
 
 export function useCalendarCell(_props: Reactivify<CalendarCellProps>) {
@@ -15,8 +15,7 @@ export function useCalendarCell(_props: Reactivify<CalendarCellProps>) {
     }
 
     const type = toValue(props.type);
-    const nextPanel: CalendarPanelType | undefined =
-      type === 'month' ? 'weeks' : type === 'year' ? 'months' : undefined;
+    const nextPanel: CalendarViewType | undefined = type === 'month' ? 'weeks' : type === 'year' ? 'months' : undefined;
     calendarCtx?.setDate(toValue(props.value), nextPanel);
   }
 

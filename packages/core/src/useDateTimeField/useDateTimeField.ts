@@ -9,7 +9,6 @@ import { useDateFormatter, useLocale } from '../i18n';
 import { useErrorMessage, useLabel } from '../a11y';
 import { useTemporalStore } from './useTemporalStore';
 import { ZonedDateTime, Calendar } from '@internationalized/date';
-import { isTemporalPartial } from './temporalPartial';
 import { useInputValidity } from '../validation';
 
 export interface DateTimeFieldProps {
@@ -109,24 +108,6 @@ export function useDateTimeField(_props: Reactivify<DateTimeFieldProps, 'schema'
 
   useInputValidity({ field });
 
-  const minDate = useTemporalStore({
-    calendar: calendar,
-    timeZone: timeZone,
-    locale: locale,
-    model: {
-      get: () => toValue(props.min),
-    },
-  });
-
-  const maxDate = useTemporalStore({
-    calendar: calendar,
-    timeZone: timeZone,
-    locale: locale,
-    model: {
-      get: () => toValue(props.max),
-    },
-  });
-
   const temporalValue = useTemporalStore({
     calendar: calendar,
     timeZone: timeZone,
@@ -167,15 +148,19 @@ export function useDateTimeField(_props: Reactivify<DateTimeFieldProps, 'schema'
     errorMessage: field.errorMessage,
   });
 
-  const calendarProps: Reactivify<CalendarProps, 'field' | 'schema'> = {
-    label: props.label,
-    locale: () => locale.value,
-    name: undefined,
-    calendar: calendar,
-    minDate: () => (isTemporalPartial(minDate.value) ? undefined : minDate.value),
-    maxDate: () => (isTemporalPartial(maxDate.value) ? undefined : maxDate.value),
-    field,
-  };
+  const calendarProps = computed(() => {
+    const propsObj: CalendarProps = {
+      label: toValue(props.label),
+      locale: locale.value,
+      name: undefined,
+      calendar: calendar.value,
+      min: toValue(props.min),
+      max: toValue(props.max),
+      field,
+    };
+
+    return propsObj;
+  });
 
   const controlProps = computed(() => {
     return withRefCapture(

@@ -14,7 +14,8 @@ import { Calendar, ZonedDateTime, now, toCalendar } from '@internationalized/dat
 import { createDisabledContext } from '../helpers/createDisabledContext';
 import { exposeField, FormField, useFormField } from '../useFormField';
 import { useInputValidity } from '../validation';
-import { useTemporalStore } from '../useDateTimeField/useTemporalStore';
+import { fromDateToCalendarZonedDateTime, useTemporalStore } from '../useDateTimeField/useTemporalStore';
+import { isTemporalPartial } from '../useDateTimeField/temporalPartial';
 
 export interface CalendarProps {
   /**
@@ -75,12 +76,12 @@ export interface CalendarProps {
   /**
    * The minimum date to use for the calendar.
    */
-  minDate?: Maybe<ZonedDateTime>;
+  min?: Maybe<Date>;
 
   /**
    * The maximum date to use for the calendar.
    */
-  maxDate?: Maybe<ZonedDateTime>;
+  max?: Maybe<Date>;
 
   /**
    * The format option for the days of the week.
@@ -161,6 +162,9 @@ export function useCalendar(_props: Reactivify<CalendarProps, 'field' | 'schema'
     return selectedDate.value;
   }
 
+  const min = computed(() => fromDateToCalendarZonedDateTime(toValue(props.min), calendar.value, timeZone.value));
+  const max = computed(() => fromDateToCalendarZonedDateTime(toValue(props.max), calendar.value, timeZone.value));
+
   const context: CalendarContext = {
     weekInfo,
     locale,
@@ -174,8 +178,8 @@ export function useCalendar(_props: Reactivify<CalendarProps, 'field' | 'schema'
       await nextTick();
       focusCurrent();
     },
-    getMinDate: () => toValue(props.minDate),
-    getMaxDate: () => toValue(props.maxDate),
+    getMinDate: () => (isTemporalPartial(min.value) ? undefined : min.value),
+    getMaxDate: () => (isTemporalPartial(max.value) ? undefined : max.value),
   };
 
   provide(CalendarContextKey, context);

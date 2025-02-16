@@ -387,8 +387,8 @@ describe('useDateTimeField', () => {
 
           const { segments, controlProps, labelProps } = props;
 
-          expect(toValue(props.calendarProps.minDate)).toEqual(minDate);
-          expect(toValue(props.calendarProps.maxDate)).toEqual(maxDate);
+          expect(toValue(props.calendarProps.value.min)).toEqual(minDate.toDate());
+          expect(toValue(props.calendarProps.value.max)).toEqual(maxDate.toDate());
 
           return {
             segments,
