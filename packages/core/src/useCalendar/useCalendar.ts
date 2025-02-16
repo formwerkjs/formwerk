@@ -237,7 +237,7 @@ export function useCalendar(_props: Reactivify<CalendarProps, 'field' | 'schema'
   watch(
     () => pickerContext?.isOpen(),
     async value => {
-      if (!value) {
+      if (pickerContext && !value) {
         focusedDay.value = undefined;
         setView('weeks');
         return;

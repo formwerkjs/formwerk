@@ -35,7 +35,7 @@ export function usePicker(_props: Reactivify<PickerProps>) {
     return withRefCapture(
       {
         role: 'dialog',
-        'aria-modal': 'true',
+        'aria-modal': 'true' as const,
         'aria-label': toValue(props.label),
       },
       pickerEl,

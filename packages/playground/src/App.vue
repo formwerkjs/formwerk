@@ -9,7 +9,7 @@ const maxDate = new Date(2025, 1, 18, 0, 0, 0, 0);
 
 <template>
   <div class="flex flex-col gap-4">
-    <DateField
+    <!-- <DateField
       name="date"
       label="Date"
       :format-options="{
@@ -21,6 +21,8 @@ const maxDate = new Date(2025, 1, 18, 0, 0, 0, 0);
         minute: '2-digit',
         second: '2-digit',
       }"
-    />
+    /> -->
+
+    <Calendar label="Pick a date" :model-value="new Date('2025-09-16')" />
   </div>
 </template>
