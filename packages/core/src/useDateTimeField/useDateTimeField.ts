@@ -167,15 +167,14 @@ export function useDateTimeField(_props: Reactivify<DateTimeFieldProps, 'schema'
     errorMessage: field.errorMessage,
   });
 
-  const calendarProps: Reactivify<CalendarProps, 'onUpdateModelValue'> = {
+  const calendarProps: Reactivify<CalendarProps, 'field' | 'schema'> = {
     label: props.label,
     locale: () => locale.value,
     name: undefined,
-    modelValue: temporalValue,
     calendar: calendar,
-    onUpdateModelValue: onValueChange,
     minDate: () => (isTemporalPartial(minDate.value) ? undefined : minDate.value),
     maxDate: () => (isTemporalPartial(maxDate.value) ? undefined : maxDate.value),
+    field,
   };
 
   const controlProps = computed(() => {

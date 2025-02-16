@@ -9,11 +9,11 @@ describe('useCalendar', () => {
     test('calendar should not have accessibility violations', async () => {
       await render({
         setup() {
-          const { pickerProps, gridProps, buttonProps, gridLabelProps, nextButtonProps, previousButtonProps } =
+          const { calendarProps, gridProps, buttonProps, gridLabelProps, nextButtonProps, previousButtonProps } =
             useCalendar({ label: 'Calendar' });
 
           return {
-            pickerProps,
+            calendarProps,
             gridProps,
             buttonProps,
             gridLabelProps,
@@ -23,7 +23,7 @@ describe('useCalendar', () => {
         },
         template: `
           <div data-testid="fixture">
-            <div v-bind="pickerProps">
+            <div v-bind="calendarProps">
               <button v-bind="buttonProps">Open Calendar</button>
               <div v-bind="gridLabelProps">Month Year</div>
               <button v-bind="previousButtonProps">Previous</button>
@@ -71,10 +71,10 @@ describe('useCalendar', () => {
     test('closes calendar when Escape is pressed', async () => {
       await render({
         setup() {
-          const { pickerProps, isOpen, buttonProps } = useCalendar({ label: 'Calendar' });
+          const { calendarProps, isOpen, buttonProps } = useCalendar({ label: 'Calendar' });
 
           return {
-            pickerProps,
+            calendarProps,
             isOpen,
             buttonProps,
           };
@@ -82,7 +82,7 @@ describe('useCalendar', () => {
         template: `
           <div data-testid="fixture">
             <button v-bind="buttonProps">Open Calendar</button>
-            <div v-if="isOpen" v-bind="pickerProps">Calendar Content</div>
+            <div v-if="isOpen" v-bind="calendarProps">Calendar Content</div>
           </div>
         `,
       });
@@ -97,10 +97,10 @@ describe('useCalendar', () => {
     test('closes calendar when Tab is pressed', async () => {
       await render({
         setup() {
-          const { pickerProps, isOpen, buttonProps, gridProps } = useCalendar({ label: 'Calendar' });
+          const { calendarProps, isOpen, buttonProps, gridProps } = useCalendar({ label: 'Calendar' });
 
           return {
-            pickerProps,
+            calendarProps,
             isOpen,
             buttonProps,
             gridProps,
@@ -109,7 +109,7 @@ describe('useCalendar', () => {
         template: `
           <div data-testid="fixture">
             <button v-bind="buttonProps">Open Calendar</button>
-            <div v-if="isOpen" v-bind="pickerProps">
+            <div v-if="isOpen" v-bind="calendarProps">
               <span v-bind="gridProps" tabindex="0">Calendar Content</span>
             </div>
           </div>
@@ -126,22 +126,21 @@ describe('useCalendar', () => {
 
   describe('date selection', () => {
     test('calls onUpdateModelValue when a date is selected', async () => {
-      const onUpdateModelValue = vi.fn();
       const currentDate = now('UTC');
 
-      await render({
+      const vm = await render({
         components: {
           CalendarCell,
         },
         setup() {
-          const { pickerProps, buttonProps } = useCalendar({
+          const { calendarProps, buttonProps } = useCalendar({
             label: 'Calendar',
-            onUpdateModelValue,
-            modelValue: currentDate,
+            timeZone: 'UTC',
+            modelValue: currentDate.toDate(),
           });
 
           return {
-            pickerProps,
+            calendarProps,
             buttonProps,
             currentDate,
           };
@@ -149,7 +148,7 @@ describe('useCalendar', () => {
         template: `
           <div data-testid="fixture">
             <button v-bind="buttonProps">Open Calendar</button>
-            <div v-bind="pickerProps">
+            <div v-bind="calendarProps">
               <CalendarCell label="Select Date" type="day" :value="currentDate" />
             </div>
           </div>
@@ -159,7 +158,7 @@ describe('useCalendar', () => {
       await flush();
       await fireEvent.click(screen.getByText('Select Date'));
       await flush();
-      expect(onUpdateModelValue).toHaveBeenCalledWith(currentDate);
+      expect(vm.emitted('update:modelValue')[0]).toEqual([currentDate.toDate()]);
     });
 
     test('uses provided calendar type', async () => {
@@ -188,22 +187,21 @@ describe('useCalendar', () => {
     });
 
     test('handles Enter key on calendar cell', async () => {
-      const onUpdateModelValue = vi.fn();
       const currentDate = now('UTC');
 
-      await render({
+      const vm = await render({
         components: {
           CalendarCell,
         },
         setup() {
-          const { pickerProps, buttonProps, isOpen, focusedDate } = useCalendar({
+          const { calendarProps, buttonProps, isOpen, focusedDate } = useCalendar({
             label: 'Calendar',
-            onUpdateModelValue,
-            modelValue: currentDate,
+            modelValue: currentDate.toDate(),
+            timeZone: 'UTC',
           });
 
           return {
-            pickerProps,
+            calendarProps,
             buttonProps,
             isOpen,
             focusedDate,
@@ -213,7 +211,7 @@ describe('useCalendar', () => {
         template: `
           <div data-testid="fixture">
             <button v-bind="buttonProps">Open Calendar</button>
-            <div v-if="isOpen" v-bind="pickerProps">
+            <div v-if="isOpen" v-bind="calendarProps">
               <CalendarCell
                 label="Select Date"
                 type="day"
@@ -232,36 +230,35 @@ describe('useCalendar', () => {
 
       // Test Enter key selects the date
       await fireEvent.keyDown(cell, { code: 'Enter' });
-      expect(onUpdateModelValue).toHaveBeenCalledWith(currentDate);
+      expect(vm.emitted('update:modelValue')[0]).toEqual([currentDate.toDate()]);
       expect(screen.queryByText(currentDate.toString())).not.toBeInTheDocument(); // Calendar should close after selection
     });
 
     test('handles Enter key in different panels', async () => {
-      const onUpdateModelValue = vi.fn();
       const currentDate = now('UTC');
 
-      await render({
+      const vm = await render({
         setup() {
-          const { pickerProps, buttonProps, isOpen, focusedDate, gridLabelProps, currentPanel } = useCalendar({
+          const { calendarProps, buttonProps, isOpen, focusedDate, gridLabelProps, currentView } = useCalendar({
             label: 'Calendar',
-            onUpdateModelValue,
-            modelValue: currentDate,
+            modelValue: currentDate.toDate(),
+            timeZone: 'UTC',
           });
 
           return {
-            pickerProps,
+            calendarProps,
             buttonProps,
             isOpen,
             focusedDate,
             gridLabelProps,
-            currentPanel,
+            currentView,
           };
         },
         template: `
           <div data-testid="fixture">
             <button v-bind="buttonProps">Open Calendar</button>
-            <div v-bind="gridLabelProps" data-testid="panel-label">{{ currentPanel.type }}</div>
-            <div v-if="isOpen" v-bind="pickerProps" data-testid="calendar">
+            <div v-bind="gridLabelProps" data-testid="panel-label">{{ currentView.type }}</div>
+            <div v-if="isOpen" v-bind="calendarProps" data-testid="calendar">
               <div>{{ focusedDate?.toString() }}</div>
             </div>
           </div>
@@ -276,7 +273,7 @@ describe('useCalendar', () => {
 
       // Test Enter in day panel
       await fireEvent.keyDown(calendar, { code: 'Enter' });
-      expect(onUpdateModelValue).toHaveBeenCalledWith(currentDate);
+      expect(vm.emitted('update:modelValue')[0]).toEqual([currentDate.toDate()]);
 
       // Switch to month panel
       await fireEvent.click(panelLabel);
@@ -295,16 +292,16 @@ describe('useCalendar', () => {
     test('switches between day, month, and year panels', async () => {
       await render({
         setup() {
-          const { gridLabelProps, currentPanel } = useCalendar({ label: 'Calendar' });
+          const { gridLabelProps, currentView } = useCalendar({ label: 'Calendar' });
 
           return {
             gridLabelProps,
-            currentPanel,
+            currentView,
           };
         },
         template: `
           <div data-testid="fixture">
-            <div v-bind="gridLabelProps" data-testid="panel-label">{{ currentPanel.type }}</div>
+            <div v-bind="gridLabelProps" data-testid="panel-label">{{ currentView.type }}</div>
           </div>
         `,
       });
@@ -321,25 +318,22 @@ describe('useCalendar', () => {
     });
 
     test('navigates to next/previous panels', async () => {
-      const onUpdateModelValue = vi.fn();
-
       await render({
         setup() {
-          const { nextButtonProps, previousButtonProps, currentPanel } = useCalendar({
+          const { nextButtonProps, previousButtonProps, currentView } = useCalendar({
             label: 'Calendar',
-            onUpdateModelValue,
           });
 
           return {
             nextButtonProps,
             previousButtonProps,
-            currentPanel,
+            currentView,
           };
         },
         template: `
           <div data-testid="fixture">
             <button v-bind="previousButtonProps">Previous</button>
-            <div data-testid="panel-type">{{ currentPanel.type }}</div>
+            <div data-testid="panel-type">{{ currentView.type }}</div>
             <button v-bind="nextButtonProps">Next</button>
           </div>
         `,
@@ -363,12 +357,13 @@ describe('useCalendar', () => {
             previousButtonProps,
             gridLabelProps,
             focusedDate,
-            pickerProps,
+            calendarProps,
             isOpen,
             buttonProps,
           } = useCalendar({
             label: 'Calendar',
-            modelValue: currentDate,
+            modelValue: currentDate.toDate(),
+            timeZone: 'UTC',
           });
 
           return {
@@ -376,7 +371,7 @@ describe('useCalendar', () => {
             previousButtonProps,
             gridLabelProps,
             focusedDate,
-            pickerProps,
+            calendarProps,
             isOpen,
             buttonProps,
           };
@@ -384,7 +379,7 @@ describe('useCalendar', () => {
         template: `
           <div data-testid="fixture">
             <button v-bind="buttonProps">Open Calendar</button>
-            <div v-if="isOpen" v-bind="pickerProps">
+            <div v-if="isOpen" v-bind="calendarProps">
               <div v-bind="gridLabelProps" data-testid="panel-label">Month Panel</div>
               <button v-bind="previousButtonProps">Previous</button>
               <button v-bind="nextButtonProps">Next</button>
@@ -428,12 +423,13 @@ describe('useCalendar', () => {
             previousButtonProps,
             gridLabelProps,
             focusedDate,
-            pickerProps,
+            calendarProps,
             isOpen,
             buttonProps,
           } = useCalendar({
             label: 'Calendar',
-            modelValue: currentDate,
+            modelValue: currentDate.toDate(),
+            timeZone: 'UTC',
           });
 
           return {
@@ -441,7 +437,7 @@ describe('useCalendar', () => {
             previousButtonProps,
             gridLabelProps,
             focusedDate,
-            pickerProps,
+            calendarProps,
             isOpen,
             buttonProps,
           };
@@ -449,7 +445,7 @@ describe('useCalendar', () => {
         template: `
           <div data-testid="fixture">
             <button v-bind="buttonProps">Open Calendar</button>
-            <div v-if="isOpen" v-bind="pickerProps">
+            <div v-if="isOpen" v-bind="calendarProps">
               <div v-bind="gridLabelProps" data-testid="panel-label">Year Panel</div>
               <button v-bind="previousButtonProps">Previous</button>
               <button v-bind="nextButtonProps">Next</button>
@@ -495,13 +491,14 @@ describe('useCalendar', () => {
 
       await render({
         setup() {
-          const { pickerProps, isOpen, buttonProps, selectedDate, focusedDate } = useCalendar({
+          const { calendarProps, isOpen, buttonProps, selectedDate, focusedDate } = useCalendar({
             label: 'Calendar',
-            modelValue: currentDate,
+            modelValue: currentDate.toDate(),
+            timeZone: 'UTC',
           });
 
           return {
-            pickerProps,
+            calendarProps,
             isOpen,
             buttonProps,
             selectedDate,
@@ -511,7 +508,7 @@ describe('useCalendar', () => {
         template: `
           <div data-testid="fixture">
             <button v-bind="buttonProps">Open Calendar</button>
-            <div v-if="isOpen" v-bind="pickerProps" data-testid="calendar">
+            <div v-if="isOpen" v-bind="calendarProps" data-testid="calendar">
               <div>{{ focusedDate?.toString() }}</div>
             </div>
           </div>
@@ -562,13 +559,14 @@ describe('useCalendar', () => {
 
       await render({
         setup() {
-          const { pickerProps, isOpen, buttonProps, selectedDate, focusedDate, gridLabelProps } = useCalendar({
+          const { calendarProps, isOpen, buttonProps, selectedDate, focusedDate, gridLabelProps } = useCalendar({
             label: 'Calendar',
-            modelValue: currentDate,
+            modelValue: currentDate.toDate(),
+            timeZone: 'UTC',
           });
 
           return {
-            pickerProps,
+            calendarProps,
             isOpen,
             buttonProps,
             selectedDate,
@@ -579,7 +577,7 @@ describe('useCalendar', () => {
         template: `
           <div data-testid="fixture">
             <button v-bind="buttonProps">Open Calendar</button>
-            <div v-if="isOpen" v-bind="pickerProps" data-testid="calendar">
+            <div v-if="isOpen" v-bind="calendarProps" data-testid="calendar">
               <div v-bind="gridLabelProps" data-testid="panel-label">Month Panel</div>
               <div>{{ focusedDate?.toString() }}</div>
             </div>
@@ -635,13 +633,14 @@ describe('useCalendar', () => {
 
       await render({
         setup() {
-          const { pickerProps, isOpen, buttonProps, selectedDate, focusedDate, gridLabelProps } = useCalendar({
+          const { calendarProps, isOpen, buttonProps, selectedDate, focusedDate, gridLabelProps } = useCalendar({
             label: 'Calendar',
-            modelValue: currentDate,
+            modelValue: currentDate.toDate(),
+            timeZone: 'UTC',
           });
 
           return {
-            pickerProps,
+            calendarProps,
             isOpen,
             buttonProps,
             selectedDate,
@@ -652,7 +651,7 @@ describe('useCalendar', () => {
         template: `
           <div data-testid="fixture">
             <button v-bind="buttonProps">Open Calendar</button>
-            <div v-if="isOpen" v-bind="pickerProps" data-testid="calendar">
+            <div v-if="isOpen" v-bind="calendarProps" data-testid="calendar">
               <div v-bind="gridLabelProps" data-testid="panel-label">Year Panel</div>
               <div>{{ focusedDate?.toString() }}</div>
             </div>
@@ -709,15 +708,16 @@ describe('useCalendar', () => {
 
       await render({
         setup() {
-          const { pickerProps, isOpen, buttonProps, selectedDate, focusedDate } = useCalendar({
+          const { calendarProps, isOpen, buttonProps, selectedDate, focusedDate } = useCalendar({
             label: 'Calendar',
-            modelValue: currentDate,
+            modelValue: currentDate.toDate(),
+            timeZone: 'UTC',
             minDate,
             maxDate,
           });
 
           return {
-            pickerProps,
+            calendarProps,
             isOpen,
             buttonProps,
             selectedDate,
@@ -727,7 +727,7 @@ describe('useCalendar', () => {
         template: `
           <div data-testid="fixture">
             <button v-bind="buttonProps">Open Calendar</button>
-            <div v-if="isOpen" v-bind="pickerProps" data-testid="calendar">
+            <div v-if="isOpen" v-bind="calendarProps" data-testid="calendar">
               <div>{{ focusedDate?.toString() }}</div>
             </div>
           </div>
@@ -753,13 +753,14 @@ describe('useCalendar', () => {
 
       await render({
         setup() {
-          const { pickerProps, isOpen, buttonProps, focusedDate } = useCalendar({
+          const { calendarProps, isOpen, buttonProps, focusedDate } = useCalendar({
             label: 'Calendar',
-            modelValue: currentDate,
+            modelValue: currentDate.toDate(),
+            timeZone: 'UTC',
           });
 
           return {
-            pickerProps,
+            calendarProps,
             isOpen,
             buttonProps,
             focusedDate,
@@ -768,7 +769,7 @@ describe('useCalendar', () => {
         template: `
           <div data-testid="fixture">
             <button v-bind="buttonProps">Open Calendar</button>
-            <div v-if="isOpen" v-bind="pickerProps" data-testid="calendar">
+            <div v-if="isOpen" v-bind="calendarProps" data-testid="calendar">
               <div>{{ focusedDate?.toString() }}</div>
             </div>
           </div>
@@ -807,13 +808,14 @@ describe('useCalendar', () => {
 
       await render({
         setup() {
-          const { pickerProps, isOpen, buttonProps, focusedDate, gridLabelProps } = useCalendar({
+          const { calendarProps, isOpen, buttonProps, focusedDate, gridLabelProps } = useCalendar({
             label: 'Calendar',
-            modelValue: currentDate,
+            modelValue: currentDate.toDate(),
+            timeZone: 'UTC',
           });
 
           return {
-            pickerProps,
+            calendarProps,
             isOpen,
             buttonProps,
             focusedDate,
@@ -823,7 +825,7 @@ describe('useCalendar', () => {
         template: `
           <div data-testid="fixture">
             <button v-bind="buttonProps">Open Calendar</button>
-            <div v-if="isOpen" v-bind="pickerProps" data-testid="calendar">
+            <div v-if="isOpen" v-bind="calendarProps" data-testid="calendar">
               <div v-bind="gridLabelProps" data-testid="panel-label">Month Panel</div>
               <div>{{ focusedDate?.toString() }}</div>
             </div>
@@ -853,13 +855,14 @@ describe('useCalendar', () => {
 
       await render({
         setup() {
-          const { pickerProps, isOpen, buttonProps, focusedDate, gridLabelProps } = useCalendar({
+          const { calendarProps, isOpen, buttonProps, focusedDate, gridLabelProps } = useCalendar({
             label: 'Calendar',
-            modelValue: currentDate,
+            modelValue: currentDate.toDate(),
+            timeZone: 'UTC',
           });
 
           return {
-            pickerProps,
+            calendarProps,
             isOpen,
             buttonProps,
             focusedDate,
@@ -869,7 +872,7 @@ describe('useCalendar', () => {
         template: `
           <div data-testid="fixture">
             <button v-bind="buttonProps">Open Calendar</button>
-            <div v-if="isOpen" v-bind="pickerProps" data-testid="calendar">
+            <div v-if="isOpen" v-bind="calendarProps" data-testid="calendar">
               <div v-bind="gridLabelProps" data-testid="panel-label">Month Panel</div>
               <div>{{ focusedDate?.toString() }}</div>
             </div>

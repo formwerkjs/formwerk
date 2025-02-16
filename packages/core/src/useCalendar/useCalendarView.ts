@@ -1,30 +1,30 @@
 import { computed, MaybeRefOrGetter, shallowRef, toValue } from 'vue';
-import { CalendarContext, CalendarDayCell, CalendarMonthCell, CalendarPanelType, CalendarYearCell } from './types';
+import { CalendarContext, CalendarDayCell, CalendarMonthCell, CalendarViewType, CalendarYearCell } from './types';
 import { useDateFormatter } from '../i18n';
 import { Reactivify } from '../types';
 import { normalizeProps } from '../utils/common';
 import { YEAR_CELLS_COUNT } from './constants';
 import { now, toCalendar } from '@internationalized/date';
 
-export interface CalendarWeeksPanel {
+export interface CalendarWeeksView {
   type: 'weeks';
   days: CalendarDayCell[];
   weekDays: string[];
 }
 
-export interface CalendarMonthsPanel {
+export interface CalendarMonthsView {
   type: 'months';
   months: CalendarMonthCell[];
 }
 
-export interface CalendarYearsPanel {
+export interface CalendarYearsView {
   type: 'years';
   years: CalendarYearCell[];
 }
 
-export type CalendarPanel = CalendarWeeksPanel | CalendarMonthsPanel | CalendarYearsPanel;
+export type CalendarView = CalendarWeeksView | CalendarMonthsView | CalendarYearsView;
 
-export interface CalendarPanelProps {
+export interface CalendarViewProps {
   /**
    * The format option for the days of the week.
    */
@@ -41,55 +41,55 @@ export interface CalendarPanelProps {
   yearFormat?: Intl.DateTimeFormatOptions['year'];
 }
 
-export function useCalendarPanel(_props: Reactivify<CalendarPanelProps>, context: CalendarContext) {
+export function useCalendarView(_props: Reactivify<CalendarViewProps>, context: CalendarContext) {
   const props = normalizeProps(_props);
-  const panelType = shallowRef<CalendarPanelType>('weeks');
-  const { days, weekDays } = useCalendarDaysPanel(context, props.weekDayFormat);
-  const { months, monthFormatter } = useCalendarMonthsPanel(context, props.monthFormat);
-  const { years, yearFormatter } = useCalendarYearsPanel(context, props.yearFormat);
+  const viewType = shallowRef<CalendarViewType>('weeks');
+  const { days, weekDays } = useCalendarDaysView(context, props.weekDayFormat);
+  const { months, monthFormatter } = useCalendarMonthsView(context, props.monthFormat);
+  const { years, yearFormatter } = useCalendarYearsView(context, props.yearFormat);
 
-  const currentPanel = computed(() => {
-    if (panelType.value === 'weeks') {
+  const currentView = computed(() => {
+    if (viewType.value === 'weeks') {
       return {
         type: 'weeks',
         days: days.value,
         weekDays: weekDays.value,
-      } as CalendarWeeksPanel;
+      } as CalendarWeeksView;
     }
 
-    if (panelType.value === 'months') {
+    if (viewType.value === 'months') {
       return {
         type: 'months',
         months: months.value,
-      } as CalendarMonthsPanel;
+      } as CalendarMonthsView;
     }
 
     return {
       type: 'years',
       years: years.value,
-    } as CalendarYearsPanel;
+    } as CalendarYearsView;
   });
 
-  function switchPanel(type: CalendarPanelType) {
-    panelType.value = type;
+  function setView(type: CalendarViewType) {
+    viewType.value = type;
   }
 
-  const panelLabel = computed(() => {
-    if (panelType.value === 'weeks') {
+  const viewLabel = computed(() => {
+    if (viewType.value === 'weeks') {
       return `${monthFormatter.value.format(context.getFocusedDate().toDate())} ${yearFormatter.value.format(context.getFocusedDate().toDate())}`;
     }
 
-    if (panelType.value === 'months') {
+    if (viewType.value === 'months') {
       return yearFormatter.value.format(context.getFocusedDate().toDate());
     }
 
     return `${yearFormatter.value.format(years.value[0].value.toDate())} - ${yearFormatter.value.format(years.value[years.value.length - 1].value.toDate())}`;
   });
 
-  return { currentPanel, switchPanel, panelLabel };
+  return { currentView, setView, viewLabel };
 }
 
-function useCalendarDaysPanel(
+function useCalendarDaysView(
   { weekInfo, getFocusedDate, getSelectedDate, locale, timeZone, calendar, getMinDate, getMaxDate }: CalendarContext,
   daysOfWeekFormat?: MaybeRefOrGetter<Intl.DateTimeFormatOptions['weekday']>,
 ) {
@@ -163,7 +163,7 @@ function useCalendarDaysPanel(
   return { days, weekDays, dayFormatter };
 }
 
-function useCalendarMonthsPanel(
+function useCalendarMonthsView(
   { getFocusedDate, locale, getSelectedDate, getMinDate, getMaxDate }: CalendarContext,
   monthFormat?: MaybeRefOrGetter<Intl.DateTimeFormatOptions['month']>,
 ) {
@@ -204,7 +204,7 @@ function useCalendarMonthsPanel(
   return { months, monthFormatter };
 }
 
-function useCalendarYearsPanel(
+function useCalendarYearsView(
   { getFocusedDate, locale, getSelectedDate, getMinDate, getMaxDate }: CalendarContext,
   yearFormat?: MaybeRefOrGetter<Intl.DateTimeFormatOptions['year']>,
 ) {

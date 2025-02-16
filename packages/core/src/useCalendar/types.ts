@@ -37,7 +37,7 @@ export interface CalendarYearCell {
 
 export type CalendarCellProps = CalendarDayCell | CalendarMonthCell | CalendarYearCell;
 
-export type CalendarPanelType = 'weeks' | 'months' | 'years';
+export type CalendarViewType = 'weeks' | 'months' | 'years';
 
 export interface CalendarContext {
   locale: Ref<string>;
@@ -49,5 +49,5 @@ export interface CalendarContext {
   getMaxDate: () => Maybe<ZonedDateTime>;
   getFocusedDate: () => ZonedDateTime;
   setFocusedDate: (date: ZonedDateTime) => void;
-  setDate: (date: ZonedDateTime, panel?: CalendarPanelType) => void;
+  setDate: (date: ZonedDateTime, view?: CalendarViewType) => void;
 }

@@ -1,7 +1,7 @@
 import { computed, nextTick, provide, Ref, ref, shallowRef, toValue, watch } from 'vue';
-import { CalendarContext, CalendarPanelType } from './types';
+import { CalendarContext, CalendarViewType } from './types';
 import { hasKeyCode, normalizeProps, useUniqId, withRefCapture } from '../utils/common';
-import { Maybe, Reactivify } from '../types';
+import { Maybe, Reactivify, StandardSchema } from '../types';
 import { useLocale } from '../i18n';
 import { FieldTypePrefixes } from '../constants';
 import { usePopoverController } from '../helpers/usePopoverController';
@@ -9,8 +9,12 @@ import { blockEvent } from '../utils/events';
 import { useLabel } from '../a11y';
 import { useControlButtonProps } from '../helpers/useControlButtonProps';
 import { CalendarContextKey, YEAR_CELLS_COUNT } from './constants';
-import { CalendarPanel, useCalendarPanel } from './useCalendarPanel';
+import { CalendarView, useCalendarView } from './useCalendarView';
 import { Calendar, ZonedDateTime, now, toCalendar } from '@internationalized/date';
+import { createDisabledContext } from '../helpers/createDisabledContext';
+import { exposeField, FormField, useFormField } from '../useFormField';
+import { useInputValidity } from '../validation';
+import { useTemporalStore } from '../useDateTimeField/useTemporalStore';
 
 export interface CalendarProps {
   /**
@@ -31,12 +35,12 @@ export interface CalendarProps {
   /**
    * The current date to use for the calendar.
    */
-  modelValue?: ZonedDateTime;
+  modelValue?: Date;
 
   /**
    * The initial value to use for the calendar.
    */
-  value?: ZonedDateTime;
+  value?: Date;
 
   /**
    * The calendar type to use for the calendar, e.g. `gregory`, `islamic-umalqura`, etc.
@@ -44,9 +48,19 @@ export interface CalendarProps {
   calendar?: Calendar;
 
   /**
+   * The time zone to use for the calendar.
+   */
+  timeZone?: string;
+
+  /**
    * Whether the calendar is disabled.
    */
   disabled?: boolean;
+
+  /**
+   * Whether the calendar is readonly.
+   */
+  readonly?: boolean;
 
   /**
    * The label for the next month button.
@@ -84,30 +98,60 @@ export interface CalendarProps {
   yearFormat?: Intl.DateTimeFormatOptions['year'];
 
   /**
-   * The available panels to switch to and from in the calendar.
+   * The available views to switch to and from in the calendar.
    */
-  allowedPanels?: CalendarPanelType[];
+  allowedViews?: CalendarViewType[];
 
   /**
-   * The callback to call when the calendar value is updated.
+   * The form field to use for the calendar.
    */
-  onUpdateModelValue?: (value: ZonedDateTime) => void;
+  field?: FormField<any>;
+
+  /**
+   * The schema to use for the calendar.
+   */
+  schema?: StandardSchema<any>;
 }
 
-export function useCalendar(_props: Reactivify<CalendarProps, 'onUpdateModelValue'>) {
-  const props = normalizeProps(_props, ['onUpdateModelValue']);
-  const calendarId = useUniqId(FieldTypePrefixes.Calendar);
-  const gridId = `${calendarId}-g`;
-  const pickerEl = ref<HTMLElement>();
-  const gridEl = ref<HTMLElement>();
-  const calendarLabelEl = ref<HTMLElement>();
+export function useCalendar(_props: Reactivify<CalendarProps, 'field' | 'schema'>) {
+  const props = normalizeProps(_props, ['field', 'schema']);
   const { weekInfo, locale, calendar, timeZone } = useLocale(props.locale, {
     calendar: () => toValue(props.calendar),
+    timeZone: () => toValue(props.timeZone),
+  });
+  const calendarId = useUniqId(FieldTypePrefixes.Calendar);
+  const gridId = `${calendarId}-g`;
+  const calendarEl = ref<HTMLElement>();
+  const gridEl = ref<HTMLElement>();
+  const calendarLabelEl = ref<HTMLElement>();
+  const field =
+    props.field ??
+    useFormField<Maybe<Date>>({
+      path: props.name,
+      disabled: props.disabled,
+      initialValue: toValue(props.modelValue) ?? toValue(props.value),
+      schema: props.schema,
+    });
+
+  const temporalValue = useTemporalStore({
+    calendar: calendar,
+    timeZone: timeZone,
+    locale: locale,
+    model: {
+      get: () => field.fieldValue.value,
+      set: value => field.setValue(value),
+    },
   });
 
-  const selectedDate = computed(() => toValue(props.modelValue) ?? toCalendar(now(toValue(timeZone)), calendar.value));
+  // If no controlling field is provided, we should hook up the required hooks to promote the calender to a full form field.
+  if (!props.field) {
+    useInputValidity({ field });
+  }
+
+  const isDisabled = createDisabledContext(props.disabled);
+  const selectedDate = computed(() => temporalValue.value ?? toCalendar(now(toValue(timeZone)), calendar.value));
   const focusedDay = shallowRef<ZonedDateTime>();
-  const { isOpen } = usePopoverController(pickerEl, { disabled: props.disabled });
+  const { isOpen } = usePopoverController(calendarEl, { disabled: props.disabled });
 
   function getFocusedOrSelected() {
     if (focusedDay.value) {
@@ -124,15 +168,7 @@ export function useCalendar(_props: Reactivify<CalendarProps, 'onUpdateModelValu
     timeZone,
     getSelectedDate: () => selectedDate.value,
     getFocusedDate: getFocusedOrSelected,
-    setDate: (date: ZonedDateTime, panel?: CalendarPanelType) => {
-      props.onUpdateModelValue?.(date);
-      if (panel) {
-        switchPanel(panel);
-      } else if (currentPanel.value.type === 'weeks') {
-        // Automatically close the calendar when a day is selected
-        isOpen.value = false;
-      }
-    },
+    setDate,
     setFocusedDate: async (date: ZonedDateTime) => {
       focusedDay.value = date;
       await nextTick();
@@ -145,10 +181,10 @@ export function useCalendar(_props: Reactivify<CalendarProps, 'onUpdateModelValu
   provide(CalendarContextKey, context);
 
   const {
-    currentPanel,
-    switchPanel,
-    panelLabel: gridLabel,
-  } = useCalendarPanel(
+    currentView,
+    setView,
+    viewLabel: gridLabel,
+  } = useCalendarView(
     {
       weekDayFormat: props.weekDayFormat,
       monthFormat: props.monthFormat,
@@ -157,7 +193,17 @@ export function useCalendar(_props: Reactivify<CalendarProps, 'onUpdateModelValu
     context,
   );
 
-  const handleKeyDown = useCalendarKeyboard(context, currentPanel);
+  function setDate(date: ZonedDateTime, view?: CalendarViewType) {
+    temporalValue.value = date;
+    if (view) {
+      setView(view);
+    } else if (currentView.value.type === 'weeks') {
+      // Automatically close the calendar when a day is selected
+      isOpen.value = false;
+    }
+  }
+
+  const handleKeyDown = useCalendarKeyboard(context, currentView);
   const buttonProps = useControlButtonProps(() => ({
     onClick: () => {
       isOpen.value = true;
@@ -195,7 +241,7 @@ export function useCalendar(_props: Reactivify<CalendarProps, 'onUpdateModelValu
   watch(isOpen, async value => {
     if (!value) {
       focusedDay.value = undefined;
-      switchPanel('weeks');
+      setView('weeks');
       return;
     }
 
@@ -207,49 +253,51 @@ export function useCalendar(_props: Reactivify<CalendarProps, 'onUpdateModelValu
     focusCurrent();
   });
 
-  const pickerProps = computed(() => {
+  const calendarProps = computed(() => {
     return withRefCapture(
       {
         id: calendarId,
         ...pickerHandlers,
       },
-      pickerEl,
+      calendarEl,
     );
   });
 
   const nextButtonProps = useControlButtonProps(() => ({
     id: `${calendarId}-next`,
     'aria-label': 'Next',
+    disabled: isDisabled.value,
     onClick: () => {
-      if (currentPanel.value.type === 'weeks') {
+      if (currentView.value.type === 'weeks') {
         context.setFocusedDate(context.getFocusedDate().add({ months: 1 }));
         return;
       }
 
-      if (currentPanel.value.type === 'months') {
+      if (currentView.value.type === 'months') {
         context.setFocusedDate(context.getFocusedDate().add({ years: 1 }));
         return;
       }
 
-      context.setFocusedDate(currentPanel.value.years[currentPanel.value.years.length - 1].value.add({ years: 1 }));
+      context.setFocusedDate(currentView.value.years[currentView.value.years.length - 1].value.add({ years: 1 }));
     },
   }));
 
   const previousButtonProps = useControlButtonProps(() => ({
     id: `${calendarId}-previous`,
     'aria-label': 'Previous',
+    disabled: isDisabled.value,
     onClick: () => {
-      if (currentPanel.value.type === 'weeks') {
+      if (currentView.value.type === 'weeks') {
         context.setFocusedDate(context.getFocusedDate().subtract({ months: 1 }));
         return;
       }
 
-      if (currentPanel.value.type === 'months') {
+      if (currentView.value.type === 'months') {
         context.setFocusedDate(context.getFocusedDate().subtract({ years: 1 }));
         return;
       }
 
-      context.setFocusedDate(currentPanel.value.years[0].value.subtract({ years: 1 }));
+      context.setFocusedDate(currentView.value.years[0].value.subtract({ years: 1 }));
     },
   }));
 
@@ -259,8 +307,8 @@ export function useCalendar(_props: Reactivify<CalendarProps, 'onUpdateModelValu
     label: gridLabel,
   });
 
-  function isAllowedPanel(panel: CalendarPanelType) {
-    return toValue(props.allowedPanels)?.includes(panel) ?? true;
+  function isAllowedView(view: CalendarViewType) {
+    return toValue(props.allowedViews)?.includes(view) ?? true;
   }
 
   const gridLabelProps = computed(() => {
@@ -270,17 +318,21 @@ export function useCalendar(_props: Reactivify<CalendarProps, 'onUpdateModelValu
         'aria-live': 'polite' as const,
         tabindex: '-1',
         onClick: () => {
-          if (currentPanel.value.type === 'weeks') {
-            if (isAllowedPanel('months')) {
-              switchPanel('months');
+          if (isDisabled.value) {
+            return;
+          }
+
+          if (currentView.value.type === 'weeks') {
+            if (isAllowedView('months')) {
+              setView('months');
             }
 
             return;
           }
 
-          if (currentPanel.value.type === 'months') {
-            if (isAllowedPanel('years')) {
-              switchPanel('years');
+          if (currentView.value.type === 'months') {
+            if (isAllowedView('years')) {
+              setView('years');
             }
 
             return;
@@ -302,56 +354,59 @@ export function useCalendar(_props: Reactivify<CalendarProps, 'onUpdateModelValu
     );
   });
 
-  return {
-    /**
-     * Whether the calendar is open.
-     */
-    isOpen,
-    /**
-     * The props for the picker element.
-     */
-    pickerProps,
-    /**
-     * The props for the grid element that displays the panel values.
-     */
-    gridProps,
-    /**
-     * The props for the button element.
-     */
-    buttonProps,
-    /**
-     * The current date.
-     */
-    selectedDate,
-    /**
-     * The focused date.
-     */
-    focusedDate: focusedDay,
-    /**
-     * The current panel.
-     */
-    currentPanel,
-    /**
-     * Switches the current panel from day to month or year.
-     */
-    switchPanel,
-    /**
-     * The props for the panel label element.
-     */
-    gridLabelProps,
-    /**
-     * The props for the next panel values button. if it is a day panel, the button will move the panel to the next month. If it is a month panel, the button will move the panel to the next year. If it is a year panel, the button will move the panel to the next set of years.
-     */
-    nextButtonProps,
-    /**
-     * The props for the previous panel values button. If it is a day panel, the button will move the panel to the previous month. If it is a month panel, the button will move the panel to the previous year. If it is a year panel, the button will move the panel to the previous set of years.
-     */
-    previousButtonProps,
-    /**
-     * The label for the current panel. If it is a day panel, the label will be the month and year. If it is a month panel, the label will be the year. If it is a year panel, the label will be the range of years currently being displayed.
-     */
-    gridLabel,
-  };
+  return exposeField(
+    {
+      /**
+       * Whether the calendar is open.
+       */
+      isOpen,
+      /**
+       * The props for the calendar element.
+       */
+      calendarProps,
+      /**
+       * The props for the grid element that displays the panel values.
+       */
+      gridProps,
+      /**
+       * The props for the button element.
+       */
+      buttonProps,
+      /**
+       * The current date.
+       */
+      selectedDate,
+      /**
+       * The focused date.
+       */
+      focusedDate: focusedDay,
+      /**
+       * The current view.
+       */
+      currentView,
+      /**
+       * Switches the current view (e.g: weeks, months, years)
+       */
+      setView,
+      /**
+       * The props for the panel label element.
+       */
+      gridLabelProps,
+      /**
+       * The props for the next panel values button. if it is a day panel, the button will move the panel to the next month. If it is a month panel, the button will move the panel to the next year. If it is a year panel, the button will move the panel to the next set of years.
+       */
+      nextButtonProps,
+      /**
+       * The props for the previous panel values button. If it is a day panel, the button will move the panel to the previous month. If it is a month panel, the button will move the panel to the previous year. If it is a year panel, the button will move the panel to the previous set of years.
+       */
+      previousButtonProps,
+      /**
+       * The label for the current panel. If it is a day panel, the label will be the month and year. If it is a month panel, the label will be the year. If it is a year panel, the label will be the range of years currently being displayed.
+       */
+      gridLabel,
+    },
+    field,
+  );
 }
 
 interface ShortcutDefinition {
@@ -359,7 +414,7 @@ interface ShortcutDefinition {
   type: 'focus' | 'select';
 }
 
-export function useCalendarKeyboard(context: CalendarContext, currentPanel: Ref<CalendarPanel>) {
+export function useCalendarKeyboard(context: CalendarContext, currentPanel: Ref<CalendarView>) {
   function withCheckedBounds(fn: () => ZonedDateTime | undefined) {
     const date = fn();
     if (!date) {
