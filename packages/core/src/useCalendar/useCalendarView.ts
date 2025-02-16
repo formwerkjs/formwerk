@@ -94,6 +94,7 @@ function useCalendarDaysView(
   daysOfWeekFormat?: MaybeRefOrGetter<Intl.DateTimeFormatOptions['weekday']>,
 ) {
   const dayFormatter = useDateFormatter(locale, () => ({ weekday: toValue(daysOfWeekFormat) ?? 'short' }));
+  const dayNumberFormatter = useDateFormatter(locale, () => ({ day: 'numeric' }));
 
   const days = computed<CalendarDayCell[]>(() => {
     const current = getSelectedDate();
@@ -133,7 +134,7 @@ function useCalendarDaysView(
 
       return {
         value: dayOfMonth,
-        label: String(dayOfMonth.day),
+        label: dayNumberFormatter.value.format(dayOfMonth.toDate()),
         dayOfMonth: dayOfMonth.day,
         isToday: rightNowDate.compare(domDate) === 0,
         selected: currentDate.compare(domDate) === 0,
