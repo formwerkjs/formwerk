@@ -24,7 +24,5 @@ const maxDate = new Date('2025-02-18');
         second: '2-digit',
       }"
     />
-
-    <Calendar name="date" label="select a date" :min="minDate" :max="maxDate" />
   </div>
 </template>

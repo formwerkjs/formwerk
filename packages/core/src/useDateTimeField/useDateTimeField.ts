@@ -7,7 +7,7 @@ import { useDateTimeSegmentGroup } from './useDateTimeSegmentGroup';
 import { FieldTypePrefixes } from '../constants';
 import { useDateFormatter, useLocale } from '../i18n';
 import { useErrorMessage, useLabel } from '../a11y';
-import { useTemporalStore } from './useTemporalStore';
+import { fromDateToCalendarZonedDateTime, useTemporalStore } from './useTemporalStore';
 import { ZonedDateTime, Calendar } from '@internationalized/date';
 import { useInputValidity } from '../validation';
 
@@ -130,6 +130,8 @@ export function useDateTimeField(_props: Reactivify<DateTimeFieldProps, 'schema'
     temporalValue,
     onValueChange,
     onTouched: () => field.setTouched(true),
+    min: computed(() => fromDateToCalendarZonedDateTime(toValue(props.min), calendar.value, timeZone.value)),
+    max: computed(() => fromDateToCalendarZonedDateTime(toValue(props.max), calendar.value, timeZone.value)),
   });
 
   const { labelProps, labelledByProps } = useLabel({

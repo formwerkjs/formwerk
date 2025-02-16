@@ -18,8 +18,16 @@ interface TemporalValueStoreInit {
 
 export function useTemporalStore(init: TemporalValueStoreInit) {
   const model = init.model;
+  function normalizeNullish(value: Maybe<ZonedDateTime>): ZonedDateTime | TemporalPartial {
+    if (isNullOrUndefined(value)) {
+      return createTemporalPartial(toValue(init.calendar), toValue(init.timeZone));
+    }
+
+    return value;
+  }
+
   const temporalVal = shallowRef<ZonedDateTime | TemporalPartial>(
-    fromDateToCalendarZonedDateTime(model.get(), toValue(init.calendar), toValue(init.timeZone)),
+    normalizeNullish(fromDateToCalendarZonedDateTime(model.get(), toValue(init.calendar), toValue(init.timeZone))),
   );
 
   watch(model.get, value => {
@@ -27,7 +35,9 @@ export function useTemporalStore(init: TemporalValueStoreInit) {
       return;
     }
 
-    temporalVal.value = fromDateToCalendarZonedDateTime(value, toValue(init.calendar), toValue(init.timeZone));
+    temporalVal.value = normalizeNullish(
+      fromDateToCalendarZonedDateTime(value, toValue(init.calendar), toValue(init.timeZone)),
+    );
   });
 
   function toDate(value: Maybe<DateValue>): Maybe<Date> {
@@ -62,10 +72,10 @@ export function fromDateToCalendarZonedDateTime(
   date: Maybe<Date>,
   calendar: Calendar,
   timeZone: string,
-): ZonedDateTime {
+): ZonedDateTime | null | undefined {
   const zonedDt = toZonedDateTime(date, timeZone);
   if (!zonedDt) {
-    return createTemporalPartial(calendar, timeZone);
+    return zonedDt;
   }
 
   return toCalendar(toTimeZone(zonedDt, timeZone), calendar);

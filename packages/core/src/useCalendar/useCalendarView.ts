@@ -98,7 +98,7 @@ function useCalendarDaysView(
   const days = computed<CalendarDayCell[]>(() => {
     const current = getSelectedDate();
     const focused = getFocusedDate();
-    const startOfMonth = focused.set({ day: 1 });
+    const startOfMonth = focused.set({ day: 1, hour: 0, minute: 0, second: 0, millisecond: 0 });
 
     const firstDayOfWeek = weekInfo.value.firstDay;
     const startDayOfWeek = startOfMonth.toDate().getDay();
@@ -176,7 +176,7 @@ function useCalendarMonthsView(
     const maxDate = getMaxDate();
 
     return Array.from({ length: focused.calendar.getMonthsInYear(focused) }, (_, i) => {
-      const date = focused.set({ month: i + 1, day: 1 });
+      const date = focused.set({ month: i + 1, day: 1, hour: 0, minute: 0, second: 0, millisecond: 0 });
       let disabled = false;
 
       if (minDate && minDate.month < date.month) {
@@ -218,7 +218,16 @@ function useCalendarYearsView(
 
     return Array.from({ length: YEAR_CELLS_COUNT }, (_, i) => {
       const startYear = Math.floor(focused.year / YEAR_CELLS_COUNT) * YEAR_CELLS_COUNT;
-      const date = focused.set({ year: startYear + i, month: 1, day: 1 });
+      const date = focused.set({
+        year: startYear + i,
+        month: 1,
+        day: 1,
+        hour: 0,
+        minute: 0,
+        second: 0,
+        millisecond: 0,
+      });
+
       let disabled = false;
 
       if (minDate && minDate.year < date.year) {

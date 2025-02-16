@@ -465,22 +465,46 @@ describe('useCalendar', () => {
 
       // Test next button (next set of years)
       await fireEvent.click(screen.getByText('Next'));
-      expect(screen.getByText(currentDate.add({ years: 9 }).set({ month: 1, day: 1 }).toString())).toBeInTheDocument();
+      expect(
+        screen.getByText(
+          currentDate
+            .add({ years: 9 })
+            .set({ month: 1, day: 1, hour: 0, minute: 0, second: 0, millisecond: 0 })
+            .toString(),
+        ),
+      ).toBeInTheDocument();
 
       // Test previous button (previous set of years)
       await fireEvent.click(screen.getByText('Previous'));
-      expect(screen.getByText(currentDate.add({ years: 8 }).set({ month: 1, day: 1 }).toString())).toBeInTheDocument();
+      expect(
+        screen.getByText(
+          currentDate
+            .add({ years: 8 })
+            .set({ month: 1, day: 1, hour: 0, minute: 0, second: 0, millisecond: 0 })
+            .toString(),
+        ),
+      ).toBeInTheDocument();
 
       // Test multiple clicks
       await fireEvent.click(screen.getByText('Previous'));
       await fireEvent.click(screen.getByText('Previous'));
       expect(
-        screen.getByText(currentDate.subtract({ years: 10 }).set({ month: 1, day: 1 }).toString()),
+        screen.getByText(
+          currentDate
+            .subtract({ years: 10 })
+            .set({ month: 1, day: 1, hour: 0, minute: 0, second: 0, millisecond: 0 })
+            .toString(),
+        ),
       ).toBeInTheDocument();
 
       await fireEvent.click(screen.getByText('Next'));
       expect(
-        screen.getByText(currentDate.subtract({ years: 9 }).set({ month: 1, day: 1 }).toString()),
+        screen.getByText(
+          currentDate
+            .subtract({ years: 9 })
+            .set({ month: 1, day: 1, hour: 0, minute: 0, second: 0, millisecond: 0 })
+            .toString(),
+        ),
       ).toBeInTheDocument();
     });
   });

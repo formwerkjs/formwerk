@@ -46,6 +46,8 @@ export interface DateTimeSegmentGroupProps {
   temporalValue: MaybeRefOrGetter<ZonedDateTime | TemporalPartial>;
   direction?: MaybeRefOrGetter<Direction>;
   controlEl: Ref<HTMLElement | undefined>;
+  min?: MaybeRefOrGetter<Maybe<ZonedDateTime>>;
+  max?: MaybeRefOrGetter<Maybe<ZonedDateTime>>;
   onValueChange: (value: ZonedDateTime) => void;
   onTouched: () => void;
 }
@@ -57,6 +59,8 @@ export function useDateTimeSegmentGroup({
   direction,
   locale,
   controlEl,
+  min,
+  max,
   onValueChange,
   onTouched,
 }: DateTimeSegmentGroupProps) {
@@ -68,6 +72,8 @@ export function useDateTimeSegmentGroup({
 
   const { setPart, addToPart } = useDateArithmetic({
     currentDate: temporalValue,
+    min,
+    max,
   });
 
   const segments = computed(() => {
@@ -315,9 +321,26 @@ export function useDateTimeSegmentGroup({
 
 interface ArithmeticInit {
   currentDate: MaybeRefOrGetter<ZonedDateTime | TemporalPartial>;
+  min?: MaybeRefOrGetter<Maybe<ZonedDateTime>>;
+  max?: MaybeRefOrGetter<Maybe<ZonedDateTime>>;
 }
 
-function useDateArithmetic({ currentDate }: ArithmeticInit) {
+function useDateArithmetic({ currentDate, min, max }: ArithmeticInit) {
+  function clampDate(date: ZonedDateTime) {
+    const minDate = toValue(min);
+    const maxDate = toValue(max);
+
+    if (minDate && date.compare(minDate) < 0) {
+      return minDate;
+    }
+
+    if (maxDate && date.compare(maxDate) > 0) {
+      return maxDate;
+    }
+
+    return date;
+  }
+
   function setPart(part: DateTimeSegmentType, value: number) {
     const date = toValue(currentDate);
     if (!isEditableSegmentType(part)) {
@@ -339,7 +362,7 @@ function useDateArithmetic({ currentDate }: ArithmeticInit) {
       };
     }
 
-    return newDate;
+    return clampDate(newDate);
   }
 
   function addToPart(part: DateTimeSegmentType, diff: number) {
@@ -377,7 +400,7 @@ function useDateArithmetic({ currentDate }: ArithmeticInit) {
         [part]: true,
       };
 
-      return newDate;
+      return clampDate(newDate);
     }
 
     // Preserves the day, month, and year when adding to the part so it doesn't overflow.
@@ -385,15 +408,17 @@ function useDateArithmetic({ currentDate }: ArithmeticInit) {
     const month = date.month;
     const year = date.year;
 
-    return date
-      .add({
-        [durationPart]: diff,
-      })
-      .set({
-        day: part !== 'day' && part !== 'weekday' ? day : undefined,
-        month: part !== 'month' ? month : undefined,
-        year: part !== 'year' ? year : undefined,
-      });
+    return clampDate(
+      date
+        .add({
+          [durationPart]: diff,
+        })
+        .set({
+          day: part !== 'day' && part !== 'weekday' ? day : undefined,
+          month: part !== 'month' ? month : undefined,
+          year: part !== 'year' ? year : undefined,
+        }),
+    );
   }
 
   return {

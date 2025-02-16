@@ -15,7 +15,6 @@ import { createDisabledContext } from '../helpers/createDisabledContext';
 import { exposeField, FormField, useFormField } from '../useFormField';
 import { useInputValidity } from '../validation';
 import { fromDateToCalendarZonedDateTime, useTemporalStore } from '../useDateTimeField/useTemporalStore';
-import { isTemporalPartial } from '../useDateTimeField/temporalPartial';
 
 export interface CalendarProps {
   /**
@@ -178,8 +177,8 @@ export function useCalendar(_props: Reactivify<CalendarProps, 'field' | 'schema'
       await nextTick();
       focusCurrent();
     },
-    getMinDate: () => (isTemporalPartial(min.value) ? undefined : min.value),
-    getMaxDate: () => (isTemporalPartial(max.value) ? undefined : max.value),
+    getMinDate: () => min.value,
+    getMaxDate: () => max.value,
   };
 
   provide(CalendarContextKey, context);
