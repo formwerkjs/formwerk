@@ -27,6 +27,7 @@ export interface DateTimeSegmentProps {
 interface DateTimeSegmentDomProps {
   id: string;
   tabindex: number;
+  role?: string;
   contenteditable: string | undefined;
   'aria-disabled': boolean | undefined;
   'data-segment-type': DateTimeSegmentType;
@@ -36,6 +37,10 @@ interface DateTimeSegmentDomProps {
   inputmode?: string;
   autocorrect?: string;
   enterkeyhint?: string;
+  'aria-valuemin'?: number;
+  'aria-valuemax'?: number;
+  'aria-valuenow'?: number;
+  'aria-valuetext'?: string;
 }
 
 export function useDateTimeSegment(_props: Reactivify<DateTimeSegmentProps>) {
@@ -166,12 +171,23 @@ export function useDateTimeSegment(_props: Reactivify<DateTimeSegmentProps>) {
       autocorrect: isNonEditable() ? undefined : 'off',
       spellcheck: isNonEditable() ? undefined : false,
       enterkeyhint: isNonEditable() ? undefined : isLast() ? 'done' : 'next',
-      inputmode: isNonEditable() ? undefined : isNumeric() ? 'numeric' : 'none',
+      inputmode: 'none',
       ...handlers,
       style: {
         caretColor: 'transparent',
       },
     };
+
+    if (isNumeric()) {
+      const { min, max } = getMetadata();
+      const value = parser.parse(toValue(props.value));
+      domProps.role = 'spinbutton';
+      domProps.inputmode = 'numeric';
+      domProps['aria-valuemin'] = min ?? undefined;
+      domProps['aria-valuemax'] = max ?? undefined;
+      domProps['aria-valuenow'] = Number.isNaN(value) ? undefined : value;
+      domProps['aria-valuetext'] = Number.isNaN(value) ? 'Empty' : value.toString();
+    }
 
     if (isNonEditable()) {
       domProps.style.pointerEvents = 'none';
