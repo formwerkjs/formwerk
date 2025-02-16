@@ -174,6 +174,10 @@ export function useCalendar(_props: Reactivify<CalendarProps, 'field' | 'schema'
     getFocusedDate: getFocusedOrSelected,
     setDate,
     setFocusedDate: async (date: ZonedDateTime) => {
+      if (isDisabled.value || toValue(props.readonly)) {
+        return;
+      }
+
       focusedDay.value = date;
       await nextTick();
       focusCurrent();
@@ -198,6 +202,10 @@ export function useCalendar(_props: Reactivify<CalendarProps, 'field' | 'schema'
   );
 
   function setDate(date: ZonedDateTime, view?: CalendarViewType) {
+    if (isDisabled.value || toValue(props.readonly)) {
+      return;
+    }
+
     temporalValue.value = date;
     focusedDay.value = date;
     if (view) {
@@ -270,7 +278,7 @@ export function useCalendar(_props: Reactivify<CalendarProps, 'field' | 'schema'
   const nextButtonProps = useControlButtonProps(() => ({
     id: `${calendarId}-next`,
     'aria-label': 'Next',
-    disabled: isDisabled.value,
+    disabled: isDisabled.value || toValue(props.readonly),
     onClick: () => {
       if (currentView.value.type === 'weeks') {
         context.setFocusedDate(context.getFocusedDate().add({ months: 1 }));
@@ -289,7 +297,7 @@ export function useCalendar(_props: Reactivify<CalendarProps, 'field' | 'schema'
   const previousButtonProps = useControlButtonProps(() => ({
     id: `${calendarId}-previous`,
     'aria-label': 'Previous',
-    disabled: isDisabled.value,
+    disabled: isDisabled.value || toValue(props.readonly),
     onClick: () => {
       if (currentView.value.type === 'weeks') {
         context.setFocusedDate(context.getFocusedDate().subtract({ months: 1 }));
@@ -322,7 +330,7 @@ export function useCalendar(_props: Reactivify<CalendarProps, 'field' | 'schema'
         'aria-live': 'polite' as const,
         tabindex: '-1',
         onClick: () => {
-          if (isDisabled.value) {
+          if (isDisabled.value || toValue(props.readonly)) {
             return;
           }
 
