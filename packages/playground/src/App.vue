@@ -1,10 +1,12 @@
 <script setup lang="ts">
 import DateField from '@/components/DateField.vue';
 import Calendar from './components/Calendar.vue';
-// import { createCalendar } from '@internationalized/date';
+import { createCalendar } from '@internationalized/date';
 
 const minDate = new Date(2025, 1, 14, 0, 0, 0, 0);
 const maxDate = new Date(2025, 1, 18, 0, 0, 0, 0);
+
+const islamic = createCalendar('islamic-umalqura');
 </script>
 
 <template>
@@ -23,6 +25,6 @@ const maxDate = new Date(2025, 1, 18, 0, 0, 0, 0);
       }"
     /> -->
 
-    <Calendar label="Pick a date" :model-value="new Date('2025-09-16')" />
+    <Calendar label="Pick a date" locale="ar-EG" :calendar="islamic" />
   </div>
 </template>

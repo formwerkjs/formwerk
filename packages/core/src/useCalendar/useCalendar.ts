@@ -115,10 +115,11 @@ export interface CalendarProps {
 
 export function useCalendar(_props: Reactivify<CalendarProps, 'field' | 'schema'>) {
   const props = normalizeProps(_props, ['field', 'schema']);
-  const { weekInfo, locale, calendar, timeZone } = useLocale(props.locale, {
+  const { weekInfo, locale, calendar, timeZone, direction } = useLocale(props.locale, {
     calendar: () => toValue(props.calendar),
     timeZone: () => toValue(props.timeZone),
   });
+
   const pickerContext = inject(PickerContextKey, null);
   const calendarId = useUniqId(FieldTypePrefixes.Calendar);
   const gridId = `${calendarId}-g`;
@@ -260,6 +261,7 @@ export function useCalendar(_props: Reactivify<CalendarProps, 'field' | 'schema'
         id: calendarId,
         ...pickerHandlers,
         role: 'application',
+        dir: direction.value,
       },
       calendarEl,
     );
