@@ -3,8 +3,8 @@ import DateField from '@/components/DateField.vue';
 import Calendar from './components/Calendar.vue';
 // import { createCalendar } from '@internationalized/date';
 
-const minDate = new Date('2025-02-14');
-const maxDate = new Date('2025-02-18');
+const minDate = new Date(2025, 1, 14, 0, 0, 0, 0);
+const maxDate = new Date(2025, 1, 18, 0, 0, 0, 0);
 </script>
 
 <template>

@@ -331,11 +331,11 @@ function useDateArithmetic({ currentDate, min, max }: ArithmeticInit) {
     const maxDate = toValue(max);
 
     if (minDate && date.compare(minDate) < 0) {
-      return minDate;
+      return toValue(currentDate);
     }
 
     if (maxDate && date.compare(maxDate) > 0) {
-      return maxDate;
+      return toValue(currentDate);
     }
 
     return date;

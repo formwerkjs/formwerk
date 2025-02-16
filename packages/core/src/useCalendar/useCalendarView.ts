@@ -4,7 +4,7 @@ import { useDateFormatter } from '../i18n';
 import { Reactivify } from '../types';
 import { normalizeProps } from '../utils/common';
 import { YEAR_CELLS_COUNT } from './constants';
-import { now, toCalendar } from '@internationalized/date';
+import { now, toCalendar, toCalendarDate } from '@internationalized/date';
 
 export interface CalendarWeeksView {
   type: 'weeks';
@@ -113,6 +113,10 @@ function useCalendarDaysView(
     const minDate = getMinDate();
     const maxDate = getMaxDate();
 
+    const rightNowDate = toCalendarDate(rightNow);
+    const focusedDate = toCalendarDate(focused);
+    const currentDate = toCalendarDate(current);
+
     return Array.from({ length: gridDays }, (_, i) => {
       const dayOfMonth = firstDay.add({ days: i });
       let disabled = false;
@@ -125,14 +129,16 @@ function useCalendarDaysView(
         disabled = true;
       }
 
+      const domDate = toCalendarDate(dayOfMonth);
+
       return {
         value: dayOfMonth,
         label: String(dayOfMonth.day),
         dayOfMonth: dayOfMonth.day,
-        isToday: dayOfMonth.compare(rightNow) === 0,
-        selected: current.compare(dayOfMonth) === 0,
-        isOutsideMonth: dayOfMonth.month !== focused.month,
-        focused: focused.compare(dayOfMonth) === 0,
+        isToday: rightNowDate.compare(domDate) === 0,
+        selected: currentDate.compare(domDate) === 0,
+        isOutsideMonth: domDate.month !== focusedDate.month,
+        focused: focusedDate.compare(domDate) === 0,
         disabled,
         type: 'day',
       } as CalendarDayCell;
