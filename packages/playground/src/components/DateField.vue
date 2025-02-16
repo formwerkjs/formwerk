@@ -16,7 +16,9 @@ const {
   direction,
 } = useDateTimeField(props);
 
-const { pickerProps, pickerTriggerProps } = usePicker({});
+const { pickerProps, pickerTriggerProps } = usePicker({
+  label: 'Pick a date',
+});
 </script>
 
 <template>
