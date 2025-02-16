@@ -1,10 +1,9 @@
-import { computed, nextTick, provide, Ref, ref, shallowRef, toValue, watch } from 'vue';
+import { computed, inject, nextTick, provide, Ref, ref, shallowRef, toValue, watch } from 'vue';
 import { CalendarContext, CalendarViewType } from './types';
 import { hasKeyCode, normalizeProps, useUniqId, withRefCapture } from '../utils/common';
 import { Maybe, Reactivify, StandardSchema } from '../types';
 import { useLocale } from '../i18n';
 import { FieldTypePrefixes } from '../constants';
-import { usePopoverController } from '../helpers/usePopoverController';
 import { blockEvent } from '../utils/events';
 import { useLabel } from '../a11y';
 import { useControlButtonProps } from '../helpers/useControlButtonProps';
@@ -15,6 +14,7 @@ import { createDisabledContext } from '../helpers/createDisabledContext';
 import { exposeField, FormField, useFormField } from '../useFormField';
 import { useInputValidity } from '../validation';
 import { fromDateToCalendarZonedDateTime, useTemporalStore } from '../useDateTimeField/useTemporalStore';
+import { PickerContextKey } from '../usePicker';
 
 export interface CalendarProps {
   /**
@@ -119,6 +119,7 @@ export function useCalendar(_props: Reactivify<CalendarProps, 'field' | 'schema'
     calendar: () => toValue(props.calendar),
     timeZone: () => toValue(props.timeZone),
   });
+  const pickerContext = inject(PickerContextKey, null);
   const calendarId = useUniqId(FieldTypePrefixes.Calendar);
   const gridId = `${calendarId}-g`;
   const calendarEl = ref<HTMLElement>();
@@ -151,7 +152,6 @@ export function useCalendar(_props: Reactivify<CalendarProps, 'field' | 'schema'
   const isDisabled = createDisabledContext(props.disabled);
   const selectedDate = computed(() => temporalValue.value ?? toCalendar(now(toValue(timeZone)), calendar.value));
   const focusedDay = shallowRef<ZonedDateTime>();
-  const { isOpen } = usePopoverController(calendarEl, { disabled: props.disabled });
 
   function getFocusedOrSelected() {
     if (focusedDay.value) {
@@ -202,16 +202,11 @@ export function useCalendar(_props: Reactivify<CalendarProps, 'field' | 'schema'
       setView(view);
     } else if (currentView.value.type === 'weeks') {
       // Automatically close the calendar when a day is selected
-      isOpen.value = false;
+      pickerContext?.close();
     }
   }
 
   const handleKeyDown = useCalendarKeyboard(context, currentView);
-  const buttonProps = useControlButtonProps(() => ({
-    onClick: () => {
-      isOpen.value = true;
-    },
-  }));
 
   const pickerHandlers = {
     onKeydown(e: KeyboardEvent) {
@@ -222,13 +217,11 @@ export function useCalendar(_props: Reactivify<CalendarProps, 'field' | 'schema'
       }
 
       if (hasKeyCode(e, 'Escape')) {
-        isOpen.value = false;
-        return;
+        pickerContext?.close();
       }
 
       if (hasKeyCode(e, 'Tab')) {
-        isOpen.value = false;
-        return;
+        pickerContext?.close();
       }
     },
   };
@@ -241,26 +234,31 @@ export function useCalendar(_props: Reactivify<CalendarProps, 'field' | 'schema'
     }
   }
 
-  watch(isOpen, async value => {
-    if (!value) {
-      focusedDay.value = undefined;
-      setView('weeks');
-      return;
-    }
+  watch(
+    () => pickerContext?.isOpen(),
+    async value => {
+      if (!value) {
+        focusedDay.value = undefined;
+        setView('weeks');
+        return;
+      }
 
-    if (!focusedDay.value) {
-      focusedDay.value = selectedDate.value.copy();
-    }
+      if (!focusedDay.value) {
+        focusedDay.value = selectedDate.value.copy();
+      }
 
-    await nextTick();
-    focusCurrent();
-  });
+      await nextTick();
+      focusCurrent();
+    },
+    { immediate: true },
+  );
 
   const calendarProps = computed(() => {
     return withRefCapture(
       {
         id: calendarId,
         ...pickerHandlers,
+        role: 'application',
       },
       calendarEl,
     );
@@ -360,10 +358,6 @@ export function useCalendar(_props: Reactivify<CalendarProps, 'field' | 'schema'
   return exposeField(
     {
       /**
-       * Whether the calendar is open.
-       */
-      isOpen,
-      /**
        * The props for the calendar element.
        */
       calendarProps,
@@ -371,10 +365,7 @@ export function useCalendar(_props: Reactivify<CalendarProps, 'field' | 'schema'
        * The props for the grid element that displays the panel values.
        */
       gridProps,
-      /**
-       * The props for the button element.
-       */
-      buttonProps,
+
       /**
        * The current date.
        */

@@ -1,5 +1,5 @@
 import { Maybe, Reactivify, StandardSchema } from '../types';
-import { CalendarProps } from '../useCalendar';
+import type { CalendarProps } from '../useCalendar';
 import { createDescribedByProps, normalizeProps, useUniqId, withRefCapture } from '../utils/common';
 import { computed, shallowRef, toValue } from 'vue';
 import { exposeField, useFormField } from '../useFormField';
@@ -179,13 +179,39 @@ export function useDateTimeField(_props: Reactivify<DateTimeFieldProps, 'schema'
 
   return exposeField(
     {
-      controlEl,
+      /**
+       * The props to use for the control element.
+       */
       controlProps,
+
+      /**
+       * The props to use for the description element.
+       */
       descriptionProps,
+
+      /**
+       * The props to use for the label element.
+       */
       labelProps,
-      segments,
+
+      /**
+       * The props to use for the error message element.
+       */
       errorMessageProps,
+
+      /**
+       * The datetime segments, you need to render these with the `DateTimeSegment` component.
+       */
+      segments,
+
+      /**
+       * The props to use for the calendar composable/component.
+       */
       calendarProps,
+
+      /**
+       * The direction of the field.
+       */
       direction,
     },
     field,

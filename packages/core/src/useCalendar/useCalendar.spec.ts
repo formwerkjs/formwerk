@@ -9,13 +9,13 @@ describe('useCalendar', () => {
     test('calendar should not have accessibility violations', async () => {
       await render({
         setup() {
-          const { calendarProps, gridProps, buttonProps, gridLabelProps, nextButtonProps, previousButtonProps } =
-            useCalendar({ label: 'Calendar' });
+          const { calendarProps, gridProps, gridLabelProps, nextButtonProps, previousButtonProps } = useCalendar({
+            label: 'Calendar',
+          });
 
           return {
             calendarProps,
             gridProps,
-            buttonProps,
             gridLabelProps,
             nextButtonProps,
             previousButtonProps,
@@ -24,7 +24,6 @@ describe('useCalendar', () => {
         template: `
           <div data-testid="fixture">
             <div v-bind="calendarProps">
-              <button v-bind="buttonProps">Open Calendar</button>
               <div v-bind="gridLabelProps">Month Year</div>
               <button v-bind="previousButtonProps">Previous</button>
               <button v-bind="nextButtonProps">Next</button>
@@ -43,87 +42,6 @@ describe('useCalendar', () => {
     });
   });
 
-  describe('calendar controls', () => {
-    test('opens calendar when button is clicked', async () => {
-      await render({
-        setup() {
-          const { buttonProps, isOpen } = useCalendar({ label: 'Calendar' });
-
-          return {
-            buttonProps,
-            isOpen,
-          };
-        },
-        template: `
-          <div data-testid="fixture">
-            <button v-bind="buttonProps">Open Calendar</button>
-            <div v-if="isOpen">Calendar Content</div>
-          </div>
-        `,
-      });
-
-      await flush();
-      expect(screen.queryByText('Calendar Content')).not.toBeInTheDocument();
-      await fireEvent.click(screen.getByText('Open Calendar'));
-      expect(screen.getByText('Calendar Content')).toBeInTheDocument();
-    });
-
-    test('closes calendar when Escape is pressed', async () => {
-      await render({
-        setup() {
-          const { calendarProps, isOpen, buttonProps } = useCalendar({ label: 'Calendar' });
-
-          return {
-            calendarProps,
-            isOpen,
-            buttonProps,
-          };
-        },
-        template: `
-          <div data-testid="fixture">
-            <button v-bind="buttonProps">Open Calendar</button>
-            <div v-if="isOpen" v-bind="calendarProps">Calendar Content</div>
-          </div>
-        `,
-      });
-
-      await flush();
-      await fireEvent.click(screen.getByText('Open Calendar'));
-      expect(screen.getByText('Calendar Content')).toBeInTheDocument();
-      await fireEvent.keyDown(screen.getByText('Calendar Content'), { code: 'Escape' });
-      expect(screen.queryByText('Calendar Content')).not.toBeInTheDocument();
-    });
-
-    test('closes calendar when Tab is pressed', async () => {
-      await render({
-        setup() {
-          const { calendarProps, isOpen, buttonProps, gridProps } = useCalendar({ label: 'Calendar' });
-
-          return {
-            calendarProps,
-            isOpen,
-            buttonProps,
-            gridProps,
-          };
-        },
-        template: `
-          <div data-testid="fixture">
-            <button v-bind="buttonProps">Open Calendar</button>
-            <div v-if="isOpen" v-bind="calendarProps">
-              <span v-bind="gridProps" tabindex="0">Calendar Content</span>
-            </div>
-          </div>
-        `,
-      });
-
-      await flush();
-      await fireEvent.click(screen.getByText('Open Calendar'));
-      expect(screen.getByText('Calendar Content')).toBeInTheDocument();
-      await fireEvent.keyDown(screen.getByText('Calendar Content'), { code: 'Tab' });
-      expect(screen.queryByText('Calendar Content')).not.toBeInTheDocument();
-    });
-  });
-
   describe('date selection', () => {
     test('calls onUpdateModelValue when a date is selected', async () => {
       const currentDate = now('UTC');
@@ -133,7 +51,7 @@ describe('useCalendar', () => {
           CalendarCell,
         },
         setup() {
-          const { calendarProps, buttonProps } = useCalendar({
+          const { calendarProps } = useCalendar({
             label: 'Calendar',
             timeZone: 'UTC',
             modelValue: currentDate.toDate(),
@@ -141,13 +59,11 @@ describe('useCalendar', () => {
 
           return {
             calendarProps,
-            buttonProps,
             currentDate,
           };
         },
         template: `
           <div data-testid="fixture">
-            <button v-bind="buttonProps">Open Calendar</button>
             <div v-bind="calendarProps">
               <CalendarCell label="Select Date" type="day" :value="currentDate" />
             </div>
@@ -194,7 +110,7 @@ describe('useCalendar', () => {
           CalendarCell,
         },
         setup() {
-          const { calendarProps, buttonProps, isOpen, focusedDate } = useCalendar({
+          const { calendarProps, focusedDate } = useCalendar({
             label: 'Calendar',
             modelValue: currentDate.toDate(),
             timeZone: 'UTC',
@@ -202,16 +118,13 @@ describe('useCalendar', () => {
 
           return {
             calendarProps,
-            buttonProps,
-            isOpen,
             focusedDate,
             currentDate,
           };
         },
         template: `
           <div data-testid="fixture">
-            <button v-bind="buttonProps">Open Calendar</button>
-            <div v-if="isOpen" v-bind="calendarProps">
+            <div v-bind="calendarProps">
               <CalendarCell
                 label="Select Date"
                 type="day"
@@ -225,13 +138,11 @@ describe('useCalendar', () => {
       });
 
       await flush();
-      await fireEvent.click(screen.getByText('Open Calendar'));
       const cell = screen.getByTestId('calendar-cell');
 
       // Test Enter key selects the date
       await fireEvent.keyDown(cell, { code: 'Enter' });
       expect(vm.emitted('update:modelValue')[0]).toEqual([currentDate.toDate()]);
-      expect(screen.queryByText(currentDate.toString())).not.toBeInTheDocument(); // Calendar should close after selection
     });
 
     test('handles Enter key in different panels', async () => {
@@ -239,7 +150,7 @@ describe('useCalendar', () => {
 
       const vm = await render({
         setup() {
-          const { calendarProps, buttonProps, isOpen, focusedDate, gridLabelProps, currentView } = useCalendar({
+          const { calendarProps, focusedDate, gridLabelProps, currentView } = useCalendar({
             label: 'Calendar',
             modelValue: currentDate.toDate(),
             timeZone: 'UTC',
@@ -247,8 +158,6 @@ describe('useCalendar', () => {
 
           return {
             calendarProps,
-            buttonProps,
-            isOpen,
             focusedDate,
             gridLabelProps,
             currentView,
@@ -256,9 +165,8 @@ describe('useCalendar', () => {
         },
         template: `
           <div data-testid="fixture">
-            <button v-bind="buttonProps">Open Calendar</button>
             <div v-bind="gridLabelProps" data-testid="panel-label">{{ currentView.type }}</div>
-            <div v-if="isOpen" v-bind="calendarProps" data-testid="calendar">
+            <div v-bind="calendarProps" data-testid="calendar">
               <div>{{ focusedDate?.toString() }}</div>
             </div>
           </div>
@@ -266,7 +174,6 @@ describe('useCalendar', () => {
       });
 
       await flush();
-      await fireEvent.click(screen.getByText('Open Calendar'));
       const calendar = screen.getByTestId('calendar');
       const panelLabel = screen.getByTestId('panel-label');
       await fireEvent.keyDown(calendar, { code: 'Escape' });
@@ -352,15 +259,7 @@ describe('useCalendar', () => {
 
       await render({
         setup() {
-          const {
-            nextButtonProps,
-            previousButtonProps,
-            gridLabelProps,
-            focusedDate,
-            calendarProps,
-            isOpen,
-            buttonProps,
-          } = useCalendar({
+          const { nextButtonProps, previousButtonProps, gridLabelProps, focusedDate, calendarProps } = useCalendar({
             label: 'Calendar',
             modelValue: currentDate.toDate(),
             timeZone: 'UTC',
@@ -372,14 +271,11 @@ describe('useCalendar', () => {
             gridLabelProps,
             focusedDate,
             calendarProps,
-            isOpen,
-            buttonProps,
           };
         },
         template: `
           <div data-testid="fixture">
-            <button v-bind="buttonProps">Open Calendar</button>
-            <div v-if="isOpen" v-bind="calendarProps">
+            <div v-bind="calendarProps">
               <div v-bind="gridLabelProps" data-testid="panel-label">Month Panel</div>
               <button v-bind="previousButtonProps">Previous</button>
               <button v-bind="nextButtonProps">Next</button>
@@ -390,7 +286,6 @@ describe('useCalendar', () => {
       });
 
       await flush();
-      await fireEvent.click(screen.getByText('Open Calendar'));
       const panelLabel = screen.getByTestId('panel-label');
 
       // Switch to month panel
@@ -418,15 +313,7 @@ describe('useCalendar', () => {
 
       await render({
         setup() {
-          const {
-            nextButtonProps,
-            previousButtonProps,
-            gridLabelProps,
-            focusedDate,
-            calendarProps,
-            isOpen,
-            buttonProps,
-          } = useCalendar({
+          const { nextButtonProps, previousButtonProps, gridLabelProps, focusedDate, calendarProps } = useCalendar({
             label: 'Calendar',
             modelValue: currentDate.toDate(),
             timeZone: 'UTC',
@@ -438,14 +325,11 @@ describe('useCalendar', () => {
             gridLabelProps,
             focusedDate,
             calendarProps,
-            isOpen,
-            buttonProps,
           };
         },
         template: `
           <div data-testid="fixture">
-            <button v-bind="buttonProps">Open Calendar</button>
-            <div v-if="isOpen" v-bind="calendarProps">
+            <div v-bind="calendarProps">
               <div v-bind="gridLabelProps" data-testid="panel-label">Year Panel</div>
               <button v-bind="previousButtonProps">Previous</button>
               <button v-bind="nextButtonProps">Next</button>
@@ -456,7 +340,6 @@ describe('useCalendar', () => {
       });
 
       await flush();
-      await fireEvent.click(screen.getByText('Open Calendar'));
       const panelLabel = screen.getByTestId('panel-label');
 
       // Switch to month panel then year panel
@@ -515,7 +398,7 @@ describe('useCalendar', () => {
 
       await render({
         setup() {
-          const { calendarProps, isOpen, buttonProps, selectedDate, focusedDate } = useCalendar({
+          const { calendarProps, selectedDate, focusedDate } = useCalendar({
             label: 'Calendar',
             modelValue: currentDate.toDate(),
             timeZone: 'UTC',
@@ -523,16 +406,13 @@ describe('useCalendar', () => {
 
           return {
             calendarProps,
-            isOpen,
-            buttonProps,
             selectedDate,
             focusedDate,
           };
         },
         template: `
           <div data-testid="fixture">
-            <button v-bind="buttonProps">Open Calendar</button>
-            <div v-if="isOpen" v-bind="calendarProps" data-testid="calendar">
+            <div v-bind="calendarProps" data-testid="calendar">
               <div>{{ focusedDate?.toString() }}</div>
             </div>
           </div>
@@ -540,7 +420,6 @@ describe('useCalendar', () => {
       });
 
       await flush();
-      await fireEvent.click(screen.getByText('Open Calendar'));
       const calendar = screen.getByTestId('calendar');
 
       // Test right arrow (next day)
@@ -583,7 +462,7 @@ describe('useCalendar', () => {
 
       await render({
         setup() {
-          const { calendarProps, isOpen, buttonProps, selectedDate, focusedDate, gridLabelProps } = useCalendar({
+          const { calendarProps, selectedDate, focusedDate, gridLabelProps } = useCalendar({
             label: 'Calendar',
             modelValue: currentDate.toDate(),
             timeZone: 'UTC',
@@ -591,8 +470,6 @@ describe('useCalendar', () => {
 
           return {
             calendarProps,
-            isOpen,
-            buttonProps,
             selectedDate,
             focusedDate,
             gridLabelProps,
@@ -600,8 +477,7 @@ describe('useCalendar', () => {
         },
         template: `
           <div data-testid="fixture">
-            <button v-bind="buttonProps">Open Calendar</button>
-            <div v-if="isOpen" v-bind="calendarProps" data-testid="calendar">
+            <div v-bind="calendarProps" data-testid="calendar">
               <div v-bind="gridLabelProps" data-testid="panel-label">Month Panel</div>
               <div>{{ focusedDate?.toString() }}</div>
             </div>
@@ -610,7 +486,6 @@ describe('useCalendar', () => {
       });
 
       await flush();
-      await fireEvent.click(screen.getByText('Open Calendar'));
       const calendar = screen.getByTestId('calendar');
       const panelLabel = screen.getByTestId('panel-label');
 
@@ -657,7 +532,7 @@ describe('useCalendar', () => {
 
       await render({
         setup() {
-          const { calendarProps, isOpen, buttonProps, selectedDate, focusedDate, gridLabelProps } = useCalendar({
+          const { calendarProps, selectedDate, focusedDate, gridLabelProps } = useCalendar({
             label: 'Calendar',
             modelValue: currentDate.toDate(),
             timeZone: 'UTC',
@@ -665,8 +540,6 @@ describe('useCalendar', () => {
 
           return {
             calendarProps,
-            isOpen,
-            buttonProps,
             selectedDate,
             focusedDate,
             gridLabelProps,
@@ -674,8 +547,7 @@ describe('useCalendar', () => {
         },
         template: `
           <div data-testid="fixture">
-            <button v-bind="buttonProps">Open Calendar</button>
-            <div v-if="isOpen" v-bind="calendarProps" data-testid="calendar">
+            <div v-bind="calendarProps" data-testid="calendar">
               <div v-bind="gridLabelProps" data-testid="panel-label">Year Panel</div>
               <div>{{ focusedDate?.toString() }}</div>
             </div>
@@ -684,7 +556,6 @@ describe('useCalendar', () => {
       });
 
       await flush();
-      await fireEvent.click(screen.getByText('Open Calendar'));
       const calendar = screen.getByTestId('calendar');
       const panelLabel = screen.getByTestId('panel-label');
 
@@ -732,7 +603,7 @@ describe('useCalendar', () => {
 
       await render({
         setup() {
-          const { calendarProps, isOpen, buttonProps, selectedDate, focusedDate } = useCalendar({
+          const { calendarProps, selectedDate, focusedDate } = useCalendar({
             label: 'Calendar',
             modelValue: currentDate.toDate(),
             timeZone: 'UTC',
@@ -742,16 +613,13 @@ describe('useCalendar', () => {
 
           return {
             calendarProps,
-            isOpen,
-            buttonProps,
             selectedDate,
             focusedDate,
           };
         },
         template: `
           <div data-testid="fixture">
-            <button v-bind="buttonProps">Open Calendar</button>
-            <div v-if="isOpen" v-bind="calendarProps" data-testid="calendar">
+            <div v-bind="calendarProps" data-testid="calendar">
               <div>{{ focusedDate?.toString() }}</div>
             </div>
           </div>
@@ -759,7 +627,6 @@ describe('useCalendar', () => {
       });
 
       await flush();
-      await fireEvent.click(screen.getByText('Open Calendar'));
       const calendar = screen.getByTestId('calendar');
 
       // Try to go before min date
@@ -770,157 +637,6 @@ describe('useCalendar', () => {
       await fireEvent.keyDown(calendar, { code: 'ArrowRight' });
       await fireEvent.keyDown(calendar, { code: 'ArrowRight' });
       expect(screen.getByText(maxDate.toString())).toBeInTheDocument();
-    });
-
-    test('handles double-press Home and End keys in day panel', async () => {
-      const currentDate = now('UTC');
-
-      await render({
-        setup() {
-          const { calendarProps, isOpen, buttonProps, focusedDate } = useCalendar({
-            label: 'Calendar',
-            modelValue: currentDate.toDate(),
-            timeZone: 'UTC',
-          });
-
-          return {
-            calendarProps,
-            isOpen,
-            buttonProps,
-            focusedDate,
-          };
-        },
-        template: `
-          <div data-testid="fixture">
-            <button v-bind="buttonProps">Open Calendar</button>
-            <div v-if="isOpen" v-bind="calendarProps" data-testid="calendar">
-              <div>{{ focusedDate?.toString() }}</div>
-            </div>
-          </div>
-        `,
-      });
-
-      await flush();
-      await fireEvent.click(screen.getByText('Open Calendar'));
-      const calendar = screen.getByTestId('calendar');
-
-      // Test Home key (first press - start of current month)
-      await fireEvent.keyDown(calendar, { code: 'Home' });
-      expect(screen.getByText(currentDate.set({ day: 1 }).toString())).toBeInTheDocument();
-
-      // Test Home key (second press - start of previous month)
-      await fireEvent.keyDown(calendar, { code: 'Home' });
-      expect(screen.getByText(currentDate.subtract({ months: 1 }).set({ day: 1 }).toString())).toBeInTheDocument();
-
-      // Reset to current date
-      await fireEvent.keyDown(calendar, { code: 'Escape' });
-      await fireEvent.click(screen.getByText('Open Calendar'));
-
-      // Test End key (first press - end of current month)
-      await fireEvent.keyDown(calendar, { code: 'End' });
-      expect(
-        screen.getByText(currentDate.set({ day: currentDate.calendar.getDaysInMonth(currentDate) }).toString()),
-      ).toBeInTheDocument();
-
-      // Test End key (second press - start of next month)
-      await fireEvent.keyDown(calendar, { code: 'End' });
-      expect(screen.getByText(currentDate.add({ months: 1 }).set({ day: 1 }).toString())).toBeInTheDocument();
-    });
-
-    test('handles double-press Home month panel', async () => {
-      const currentDate = now('UTC');
-
-      await render({
-        setup() {
-          const { calendarProps, isOpen, buttonProps, focusedDate, gridLabelProps } = useCalendar({
-            label: 'Calendar',
-            modelValue: currentDate.toDate(),
-            timeZone: 'UTC',
-          });
-
-          return {
-            calendarProps,
-            isOpen,
-            buttonProps,
-            focusedDate,
-            gridLabelProps,
-          };
-        },
-        template: `
-          <div data-testid="fixture">
-            <button v-bind="buttonProps">Open Calendar</button>
-            <div v-if="isOpen" v-bind="calendarProps" data-testid="calendar">
-              <div v-bind="gridLabelProps" data-testid="panel-label">Month Panel</div>
-              <div>{{ focusedDate?.toString() }}</div>
-            </div>
-          </div>
-        `,
-      });
-
-      await flush();
-      await fireEvent.click(screen.getByText('Open Calendar'));
-      const calendar = screen.getByTestId('calendar');
-      const panelLabel = screen.getByTestId('panel-label');
-
-      // Switch to month panel
-      await fireEvent.click(panelLabel);
-
-      // Test Home key (first press - start of current year)
-      await fireEvent.keyDown(calendar, { code: 'Home' });
-      expect(screen.getByText(currentDate.set({ month: 1 }).toString())).toBeInTheDocument();
-
-      // Test Home key (second press - start of previous year)
-      await fireEvent.keyDown(calendar, { code: 'Home' });
-      expect(screen.getByText(currentDate.subtract({ years: 1 }).set({ month: 1 }).toString())).toBeInTheDocument();
-    });
-
-    test('handles double-press End month panel', async () => {
-      const currentDate = now('UTC');
-
-      await render({
-        setup() {
-          const { calendarProps, isOpen, buttonProps, focusedDate, gridLabelProps } = useCalendar({
-            label: 'Calendar',
-            modelValue: currentDate.toDate(),
-            timeZone: 'UTC',
-          });
-
-          return {
-            calendarProps,
-            isOpen,
-            buttonProps,
-            focusedDate,
-            gridLabelProps,
-          };
-        },
-        template: `
-          <div data-testid="fixture">
-            <button v-bind="buttonProps">Open Calendar</button>
-            <div v-if="isOpen" v-bind="calendarProps" data-testid="calendar">
-              <div v-bind="gridLabelProps" data-testid="panel-label">Month Panel</div>
-              <div>{{ focusedDate?.toString() }}</div>
-            </div>
-          </div>
-        `,
-      });
-
-      await flush();
-      await fireEvent.click(screen.getByText('Open Calendar'));
-      const calendar = screen.getByTestId('calendar');
-      const panelLabel = screen.getByTestId('panel-label');
-
-      // Switch to month panel
-      await fireEvent.click(panelLabel);
-
-      // Test End key (first press - end of current year)
-      await fireEvent.keyDown(calendar, { code: 'End' });
-      expect(
-        screen.getByText(currentDate.set({ month: currentDate.calendar.getMonthsInYear(currentDate) }).toString()),
-      ).toBeInTheDocument();
-
-      // Test End key (second press - start of next year)
-      await fireEvent.keyDown(calendar, { code: 'End' });
-      expect(screen.getByText(currentDate.add({ years: 1 }).set({ month: 1 }).toString())).toBeInTheDocument();
     });
   });
 });

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useDateTimeField, DateTimeFieldProps, DateTimeSegment } from '@formwerk/core';
+import { useDateTimeField, DateTimeFieldProps, DateTimeSegment, usePicker } from '@formwerk/core';
 import Calendar from './Calendar.vue';
 
 const props = defineProps<DateTimeFieldProps>();
@@ -15,6 +15,8 @@ const {
   calendarProps,
   direction,
 } = useDateTimeField(props);
+
+const { pickerProps, pickerTriggerProps } = usePicker({});
 </script>
 
 <template>
@@ -28,10 +30,12 @@ const {
         <DateTimeSegment v-for="segment in segments" v-bind="segment" class="segment" />
       </div>
 
-      <button v-bind="buttonProps">📅</button>
+      <button v-bind="pickerTriggerProps">📅</button>
     </div>
 
-    <Calendar v-bind="calendarProps" />
+    <div v-bind="pickerProps" popover>
+      <Calendar v-bind="calendarProps" />
+    </div>
 
     <span v-bind="errorMessageProps" class="w-full truncate error-message">
       {{ errorMessage }}
