@@ -25,6 +25,6 @@ const islamic = createCalendar('islamic-umalqura');
       }"
     /> -->
 
-    <Calendar label="Pick a date" locale="ar-EG" :calendar="islamic" />
+    <Calendar label="Pick a date" :min="minDate" :max="maxDate" />
   </div>
 </template>

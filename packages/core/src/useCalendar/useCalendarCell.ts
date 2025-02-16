@@ -4,6 +4,7 @@ import { computed, defineComponent, h, inject, shallowRef, toValue } from 'vue';
 import { CalendarCellProps, CalendarViewType } from './types';
 import { CalendarContextKey } from './constants';
 import { createDisabledContext } from '../helpers/createDisabledContext';
+import { blockEvent } from '../utils/events';
 
 export function useCalendarCell(_props: Reactivify<CalendarCellProps>) {
   const props = normalizeProps(_props);
@@ -11,8 +12,16 @@ export function useCalendarCell(_props: Reactivify<CalendarCellProps>) {
   const calendarCtx = inject(CalendarContextKey, null);
   const isDisabled = createDisabledContext(props.disabled);
 
-  function handleClick() {
+  function handlePointerDown(e: PointerEvent) {
     if (isDisabled.value) {
+      blockEvent(e);
+      return;
+    }
+  }
+
+  function handleClick(e: MouseEvent) {
+    if (isDisabled.value) {
+      blockEvent(e);
       return;
     }
 
@@ -27,9 +36,10 @@ export function useCalendarCell(_props: Reactivify<CalendarCellProps>) {
     return withRefCapture(
       {
         key: toValue(props.value).toString(),
-        onClick: isDisabled.value ? undefined : handleClick,
+        onClick: handleClick,
+        onPointerdown: handlePointerDown,
         'aria-selected': toValue(props.selected),
-        'aria-disabled': isDisabled,
+        'aria-disabled': isDisabled.value,
         tabindex: isDisabled.value || !isFocused ? '-1' : '0',
       },
       cellEl,
