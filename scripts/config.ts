@@ -75,6 +75,7 @@ async function createConfig(pkg: keyof typeof pkgNameMap, format: ModuleFormat) 
         'klona',
         '@standard-schema/utils',
         '@standard-schema/spec',
+        '@internationalized/date',
       ].filter(Boolean) as string[],
       plugins: createPlugins({ version, pkg, format }),
     },

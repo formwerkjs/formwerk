@@ -1,5 +1,5 @@
-import { MaybeRefOrGetter, toValue } from 'vue';
-import { getUserLocale } from '../getUserLocale';
+import { MaybeRefOrGetter, toValue, watch } from 'vue';
+import { getUserLocale } from './getUserLocale';
 
 /**
  * Stuff that are considered "literals" that's not part of the number itself and should be stripped out when parsing/validating.
@@ -57,7 +57,7 @@ interface NumberSymbols {
   resolveNumber: (number: string) => string;
 }
 
-interface NumberParser {
+export interface NumberParser {
   formatter: Intl.NumberFormat;
   options: Intl.ResolvedNumberFormatOptions;
   locale: string;
@@ -67,6 +67,7 @@ interface NumberParser {
   isValidNumberPart(value: string): boolean;
 }
 
+// TODO: May memory leak in SSR
 const numberParserCache = new Map<string, NumberParser>();
 
 function getParser(locale: string, options: Intl.NumberFormatOptions) {
@@ -206,6 +207,8 @@ export function defineNumberParser(locale: string, options: Intl.NumberFormatOpt
   };
 }
 
+export type NumberParserContext = Pick<NumberParser, 'parse' | 'isValidNumberPart'>;
+
 export function useNumberParser(
   locale: MaybeRefOrGetter<string | undefined>,
   opts?: MaybeRefOrGetter<Intl.NumberFormatOptions | undefined>,
@@ -273,11 +276,17 @@ export function useNumberParser(
     return resolveParser(value).isValidNumberPart(value);
   }
 
-  function format(value: number): string {
-    const defaultParser = getParser(toValue(locale) ?? toValue(resolvedLocale), toValue(opts) || {});
-
-    return (lastResolvedParser ?? defaultParser).format(value);
+  function getDefaultParser() {
+    return getParser(toValue(locale) ?? toValue(resolvedLocale), toValue(opts) || {});
   }
+
+  function format(value: number): string {
+    return (lastResolvedParser ?? getDefaultParser()).format(value);
+  }
+
+  watch([() => toValue(locale), () => toValue(opts)], () => {
+    lastResolvedParser = getDefaultParser();
+  });
 
   return {
     parse,

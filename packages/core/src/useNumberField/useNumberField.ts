@@ -1,4 +1,4 @@
-import { Ref, computed, nextTick, shallowRef, toValue } from 'vue';
+import { Ref, computed, nextTick, shallowRef, toValue, watch } from 'vue';
 import {
   createDescribedByProps,
   fromNumberish,
@@ -144,8 +144,9 @@ export function useNumberField(
   const props = normalizeProps(_props, ['schema']);
   const inputId = useUniqId(FieldTypePrefixes.NumberField);
   const inputEl = elementRef || shallowRef<HTMLInputElement>();
-  const { locale } = useLocale();
-  const parser = useNumberParser(() => toValue(props.locale) ?? locale.value, props.formatOptions);
+  const { locale } = useLocale(props.locale);
+  const parser = useNumberParser(locale, props.formatOptions);
+
   const field = useFormField<number>({
     path: props.name,
     initialValue: toValue(props.modelValue) ?? fromNumberish(props.value),
@@ -153,19 +154,28 @@ export function useNumberField(
     schema: props.schema,
   });
 
+  const formattedText = shallowRef<string>('');
   const { validityDetails, updateValidity } = useInputValidity({
     inputEl,
     field,
     disableHtmlValidation: props.disableHtmlValidation,
   });
-  const { fieldValue, setValue, setTouched, errorMessage, isDisabled } = field;
-  const formattedText = computed<string>(() => {
-    if (Number.isNaN(fieldValue.value) || isEmpty(fieldValue.value)) {
-      return '';
-    }
 
-    return parser.format(fieldValue.value);
-  });
+  const { fieldValue, setValue, setTouched, errorMessage, isDisabled } = field;
+
+  watch(
+    [locale, () => toValue(props.formatOptions), fieldValue],
+    () => {
+      if (Number.isNaN(fieldValue.value) || isEmpty(fieldValue.value)) {
+        formattedText.value = '';
+
+        return;
+      }
+
+      formattedText.value = parser.format(fieldValue.value);
+    },
+    { immediate: true },
+  );
 
   const { labelProps, labelledByProps } = useLabel({
     for: inputId,

@@ -128,6 +128,11 @@ export function useInputValidity(opts: InputValidityOptions) {
     useEventListener(opts.inputEl, opts?.events || ['invalid'], () => validateNative(true));
   }
 
+  // TODO: is this the best approach?
+  if (!opts.inputEl) {
+    watch(opts.field.fieldValue, updateValidity);
+  }
+
   /**
    * Validity is always updated on mount.
    */

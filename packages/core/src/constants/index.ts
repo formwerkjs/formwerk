@@ -18,6 +18,9 @@ export const FieldTypePrefixes = {
   CustomField: 'cf',
   ComboBox: 'cbx',
   ListBox: 'lb',
+  DateTimeField: 'dtf',
+  DateTimeSegment: 'dts',
+  Calendar: 'cal',
 } as const;
 
 export const NOOP = () => {};

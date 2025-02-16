@@ -3,7 +3,7 @@
   "private": true,
   "version": "0.0.1",
   "scripts": {
-    "dev": "vite",
+    "dev": "vite --host",
     "build": "vue-tsc && vite build",
     "preview": "vite preview"
   },
@@ -12,6 +12,7 @@
     "@tailwindcss/postcss": "^4.0.6",
     "fuse.js": "^7.1.0",
     "tailwindcss": "^4.0.6",
+    "@internationalized/date": "^3.7.0",
     "vue": "^3.5.13",
     "vue-i18n": "^11.1.1",
     "yup": "^1.6.1",
