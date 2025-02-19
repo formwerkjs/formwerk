@@ -6,6 +6,7 @@ import { FieldTypePrefixes } from '../constants';
 import { blockEvent } from '../utils/events';
 import { DateTimeSegmentType } from './types';
 import { isEditableSegmentType } from './constants';
+import { createDisabledContext } from '../helpers/createDisabledContext';
 
 export interface DateTimeSegmentProps {
   /**
@@ -22,6 +23,11 @@ export interface DateTimeSegmentProps {
    * Whether the segment is disabled.
    */
   disabled?: boolean;
+
+  /**
+   * Whether the segment is readonly.
+   */
+  readonly?: boolean;
 }
 
 interface DateTimeSegmentDomProps {
@@ -30,6 +36,7 @@ interface DateTimeSegmentDomProps {
   role?: string;
   contenteditable: string | undefined;
   'aria-disabled': boolean | undefined;
+  'aria-readonly': boolean | undefined;
   'data-segment-type': DateTimeSegmentType;
   style: CSSProperties;
   'aria-label'?: string;
@@ -48,7 +55,8 @@ export function useDateTimeSegment(_props: Reactivify<DateTimeSegmentProps>) {
   const id = useUniqId(FieldTypePrefixes.DateTimeSegment);
   const segmentEl = shallowRef<HTMLSpanElement>();
   const segmentGroup = inject(DateTimeSegmentGroupKey, null);
-  const isNonEditable = () => toValue(props.disabled) || !isEditableSegmentType(toValue(props.type));
+  const isDisabled = createDisabledContext(props.disabled);
+  const isNonEditable = () => isDisabled.value || !isEditableSegmentType(toValue(props.type));
 
   if (!segmentGroup) {
     throw new Error('DateTimeSegmentGroup is not provided');
@@ -80,6 +88,11 @@ export function useDateTimeSegment(_props: Reactivify<DateTimeSegmentProps>) {
       currentInput = '';
     },
     onBeforeinput(evt: InputEvent) {
+      if (toValue(props.readonly) || isDisabled.value) {
+        blockEvent(evt);
+        return;
+      }
+
       // No data,like backspace or whatever
       if (isNullOrUndefined(evt.data)) {
         return;
@@ -129,6 +142,10 @@ export function useDateTimeSegment(_props: Reactivify<DateTimeSegmentProps>) {
       currentInput = '';
     },
     onKeydown(evt: KeyboardEvent) {
+      if (toValue(props.readonly) || isDisabled.value) {
+        return;
+      }
+
       if (hasKeyCode(evt, 'Enter')) {
         blockEvent(evt);
         focusNext();
@@ -165,9 +182,10 @@ export function useDateTimeSegment(_props: Reactivify<DateTimeSegmentProps>) {
       id,
       tabindex: isNonEditable() ? -1 : 0,
       contenteditable: isNonEditable() ? undefined : 'plaintext-only',
-      'aria-disabled': toValue(props.disabled),
+      'aria-disabled': isDisabled.value,
       'data-segment-type': toValue(props.type),
       'aria-label': isNonEditable() ? undefined : toValue(props.type),
+      'aria-readonly': toValue(props.readonly) ? true : undefined,
       autocorrect: isNonEditable() ? undefined : 'off',
       spellcheck: isNonEditable() ? undefined : false,
       enterkeyhint: isNonEditable() ? undefined : isLast() ? 'done' : 'next',
@@ -203,7 +221,7 @@ export function useDateTimeSegment(_props: Reactivify<DateTimeSegmentProps>) {
 
 export const DateTimeSegment = defineComponent<DateTimeSegmentProps>({
   name: 'DateTimeSegment',
-  props: ['type', 'value', 'disabled'],
+  props: ['type', 'value', 'disabled', 'readonly'],
   setup(props) {
     const { segmentProps } = useDateTimeSegment(props);
 

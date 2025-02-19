@@ -46,6 +46,7 @@ export interface DateTimeSegmentGroupProps {
   temporalValue: MaybeRefOrGetter<ZonedDateTime | TemporalPartial>;
   direction?: MaybeRefOrGetter<Direction>;
   controlEl: Ref<HTMLElement | undefined>;
+  readonly?: MaybeRefOrGetter<boolean | undefined>;
   min?: MaybeRefOrGetter<Maybe<ZonedDateTime>>;
   max?: MaybeRefOrGetter<Maybe<ZonedDateTime>>;
   onValueChange: (value: ZonedDateTime) => void;
@@ -59,6 +60,7 @@ export function useDateTimeSegmentGroup({
   direction,
   locale,
   controlEl,
+  readonly,
   min,
   max,
   onValueChange,
@@ -78,7 +80,7 @@ export function useDateTimeSegmentGroup({
 
   const segments = computed(() => {
     const date = toValue(temporalValue);
-    const parts = formatter.value.formatToParts(date.toDate()) as {
+    let parts = formatter.value.formatToParts(date.toDate()) as {
       type: DateTimeSegmentType;
       value: string;
     }[];
@@ -93,6 +95,15 @@ export function useDateTimeSegmentGroup({
           part.value = getSegmentTypePlaceholder(part.type) ?? part.value;
         }
       }
+    }
+
+    if (toValue(readonly)) {
+      parts = parts.map(part => {
+        return {
+          ...part,
+          readonly: true,
+        };
+      });
     }
 
     return parts;

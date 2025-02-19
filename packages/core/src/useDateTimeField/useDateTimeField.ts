@@ -10,6 +10,7 @@ import { useErrorMessage, useLabel } from '../a11y';
 import { fromDateToCalendarZonedDateTime, useTemporalStore } from './useTemporalStore';
 import { ZonedDateTime, Calendar } from '@internationalized/date';
 import { useInputValidity } from '../validation';
+import { createDisabledContext } from '../helpers/createDisabledContext';
 
 export interface DateTimeFieldProps {
   /**
@@ -96,6 +97,7 @@ export function useDateTimeField(_props: Reactivify<DateTimeFieldProps, 'schema'
     timeZone: () => toValue(props.timeZone),
   });
 
+  const isDisabled = createDisabledContext(props.disabled);
   const formatter = useDateFormatter(locale, props.formatOptions);
   const controlId = useUniqId(FieldTypePrefixes.DateTimeField);
 
@@ -126,8 +128,10 @@ export function useDateTimeField(_props: Reactivify<DateTimeFieldProps, 'schema'
     formatter,
     locale,
     formatOptions: props.formatOptions,
+    direction,
     controlEl,
     temporalValue,
+    readonly: props.readonly,
     onValueChange,
     onTouched: () => field.setTouched(true),
     min: computed(() => fromDateToCalendarZonedDateTime(toValue(props.min), calendar.value, timeZone.value)),
@@ -172,6 +176,7 @@ export function useDateTimeField(_props: Reactivify<DateTimeFieldProps, 'schema'
         ...labelledByProps.value,
         ...describedByProps.value,
         ...accessibleErrorProps.value,
+        'aria-disabled': isDisabled.value || undefined,
       },
       controlEl,
     );
