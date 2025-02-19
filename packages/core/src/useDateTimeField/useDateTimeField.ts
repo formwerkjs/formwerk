@@ -21,7 +21,7 @@ export interface DateTimeFieldProps {
   /**
    * The name to use for the field.
    */
-  name: string;
+  name?: string;
 
   /**
    * The locale to use for the field.
