@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import DateField from '@/components/DateField.vue';
 import Calendar from '@/components/Calendar.vue';
+import { createCalendar, IslamicUmalquraCalendar } from '@internationalized/date';
+const calendar = createCalendar('islamic-umalqura');
 
 // You need to be careful with the time component of the date object.
 // JS date objects fills the date time with the current time component.
@@ -11,20 +13,6 @@ const max = new Date('2025-01-20');
 
 <template>
   <div class="flex flex-col gap-4">
-    <!-- <DateField
-      name="date"
-      label="Date"
-      :format-options="{
-        day: '2-digit',
-        month: 'numeric',
-        year: 'numeric',
-        hour: '2-digit',
-        hour12: true,
-        minute: '2-digit',
-        second: '2-digit',
-      }"
-    /> -->
-
-    <Calendar label="Calendar" :value="value" readonly />
+    <DateField label="Hijri Date" :value="new Date('2025-02-11')" :calendar="calendar" locale="ar-EG" />
   </div>
 </template>

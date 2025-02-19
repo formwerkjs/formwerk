@@ -46,6 +46,8 @@ const { pickerProps, pickerTriggerProps } = usePicker({
 </template>
 
 <style scoped lang="postcss">
+@reference "../style.css";
+
 .InputDate {
   font-family: 'Monaspace Neon Var';
   @apply relative w-full;
