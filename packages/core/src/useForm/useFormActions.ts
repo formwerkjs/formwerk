@@ -51,8 +51,8 @@ export interface FormActions<TForm extends FormObject, TOutput extends FormObjec
    * ```
    */
   handleSubmit: (
-    onSuccess: (payload: ConsumableData<TOutput>, ctx: SubmitContext) => MaybeAsync<unknown>,
-  ) => (e?: Event) => Promise<unknown>;
+    onSuccess: (payload: ConsumableData<TOutput>, ctx: SubmitContext) => MaybeAsync<void>,
+  ) => (e?: Event) => Promise<void>;
   /**
    * Resets the form to its initial state.
    */
