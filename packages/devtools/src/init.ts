@@ -1,4 +1,4 @@
-import { App, getCurrentInstance, nextTick } from 'vue';
+import { App, getCurrentInstance, nextTick, onUnmounted, watch } from 'vue';
 import { throttle } from 'packages/shared/src';
 import { FormField, FormReturns } from '@core/index';
 import { isSSR } from '@core/utils/common';
@@ -11,7 +11,7 @@ import {
   mapFormForDevtoolsInspector,
 } from './helpers';
 import { getInspectorId } from './constants';
-import { getAllForms, getRootFields } from './registry';
+import { getAllForms, getRootFields, registerField as _registerField, registerForm as _registerForm } from './registry';
 
 let SELECTED_NODE:
   | { type: 'form'; form: FormReturns }
@@ -133,7 +133,7 @@ async function installDevtoolsPlugin(app: App) {
   }
 }
 
-export const refreshInspector = throttle(() => {
+const refreshInspector = throttle(() => {
   const INSPECTOR_ID = getInspectorId();
 
   setTimeout(async () => {
@@ -155,4 +155,31 @@ export function initDevTools() {
   }
 
   return vm;
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function registerField(field: FormField<any>, type: string) {
+  const vm = initDevTools();
+  const watchable = _registerField(field, type, vm);
+
+  watch(watchable, refreshInspector, {
+    deep: true,
+  });
+
+  onUnmounted(refreshInspector);
+
+  refreshInspector();
+}
+
+export function registerForm(form: FormReturns) {
+  const vm = initDevTools();
+  const watchable = _registerForm(form, vm);
+
+  watch(watchable, refreshInspector, {
+    deep: true,
+  });
+
+  onUnmounted(refreshInspector);
+
+  refreshInspector();
 }

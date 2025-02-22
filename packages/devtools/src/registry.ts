@@ -1,6 +1,5 @@
-import { FormField, FormReturns } from '@core/index';
-import { initDevTools, refreshInspector } from './init';
-import { onUnmounted, watch } from 'vue';
+import { FormField, FormReturns, Maybe } from '@core/index';
+import { ComponentInternalInstance, onUnmounted } from 'vue';
 import { DevtoolsForm, DevtoolsRootForm } from './types';
 import { getRootFormId } from './constants';
 
@@ -48,8 +47,7 @@ export function getAllForms() {
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function registerField(field: FormField<any>, type: string) {
-  const vm = initDevTools();
+export function registerField(field: FormField<any>, type: string, vm: Maybe<ComponentInternalInstance>) {
   const id = field.getPath() ?? field.getName() ?? '';
   const formId = field.form?.id ?? getRootFormId();
 
@@ -77,31 +75,20 @@ export function registerField(field: FormField<any>, type: string) {
     type,
   });
 
-  watch(
-    () => ({
-      errors: field.errorMessage.value,
-      isValid: field.isValid.value,
-      isDirty: field.isDirty.value,
-      touched: field.isTouched.value,
-      value: field.fieldValue.value,
-    }),
-    refreshInspector,
-    {
-      deep: true,
-    },
-  );
-
   onUnmounted(() => {
     form.fields.delete(id);
-    refreshInspector();
   });
 
-  refreshInspector();
+  return () => ({
+    errors: field.errorMessage.value,
+    isValid: field.isValid.value,
+    isDirty: field.isDirty.value,
+    touched: field.isTouched.value,
+    value: field.fieldValue.value,
+  });
 }
 
-export function registerForm(form: FormReturns) {
-  const vm = initDevTools();
-
+export function registerForm(form: FormReturns, vm: Maybe<ComponentInternalInstance>) {
   if (!TREE) {
     TREE = new Map();
   }
@@ -114,26 +101,15 @@ export function registerForm(form: FormReturns) {
     });
   }
 
-  watch(
-    () => ({
-      errors: form.getErrors(),
-      isValid: form.isValid(),
-      isDirty: form.isDirty(),
-      touched: form.isTouched(),
-      values: form.values,
-      isSubmitting: form.isSubmitting.value,
-      submitAttemptsCount: form.submitAttemptsCount.value,
-    }),
-    refreshInspector,
-    {
-      deep: true,
-    },
-  );
-
   onUnmounted(() => {
     TREE.delete(form.context.id);
-    refreshInspector();
   });
 
-  refreshInspector();
+  return () => ({
+    errors: form.getErrors(),
+    isValid: form.isValid(),
+    isDirty: form.isDirty(),
+    touched: form.isTouched(),
+    values: form.values,
+  });
 }
