@@ -70,8 +70,9 @@ async function createConfig(pkg: keyof typeof pkgNameMap, format: ModuleFormat) 
       input: slashes(path.resolve(__dirname, `../packages/${pkg}/src/index.ts`)),
       external: [
         'vue',
+        'klona',
+        'type-fest',
         pkg === 'core' ? '@formwerk/devtools' : undefined,
-        pkg === 'core' ? 'klona' : undefined,
         pkg === 'core' ? '@standard-schema/utils' : undefined,
         pkg === 'core' ? '@standard-schema/spec' : undefined,
         pkg === 'core' ? '@internationalized/date' : undefined,
