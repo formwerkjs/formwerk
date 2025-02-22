@@ -12,6 +12,7 @@ import {
 } from './helpers';
 import { getInspectorId } from './constants';
 import { getAllForms, getRootFields, registerField as _registerField, registerForm as _registerForm } from './registry';
+import { brandMessage } from './utils';
 
 let SELECTED_NODE:
   | { type: 'form'; form: FormReturns }
@@ -57,19 +58,38 @@ async function installDevtoolsPlugin(app: App) {
                 tooltip: 'Validate selected item',
                 action: async () => {
                   if (!SELECTED_NODE) {
-                    console.error('There is not a valid selected Formwerk node or component');
+                    console.error(brandMessage('There is not a valid selected Formwerk node or component'));
                     return;
                   }
+
+                  if (SELECTED_NODE.type === 'form') {
+                    SELECTED_NODE.form.validate();
+                    return;
+                  }
+
+                  if (SELECTED_NODE.type === 'field') {
+                    SELECTED_NODE.field.validate();
+                    return;
+                  }
+
+                  console.warn(brandMessage('Validating a non-field or form path is not yet implemented'));
                 },
               },
               {
-                icon: 'delete_sweep',
-                tooltip: 'Clear validation state of the selected item',
+                icon: 'replay',
+                tooltip: 'Reset selected item to its initial state',
                 action: () => {
                   if (!SELECTED_NODE) {
-                    console.error('There is not a valid selected Formwerk node or component');
+                    console.error(brandMessage('There is not a valid selected Formwerk node or component'));
                     return;
                   }
+
+                  if (SELECTED_NODE.type === 'form') {
+                    SELECTED_NODE.form.reset();
+                    return;
+                  }
+
+                  console.warn(brandMessage('Resetting a non-field or form path is not yet implemented'));
                 },
               },
             ],

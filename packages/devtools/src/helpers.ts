@@ -12,7 +12,7 @@ import {
 import type { FormReturns, FormField } from '@core/index';
 import { ComponentInternalInstance, toValue } from 'vue';
 import { getPluginColors } from './constants';
-import { buildFormTree } from './utils';
+import { brandMessage, buildFormTree } from './utils';
 import { setInPath } from '@core/utils/path';
 import { getField, getForm } from './registry';
 
@@ -165,7 +165,7 @@ export function decodeNodeId(nodeId: string): {
     };
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
   } catch (err) {
-    console.error(`Devtools: [formwerk] Failed to parse node id ${nodeId}`);
+    console.error(brandMessage(`Failed to parse node id ${nodeId}`));
   }
 
   return {};

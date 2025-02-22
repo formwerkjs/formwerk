@@ -41,3 +41,7 @@ export function buildFormTree(tree: any[] | Record<string, any>, path: string[] 
 
   return { id: '', label: '', children: [] };
 }
+
+export function brandMessage(message: string) {
+  return `[Formwerk Devtools]: ${message}`;
+}
