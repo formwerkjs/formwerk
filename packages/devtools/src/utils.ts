@@ -1,6 +1,8 @@
 import { CustomInspectorNode } from '@vue/devtools-kit';
+import type { FormReturns } from '@core/index';
 import { PathState } from './types';
 import { isObject } from 'packages/shared/src/utils';
+import { encodeNodeId } from './helpers';
 
 /**
  * A typed version of Object.keys
@@ -14,7 +16,11 @@ export function isPathState(value: any): value is PathState {
   return value && 'path' in value && 'value' in value;
 }
 
-export function buildFormTree(tree: any[] | Record<string, any>, path: string[] = []): CustomInspectorNode {
+export function buildFormTree(
+  tree: any[] | Record<string, any>,
+  path: string[] = [],
+  form: FormReturns,
+): CustomInspectorNode {
   const key = [...path].pop();
   if ('id' in tree) {
     return {
@@ -23,19 +29,32 @@ export function buildFormTree(tree: any[] | Record<string, any>, path: string[] 
     } as CustomInspectorNode;
   }
 
+  const fullPath = path.join('.');
+
+  const nodeState: PathState = {
+    formId: form.context.id,
+    dirty: form.isDirty(fullPath),
+    valid: form.isValid(fullPath),
+    errors: form.getErrors(fullPath),
+    value: form.getValue(fullPath),
+    touched: form.isTouched(fullPath),
+    type: 'path',
+    path: fullPath,
+  };
+
   if (isObject(tree)) {
     return {
-      id: `${path.join('.')}`,
+      id: encodeNodeId(nodeState),
       label: key || '',
-      children: Object.keys(tree).map(key => buildFormTree(tree[key] as any, [...path, key])),
+      children: Object.keys(tree).map(key => buildFormTree(tree[key] as any, [...path, key], form)),
     };
   }
 
   if (Array.isArray(tree)) {
     return {
-      id: `${path.join('.')}`,
+      id: encodeNodeId(nodeState),
       label: `${key}[]`,
-      children: tree.map((c, idx) => buildFormTree(c, [...path, String(idx)])),
+      children: tree.map((c, idx) => buildFormTree(c, [...path, String(idx)], form)),
     };
   }
 

@@ -3,22 +3,20 @@ import {
   DevtoolsField,
   DevtoolsForm,
   EncodedNode,
+  FieldState,
   fieldToState,
+  FormState,
   formToState,
-  NODE_TYPE,
   NodeState,
   PathState,
 } from './types';
-import type { FormReturns, FormField } from '@core/index';
-import { ComponentInternalInstance, toValue } from 'vue';
+import { toValue } from 'vue';
 import { getPluginColors } from './constants';
 import { brandMessage, buildFormTree } from './utils';
 import { setInPath } from '@core/utils/path';
 import { getField, getForm } from './registry';
 
-export function buildFieldState(
-  state: Pick<PathState, 'errors' | 'touched' | 'dirty' | 'value' | 'valid'>,
-): CustomInspectorState {
+export function buildFieldState(state: FieldState | PathState): CustomInspectorState {
   return {
     'Field state': [
       { key: 'errors', value: state.errors },
@@ -42,68 +40,56 @@ export function buildFieldState(
   };
 }
 
-export function buildFormState(form: FormReturns): CustomInspectorState {
-  const { isSubmitting, isTouched, isDirty, isValid, submitAttemptsCount, values, getErrors } = form;
-
+export function buildFormState(form: FormState): CustomInspectorState {
   return {
     'Form state': [
       {
         key: 'submitCount',
-        value: submitAttemptsCount.value,
+        value: form.submitCount,
       },
       {
         key: 'isSubmitting',
-        value: isSubmitting.value,
+        value: form.isSubmitting,
       },
       {
         key: 'touched',
-        value: isTouched(),
+        value: form.touched,
       },
       {
         key: 'dirty',
-        value: isDirty(),
+        value: form.dirty,
       },
       {
         key: 'valid',
-        value: isValid(),
+        value: form.valid,
       },
       {
         key: 'currentValues',
-        value: values,
+        value: form.value,
       },
       {
         key: 'errors',
-        value: getErrors(),
+        value: form.errors,
       },
     ],
   };
 }
 
 export function encodeNodeId(nodeState?: NodeState): string {
-  const type = (() => {
-    if (!nodeState) {
-      return 'unknown';
+  const ff = (() => {
+    if (nodeState?.type !== 'field') {
+      return '';
     }
 
-    if ('id' in nodeState) {
-      return 'form';
-    } else if ('path' in nodeState) {
-      return 'field';
-    } else {
-      return 'pathState';
-    }
+    return nodeState.path;
   })();
 
-  const ff = (() => {
-    if (!nodeState) {
+  const fp = (() => {
+    if (nodeState?.type !== 'path') {
       return '';
     }
 
-    if ('path' in nodeState) {
-      return nodeState.path;
-    } else {
-      return '';
-    }
+    return nodeState.path;
   })();
 
   const form = (() => {
@@ -111,64 +97,77 @@ export function encodeNodeId(nodeState?: NodeState): string {
       return '';
     }
 
-    if ('id' in nodeState) {
+    if (nodeState.type === 'form') {
       return nodeState.id;
     }
 
-    if ('formId' in nodeState && nodeState.formId) {
-      return nodeState.formId;
+    if (nodeState.type === 'field' || nodeState.type === 'path') {
+      return nodeState.formId ?? '';
     }
 
     return '';
   })();
 
-  const idObject = { f: form, ff, type } satisfies EncodedNode;
+  const idObject = { f: form, ff, fp, type: nodeState?.type ?? 'unknown' } satisfies EncodedNode;
 
   return btoa(encodeURIComponent(JSON.stringify(idObject)));
 }
 
-export function decodeNodeId(nodeId: string): {
-  field?: FormField<unknown> & { _vm?: ComponentInternalInstance | null };
-  form?: FormReturns & { _vm?: ComponentInternalInstance | null };
-  state?: PathState;
-  type?: NODE_TYPE;
-} {
+export function decodeNode(nodeId: string): NodeState | null {
   try {
     const idObject = JSON.parse(decodeURIComponent(atob(nodeId))) as EncodedNode;
-    const form = getForm(idObject.f);
 
-    // standalone field
-    if (!form && idObject.ff) {
-      const field = getField(idObject.ff);
+    if (idObject.type === 'field') {
+      if (!idObject.ff) {
+        return null;
+      }
+
+      const field = getField(idObject.ff, idObject.f);
       if (!field) {
-        return {};
+        return null;
+      }
+
+      return fieldToState(field, idObject.f);
+    }
+
+    if (idObject.type === 'path') {
+      if (!idObject.fp) {
+        return null;
+      }
+
+      const form = getForm(idObject.f);
+
+      // Should not happen, path should always be relative to a form
+      if (!form || '_isRoot' in form) {
+        return null;
       }
 
       return {
-        type: idObject.type,
-        field,
+        type: 'path',
+        path: idObject.fp,
+        formId: idObject.f,
+        touched: form.isTouched(idObject.fp),
+        dirty: form.isDirty(idObject.fp),
+        valid: form.isValid(idObject.fp),
+        errors: form.getErrors(idObject.fp),
+        value: form.getValue(idObject.fp),
       };
     }
 
-    if (!form || '_isRoot' in form) {
-      return {};
+    if (idObject.type === 'form') {
+      const form = getForm(idObject.f);
+
+      if (!form || '_isRoot' in form) {
+        return null;
+      }
+
+      return formToState(form);
     }
-
-    const field = form.fields.get(idObject.ff);
-    const state = formToState(form);
-
-    return {
-      type: idObject.type,
-      form,
-      state,
-      field,
-    };
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  } catch (err) {
+  } catch {
     console.error(brandMessage(`Failed to parse node id ${nodeId}`));
   }
 
-  return {};
+  return null;
 }
 
 /**
@@ -218,7 +217,7 @@ export function mapFormForDevtoolsInspector(form: DevtoolsForm, filter?: string)
       setInPath(formTreeNodes, toValue(state.getPath() ?? ''), mapFieldForDevtoolsInspector(state, form));
     });
 
-  const { children } = buildFormTree(formTreeNodes);
+  const { children } = buildFormTree(formTreeNodes, [], form);
 
   return {
     id: encodeNodeId(formState),

@@ -1,8 +1,7 @@
 import type { FormField, FormReturns } from '@core/index';
 import { ComponentInternalInstance } from 'vue';
 
-// Base interface for state
-export interface PathState<TValue = unknown> {
+interface BaseState<TValue = unknown> {
   touched: boolean;
   dirty: boolean;
   valid: boolean;
@@ -10,16 +9,27 @@ export interface PathState<TValue = unknown> {
   value: TValue;
 }
 
+// Base interface for state
+export interface PathState<TValue = unknown> extends BaseState<TValue> {
+  type: 'path';
+  path: string;
+  formId?: string;
+}
+
 // Form state extending base state
-export interface FormState extends PathState {
+export interface FormState extends BaseState {
   id: string;
+  isSubmitting: boolean;
+  submitCount: number;
+  type: 'form';
 }
 
 // Field state extending base state
-export interface FieldState<TValue = unknown> extends PathState<TValue> {
+export interface FieldState<TValue = unknown> extends BaseState<TValue> {
   path: string;
   name: string;
   formId?: string;
+  type: 'field';
 }
 
 // Union type for node state
@@ -39,40 +49,30 @@ export type DevtoolsRootForm = {
   _isRoot: true;
 };
 
-// Devtools field type
-
-// Node types
-export const NODE_TYPES = {
-  form: 'form',
-  field: 'field',
-  pathState: 'pathState',
-  unknown: 'unknown',
-} as const;
-
-export type NODE_TYPE = keyof typeof NODE_TYPES;
-
 // Encoded node type
 export type EncodedNode = {
-  type: NODE_TYPE;
-  ff: string; // form field path
+  type: NodeState['type'] | 'unknown';
+  ff: string; // form field
   f: string; // form id
+  fp: string; // form path
 };
 
 // Functions to convert form and field to state
-export const formToState = (form: FormReturns): FormState => {
-  const errors = form.getErrors();
-
+export function formToState(form: FormReturns): FormState {
   return {
     id: form.context.id,
     touched: form.isTouched(),
     dirty: form.isDirty(),
-    valid: errors.length === 0,
+    isSubmitting: form.isSubmitting.value,
+    submitCount: form.submitAttemptsCount.value,
+    valid: form.isValid(),
     value: form.values,
-    errors,
+    errors: form.getErrors(),
+    type: 'form',
   };
-};
+}
 
-export const fieldToState = (field: FormField<unknown>, formId?: string): FieldState<unknown> => {
+export function fieldToState(field: FormField<unknown>, formId?: string): FieldState<unknown> {
   return {
     path: field.getPath() ?? '',
     name: field.getName() ?? '',
@@ -82,5 +82,6 @@ export const fieldToState = (field: FormField<unknown>, formId?: string): FieldS
     value: field.fieldValue,
     errors: field.errors.value.map(error => error?.[0]),
     formId,
+    type: 'field',
   };
-};
+}

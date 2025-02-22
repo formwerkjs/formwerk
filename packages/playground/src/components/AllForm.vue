@@ -34,16 +34,16 @@ const onSubmit = handleSubmit(payload => {
     <h2 class="text-2xl font-bold mb-6">Fields Inside Form</h2>
 
     <form @submit="onSubmit" class="space-y-6 mb-12">
-      <InputText name="username" label="Username" placeholder="Enter username" />
+      <InputText name="username.name" label="Username" placeholder="Enter username" />
       <InputNumber name="age" label="Age" :min="0" :max="120" />
       <InputTextArea name="description" label="Description" placeholder="Enter description" />
       <DateField name="birthdate" label="Birth Date" :value="value" :min="min" :max="max" />
       <InputSelect name="country" label="Country" :options="options" />
 
       <CheckboxGroup name="hobbies" label="Hobbies">
-        <CheckboxItem name="hobbies" value="reading" label="Reading" />
-        <CheckboxItem name="hobbies" value="gaming" label="Gaming" />
-        <CheckboxItem name="hobbies" value="coding" label="Coding" />
+        <CheckboxItem value="reading" label="Reading" />
+        <CheckboxItem value="gaming" label="Gaming" />
+        <CheckboxItem value="coding" label="Coding" />
       </CheckboxGroup>
 
       <RadioGroup name="gender" label="Gender">

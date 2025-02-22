@@ -6,12 +6,19 @@ import { PathState } from './types';
 import {
   buildFieldState,
   buildFormState,
-  decodeNodeId,
+  decodeNode,
   mapFieldForDevtoolsInspector,
   mapFormForDevtoolsInspector,
 } from './helpers';
 import { getInspectorId } from './constants';
-import { getAllForms, getRootFields, registerField as _registerField, registerForm as _registerForm } from './registry';
+import {
+  getAllForms,
+  getRootFields,
+  registerField as _registerField,
+  registerForm as _registerForm,
+  getForm,
+  getField,
+} from './registry';
 import { brandMessage } from './utils';
 
 let SELECTED_NODE:
@@ -19,9 +26,8 @@ let SELECTED_NODE:
   | { type: 'field'; field: FormField<unknown> }
   | null
   | {
-      type: 'pathState';
+      type: 'path';
       state: PathState;
-      form: FormReturns;
     } = null;
 
 /**
@@ -120,33 +126,40 @@ async function installDevtoolsPlugin(app: App) {
               return;
             }
 
-            const { form, field, state, type } = decodeNodeId(payload.nodeId);
-
+            const node = decodeNode(payload.nodeId);
             api.unhighlightElement();
-
-            if (form && type === 'form') {
-              payload.state = buildFormState(form);
-              SELECTED_NODE = { type: 'form', form };
-              api.highlightElement(form._vm);
+            if (!node) {
               return;
             }
 
-            if (state && type === 'pathState' && form) {
-              payload.state = buildFieldState(state);
-              SELECTED_NODE = { type: 'pathState', state, form };
+            if (node.type === 'form') {
+              payload.state = buildFormState(node);
+              const form = getForm(node.id);
+
+              if (form && '_vm' in form) {
+                SELECTED_NODE = { type: 'form', form };
+                api.highlightElement(form._vm);
+              }
+
               return;
             }
 
-            if (field && type === 'field') {
-              payload.state = buildFieldState({
-                errors: field.errors.value,
-                dirty: field.isDirty.value,
-                valid: field.isValid.value,
-                touched: field.isTouched.value,
-                value: field.fieldValue.value,
-              });
-              SELECTED_NODE = { field, type: 'field' };
-              api.highlightElement(field._vm);
+            if (node.type === 'field') {
+              payload.state = buildFieldState(node);
+              const field = getField(node.path, node.formId);
+
+              if (field) {
+                SELECTED_NODE = { type: 'field', field };
+                api.highlightElement(field._vm);
+              }
+
+              return;
+            }
+
+            if (node.type === 'path') {
+              payload.state = buildFieldState(node);
+              SELECTED_NODE = { type: 'path', state: node };
+
               return;
             }
 
