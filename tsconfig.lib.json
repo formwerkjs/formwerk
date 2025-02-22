@@ -22,8 +22,7 @@
     "allowSyntheticDefaultImports": true,
     "resolveJsonModule": true,
     "paths": {
-      "@core/*": ["packages/core/src/*"],
-      "@dev-tools/*": ["packages/dev-tools/src/*"]
+      "@core/*": ["packages/core/src/*"]
     }
   },
   "include": ["packages/*/src", "global.d.ts"],

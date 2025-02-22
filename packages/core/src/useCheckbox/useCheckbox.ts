@@ -13,7 +13,7 @@ import { CheckboxGroupContext, CheckboxGroupKey } from './useCheckboxGroup';
 import { useFormField, exposeField, FormField } from '../useFormField';
 import { FieldTypePrefixes } from '../constants';
 import { useInputValidity } from '../validation';
-import { registerCheckboxWithDevtools } from '@dev-tools/index';
+import { registerCheckboxWithDevtools } from 'packages/devtools/src/index';
 
 export interface CheckboxProps<TValue = string> {
   /**

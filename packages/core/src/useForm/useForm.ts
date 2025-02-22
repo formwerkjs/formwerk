@@ -25,7 +25,7 @@ import { FieldTypePrefixes } from '../constants';
 import { appendToFormData, clearFormData } from '../utils/formData';
 import { PartialDeep } from 'type-fest';
 import { createDisabledContext } from '../helpers/createDisabledContext';
-import { registerFormWithDevTools, refreshInspector } from '@dev-tools/index';
+import { registerFormWithDevTools, refreshInspector } from 'packages/devtools/src/index';
 
 export interface FormProps<
   TSchema extends GenericFormSchema,

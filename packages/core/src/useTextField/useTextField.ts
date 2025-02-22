@@ -14,7 +14,7 @@ import { useLabel, useErrorMessage } from '../a11y';
 import { useFormField, exposeField } from '../useFormField';
 import { FieldTypePrefixes } from '../constants';
 import { StandardSchema } from '../types';
-import { registerTextFieldWithDevtools } from '@dev-tools/index';
+import { registerTextFieldWithDevtools } from 'packages/devtools/src/index';
 
 export type TextInputDOMType = 'text' | 'password' | 'email' | 'number' | 'tel' | 'url';
 

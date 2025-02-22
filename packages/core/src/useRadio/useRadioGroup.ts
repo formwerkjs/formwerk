@@ -22,7 +22,7 @@ import {
 import { useLocale } from '../i18n';
 import { useFormField, exposeField } from '../useFormField';
 import { FieldTypePrefixes } from '../constants';
-import { registerRadioWithDevtools } from '@dev-tools/index';
+import { registerRadioWithDevtools } from 'packages/devtools/src/index';
 
 export interface RadioGroupContext<TValue> {
   name: string;

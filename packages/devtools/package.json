@@ -1,15 +1,15 @@
 {
-  "name": "formwerk-dev-tools",
-  "version": "1.0.0",
-  "description": "Integration with vue-dev-tools",
+  "name": "@formwerk/devtools",
+  "version": "0.8.0",
+  "description": "Formwerk's Vue devtools plugin",
   "author": "Abdelrahman Awad <logaretm1@gmail.com>",
   "license": "MIT",
   "funding": "https://github.com/sponsors/logaretm",
-  "module": "dist/core.mjs",
-  "unpkg": "dist/core.iife.js",
-  "jsdelivr": "dist/core.iife.js",
+  "module": "dist/devtools.mjs",
+  "unpkg": "dist/devtools.iife.js",
+  "jsdelivr": "dist/devtools.iife.js",
   "main": "dist/index.mjs",
-  "types": "dist/core.d.ts",
+  "types": "dist/devtools.d.ts",
   "type": "module",
   "exports": {
     ".": {
