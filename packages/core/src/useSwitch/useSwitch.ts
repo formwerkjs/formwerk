@@ -14,6 +14,7 @@ import { useLabel, useErrorMessage } from '../a11y';
 import { useFormField, exposeField } from '../useFormField';
 import { FieldTypePrefixes } from '../constants';
 import { useInputValidity } from '../validation';
+import { registerField } from '@formwerk/devtools';
 
 export interface SwitchDomInputProps
   extends InputBaseAttributes,
@@ -233,6 +234,10 @@ export function useSwitch<TValue = boolean>(
 
   function togglePressed(force?: boolean) {
     isPressed.value = force ?? !isPressed.value;
+  }
+
+  if (__DEV__) {
+    registerField(field, 'Switch');
   }
 
   return exposeField(

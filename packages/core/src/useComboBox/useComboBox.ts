@@ -19,6 +19,7 @@ import { useErrorMessage } from '../a11y/useErrorMessage';
 import { useInputValidity } from '../validation';
 import { FilterFn } from '../collections';
 import { useControlButtonProps } from '../helpers/useControlButtonProps';
+import { registerField } from '@formwerk/devtools';
 
 export interface ComboBoxProps<TOption, TValue = TOption> {
   /**
@@ -367,6 +368,10 @@ export function useComboBox<TOption, TValue = TOption>(
     }
 
     watch(inputValue, debounce(filter.debounceMs, updateHiddenState));
+  }
+
+  if (__DEV__) {
+    registerField(field, 'ComboBox');
   }
 
   return exposeField(

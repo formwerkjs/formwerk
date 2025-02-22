@@ -5,6 +5,7 @@ import { exposeField, useFormField } from '../useFormField';
 import { createDescribedByProps, normalizeProps, propsToValues, useUniqId, withRefCapture } from '../utils/common';
 import { useLabel, useErrorMessage } from '../a11y';
 import { useInputValidity } from '../validation';
+import { registerField } from '@formwerk/devtools';
 
 export interface CustomFieldProps<TValue = unknown> {
   /**
@@ -96,6 +97,10 @@ export function useCustomField<TValue = unknown>(
       elementRef,
     ),
   );
+
+  if (__DEV__) {
+    registerField(field, 'Custom');
+  }
 
   return exposeField(
     {

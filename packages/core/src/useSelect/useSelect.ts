@@ -14,6 +14,7 @@ import { useInputValidity } from '../validation';
 import { useListBox } from '../useListBox';
 import { useLabel, useErrorMessage } from '../a11y';
 import { FieldTypePrefixes } from '../constants';
+import { registerField } from '@formwerk/devtools';
 
 export interface SelectProps<TOption, TValue = TOption> {
   /**
@@ -272,6 +273,10 @@ export function useSelect<TOption, TValue = TOption>(_props: Reactivify<SelectPr
       triggerEl,
     );
   });
+
+  if (__DEV__) {
+    registerField(field, 'Select');
+  }
 
   return exposeField(
     {

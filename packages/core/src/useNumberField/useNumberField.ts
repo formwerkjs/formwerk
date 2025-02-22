@@ -26,6 +26,7 @@ import { useLocale } from '../i18n';
 import { exposeField, useFormField } from '../useFormField';
 import { FieldTypePrefixes } from '../constants';
 import { useEventListener } from '../helpers/useEventListener';
+import { registerField } from '@formwerk/devtools';
 
 export interface NumberInputDOMAttributes {
   name?: string;
@@ -297,6 +298,10 @@ export function useNumberField(
     },
     { disabled: () => isDisabled.value || toValue(props.disableWheel), passive: true },
   );
+
+  if (__DEV__) {
+    registerField(field, 'Number');
+  }
 
   return exposeField(
     {

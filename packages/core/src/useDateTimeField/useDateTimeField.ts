@@ -11,6 +11,7 @@ import { fromDateToCalendarZonedDateTime, useTemporalStore } from './useTemporal
 import { ZonedDateTime, Calendar } from '@internationalized/date';
 import { useInputValidity } from '../validation';
 import { createDisabledContext } from '../helpers/createDisabledContext';
+import { registerField } from '@formwerk/devtools';
 
 export interface DateTimeFieldProps {
   /**
@@ -181,6 +182,10 @@ export function useDateTimeField(_props: Reactivify<DateTimeFieldProps, 'schema'
       controlEl,
     );
   });
+
+  if (__DEV__) {
+    registerField(field, 'Date');
+  }
 
   return exposeField(
     {

@@ -15,6 +15,7 @@ import { exposeField, FormField, useFormField } from '../useFormField';
 import { useInputValidity } from '../validation';
 import { fromDateToCalendarZonedDateTime, useTemporalStore } from '../useDateTimeField/useTemporalStore';
 import { PickerContextKey } from '../usePicker';
+import { registerField } from '@formwerk/devtools';
 
 export interface CalendarProps {
   /**
@@ -365,6 +366,13 @@ export function useCalendar(_props: Reactivify<CalendarProps, 'field' | 'schema'
       gridEl,
     );
   });
+
+  if (__DEV__) {
+    // If it is its own field, we should register it with devtools.
+    if (!props.field) {
+      registerField(field, 'Calendar');
+    }
+  }
 
   return exposeField(
     {

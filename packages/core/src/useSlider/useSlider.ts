@@ -26,6 +26,7 @@ import { useLocale } from '../i18n';
 import { useFormField, exposeField } from '../useFormField';
 import { FieldTypePrefixes } from '../constants';
 import { useInputValidity } from '../validation';
+import { registerField } from '@formwerk/devtools';
 
 export interface SliderProps<TValue = number> {
   /**
@@ -477,6 +478,10 @@ export function useSlider<TValue>(_props: Reactivify<SliderProps<TValue>, 'schem
         sliderMax: absoluteMax,
       } satisfies ThumbMetadata;
     });
+  }
+
+  if (__DEV__) {
+    registerField(field, 'Slider');
   }
 
   return exposeField(

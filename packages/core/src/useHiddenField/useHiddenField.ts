@@ -3,6 +3,7 @@ import { Reactivify } from '../types';
 import { exposeField, useFormField } from '../useFormField';
 import { normalizeProps } from '../utils/common';
 import { useInputValidity } from '../validation';
+import { registerField } from '@formwerk/devtools';
 
 export interface HiddenFieldProps<TValue = unknown> {
   /**
@@ -40,6 +41,10 @@ export function useHiddenField<TValue = unknown>(_props: Reactivify<HiddenFieldP
       field.setValue(value);
     },
   );
+
+  if (__DEV__) {
+    registerField(field, 'Hidden');
+  }
 
   return exposeField({}, field);
 }

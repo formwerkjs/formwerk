@@ -22,6 +22,7 @@ import { useLabel, useErrorMessage } from '../a11y';
 import { useFormField, exposeField } from '../useFormField';
 import { FieldTypePrefixes } from '../constants';
 import { createDisabledContext } from '../helpers/createDisabledContext';
+import { registerField } from '@formwerk/devtools';
 
 export interface SearchInputDOMAttributes extends TextInputBaseAttributes {
   type?: 'search';
@@ -226,6 +227,10 @@ export function useSearchField(
       elementRef,
     ),
   );
+
+  if (__DEV__) {
+    registerField(field, 'Search');
+  }
 
   return exposeField(
     {
