@@ -36,10 +36,8 @@
   ],
   "dependencies": {
     "klona": "^2.0.6",
-    "type-fest": "^4.34.1"
-  },
-  "peerDependencies": {
-    "@vue/devtools-api": "^7.5.2",
-    "@vue/devtools-kit": "^7.5.2"
+    "type-fest": "^4.34.1",
+    "@vue/devtools-api": "^7.7.2",
+    "@vue/devtools-kit": "^7.7.2"
   }
 }
