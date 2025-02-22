@@ -1,20 +1,20 @@
 import { CustomInspectorNode, CustomInspectorState, InspectorNodeTag } from '@vue/devtools-kit';
 import {
+  DevtoolsField,
   DevtoolsForm,
   EncodedNode,
-  InputField,
   fieldToState,
-  FormContext,
   formToState,
   NODE_TYPE,
   NodeState,
   PathState,
 } from './types';
+import type { FormReturns, FormField } from '@core/index';
 import { ComponentInternalInstance, toValue } from 'vue';
 import { COLORS } from './config';
-import { DEVTOOLS_FIELDS, DEVTOOLS_FORMS } from './storage';
 import { buildFormTree } from './utils';
 import { setInPath } from '@core/utils/path';
+import { getField, getForm } from './registry';
 
 export function buildFieldState(
   state: Pick<PathState, 'errors' | 'touched' | 'dirty' | 'value' | 'valid'>,
@@ -42,7 +42,7 @@ export function buildFieldState(
   };
 }
 
-export function buildFormState(form: FormContext): CustomInspectorState {
+export function buildFormState(form: FormReturns): CustomInspectorState {
   const { isSubmitting, isTouched, isDirty, isValid, submitAttemptsCount, values, getErrors } = form;
 
   return {
@@ -57,15 +57,15 @@ export function buildFormState(form: FormContext): CustomInspectorState {
       },
       {
         key: 'touched',
-        value: isTouched.value,
+        value: isTouched(),
       },
       {
         key: 'dirty',
-        value: isDirty.value,
+        value: isDirty(),
       },
       {
         key: 'valid',
-        value: isValid.value,
+        value: isValid(),
       },
       {
         key: 'currentValues',
@@ -73,17 +73,7 @@ export function buildFormState(form: FormContext): CustomInspectorState {
       },
       {
         key: 'errors',
-        value: getErrors().reduce(
-          (acc, error) => {
-            const message = error?.messages?.[0];
-            if (message) {
-              acc[error?.path] = message;
-            }
-
-            return acc;
-          },
-          {} as Record<string, string | undefined>,
-        ),
+        value: getErrors(),
       },
     ],
   };
@@ -138,18 +128,18 @@ export function encodeNodeId(nodeState?: NodeState): string {
 }
 
 export function decodeNodeId(nodeId: string): {
-  field?: InputField & { _vm?: ComponentInternalInstance | null };
-  form?: FormContext & { _vm?: ComponentInternalInstance | null };
+  field?: FormField<unknown> & { _vm?: ComponentInternalInstance | null };
+  form?: FormReturns & { _vm?: ComponentInternalInstance | null };
   state?: PathState;
   type?: NODE_TYPE;
 } {
   try {
     const idObject = JSON.parse(decodeURIComponent(atob(nodeId))) as EncodedNode;
-    const form = DEVTOOLS_FORMS[idObject.f];
+    const form = getForm(idObject.f);
 
     // standalone field
     if (!form && idObject.ff) {
-      const field = DEVTOOLS_FIELDS[idObject.ff];
+      const field = getField(idObject.ff);
       if (!field) {
         return {};
       }
@@ -160,11 +150,11 @@ export function decodeNodeId(nodeId: string): {
       };
     }
 
-    if (!form) {
+    if (!form || '_isRoot' in form) {
       return {};
     }
 
-    const field = form.children?.find(state => state.getPath() === idObject.ff);
+    const field = form.fields.get(idObject.ff);
     const state = formToState(form);
 
     return {
@@ -191,7 +181,7 @@ export function getValidityColors(valid: boolean) {
   };
 }
 
-export function getFieldNodeTags(type: InputField, valid: boolean, form: FormContext | undefined) {
+export function getFieldNodeTags(field: DevtoolsField, valid: boolean, form: FormReturns | undefined) {
   const { textColor, bgColor } = getValidityColors(valid);
 
   return [
@@ -201,7 +191,7 @@ export function getFieldNodeTags(type: InputField, valid: boolean, form: FormCon
       backgroundColor: bgColor,
     },
     {
-      label: resolveFieldTypeName(type),
+      label: field.type,
       textColor: COLORS.black,
       backgroundColor: COLORS.gray,
     },
@@ -216,11 +206,11 @@ export function getFieldNodeTags(type: InputField, valid: boolean, form: FormCon
 }
 
 export function mapFormForDevtoolsInspector(form: DevtoolsForm): CustomInspectorNode {
-  const { textColor, bgColor } = getValidityColors(form.isValid.value);
+  const { textColor, bgColor } = getValidityColors(form.isValid());
   const formState = formToState(form);
 
   const formTreeNodes = {};
-  form.children?.forEach(state => {
+  form.fields?.forEach(state => {
     setInPath(formTreeNodes, toValue(state.getPath() ?? ''), mapFieldForDevtoolsInspector(state, form));
   });
 
@@ -240,24 +230,12 @@ export function mapFormForDevtoolsInspector(form: DevtoolsForm): CustomInspector
   };
 }
 
-export function mapFieldForDevtoolsInspector(field: InputField, form?: FormContext): CustomInspectorNode {
+export function mapFieldForDevtoolsInspector(field: DevtoolsField, form?: DevtoolsForm): CustomInspectorNode {
   const fieldState = fieldToState(field, form?.context.id);
+
   return {
     id: encodeNodeId(fieldState),
     label: fieldState.name,
     tags: getFieldNodeTags(field, fieldState.valid, form),
   };
-}
-
-function resolveFieldTypeName(field: InputField) {
-  switch (field.type) {
-    case 'text-field':
-      return 'Text Field';
-    case 'checkbox':
-      return 'Checkbox';
-    case 'radio':
-      return 'Radio';
-    default:
-      return 'unknown';
-  }
 }

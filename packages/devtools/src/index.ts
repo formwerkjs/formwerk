@@ -1,2 +1,2 @@
-export * from './registery';
+export * from './registry';
 export * from './init';

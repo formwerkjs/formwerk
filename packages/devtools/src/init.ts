@@ -1,8 +1,8 @@
 import { App, getCurrentInstance, nextTick } from 'vue';
 import { throttle } from 'packages/shared/src';
+import { FormField, FormReturns } from '@core/index';
 import { isClient } from './assertions';
-import { DEVTOOLS_FIELDS, DEVTOOLS_FORMS, INSPECTOR_ID } from './storage';
-import { FormContext, InputField, PathState } from './types';
+import { PathState } from './types';
 import {
   buildFieldState,
   buildFormState,
@@ -10,15 +10,17 @@ import {
   mapFieldForDevtoolsInspector,
   mapFormForDevtoolsInspector,
 } from './helpers';
+import { INSPECTOR_ID } from './config';
+import { getAllForms, getRootFields } from './registry';
 
 let SELECTED_NODE:
-  | { type: 'form'; form: FormContext }
-  | { type: 'field'; field: InputField }
+  | { type: 'form'; form: FormReturns }
+  | { type: 'field'; field: FormField<unknown> }
   | null
   | {
       type: 'pathState';
       state: PathState;
-      form: FormContext;
+      form: FormReturns;
     } = null;
 
 /**
@@ -79,8 +81,8 @@ async function installDevtoolsPlugin(app: App) {
             return;
           }
 
-          const forms = Object.values(DEVTOOLS_FORMS);
-          const fields = Object.values(DEVTOOLS_FIELDS);
+          const forms = getAllForms();
+          const fields = getRootFields();
 
           payload.rootNodes = [
             ...forms.map(mapFormForDevtoolsInspector),

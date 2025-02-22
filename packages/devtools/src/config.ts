@@ -9,3 +9,7 @@ export const COLORS = {
   orange: 0xf5a962,
   gray: 0xbbbfca,
 };
+
+export const INSPECTOR_ID = 'formwerk-inspector';
+
+export const ROOT_FORM_ID = '~none';

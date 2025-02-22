@@ -1,10 +1,5 @@
-import { useForm } from '@core/useForm';
-import { FormField, useFormField } from '@core/useFormField';
+import type { FormField, FormReturns } from '@core/index';
 import { ComponentInternalInstance } from 'vue';
-import { useTextField } from '@core/useTextField';
-import { DEVTOOLS_FIELDS } from './storage';
-import { useCheckbox } from '@core/useCheckbox';
-import { useRadioGroup } from '@core/useRadio';
 
 // Base interface for state
 export interface PathState<TValue = unknown> {
@@ -28,52 +23,23 @@ export interface FieldState<TValue = unknown> extends PathState<TValue> {
 }
 
 // Union type for node state
-export type NodeState = FormState | FieldState;
+export type NodeState = FormState | FieldState | PathState;
 
-// Form context type
-export type FormContext = ReturnType<typeof useForm>;
-
-// Node types
-export const FIELD_TYPES = {
-  TextField: 'text-field',
-  Checkbox: 'checkbox',
-  Radio: 'radio',
-  unknown: 'unknown',
-} as const;
-
-// Text field type combining form field and text field
-export type TextField = ReturnType<typeof useTextField> &
-  ReturnType<typeof useFormField<string | undefined>> & {
-    type: (typeof FIELD_TYPES)['TextField'];
-  };
-
-export type CheckboxField = ReturnType<typeof useCheckbox> &
-  ReturnType<typeof useFormField<string | undefined>> & {
-    type: (typeof FIELD_TYPES)['Checkbox'];
-  };
-
-export type RadioField = ReturnType<typeof useRadioGroup> &
-  ReturnType<typeof useFormField<string | undefined>> & {
-    type: (typeof FIELD_TYPES)['Radio'];
-  };
-
-// Input field type
-export type InputField =
-  | (FormField<unknown> & {
-      type: (typeof FIELD_TYPES)['unknown'];
-    })
-  | TextField
-  | CheckboxField
-  | RadioField;
+// Devtools field type
+export type DevtoolsField = FormField<unknown> & { type: string; _vm?: ComponentInternalInstance | null };
 
 // Devtools form type
-export type DevtoolsForm = FormContext & {
-  children?: (typeof DEVTOOLS_FIELDS)[keyof typeof DEVTOOLS_FIELDS][];
+export type DevtoolsForm = FormReturns & {
   _vm?: ComponentInternalInstance | null;
+  fields: Map<string, DevtoolsField>;
+};
+
+export type DevtoolsRootForm = {
+  fields: Map<string, DevtoolsField>;
+  _isRoot: true;
 };
 
 // Devtools field type
-export type DevtoolsField = InputField & { _vm?: ComponentInternalInstance | null };
 
 // Node types
 export const NODE_TYPES = {
@@ -93,18 +59,20 @@ export type EncodedNode = {
 };
 
 // Functions to convert form and field to state
-export const formToState = (form: FormContext): FormState => {
+export const formToState = (form: FormReturns): FormState => {
+  const errors = form.getErrors();
+
   return {
     id: form.context.id,
-    touched: form.isTouched.value,
-    dirty: form.isDirty.value,
-    valid: !!form.validate(),
+    touched: form.isTouched(),
+    dirty: form.isDirty(),
+    valid: errors.length === 0,
     value: form.values,
-    errors: form.getErrors().map(error => error.messages[0]),
+    errors,
   };
 };
 
-export const fieldToState = (field: InputField, formId?: string): FieldState<unknown> => {
+export const fieldToState = (field: FormField<unknown>, formId?: string): FieldState<unknown> => {
   return {
     path: field.getPath() ?? '',
     name: field.getName() ?? '',

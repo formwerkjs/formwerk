@@ -19,6 +19,7 @@ export * from './usePicker';
 export * from './types';
 export * from './config';
 export * from './useForm';
+export * from './useFormField';
 export * from './useFormGroup';
 export * from './useFormRepeater';
 export * from './validation';

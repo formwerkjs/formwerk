@@ -311,3 +311,8 @@ export function useForm<
 
   return form as typeof baseReturns & FormActions<TInput, TOutput>;
 }
+
+/**
+ * Just a utility type helper to get the return type of the useForm composable.
+ */
+export type FormReturns = ReturnType<typeof useForm>;
