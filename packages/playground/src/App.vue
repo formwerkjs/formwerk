@@ -27,7 +27,7 @@ const isNotificationsEnabled = ref(false);
 
 <template>
   <div class="">
-    <h2 class="text-2xl font-bold mb-6">Fields Outside Form</h2>
+    <!-- <h2 class="text-2xl font-bold mb-6">Fields Outside Form</h2>
     <InputText name="username" label="Username" placeholder="Enter username" />
     <InputNumber name="age" label="Age" :min="0" :max="120" />
     <InputTextArea name="description" label="Description" placeholder="Enter description" />
@@ -53,8 +53,8 @@ const isNotificationsEnabled = ref(false);
       name="notificationName"
       label="Notification name"
       placeholder="Enter notification name"
-    />
+    /> -->
 
-    <!-- <AllForm /> -->
+    <AllForm />
   </div>
 </template>

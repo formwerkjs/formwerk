@@ -77,7 +77,7 @@ export function registerField(field: FormField<any>, type: string, vm: Maybe<Com
 
   onUnmounted(() => {
     form.fields.delete(id);
-  });
+  }, vm);
 
   return () => ({
     errors: field.errorMessage.value,
@@ -103,7 +103,7 @@ export function registerForm(form: FormReturns, vm: Maybe<ComponentInternalInsta
 
   onUnmounted(() => {
     TREE.delete(form.context.id);
-  });
+  }, vm);
 
   return () => ({
     errors: form.getErrors(),

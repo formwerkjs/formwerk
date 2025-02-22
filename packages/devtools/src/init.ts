@@ -36,28 +36,28 @@ async function installDevtoolsPlugin(app: App) {
       const devtools = await import('@vue/devtools-api');
       devtools.setupDevtoolsPlugin(
         {
+          app,
           id: 'formwerk-devtools-plugin',
-          label: 'Formwerk Plugin',
+          label: 'Formwerk',
           packageName: 'formwerk',
           homepage: 'https://formwerk.dev/',
-          app,
-          logo: 'https://formwerk.dev/_astro/logo-dark.0cuv1M4O.svg',
+          logo: 'https://formwerk.dev/logo-w.svg',
         },
         api => {
           API = api;
 
           api.addInspector({
             id: INSPECTOR_ID,
-            icon: 'rule',
-            label: 'formwerk',
+            icon: 'https://formwerk.dev/logo-w.svg',
+            label: 'Formwerk',
             noSelectionText: 'Select a formwerk node to inspect',
             actions: [
               {
                 icon: 'done_outline',
-                tooltip: 'Formwerk selected item',
+                tooltip: 'Validate selected item',
                 action: async () => {
                   if (!SELECTED_NODE) {
-                    console.error('There is not a valid selected vee-validate node or component');
+                    console.error('There is not a valid selected Formwerk node or component');
                     return;
                   }
                 },
@@ -67,7 +67,7 @@ async function installDevtoolsPlugin(app: App) {
                 tooltip: 'Clear validation state of the selected item',
                 action: () => {
                   if (!SELECTED_NODE) {
-                    console.error('There is not a valid selected vee-validate node or component');
+                    console.error('There is not a valid selected Formwerk node or component');
                     return;
                   }
                 },
@@ -159,10 +159,11 @@ export function initDevTools() {
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function registerField(field: FormField<any>, type: string) {
-  onMounted(() => {
+  onMounted(async () => {
     const vm = initDevTools();
+    // Makes sure forms are registered before fields in same component contexts
+    await nextTick();
     const watchable = _registerField(field, type, vm);
-
     watch(watchable, refreshInspector, {
       deep: true,
     });

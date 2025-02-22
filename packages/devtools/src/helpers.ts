@@ -165,7 +165,7 @@ export function decodeNodeId(nodeId: string): {
     };
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
   } catch (err) {
-    // console.error(`Devtools: [vee-validate] Failed to parse node id ${nodeId}`);
+    console.error(`Devtools: [formwerk] Failed to parse node id ${nodeId}`);
   }
 
   return {};
