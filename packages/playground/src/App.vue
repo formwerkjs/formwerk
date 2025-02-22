@@ -11,6 +11,7 @@ import RadioItem from '@/components/RadioItem.vue';
 import Switch from '@/components/Switch.vue';
 import InputTextArea from '@/components/InputTextArea.vue';
 import AllForm from './components/AllForm.vue';
+import { ref } from 'vue';
 
 const min = new Date(2025, 0, 4, 0, 0, 0, 0);
 const value = new Date('2025-01-15');
@@ -21,6 +22,8 @@ const options = [
   { label: 'Option 2', value: '2' },
   { label: 'Option 3', value: '3' },
 ];
+
+const isNotificationsEnabled = ref(false);
 </script>
 
 <template>
@@ -44,10 +47,15 @@ const options = [
       <RadioItem name="gender" value="other" label="Other" />
     </RadioGroup>
 
-    <Switch name="notifications" label="Enable notifications" />
+    <Switch name="notifications" label="Enable notifications" v-model="isNotificationsEnabled" />
 
-    <Calendar name="calendar" label="Calendar" />
+    <InputText
+      v-if="isNotificationsEnabled"
+      name="notificationName"
+      label="Notification name"
+      placeholder="Enter notification name"
+    />
 
-    <AllForm />
+    <!-- <AllForm /> -->
   </div>
 </template>

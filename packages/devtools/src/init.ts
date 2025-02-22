@@ -1,4 +1,4 @@
-import { App, getCurrentInstance, nextTick, onUnmounted, watch } from 'vue';
+import { App, getCurrentInstance, nextTick, onMounted, onUnmounted, watch } from 'vue';
 import { throttle } from 'packages/shared/src';
 import { FormField, FormReturns } from '@core/index';
 import { isSSR } from '@core/utils/common';
@@ -166,9 +166,9 @@ export function registerField(field: FormField<any>, type: string) {
     deep: true,
   });
 
+  // TODO: Figure out why this is needed
+  onMounted(() => setTimeout(refreshInspector, 500));
   onUnmounted(refreshInspector);
-
-  refreshInspector();
 }
 
 export function registerForm(form: FormReturns) {
@@ -179,7 +179,7 @@ export function registerForm(form: FormReturns) {
     deep: true,
   });
 
+  // TODO: Figure out why this is needed
+  onMounted(() => setTimeout(refreshInspector, 500));
   onUnmounted(refreshInspector);
-
-  refreshInspector();
 }
