@@ -201,14 +201,22 @@ export function getFieldNodeTags(field: DevtoolsField, valid: boolean) {
   ].filter(Boolean) as InspectorNodeTag[];
 }
 
-export function mapFormForDevtoolsInspector(form: DevtoolsForm): CustomInspectorNode {
+export function mapFormForDevtoolsInspector(form: DevtoolsForm, filter?: string): CustomInspectorNode {
   const { textColor, bgColor } = getValidityColors(form.isValid());
   const formState = formToState(form);
 
   const formTreeNodes = {};
-  form.fields?.forEach(state => {
-    setInPath(formTreeNodes, toValue(state.getPath() ?? ''), mapFieldForDevtoolsInspector(state, form));
-  });
+  Array.from(form.fields?.values() ?? [])
+    .filter(f => {
+      if (!filter) {
+        return true;
+      }
+
+      return f.getName()?.toLowerCase().includes(filter.toLowerCase()) ?? false;
+    })
+    .forEach(state => {
+      setInPath(formTreeNodes, toValue(state.getPath() ?? ''), mapFieldForDevtoolsInspector(state, form));
+    });
 
   const { children } = buildFormTree(formTreeNodes);
 

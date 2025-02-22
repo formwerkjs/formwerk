@@ -101,10 +101,16 @@ async function installDevtoolsPlugin(app: App) {
             }
 
             const forms = getAllForms();
-            const fields = getRootFields();
+            const fields = getRootFields().filter(f => {
+              if (!payload.filter) {
+                return true;
+              }
+
+              return f.getName()?.toLowerCase().includes(payload.filter.toLowerCase()) ?? false;
+            });
 
             payload.rootNodes = [
-              ...forms.map(mapFormForDevtoolsInspector),
+              ...forms.map(form => mapFormForDevtoolsInspector(form, payload.filter)),
               ...fields.map(field => mapFieldForDevtoolsInspector(field)),
             ];
           });
