@@ -10,6 +10,7 @@ import RadioItem from '@/components/RadioItem.vue';
 import Switch from '@/components/Switch.vue';
 import InputTextArea from '@/components/InputTextArea.vue';
 import { ref } from 'vue';
+import AllForm from './components/AllForm.vue';
 
 const min = new Date(2025, 0, 4, 0, 0, 0, 0);
 const value = new Date('2025-01-15');

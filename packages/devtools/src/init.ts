@@ -159,27 +159,31 @@ export function initDevTools() {
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function registerField(field: FormField<any>, type: string) {
-  const vm = initDevTools();
-  const watchable = _registerField(field, type, vm);
+  onMounted(() => {
+    const vm = initDevTools();
+    const watchable = _registerField(field, type, vm);
 
-  watch(watchable, refreshInspector, {
-    deep: true,
+    watch(watchable, refreshInspector, {
+      deep: true,
+    });
+
+    setTimeout(refreshInspector, 500);
   });
 
-  // TODO: Figure out why this is needed
-  onMounted(() => setTimeout(refreshInspector, 500));
   onUnmounted(refreshInspector);
 }
 
 export function registerForm(form: FormReturns) {
-  const vm = initDevTools();
-  const watchable = _registerForm(form, vm);
+  onMounted(() => {
+    const vm = initDevTools();
+    const watchable = _registerForm(form, vm);
 
-  watch(watchable, refreshInspector, {
-    deep: true,
+    watch(watchable, refreshInspector, {
+      deep: true,
+    });
+
+    setTimeout(refreshInspector, 500);
   });
 
-  // TODO: Figure out why this is needed
-  onMounted(() => setTimeout(refreshInspector, 500));
   onUnmounted(refreshInspector);
 }
