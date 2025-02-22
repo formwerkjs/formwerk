@@ -1,4 +1,5 @@
 import { InjectionKey, toValue, computed, onBeforeUnmount, reactive, provide, ref } from 'vue';
+import { registerField } from '@formwerk/devtools';
 import { useInputValidity } from '../validation/useInputValidity';
 import { useLabel, useErrorMessage } from '../a11y';
 import {
@@ -22,7 +23,6 @@ import {
 import { useLocale } from '../i18n';
 import { useFormField, exposeField } from '../useFormField';
 import { FieldTypePrefixes } from '../constants';
-import { registerRadioWithDevtools } from 'packages/devtools/src/index';
 
 export interface RadioGroupContext<TValue> {
   name: string;
@@ -269,7 +269,11 @@ export function useRadioGroup<TValue = string>(_props: Reactivify<RadioGroupProp
 
   provide(RadioGroupKey, context);
 
-  const exposedField = exposeField(
+  if (__DEV__) {
+    registerField(field, 'Radio');
+  }
+
+  return exposeField(
     {
       /**
        * Props for the description element.
@@ -294,11 +298,4 @@ export function useRadioGroup<TValue = string>(_props: Reactivify<RadioGroupProp
     },
     field,
   );
-
-  if (__DEV__) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    registerRadioWithDevtools({ ...exposedField, ...field } as any);
-  }
-
-  return exposedField;
 }

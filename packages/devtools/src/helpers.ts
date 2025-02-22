@@ -11,7 +11,7 @@ import {
 } from './types';
 import type { FormReturns, FormField } from '@core/index';
 import { ComponentInternalInstance, toValue } from 'vue';
-import { COLORS } from './config';
+import { getPluginColors } from './constants';
 import { buildFormTree } from './utils';
 import { setInPath } from '@core/utils/path';
 import { getField, getForm } from './registry';
@@ -175,6 +175,8 @@ export function decodeNodeId(nodeId: string): {
  * Resolves the tag color based on the form state
  */
 export function getValidityColors(valid: boolean) {
+  const COLORS = getPluginColors();
+
   return {
     bgColor: valid ? COLORS.success : COLORS.error,
     textColor: valid ? COLORS.black : COLORS.white,
@@ -183,6 +185,7 @@ export function getValidityColors(valid: boolean) {
 
 export function getFieldNodeTags(field: DevtoolsField, valid: boolean, form: FormReturns | undefined) {
   const { textColor, bgColor } = getValidityColors(valid);
+  const COLORS = getPluginColors();
 
   return [
     {

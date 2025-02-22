@@ -149,6 +149,9 @@ importers:
 
   packages/core:
     dependencies:
+      '@formwerk/devtools':
+        specifier: workspace:*
+        version: link:../devtools
       '@internationalized/date':
         specifier: ^3.7.0
         version: 3.7.0
@@ -168,7 +171,7 @@ importers:
         specifier: '>=3.5.0'
         version: 3.5.13(typescript@5.7.3)
 
-  packages/dev-tools:
+  packages/devtools:
     dependencies:
       '@vue/devtools-api':
         specifier: ^7.5.2

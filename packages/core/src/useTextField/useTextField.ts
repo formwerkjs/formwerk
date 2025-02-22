@@ -1,4 +1,5 @@
 import { Ref, computed, shallowRef, toValue } from 'vue';
+import { registerField } from '@formwerk/devtools';
 import { createDescribedByProps, normalizeProps, propsToValues, useUniqId, withRefCapture } from '../utils/common';
 import {
   AriaDescribableProps,
@@ -14,7 +15,6 @@ import { useLabel, useErrorMessage } from '../a11y';
 import { useFormField, exposeField } from '../useFormField';
 import { FieldTypePrefixes } from '../constants';
 import { StandardSchema } from '../types';
-import { registerTextFieldWithDevtools } from 'packages/devtools/src/index';
 
 export type TextInputDOMType = 'text' | 'password' | 'email' | 'number' | 'tel' | 'url';
 
@@ -178,7 +178,11 @@ export function useTextField(
     );
   });
 
-  const exposedField = exposeField(
+  if (__DEV__) {
+    registerField(field, 'Text');
+  }
+
+  return exposeField(
     {
       /**
        * Props for the description element.
@@ -207,10 +211,4 @@ export function useTextField(
     },
     field,
   );
-
-  if (__DEV__) {
-    registerTextFieldWithDevtools({ ...exposedField, ...field });
-  }
-
-  return exposedField;
 }

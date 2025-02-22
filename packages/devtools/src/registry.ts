@@ -2,7 +2,7 @@ import { FormField, FormReturns } from '@core/index';
 import { initDevTools, refreshInspector } from './init';
 import { onUnmounted, watch } from 'vue';
 import { DevtoolsForm, DevtoolsRootForm } from './types';
-import { ROOT_FORM_ID } from './config';
+import { getRootFormId } from './constants';
 
 let TREE!: Map<string, DevtoolsForm | DevtoolsRootForm>;
 
@@ -15,7 +15,7 @@ export function getField(path: string, formId?: string) {
     return TREE.get(formId)?.fields.get(path) ?? null;
   }
 
-  return TREE.get(ROOT_FORM_ID)?.fields.get(path) ?? null;
+  return TREE.get(getRootFormId())?.fields.get(path) ?? null;
 }
 
 export function getForm(formId?: string) {
@@ -23,7 +23,7 @@ export function getForm(formId?: string) {
     return null;
   }
 
-  return TREE.get(formId ?? ROOT_FORM_ID) as DevtoolsForm | DevtoolsRootForm | undefined;
+  return TREE.get(formId ?? getRootFormId()) as DevtoolsForm | DevtoolsRootForm | undefined;
 }
 
 export function getRootFields() {
@@ -31,7 +31,7 @@ export function getRootFields() {
     return [];
   }
 
-  const fields = getForm(ROOT_FORM_ID)?.fields;
+  const fields = getForm(getRootFormId())?.fields;
   if (!fields) {
     return [];
   }
@@ -47,10 +47,11 @@ export function getAllForms() {
   return Array.from(TREE.values()).filter(node => !('_isRoot' in node)) as DevtoolsForm[];
 }
 
-export function registerField(field: FormField<unknown>, type: string) {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function registerField(field: FormField<any>, type: string) {
   const vm = initDevTools();
   const id = field.getPath() ?? field.getName() ?? '';
-  const formId = field.form?.id ?? ROOT_FORM_ID;
+  const formId = field.form?.id ?? getRootFormId();
 
   if (!TREE) {
     TREE = new Map();
@@ -61,14 +62,14 @@ export function registerField(field: FormField<unknown>, type: string) {
       fields: new Map(),
     } as DevtoolsRootForm;
 
-    if (formId === ROOT_FORM_ID) {
+    if (formId === getRootFormId()) {
       (node as DevtoolsRootForm)._isRoot = true;
     }
 
     TREE.set(formId, node);
   }
 
-  const form = TREE.get(formId ?? ROOT_FORM_ID)!;
+  const form = TREE.get(formId ?? getRootFormId())!;
 
   form.fields.set(id, {
     ...field,
@@ -79,7 +80,9 @@ export function registerField(field: FormField<unknown>, type: string) {
   watch(
     () => ({
       errors: field.errorMessage.value,
-      isValid: !field.errorMessage.value,
+      isValid: field.isValid.value,
+      isDirty: field.isDirty.value,
+      touched: field.isTouched.value,
       value: field.fieldValue.value,
     }),
     refreshInspector,
@@ -96,7 +99,7 @@ export function registerField(field: FormField<unknown>, type: string) {
   refreshInspector();
 }
 
-export function registerFormWithDevTools(form: FormReturns) {
+export function registerForm(form: FormReturns) {
   const vm = initDevTools();
 
   if (!TREE) {
@@ -110,6 +113,22 @@ export function registerFormWithDevTools(form: FormReturns) {
       ...form,
     });
   }
+
+  watch(
+    () => ({
+      errors: form.getErrors(),
+      isValid: form.isValid(),
+      isDirty: form.isDirty(),
+      touched: form.isTouched(),
+      values: form.values,
+      isSubmitting: form.isSubmitting.value,
+      submitAttemptsCount: form.submitAttemptsCount.value,
+    }),
+    refreshInspector,
+    {
+      deep: true,
+    },
+  );
 
   onUnmounted(() => {
     TREE.delete(form.context.id);
