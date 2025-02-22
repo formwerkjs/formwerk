@@ -24,14 +24,16 @@
   font-weight: 400;
 }
 
-html,
-body {
-  /* font-family: 'Monaspace Neon Var'; */
+html {
   @apply h-full w-full;
 }
 
+body {
+  @apply w-full overflow-auto;
+}
+
 #app {
-  @apply h-full p-20;
+  @apply p-20 h-full;
 }
 
 button[type='submit'] {

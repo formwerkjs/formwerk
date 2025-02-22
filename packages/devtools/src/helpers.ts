@@ -183,7 +183,7 @@ export function getValidityColors(valid: boolean) {
   };
 }
 
-export function getFieldNodeTags(field: DevtoolsField, valid: boolean, form: FormReturns | undefined) {
+export function getFieldNodeTags(field: DevtoolsField, valid: boolean) {
   const { textColor, bgColor } = getValidityColors(valid);
   const COLORS = getPluginColors();
 
@@ -198,13 +198,6 @@ export function getFieldNodeTags(field: DevtoolsField, valid: boolean, form: For
       textColor: COLORS.black,
       backgroundColor: COLORS.gray,
     },
-    !form
-      ? {
-          label: 'Standalone',
-          textColor: COLORS.black,
-          backgroundColor: COLORS.gray,
-        }
-      : undefined,
   ].filter(Boolean) as InspectorNodeTag[];
 }
 
@@ -239,6 +232,6 @@ export function mapFieldForDevtoolsInspector(field: DevtoolsField, form?: Devtoo
   return {
     id: encodeNodeId(fieldState),
     label: fieldState.name,
-    tags: getFieldNodeTags(field, fieldState.valid, form),
+    tags: getFieldNodeTags(field, fieldState.valid),
   };
 }
