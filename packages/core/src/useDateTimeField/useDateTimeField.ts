@@ -111,6 +111,9 @@ export function useDateTimeField(_props: Reactivify<DateTimeFieldProps, 'schema'
 
   useInputValidity({ field });
 
+  const min = computed(() => fromDateToCalendarZonedDateTime(toValue(props.min), calendar.value, timeZone.value));
+  const max = computed(() => fromDateToCalendarZonedDateTime(toValue(props.max), calendar.value, timeZone.value));
+
   const temporalValue = useTemporalStore({
     calendar: calendar,
     timeZone: timeZone,
@@ -119,6 +122,8 @@ export function useDateTimeField(_props: Reactivify<DateTimeFieldProps, 'schema'
       get: () => field.fieldValue.value,
       set: value => field.setValue(value),
     },
+    min,
+    max,
   });
 
   function onValueChange(value: ZonedDateTime) {
@@ -135,8 +140,8 @@ export function useDateTimeField(_props: Reactivify<DateTimeFieldProps, 'schema'
     readonly: props.readonly,
     onValueChange,
     onTouched: () => field.setTouched(true),
-    min: computed(() => fromDateToCalendarZonedDateTime(toValue(props.min), calendar.value, timeZone.value)),
-    max: computed(() => fromDateToCalendarZonedDateTime(toValue(props.max), calendar.value, timeZone.value)),
+    min,
+    max,
   });
 
   const { labelProps, labelledByProps } = useLabel({

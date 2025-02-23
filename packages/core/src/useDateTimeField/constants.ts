@@ -1,5 +1,5 @@
 import { DateTimeSegmentType } from './types';
-import type { DateTimeDuration } from '@internationalized/date';
+import type { DateTimeDuration, ZonedDateTime } from '@internationalized/date';
 
 export function isEditableSegmentType(type: DateTimeSegmentType) {
   return !['era', 'timeZoneName', 'literal'].includes(type);
@@ -52,4 +52,18 @@ export function isNumericByDefault(type: DateTimeSegmentType) {
   };
 
   return map[type] ?? false;
+}
+
+export function getOrderedSegmentTypes(): DateTimeSegmentType[] {
+  return ['year', 'month', 'day', 'hour', 'minute', 'second'];
+}
+
+export function isEqualPart(min: ZonedDateTime, max: ZonedDateTime, part: DateTimeSegmentType) {
+  const parts = getOrderedSegmentTypes();
+  const idx = parts.indexOf(part);
+  if (idx === -1) {
+    return false;
+  }
+
+  return parts.slice(0, idx).every(p => min[p] === max[p]) && min[part] === max[part];
 }

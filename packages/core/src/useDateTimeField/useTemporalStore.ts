@@ -14,13 +14,21 @@ interface TemporalValueStoreInit {
   timeZone: MaybeRefOrGetter<string>;
   calendar: MaybeRefOrGetter<Calendar>;
   allowPartial?: boolean;
+  min?: MaybeRefOrGetter<Maybe<ZonedDateTime>>;
+  max?: MaybeRefOrGetter<Maybe<ZonedDateTime>>;
 }
 
 export function useTemporalStore(init: TemporalValueStoreInit) {
   const model = init.model;
+
   function normalizeNullish(value: Maybe<ZonedDateTime>): ZonedDateTime | TemporalPartial {
     if (isNullOrUndefined(value)) {
-      return createTemporalPartial(toValue(init.calendar), toValue(init.timeZone));
+      return createTemporalPartial(
+        toValue(init.calendar),
+        toValue(init.timeZone),
+        toValue(init.min),
+        toValue(init.max),
+      );
     }
 
     return value;
