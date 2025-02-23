@@ -13,9 +13,16 @@ export function createTemporalPartial(
   if (min && max) {
     // Get the middle of the min and max
     const diff = Math.round(max.compare(min) / 2);
-    const zonedDateTime = min.add({
-      milliseconds: diff,
-    }) as TemporalPartial;
+    const zonedDateTime = min
+      .add({
+        milliseconds: diff,
+      })
+      .set({
+        hour: 0,
+        minute: 0,
+        second: 0,
+        millisecond: 0,
+      }) as TemporalPartial;
     zonedDateTime['~fw_temporal_partial'] = {};
 
     const parts = getOrderedSegmentTypes();
@@ -27,7 +34,12 @@ export function createTemporalPartial(
     return zonedDateTime;
   }
 
-  const zonedDateTime = toCalendar(now(timeZone), calendar) as TemporalPartial;
+  const zonedDateTime = toCalendar(now(timeZone), calendar).set({
+    hour: 0,
+    minute: 0,
+    second: 0,
+    millisecond: 0,
+  }) as TemporalPartial;
   zonedDateTime['~fw_temporal_partial'] = {};
 
   return zonedDateTime;
