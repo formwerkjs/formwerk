@@ -57,7 +57,6 @@ export function useDateTimeSegment(_props: Reactivify<DateTimeSegmentProps>) {
   const segmentEl = shallowRef<HTMLSpanElement>();
   const segmentGroup = inject(DateTimeSegmentGroupKey, null);
   const isDisabled = createDisabledContext(props.disabled);
-  const isNonEditable = () => isDisabled.value || !isEditableSegmentType(toValue(props.type));
 
   if (!segmentGroup) {
     throw new Error('DateTimeSegmentGroup is not provided');
@@ -75,6 +74,7 @@ export function useDateTimeSegment(_props: Reactivify<DateTimeSegmentProps>) {
     isLast,
     focusNext,
     isNumeric,
+    isLockedByRange,
   } = segmentGroup.useDateSegmentRegistration({
     id,
     getElem: () => segmentEl.value,
@@ -83,13 +83,19 @@ export function useDateTimeSegment(_props: Reactivify<DateTimeSegmentProps>) {
 
   let currentInput = '';
 
+  function isNonEditable() {
+    return (
+      !isEditableSegmentType(toValue(props.type)) || isDisabled.value || toValue(props.readonly) || isLockedByRange()
+    );
+  }
+
   const handlers = {
     onFocus() {
       // Reset the current input when the segment is focused
       currentInput = '';
     },
     onBeforeinput(evt: InputEvent) {
-      if (toValue(props.readonly) || isDisabled.value) {
+      if (isNonEditable()) {
         blockEvent(evt);
         return;
       }
@@ -143,7 +149,7 @@ export function useDateTimeSegment(_props: Reactivify<DateTimeSegmentProps>) {
       currentInput = '';
     },
     onKeydown(evt: KeyboardEvent) {
-      if (toValue(props.readonly) || isDisabled.value) {
+      if (isNonEditable()) {
         return;
       }
 
@@ -185,7 +191,7 @@ export function useDateTimeSegment(_props: Reactivify<DateTimeSegmentProps>) {
       id,
       tabindex: isNonEditable() ? -1 : 0,
       contenteditable: isNonEditable() ? undefined : ceValue,
-      'aria-disabled': isDisabled.value,
+      'aria-disabled': isNonEditable(),
       'data-segment-type': toValue(props.type),
       'aria-label': isNonEditable() ? undefined : toValue(props.type),
       'aria-readonly': toValue(props.readonly) ? true : undefined,

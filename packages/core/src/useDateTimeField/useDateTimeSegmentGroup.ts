@@ -7,6 +7,7 @@ import { useEventListener } from '../helpers/useEventListener';
 import {
   getSegmentTypePlaceholder,
   isEditableSegmentType,
+  isEqualPart,
   isNumericByDefault,
   isOptionalSegmentType,
   segmentTypeToDurationLike,
@@ -34,6 +35,7 @@ export interface DateTimeSegmentGroupContext {
     onTouched(): void;
     isLast(): boolean;
     focusNext(): void;
+    isLockedByRange(): boolean;
   };
 }
 
@@ -166,6 +168,18 @@ export function useDateTimeSegmentGroup({
       onValueChange(withAllPartsSet(date));
     }
 
+    function isLockedByRange() {
+      const type = segment.getType();
+      const minDate = toValue(min);
+      const maxDate = toValue(max);
+      // Can't be locked when either bound is open.
+      if (!minDate || !maxDate) {
+        return false;
+      }
+
+      return isEqualPart(minDate, maxDate, type);
+    }
+
     function getMetadata() {
       const type = segment.getType();
       const date = toValue(temporalValue);
@@ -252,6 +266,7 @@ export function useDateTimeSegmentGroup({
       isLast,
       focusNext,
       isNumeric,
+      isLockedByRange,
     };
   }
 
