@@ -15,6 +15,7 @@ import { useListBox } from '../useListBox';
 import { useLabel, useErrorMessage } from '../a11y';
 import { FieldTypePrefixes } from '../constants';
 import { registerField } from '@formwerk/devtools';
+import { useConstraintsValidator } from '../validation/useContraintsValidator';
 
 export interface SelectProps<TOption, TValue = TOption> {
   /**
@@ -31,6 +32,11 @@ export interface SelectProps<TOption, TValue = TOption> {
    * Description text for the select field.
    */
   description?: string;
+
+  /**
+   * Whether the select field is required.
+   */
+  required?: boolean;
 
   /**
    * Placeholder text when no option is selected.
@@ -93,7 +99,7 @@ export function useSelect<TOption, TValue = TOption>(_props: Reactivify<SelectPr
     disabled: props.disabled,
     schema: props.schema,
   });
-
+  const triggerEl = ref<HTMLElement>();
   const { fieldValue, setValue, errorMessage, isDisabled } = field;
   const isMutable = () => !isDisabled.value && !toValue(props.readonly);
   const { labelProps, labelledByProps } = useLabel({
@@ -126,7 +132,14 @@ export function useSelect<TOption, TValue = TOption>(_props: Reactivify<SelectPr
     onToggleAfter: toggleAfter,
   });
 
-  const { updateValidity } = useInputValidity({ field });
+  const { element: inputEl } = useConstraintsValidator({
+    type: 'select',
+    required: () => toValue(props.required),
+    value: fieldValue,
+    source: triggerEl,
+  });
+
+  const { updateValidity } = useInputValidity({ field, inputEl });
   const { descriptionProps, describedByProps } = createDescribedByProps({
     inputId,
     description: props.description,
@@ -250,8 +263,6 @@ export function useSelect<TOption, TValue = TOption>(_props: Reactivify<SelectPr
       }
     },
   };
-
-  const triggerEl = ref<HTMLElement>();
 
   const triggerProps = computed<SelectTriggerDomProps>(() => {
     return withRefCapture(

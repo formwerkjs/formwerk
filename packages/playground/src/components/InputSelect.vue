@@ -11,7 +11,7 @@ export interface TheProps<TOption, TValue> extends SelectProps<TOption, TValue> 
 
 const props = defineProps<TheProps<TOption, TValue>>();
 
-const { triggerProps, labelProps, errorMessageProps, isTouched, displayError, fieldValue, listBoxProps } =
+const { triggerProps, labelProps, errorMessageProps, isTouched, errorMessage, fieldValue, listBoxProps } =
   useSelect(props);
 </script>
 
@@ -64,7 +64,7 @@ const { triggerProps, labelProps, errorMessageProps, isTouched, displayError, fi
     </div>
 
     <span v-bind="errorMessageProps" class="error-message">
-      {{ displayError() }}
+      {{ errorMessage }}
     </span>
   </div>
 </template>

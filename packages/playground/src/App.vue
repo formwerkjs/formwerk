@@ -11,6 +11,7 @@ import Switch from '@/components/Switch.vue';
 import InputTextArea from '@/components/InputTextArea.vue';
 import { ref } from 'vue';
 import AllForm from './components/AllForm.vue';
+import Slider from './components/Slider.vue';
 
 const min = new Date(2025, 0, 4, 0, 0, 0, 0);
 const value = new Date('2025-01-15');
@@ -27,14 +28,13 @@ const isNotificationsEnabled = ref(false);
 
 <template>
   <div class="">
-    <DateField name="birthdate" label="Birth Date" :value="value" :min="min" :max="max" />
+    <InputSelect name="country" label="Country" required :options="options" />
 
     <!-- <h2 class="text-2xl font-bold mb-6">Fields Outside Form</h2>
     <InputText name="username" label="Username" placeholder="Enter username" />
     <InputNumber name="age" label="Age" :min="0" :max="120" />
     <InputTextArea name="description" label="Description" placeholder="Enter description" />
     <DateField name="birthdate" label="Birth Date" :value="value" :min="min" :max="max" />
-    <InputSelect name="country" label="Country" :options="options" />
 
     <CheckboxGroup name="hobbies" label="Hobbies">
       <CheckboxItem name="hobbies" value="reading" label="Reading" />
