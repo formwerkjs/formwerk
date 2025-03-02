@@ -12,6 +12,7 @@ import InputTextArea from '@/components/InputTextArea.vue';
 import { ref } from 'vue';
 import AllForm from './components/AllForm.vue';
 import Slider from './components/Slider.vue';
+import Calendar from './components/Calendar.vue';
 
 const min = new Date(2025, 0, 4, 0, 0, 0, 0);
 const value = new Date('2025-01-15');
@@ -29,7 +30,8 @@ const isNotificationsEnabled = ref(false);
 <template>
   <div class="">
     <!-- <InputSelect name="country" label="Country" required :options="options" /> -->
-    <DateField name="birthdate" label="Birth Date" :value="value" :min="min" :max="max" />
+    <!-- <DateField name="birthdate" label="Birth Date" :value="value" :min="min" :max="max" /> -->
+    <Calendar name="birthdate" label="Birth Date" required :min="min" :max="max" />
 
     <!-- <h2 class="text-2xl font-bold mb-6">Fields Outside Form</h2>
     <InputText name="username" label="Username" placeholder="Enter username" />

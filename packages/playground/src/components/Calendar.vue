@@ -3,8 +3,16 @@ import { useCalendar, type CalendarProps, CalendarCell } from '@formwerk/core';
 
 const props = defineProps<CalendarProps>();
 
-const { calendarProps, gridProps, nextButtonProps, previousButtonProps, gridLabelProps, gridLabel, currentView } =
-  useCalendar(props);
+const {
+  calendarProps,
+  gridProps,
+  nextButtonProps,
+  previousButtonProps,
+  gridLabelProps,
+  gridLabel,
+  currentView,
+  errorMessage,
+} = useCalendar(props);
 </script>
 
 <template>
@@ -62,5 +70,7 @@ const { calendarProps, gridProps, nextButtonProps, previousButtonProps, gridLabe
         {{ year.label }}
       </CalendarCell>
     </div>
+
+    {{ errorMessage }}
   </div>
 </template>

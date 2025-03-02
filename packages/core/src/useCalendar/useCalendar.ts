@@ -16,6 +16,7 @@ import { useInputValidity } from '../validation';
 import { fromDateToCalendarZonedDateTime, useTemporalStore } from '../useDateTimeField/useTemporalStore';
 import { PickerContextKey } from '../usePicker';
 import { registerField } from '@formwerk/devtools';
+import { useConstraintsValidator } from '../validation/useContraintsValidator';
 
 export interface CalendarProps {
   /**
@@ -27,6 +28,11 @@ export interface CalendarProps {
    * The label for the calendar.
    */
   label: string;
+
+  /**
+   * Whether the calendar is required.
+   */
+  required?: boolean;
 
   /**
    * The locale to use for the calendar.
@@ -148,7 +154,14 @@ export function useCalendar(_props: Reactivify<CalendarProps, 'field' | 'schema'
 
   // If no controlling field is provided, we should hook up the required hooks to promote the calender to a full form field.
   if (!props.field) {
-    useInputValidity({ field });
+    const { element } = useConstraintsValidator({
+      type: 'date',
+      value: field.fieldValue,
+      source: calendarEl,
+      required: props.required,
+    });
+
+    useInputValidity({ field, inputEl: element });
   }
 
   const isDisabled = createDisabledContext(props.disabled);
