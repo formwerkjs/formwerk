@@ -117,11 +117,11 @@ export function useDateTimeField(_props: Reactivify<DateTimeFieldProps, 'schema'
 
   const { element: inputEl } = useConstraintsValidator({
     type: 'date',
-    required: () => toValue(props.required),
+    required: props.required,
     value: field.fieldValue,
     source: controlEl,
-    min: () => toValue(props.min),
-    max: () => toValue(props.max),
+    min: props.min,
+    max: props.max,
   });
 
   useInputValidity({ field, inputEl });

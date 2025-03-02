@@ -134,7 +134,7 @@ export function useSelect<TOption, TValue = TOption>(_props: Reactivify<SelectPr
 
   const { element: inputEl } = useConstraintsValidator({
     type: 'select',
-    required: () => toValue(props.required),
+    required: props.required,
     value: fieldValue as unknown as string,
     source: triggerEl,
   });
