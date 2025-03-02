@@ -12,6 +12,7 @@ import { ZonedDateTime, Calendar } from '@internationalized/date';
 import { useInputValidity } from '../validation';
 import { createDisabledContext } from '../helpers/createDisabledContext';
 import { registerField } from '@formwerk/devtools';
+import { useConstraintsValidator } from '../validation/useContraintsValidator';
 
 export interface DateTimeFieldProps {
   /**
@@ -23,6 +24,11 @@ export interface DateTimeFieldProps {
    * The name to use for the field.
    */
   name?: string;
+
+  /**
+   * Whether the field is required.
+   */
+  required?: boolean;
 
   /**
    * The locale to use for the field.
@@ -109,7 +115,16 @@ export function useDateTimeField(_props: Reactivify<DateTimeFieldProps, 'schema'
     schema: props.schema,
   });
 
-  useInputValidity({ field });
+  const { element: inputEl } = useConstraintsValidator({
+    type: 'date',
+    required: () => toValue(props.required),
+    value: field.fieldValue,
+    source: controlEl,
+    min: () => toValue(props.min),
+    max: () => toValue(props.max),
+  });
+
+  useInputValidity({ field, inputEl });
 
   const min = computed(() => fromDateToCalendarZonedDateTime(toValue(props.min), calendar.value, timeZone.value));
   const max = computed(() => fromDateToCalendarZonedDateTime(toValue(props.max), calendar.value, timeZone.value));
@@ -142,6 +157,7 @@ export function useDateTimeField(_props: Reactivify<DateTimeFieldProps, 'schema'
     onTouched: () => field.setTouched(true),
     min,
     max,
+    dispatchEvent: (type: string) => inputEl.value?.dispatchEvent(new Event(type)),
   });
 
   const { labelProps, labelledByProps } = useLabel({

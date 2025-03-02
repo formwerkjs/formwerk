@@ -36,6 +36,7 @@ export interface DateTimeSegmentGroupContext {
     isLast(): boolean;
     focusNext(): void;
     isLockedByRange(): boolean;
+    dispatchEvent(type: string): void;
   };
 }
 
@@ -53,6 +54,7 @@ export interface DateTimeSegmentGroupProps {
   max?: MaybeRefOrGetter<Maybe<ZonedDateTime>>;
   onValueChange: (value: ZonedDateTime) => void;
   onTouched: () => void;
+  dispatchEvent: (type: string) => void;
 }
 
 export function useDateTimeSegmentGroup({
@@ -67,6 +69,7 @@ export function useDateTimeSegmentGroup({
   max,
   onValueChange,
   onTouched,
+  dispatchEvent,
 }: DateTimeSegmentGroupProps) {
   const renderedSegments = ref<DateTimeSegmentRegistration[]>([]);
   const parser = useNumberParser(locale, {
@@ -267,6 +270,7 @@ export function useDateTimeSegmentGroup({
       focusNext,
       isNumeric,
       isLockedByRange,
+      dispatchEvent,
     };
   }
 
@@ -388,7 +392,7 @@ function useDateArithmetic({ currentDate, min, max }: ArithmeticInit) {
       };
     }
 
-    return clampDate(newDate);
+    return newDate;
   }
 
   function addToPart(part: DateTimeSegmentType, diff: number) {

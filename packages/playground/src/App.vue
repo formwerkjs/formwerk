@@ -28,7 +28,8 @@ const isNotificationsEnabled = ref(false);
 
 <template>
   <div class="">
-    <InputSelect name="country" label="Country" required :options="options" />
+    <!-- <InputSelect name="country" label="Country" required :options="options" /> -->
+    <DateField name="birthdate" label="Birth Date" :value="value" :min="min" :max="max" />
 
     <!-- <h2 class="text-2xl font-bold mb-6">Fields Outside Form</h2>
     <InputText name="username" label="Username" placeholder="Enter username" />

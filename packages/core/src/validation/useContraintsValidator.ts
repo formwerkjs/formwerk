@@ -3,31 +3,31 @@ import { Maybe } from '../types';
 import { useEventListener } from '../helpers/useEventListener';
 
 export interface ConstraintOptions<TValue> {
-  value: MaybeRefOrGetter<TValue>;
+  value: MaybeRefOrGetter<Maybe<TValue>>;
   source: Ref<Maybe<HTMLElement>>;
 }
 
-interface BaseConstraints extends ConstraintOptions<unknown> {
+interface BaseConstraints<TValue> extends ConstraintOptions<TValue> {
   required?: MaybeRefOrGetter<Maybe<boolean>>;
 }
 
-interface TextualConstraints extends BaseConstraints {
+interface TextualConstraints extends BaseConstraints<string> {
   type: 'text';
   minLength?: MaybeRefOrGetter<Maybe<number>>;
   maxLength?: MaybeRefOrGetter<Maybe<number>>;
 }
 
-interface SelectConstraints extends BaseConstraints {
+interface SelectConstraints extends BaseConstraints<string> {
   type: 'select';
 }
 
-interface NumericConstraints extends BaseConstraints {
+interface NumericConstraints extends BaseConstraints<number> {
   type: 'number';
   min?: MaybeRefOrGetter<Maybe<number>>;
   max?: MaybeRefOrGetter<Maybe<number>>;
 }
 
-interface DateConstraints extends BaseConstraints {
+interface DateConstraints extends BaseConstraints<Date> {
   type: 'date';
   min?: MaybeRefOrGetter<Maybe<Date>>;
   max?: MaybeRefOrGetter<Maybe<Date>>;
@@ -53,16 +53,24 @@ export function useConstraintsValidator(constraints: Constraints) {
     if (constraints.type === 'text') {
       element.value.setAttribute('minlength', toValue(constraints.minLength)?.toString() ?? '');
       element.value.setAttribute('maxlength', toValue(constraints.maxLength)?.toString() ?? '');
+
+      return;
     }
 
     if (constraints.type === 'number') {
       element.value.setAttribute('min', toValue(constraints.min)?.toString() ?? '');
       element.value.setAttribute('max', toValue(constraints.max)?.toString() ?? '');
+
+      return;
     }
 
     if (constraints.type === 'date') {
-      element.value.setAttribute('min', toValue(constraints.min)?.toISOString() ?? '');
-      element.value.setAttribute('max', toValue(constraints.max)?.toISOString() ?? '');
+      const min = toValue(constraints.min);
+      const max = toValue(constraints.max);
+      element.value.setAttribute('min', min ? dateToString(min) : '');
+      element.value.setAttribute('max', max ? dateToString(max) : '');
+
+      return;
     }
   });
 
@@ -71,17 +79,21 @@ export function useConstraintsValidator(constraints: Constraints) {
       return;
     }
 
-    const val = toValue(constraints.value);
     if (constraints.type === 'text' || element.value.type === 'text') {
+      const val = toValue(constraints.value);
       element.value.value = String(val ?? '');
+      return;
     }
 
     if (constraints.type === 'number') {
+      const val = toValue(constraints.value);
       element.value.value = String(val ?? '');
+      return;
     }
 
     if (constraints.type === 'date') {
-      element.value.value = val ? new Date(String(val)).toISOString() : '';
+      const date = toValue(constraints.value);
+      element.value.value = date ? dateToString(date) : '';
     }
   });
 
@@ -92,4 +104,8 @@ export function useConstraintsValidator(constraints: Constraints) {
   return {
     element,
   };
+}
+
+function dateToString(date: Date) {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
 }

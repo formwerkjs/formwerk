@@ -75,6 +75,7 @@ export function useDateTimeSegment(_props: Reactivify<DateTimeSegmentProps>) {
     focusNext,
     isNumeric,
     isLockedByRange,
+    dispatchEvent,
   } = segmentGroup.useDateSegmentRegistration({
     id,
     getElem: () => segmentEl.value,
@@ -135,6 +136,7 @@ export function useDateTimeSegment(_props: Reactivify<DateTimeSegmentProps>) {
     },
     onBlur() {
       onTouched();
+      dispatchEvent('blur');
       const { min, max } = getMetadata();
       if (isNullOrUndefined(min) || isNullOrUndefined(max)) {
         return;
