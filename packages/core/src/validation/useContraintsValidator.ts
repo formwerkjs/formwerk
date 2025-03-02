@@ -1,4 +1,4 @@
-import { MaybeRefOrGetter, onMounted, Ref, shallowRef, toValue, watchEffect } from 'vue';
+import { MaybeRefOrGetter, nextTick, onMounted, Ref, shallowRef, toValue, watchEffect } from 'vue';
 import { Maybe } from '../types';
 import { useEventListener } from '../helpers/useEventListener';
 
@@ -79,6 +79,10 @@ export function useConstraintsValidator(constraints: Constraints) {
       return;
     }
 
+    nextTick(() => {
+      element.value?.dispatchEvent(new Event('change'));
+    });
+
     if (constraints.type === 'text' || element.value.type === 'text') {
       const val = toValue(constraints.value);
       element.value.value = String(val ?? '');
@@ -97,7 +101,7 @@ export function useConstraintsValidator(constraints: Constraints) {
     }
   });
 
-  useEventListener(constraints.source, ['change', 'blur', 'input'], evt => {
+  useEventListener(constraints.source, ['blur', 'input'], evt => {
     element.value?.dispatchEvent(new Event(evt.type));
   });
 

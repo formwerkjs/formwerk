@@ -6,6 +6,10 @@ import { flush } from '@test-utils/flush';
 import { DateTimeSegment } from './useDateTimeSegment';
 import { createTemporalPartial, isTemporalPartial } from './temporalPartial';
 
+function dispatchEvent() {
+  // NOOP
+}
+
 describe('useDateTimeSegmentGroup', () => {
   const timeZone = 'UTC';
   const locale = 'en-US';
@@ -35,6 +39,7 @@ describe('useDateTimeSegmentGroup', () => {
             controlEl,
             onValueChange,
             onTouched: () => {},
+            dispatchEvent,
           });
 
           // Register a segment
@@ -84,6 +89,7 @@ describe('useDateTimeSegmentGroup', () => {
             controlEl,
             onValueChange,
             onTouched: () => {},
+            dispatchEvent,
           });
 
           return {
@@ -133,9 +139,10 @@ describe('useDateTimeSegmentGroup', () => {
             formatOptions: {},
             locale,
             controlEl,
+            direction: 'rtl',
             onValueChange,
             onTouched: () => {},
-            direction: 'rtl',
+            dispatchEvent,
           });
 
           return {
@@ -187,6 +194,7 @@ describe('useDateTimeSegmentGroup', () => {
             controlEl,
             onValueChange,
             onTouched: () => {},
+            dispatchEvent,
           });
 
           const segment = {
@@ -222,6 +230,7 @@ describe('useDateTimeSegmentGroup', () => {
             controlEl,
             onValueChange,
             onTouched: () => {},
+            dispatchEvent,
           });
 
           const segment = {
@@ -257,6 +266,7 @@ describe('useDateTimeSegmentGroup', () => {
             controlEl,
             onValueChange,
             onTouched: () => {},
+            dispatchEvent,
           });
 
           const segment = {
@@ -292,6 +302,7 @@ describe('useDateTimeSegmentGroup', () => {
             controlEl,
             onValueChange,
             onTouched: () => {},
+            dispatchEvent,
           });
 
           const segment = {
@@ -329,6 +340,7 @@ describe('useDateTimeSegmentGroup', () => {
             controlEl,
             onValueChange,
             onTouched: () => {},
+            dispatchEvent,
           });
 
           return {
@@ -369,6 +381,7 @@ describe('useDateTimeSegmentGroup', () => {
             controlEl,
             onValueChange,
             onTouched: () => {},
+            dispatchEvent,
           });
 
           return {
@@ -430,6 +443,7 @@ describe('useDateTimeSegmentGroup', () => {
             controlEl,
             onValueChange,
             onTouched: () => {},
+            dispatchEvent,
           });
 
           return {
@@ -492,6 +506,7 @@ describe('useDateTimeSegmentGroup', () => {
             controlEl,
             onValueChange,
             onTouched: () => {},
+            dispatchEvent,
           });
 
           return {
@@ -548,6 +563,7 @@ describe('useDateTimeSegmentGroup', () => {
             controlEl,
             onValueChange,
             onTouched: () => {},
+            dispatchEvent,
           });
 
           return {
@@ -621,6 +637,7 @@ describe('useDateTimeSegmentGroup', () => {
             controlEl,
             onValueChange,
             onTouched: () => {},
+            dispatchEvent,
           });
 
           return {
@@ -718,6 +735,7 @@ describe('useDateTimeSegmentGroup', () => {
             controlEl,
             onValueChange,
             onTouched: () => {},
+            dispatchEvent,
           });
 
           return {

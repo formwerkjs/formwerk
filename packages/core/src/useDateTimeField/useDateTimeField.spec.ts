@@ -293,7 +293,7 @@ describe('useDateTimeField', () => {
         template: `
           <div>
             <span v-bind="labelProps">Date</span>
-            <div v-bind="controlProps">
+            <div v-bind="controlProps" data-testid="control">
               <DateTimeSegment
                 v-for="segment in segments"
                 :key="segment.type"
