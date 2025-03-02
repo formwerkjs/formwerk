@@ -54,16 +54,19 @@ export function isNumericByDefault(type: DateTimeSegmentType) {
   return map[type] ?? false;
 }
 
-export function getOrderedSegmentTypes(): DateTimeSegmentType[] {
+type EditableSegmentType = 'year' | 'month' | 'day' | 'hour' | 'minute' | 'second';
+
+export function getOrderedSegmentTypes(): EditableSegmentType[] {
   return ['year', 'month', 'day', 'hour', 'minute', 'second'];
 }
 
 export function isEqualPart(min: ZonedDateTime, max: ZonedDateTime, part: DateTimeSegmentType) {
+  const editablePart = part as EditableSegmentType;
   const parts = getOrderedSegmentTypes();
-  const idx = parts.indexOf(part);
+  const idx = parts.indexOf(editablePart);
   if (idx === -1) {
     return false;
   }
 
-  return parts.slice(0, idx).every(p => min[p] === max[p]) && min[part] === max[part];
+  return parts.slice(0, idx).every(p => min[p] === max[p]) && min[editablePart] === max[editablePart];
 }
