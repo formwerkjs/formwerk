@@ -9,7 +9,7 @@ function onCompleted(value: string) {
 </script>
 
 <template>
-  <OtpField name="otp" label="OTP" accept="numeric" :length="4" prefix="G-" masked @completed="onCompleted" />
+  <OtpField name="otp" label="OTP" accept="numeric" :length="4" @completed="onCompleted" />
 
   <div class="flex w-full">
     <button @click="form.setValue('otp', 'G-4321')">Set OTP</button>
