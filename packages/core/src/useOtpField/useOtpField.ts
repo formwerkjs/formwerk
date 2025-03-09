@@ -111,7 +111,7 @@ export function useOtpField(_props: Reactivify<OTPFieldProps, 'schema' | 'onComp
 
   function getRequiredLength() {
     const prefix = toValue(props.prefix) || '';
-    const length = toValue(props.length) ?? 0;
+    const length = getLength();
 
     return prefix.length + length;
   }
@@ -122,6 +122,17 @@ export function useOtpField(_props: Reactivify<OTPFieldProps, 'schema' | 'onComp
     disabled: props.disabled,
     schema: props.schema,
   });
+
+  function getLength() {
+    const propLength = toValue(props.length);
+    if (propLength) {
+      return propLength;
+    }
+
+    const prefix = toValue(props.prefix);
+
+    return prefix ? 4 : 6;
+  }
 
   const inputsState = ref<string[]>(withPrefix(toValue(props.modelValue) ?? toValue(props.value)).split(''));
 
@@ -198,7 +209,7 @@ export function useOtpField(_props: Reactivify<OTPFieldProps, 'schema' | 'onComp
 
   const fieldSlots = computed<OtpSlotProps[]>(() => {
     const prefix = toValue(props.prefix) || '';
-    const length = prefix.length + (toValue(props.length) ?? 0);
+    const length = prefix.length + getLength();
 
     return Array.from({ length }, (_, index) => ({
       value: inputsState.value[index] ?? '',
