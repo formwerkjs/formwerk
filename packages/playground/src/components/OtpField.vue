@@ -13,8 +13,8 @@
 </template>
 
 <script setup lang="ts">
-import { useOtpField, OTPFieldProps } from '@formwerk/core';
-import OtpSlot from './OtpSlot.vue';
+import { useOtpField, OTPFieldProps, OtpSlot } from '@formwerk/core';
+
 const props = defineProps<OTPFieldProps>();
 
 const { controlProps, labelProps, errorMessage, errorMessageProps, fieldSlots } = useOtpField(props);

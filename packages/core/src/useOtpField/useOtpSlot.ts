@@ -151,7 +151,7 @@ export function useOtpSlot(_props: Reactivify<OtpSlotProps>) {
     }
 
     if (!isInput) {
-      baseProps['aria-role'] = 'textbox';
+      baseProps.role = 'textbox';
       baseProps['aria-label'] = toValue(props.value) || 'Enter a character';
       baseProps['aria-multiline'] = 'false';
       baseProps.contenteditable = isDisabled.value ? 'false' : isFirefox() ? 'true' : 'plaintext-only';
