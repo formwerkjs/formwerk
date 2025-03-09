@@ -8,6 +8,7 @@ export interface OtpSlotRegistration {
   focusPrevious(): void;
   setValue(value: string): void;
   handlePaste(event: ClipboardEvent): void;
+  isLast(): boolean;
 }
 
 export interface OtpContext {

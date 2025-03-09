@@ -289,16 +289,22 @@ export function useOtpField(_props: Reactivify<OTPFieldProps, 'schema' | 'onComp
     }
   }
 
+  let registeredSlots = 0;
+
   provide(OtpContextKey, {
     useSlotRegistration() {
       const slotId = useUniqId(FieldTypePrefixes.OTPSlot);
+      const index = registeredSlots++;
 
       return {
         id: slotId,
         focusNext,
         focusPrevious,
+        isLast() {
+          return index === getRequiredLength() - 1;
+        },
         handlePaste: onPaste,
-        setValue: (value: string) => {
+        setValue(value: string) {
           const index = getActiveSlotIndex();
           if (index === -1) {
             return;

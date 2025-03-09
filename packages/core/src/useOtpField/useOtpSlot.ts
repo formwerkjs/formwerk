@@ -43,6 +43,7 @@ export function useOtpSlot(_props: Reactivify<OtpSlotProps>) {
     useSlotRegistration() {
       return {
         id: '',
+        isLast: () => true,
         focusNext: () => {},
         focusPrevious: () => {},
         setValue: () => {},
@@ -51,7 +52,7 @@ export function useOtpSlot(_props: Reactivify<OtpSlotProps>) {
     },
   });
 
-  const { focusNext, focusPrevious, setValue, id, handlePaste } = context.useSlotRegistration({
+  const { focusNext, focusPrevious, setValue, id, handlePaste, isLast } = context.useSlotRegistration({
     focus() {
       slotEl.value?.focus();
     },
@@ -139,10 +140,9 @@ export function useOtpSlot(_props: Reactivify<OtpSlotProps>) {
       spellcheck: false,
       tabindex: isDisabled.value ? '-1' : '0',
       autocorrect: 'off',
-      autocomplete: 'off',
+      autocomplete: 'one-time-code',
       autocapitalize: 'off',
-      // TODO: Should be either done or next depending on if it's the last slot
-      enterkeyhint: 'next',
+      enterkeyhint: isLast() ? 'done' : 'next',
       ...handlers,
     };
 
