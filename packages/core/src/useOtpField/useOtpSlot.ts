@@ -144,9 +144,6 @@ export function useOtpSlot(_props: Reactivify<OtpSlotProps>) {
       // TODO: Should be either done or next depending on if it's the last slot
       enterkeyhint: 'next',
       ...handlers,
-      style: {
-        caretColor: 'transparent',
-      },
     };
 
     if (toValue(props.accept) === 'numeric') {
