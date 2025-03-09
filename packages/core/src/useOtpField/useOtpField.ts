@@ -9,6 +9,8 @@ import { useInputValidity, useConstraintsValidator } from '../validation';
 import { OtpSlotProps } from './useOtpSlot';
 import { createDisabledContext } from '../helpers/createDisabledContext';
 import { registerField } from '@formwerk/devtools';
+import { isValueAccepted } from './utils';
+import { blockEvent } from '../utils/events';
 
 export interface OTPFieldProps {
   /**
@@ -231,6 +233,60 @@ export function useOtpField(_props: Reactivify<OTPFieldProps, 'schema' | 'onComp
     inputsState.value = value.split('');
   });
 
+  function onPaste(event: ClipboardEvent) {
+    const text = event.clipboardData?.getData('text/plain') || '';
+    blockEvent(event);
+    if (!text.length) {
+      return;
+    }
+
+    if (!isValueAccepted(text, toValue(props.accept) || 'all')) {
+      return;
+    }
+
+    const prefixed = withPrefix(text).split('');
+    if (prefixed.length === getRequiredLength()) {
+      prefixed.forEach((value, index) => {
+        inputsState.value[index] = value;
+      });
+
+      updateFieldValue();
+      return;
+    }
+
+    const currentIndex = getActiveSlotIndex();
+    if (currentIndex === -1) {
+      return;
+    }
+
+    // Fill input states starting from the active index
+    const prefixLength = (toValue(props.prefix) || '').length;
+    const maxLength = getRequiredLength();
+    const availableSlots = maxLength - currentIndex;
+
+    // Only take characters that can fit in the remaining slots
+    const textToFill = text.slice(0, availableSlots);
+
+    // Skip prefix slots if we're pasting into a position after the prefix
+    if (currentIndex >= prefixLength) {
+      for (let i = 0; i < textToFill.length; i++) {
+        const char = textToFill[i];
+        inputsState.value[currentIndex + i] = char;
+      }
+    }
+
+    updateFieldValue();
+  }
+
+  function updateFieldValue() {
+    const nextValue = inputsState.value.join('');
+    const isCompleted = nextValue?.length === getRequiredLength();
+    field.setValue(nextValue);
+    if (isCompleted) {
+      props.onCompleted?.(nextValue);
+    }
+  }
+
   provide(OtpContextKey, {
     useSlotRegistration() {
       const slotId = useUniqId(FieldTypePrefixes.OTPSlot);
@@ -239,6 +295,7 @@ export function useOtpField(_props: Reactivify<OTPFieldProps, 'schema' | 'onComp
         id: slotId,
         focusNext,
         focusPrevious,
+        handlePaste: onPaste,
         setValue: (value: string) => {
           const index = getActiveSlotIndex();
           if (index === -1) {
@@ -246,12 +303,7 @@ export function useOtpField(_props: Reactivify<OTPFieldProps, 'schema' | 'onComp
           }
 
           inputsState.value[index] = value;
-          const nextValue = inputsState.value.join('');
-          const isCompleted = nextValue?.length === getRequiredLength();
-          field.setValue(nextValue);
-          if (isCompleted) {
-            props.onCompleted?.(nextValue);
-          }
+          updateFieldValue();
         },
       };
     },

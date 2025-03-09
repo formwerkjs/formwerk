@@ -5,6 +5,7 @@ import { isFirefox } from '../utils/platform';
 import { blockEvent } from '../utils/events';
 import { OtpContextKey, OtpSlotAcceptType } from './types';
 import { createDisabledContext } from '../helpers/createDisabledContext';
+import { isValueAccepted } from './utils';
 
 export interface OtpSlotProps {
   /**
@@ -38,12 +39,6 @@ export function useOtpSlot(_props: Reactivify<OtpSlotProps>) {
   const slotEl = ref<HTMLElement>();
   const isDisabled = createDisabledContext(props.disabled);
 
-  const acceptMapRegex: Record<OtpSlotAcceptType, RegExp> = {
-    all: /./,
-    numeric: /^\d+$/,
-    alphanumeric: /^[a-zA-Z0-9]+$/,
-  };
-
   const context = inject(OtpContextKey, {
     useSlotRegistration() {
       return {
@@ -51,11 +46,12 @@ export function useOtpSlot(_props: Reactivify<OtpSlotProps>) {
         focusNext: () => {},
         focusPrevious: () => {},
         setValue: () => {},
+        handlePaste: () => {},
       };
     },
   });
 
-  const { focusNext, focusPrevious, setValue, id } = context.useSlotRegistration({
+  const { focusNext, focusPrevious, setValue, id, handlePaste } = context.useSlotRegistration({
     focus() {
       slotEl.value?.focus();
     },
@@ -90,6 +86,9 @@ export function useOtpSlot(_props: Reactivify<OtpSlotProps>) {
   }
 
   const handlers = {
+    onPaste(e: ClipboardEvent) {
+      handlePaste(e);
+    },
     onKeydown(e: KeyboardEvent) {
       if (hasKeyCode(e, 'Backspace') || hasKeyCode(e, 'Delete')) {
         blockEvent(e);
@@ -122,10 +121,8 @@ export function useOtpSlot(_props: Reactivify<OtpSlotProps>) {
         return;
       }
 
-      const re = acceptMapRegex[toValue(props.accept) || 'all'];
-
       blockEvent(e);
-      if (re.test(e.data)) {
+      if (isValueAccepted(e.data, toValue(props.accept) || 'all')) {
         setElementValue(e.data);
         focusNext();
       }
