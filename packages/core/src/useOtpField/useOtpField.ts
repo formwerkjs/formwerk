@@ -37,6 +37,11 @@ export interface OTPFieldProps {
   disabled?: boolean;
 
   /**
+   * Whether the OTP field is masked.
+   */
+  masked?: boolean;
+
+  /**
    * Whether the OTP field is readonly.
    */
   readonly?: boolean;
@@ -193,6 +198,7 @@ export function useOtpField(_props: Reactivify<OTPFieldProps, 'schema'>) {
       disabled: prefix.length ? prefix.length > index : isDisabled.value,
       readonly: toValue(props.readonly),
       accept: toValue(props.accept),
+      masked: prefix.length <= index && toValue(props.masked),
     }));
   });
 

@@ -23,6 +23,11 @@ export interface OtpSlotProps {
   readonly?: boolean;
 
   /**
+   * Whether the slot is masked.
+   */
+  masked?: boolean;
+
+  /**
    * The type of the slot.
    */
   accept?: OtpSlotAcceptType;
@@ -62,6 +67,14 @@ export function useOtpSlot(_props: Reactivify<OtpSlotProps>) {
     }
   }
 
+  function withMask(value: string | undefined) {
+    if (!toValue(props.masked) || !value) {
+      return value ?? '';
+    }
+
+    return '•'.repeat(value.length);
+  }
+
   function setElementValue(value: string) {
     if (!slotEl.value) {
       return;
@@ -73,7 +86,7 @@ export function useOtpSlot(_props: Reactivify<OtpSlotProps>) {
       return;
     }
 
-    slotEl.value.textContent = value;
+    slotEl.value.textContent = withMask(value);
   }
 
   const handlers = {
@@ -146,6 +159,7 @@ export function useOtpSlot(_props: Reactivify<OtpSlotProps>) {
       baseProps.contenteditable = isDisabled.value ? 'false' : isFirefox() ? 'true' : 'plaintext-only';
     } else {
       baseProps.value = toValue(props.value);
+      baseProps.type = toValue(props.masked) ? 'password' : 'text';
     }
 
     return withRefCapture(baseProps, slotEl);
@@ -154,7 +168,7 @@ export function useOtpSlot(_props: Reactivify<OtpSlotProps>) {
   return {
     slotProps,
     key: id,
-    value: computed(() => toValue(props.value)),
+    value: computed(() => withMask(toValue(props.value))),
   };
 }
 
@@ -163,7 +177,7 @@ export function useOtpSlot(_props: Reactivify<OtpSlotProps>) {
  */
 export const OtpSlot = /*#__PURE__*/ defineComponent<OtpSlotProps>({
   name: 'OtpSlot',
-  props: ['value', 'disabled', 'readonly', 'accept'],
+  props: ['value', 'disabled', 'readonly', 'accept', 'masked'],
   setup(props) {
     const { slotProps, value, key } = useOtpSlot(props);
 
