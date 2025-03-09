@@ -4,11 +4,14 @@ import { useForm } from '@formwerk/core';
 const form = useForm();
 
 function onCompleted(value: string) {
-  console.log('onCompleted', value);
+  alert(`onCompleted: ${value}`);
 }
 </script>
 
 <template>
-  <OtpField name="otp" label="OTP" :length="4" accept="numeric" prefix="G-" required @completed="onCompleted" />
-  <button @click="form.setValue('otp', 'G-4321')">Set OTP</button>
+  <OtpField name="otp" label="OTP" :length="6" prefix="G-" masked @completed="onCompleted" />
+
+  <div class="flex w-full">
+    <button @click="form.setValue('otp', 'G-4321')">Set OTP</button>
+  </div>
 </template>
