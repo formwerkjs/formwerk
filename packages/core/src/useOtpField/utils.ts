@@ -11,3 +11,5 @@ export function isValueAccepted(value: string, accept: OtpSlotAcceptType) {
 
   return regex.test(value);
 }
+
+export const DEFAULT_MASK = '•';

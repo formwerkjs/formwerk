@@ -1,4 +1,4 @@
-import { computed, defineComponent, h, inject, ref, toValue } from 'vue';
+import { computed, defineComponent, h, inject, ref, toValue, useId } from 'vue';
 import { Reactivify } from '../types';
 import { hasKeyCode, isInputElement, normalizeProps, warn, withRefCapture } from '../utils/common';
 import { isFirefox } from '../utils/platform';
@@ -39,24 +39,9 @@ export function useOtpSlot(_props: Reactivify<OtpSlotProps>) {
   const slotEl = ref<HTMLElement>();
   const isDisabled = createDisabledContext(props.disabled);
 
-  const context = inject(OtpContextKey, {
-    useSlotRegistration() {
-      return {
-        id: '',
-        isLast: () => true,
-        focusNext: () => {},
-        focusPrevious: () => {},
-        setValue: () => {},
-        handlePaste: () => {},
-      };
-    },
-  });
+  const context = inject(OtpContextKey, null);
 
-  const { focusNext, focusPrevious, setValue, id, handlePaste, isLast } = context.useSlotRegistration({
-    focus() {
-      slotEl.value?.focus();
-    },
-  });
+  const registration = context?.useSlotRegistration();
 
   if (!context) {
     if (__DEV__) {
@@ -69,7 +54,7 @@ export function useOtpSlot(_props: Reactivify<OtpSlotProps>) {
       return value ?? '';
     }
 
-    return '•'.repeat(value.length);
+    return context?.getMaskCharacter().repeat(value.length) ?? '';
   }
 
   function setElementValue(value: string) {
@@ -77,7 +62,7 @@ export function useOtpSlot(_props: Reactivify<OtpSlotProps>) {
       return;
     }
 
-    setValue(value);
+    registration?.setValue(value);
     if (isInputElement(slotEl.value)) {
       slotEl.value.value = value;
       return;
@@ -88,31 +73,31 @@ export function useOtpSlot(_props: Reactivify<OtpSlotProps>) {
 
   const handlers = {
     onPaste(e: ClipboardEvent) {
-      handlePaste(e);
+      registration?.handlePaste(e);
     },
     onKeydown(e: KeyboardEvent) {
       if (hasKeyCode(e, 'Backspace') || hasKeyCode(e, 'Delete')) {
         blockEvent(e);
         setElementValue('');
-        focusPrevious();
+        registration?.focusPrevious();
         return;
       }
 
       if (hasKeyCode(e, 'Enter')) {
         blockEvent(e);
-        focusNext();
+        registration?.focusNext();
         return;
       }
 
       if (hasKeyCode(e, 'ArrowLeft')) {
         blockEvent(e);
-        focusPrevious();
+        registration?.focusPrevious();
         return;
       }
 
       if (hasKeyCode(e, 'ArrowRight')) {
         blockEvent(e);
-        focusNext();
+        registration?.focusNext();
         return;
       }
     },
@@ -125,7 +110,7 @@ export function useOtpSlot(_props: Reactivify<OtpSlotProps>) {
       blockEvent(e);
       if (isValueAccepted(e.data, toValue(props.accept) || 'all')) {
         setElementValue(e.data);
-        focusNext();
+        registration?.focusNext();
       }
     },
   };
@@ -142,7 +127,7 @@ export function useOtpSlot(_props: Reactivify<OtpSlotProps>) {
       autocorrect: 'off',
       autocomplete: 'one-time-code',
       autocapitalize: 'off',
-      enterkeyhint: isLast() ? 'done' : 'next',
+      enterkeyhint: registration?.isLast() ? 'done' : 'next',
       ...handlers,
     };
 
@@ -165,7 +150,7 @@ export function useOtpSlot(_props: Reactivify<OtpSlotProps>) {
 
   return {
     slotProps,
-    key: id,
+    key: registration?.id ?? useId(),
     value: computed(() => withMask(toValue(props.value))),
   };
 }
@@ -173,12 +158,12 @@ export function useOtpSlot(_props: Reactivify<OtpSlotProps>) {
 /**
  * A helper component that renders an OTP slot. You can build your own with `useOtpSlot`.
  */
-export const OtpSlot = /*#__PURE__*/ defineComponent<OtpSlotProps>({
+export const OtpSlot = /*#__PURE__*/ defineComponent<OtpSlotProps & { as?: string }>({
   name: 'OtpSlot',
-  props: ['value', 'disabled', 'readonly', 'accept', 'masked'],
+  props: ['value', 'disabled', 'readonly', 'accept', 'masked', 'as'],
   setup(props) {
     const { slotProps, value, key } = useOtpSlot(props);
 
-    return () => h('span', { ...slotProps.value, key }, value.value);
+    return () => h(props.as || 'span', { ...slotProps.value, key }, value.value);
   },
 });
