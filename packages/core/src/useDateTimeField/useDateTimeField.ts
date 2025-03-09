@@ -12,7 +12,7 @@ import { ZonedDateTime, Calendar } from '@internationalized/date';
 import { useInputValidity } from '../validation';
 import { createDisabledContext } from '../helpers/createDisabledContext';
 import { registerField } from '@formwerk/devtools';
-import { useConstraintsValidator } from '../validation/useContraintsValidator';
+import { useConstraintsValidator } from '../validation/useConstraintsValidator';
 
 export interface DateTimeFieldProps {
   /**

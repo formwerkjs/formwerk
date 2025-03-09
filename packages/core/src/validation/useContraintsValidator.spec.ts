@@ -1,5 +1,5 @@
 import { nextTick, onMounted, ref } from 'vue';
-import { useConstraintsValidator } from './useContraintsValidator';
+import { useConstraintsValidator } from './useConstraintsValidator';
 import { fireEvent, render, screen } from '@testing-library/vue';
 import { renderSetup } from '@test-utils/index';
 

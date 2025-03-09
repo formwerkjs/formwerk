@@ -15,7 +15,7 @@ import { useListBox } from '../useListBox';
 import { useLabel, useErrorMessage } from '../a11y';
 import { FieldTypePrefixes } from '../constants';
 import { registerField } from '@formwerk/devtools';
-import { useConstraintsValidator } from '../validation/useContraintsValidator';
+import { useConstraintsValidator } from '../validation/useConstraintsValidator';
 
 export interface SelectProps<TOption, TValue = TOption> {
   /**

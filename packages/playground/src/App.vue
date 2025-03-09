@@ -1,11 +1,7 @@
 <script setup lang="ts">
-import DateField from '@/components/DateField.vue';
-
-const min = new Date(2025, 0, 4, 0, 0, 0, 0);
-const value = new Date('2025-01-15');
-const max = new Date('2025-01-20');
+import OtpField from '@/components/OtpField.vue';
 </script>
 
 <template>
-  <DateField name="birthdate" label="Birth Date" />
+  <OtpField name="otp" label="OTP" :length="4" accept="numeric" prefix="G-" required />
 </template>

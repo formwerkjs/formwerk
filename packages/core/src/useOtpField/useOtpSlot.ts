@@ -1,0 +1,172 @@
+import { computed, defineComponent, h, inject, ref, toValue } from 'vue';
+import { Reactivify } from '../types';
+import { hasKeyCode, isInputElement, normalizeProps, warn, withRefCapture } from '../utils/common';
+import { isFirefox } from '../utils/platform';
+import { blockEvent } from '../utils/events';
+import { OtpContextKey, OtpSlotAcceptType } from './types';
+import { createDisabledContext } from '../helpers/createDisabledContext';
+
+export interface OtpSlotProps {
+  /**
+   * The value of the slot.
+   */
+  value: string;
+
+  /**
+   * Whether the slot is disabled.
+   */
+  disabled?: boolean;
+
+  /**
+   * Whether the slot is readonly.
+   */
+  readonly?: boolean;
+
+  /**
+   * The type of the slot.
+   */
+  accept?: OtpSlotAcceptType;
+}
+
+export function useOtpSlot(_props: Reactivify<OtpSlotProps>) {
+  const props = normalizeProps(_props);
+  const slotEl = ref<HTMLElement>();
+  const isDisabled = createDisabledContext(props.disabled);
+
+  const acceptMapRegex: Record<OtpSlotAcceptType, RegExp> = {
+    all: /./,
+    numeric: /^\d+$/,
+    alphanumeric: /^[a-zA-Z0-9]+$/,
+  };
+
+  const context = inject(OtpContextKey, {
+    useSlotRegistration() {
+      return {
+        id: '',
+        focusNext: () => {},
+        focusPrevious: () => {},
+        setValue: () => {},
+      };
+    },
+  });
+
+  const { focusNext, focusPrevious, setValue, id } = context.useSlotRegistration({
+    focus() {
+      slotEl.value?.focus();
+    },
+  });
+
+  if (!context) {
+    if (__DEV__) {
+      warn('OtpSlot must be used within an OtpField');
+    }
+  }
+
+  function setElementValue(value: string) {
+    if (!slotEl.value) {
+      return;
+    }
+
+    setValue(value);
+    if (isInputElement(slotEl.value)) {
+      slotEl.value.value = value;
+      return;
+    }
+
+    slotEl.value.textContent = value;
+  }
+
+  const handlers = {
+    onKeydown(e: KeyboardEvent) {
+      if (hasKeyCode(e, 'Backspace') || hasKeyCode(e, 'Delete')) {
+        blockEvent(e);
+        setElementValue('');
+        focusPrevious();
+        return;
+      }
+
+      if (hasKeyCode(e, 'Enter')) {
+        blockEvent(e);
+        focusNext();
+        return;
+      }
+
+      if (hasKeyCode(e, 'ArrowLeft')) {
+        blockEvent(e);
+        focusPrevious();
+        return;
+      }
+
+      if (hasKeyCode(e, 'ArrowRight')) {
+        blockEvent(e);
+        focusNext();
+        return;
+      }
+    },
+    onBeforeinput(e: InputEvent) {
+      // Ignores non printable keys
+      if (!e.data) {
+        return;
+      }
+
+      const re = acceptMapRegex[toValue(props.accept) || 'all'];
+
+      blockEvent(e);
+      if (re.test(e.data)) {
+        setElementValue(e.data);
+        focusNext();
+      }
+    },
+  };
+
+  const slotProps = computed(() => {
+    const isInput = isInputElement(slotEl.value);
+
+    const baseProps: Record<string, unknown> = {
+      [isInput ? 'readonly' : 'aria-readonly']: toValue(props.readonly),
+      [isInput ? 'disabled' : 'aria-disabled']: toValue(props.disabled),
+      'data-otp-slot': true,
+      spellcheck: false,
+      tabindex: isDisabled.value ? '-1' : '0',
+      autocorrect: 'off',
+      autocapitalize: 'off',
+      // TODO: Should be either done or next depending on if it's the last slot
+      enterkeyhint: 'next',
+      ...handlers,
+      style: {
+        caretColor: 'transparent',
+      },
+    };
+
+    if (toValue(props.accept) === 'numeric') {
+      baseProps.inputmode = 'numeric';
+    }
+
+    if (!isInput) {
+      baseProps.contenteditable = isDisabled.value ? 'false' : isFirefox() ? 'true' : 'plaintext-only';
+    } else {
+      baseProps.value = toValue(props.value);
+    }
+
+    return withRefCapture(baseProps, slotEl);
+  });
+
+  return {
+    slotProps,
+    key: id,
+    value: computed(() => toValue(props.value)),
+  };
+}
+
+/**
+ * A helper component that renders an OTP slot. You can build your own with `useOtpSlot`.
+ */
+export const OtpSlot = /*#__PURE__*/ defineComponent<OtpSlotProps>({
+  name: 'OtpSlot',
+  props: ['value', 'disabled', 'readonly', 'accept'],
+  setup(props) {
+    const { slotProps, value, key } = useOtpSlot(props);
+
+    return () => h('span', { ...slotProps.value, key }, value.value);
+  },
+});
