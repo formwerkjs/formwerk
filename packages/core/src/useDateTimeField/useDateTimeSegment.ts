@@ -45,6 +45,7 @@ interface DateTimeSegmentDomProps {
   inputmode?: string;
   autocorrect?: string;
   enterkeyhint?: string;
+  autocomplete?: string;
   'aria-valuemin'?: number;
   'aria-valuemax'?: number;
   'aria-valuenow'?: number;
@@ -207,6 +208,7 @@ export function useDateTimeSegment(_props: Reactivify<DateTimeSegmentProps>) {
       'aria-label': isNonEditable() ? undefined : toValue(props.type),
       'aria-readonly': toValue(props.readonly) ? true : undefined,
       autocorrect: isNonEditable() ? undefined : 'off',
+      autocomplete: isNonEditable() ? undefined : 'off',
       spellcheck: isNonEditable() ? undefined : false,
       enterkeyhint: isNonEditable() ? undefined : isLast() ? 'done' : 'next',
       inputmode: 'none',

@@ -139,6 +139,7 @@ export function useOtpSlot(_props: Reactivify<OtpSlotProps>) {
       spellcheck: false,
       tabindex: isDisabled.value ? '-1' : '0',
       autocorrect: 'off',
+      autocomplete: 'off',
       autocapitalize: 'off',
       // TODO: Should be either done or next depending on if it's the last slot
       enterkeyhint: 'next',
@@ -153,6 +154,9 @@ export function useOtpSlot(_props: Reactivify<OtpSlotProps>) {
     }
 
     if (!isInput) {
+      baseProps['aria-role'] = 'textbox';
+      baseProps['aria-label'] = toValue(props.value) || 'Enter a character';
+      baseProps['aria-multiline'] = 'false';
       baseProps.contenteditable = isDisabled.value ? 'false' : isFirefox() ? 'true' : 'plaintext-only';
     } else {
       baseProps.value = toValue(props.value);
