@@ -1,5 +1,5 @@
-import { computed, provide, ref, toValue } from 'vue';
-import { Reactivify, StandardSchema } from '../types';
+import { computed, provide, ref, toValue, watch } from 'vue';
+import { MaybeAsync, Reactivify, StandardSchema } from '../types';
 import { OtpContextKey, OtpSlotAcceptType } from './types';
 import { createDescribedByProps, normalizeProps, useUniqId, withRefCapture } from '../utils/common';
 import { FieldTypePrefixes } from '../constants';
@@ -80,10 +80,15 @@ export interface OTPFieldProps {
    * The prefix of the OTP field. If you prefix your codes with a character, you can set it here (e.g "G-").
    */
   prefix?: string;
+
+  /**
+   * The callback function that is called when the OTP field is completed.
+   */
+  onCompleted?: (value: string) => MaybeAsync<void>;
 }
 
-export function useOtpField(_props: Reactivify<OTPFieldProps, 'schema'>) {
-  const props = normalizeProps(_props, ['schema']);
+export function useOtpField(_props: Reactivify<OTPFieldProps, 'schema' | 'onCompleted'>) {
+  const props = normalizeProps(_props, ['schema', 'onCompleted']);
   const controlEl = ref<HTMLElement>();
   const id = useUniqId(FieldTypePrefixes.OTPField);
   const isDisabled = createDisabledContext(props.disabled);
@@ -91,7 +96,7 @@ export function useOtpField(_props: Reactivify<OTPFieldProps, 'schema'>) {
   function withPrefix(value: string | undefined) {
     const prefix = toValue(props.prefix);
     if (!prefix) {
-      return value;
+      return value ?? '';
     }
 
     value = value ?? '';
@@ -116,7 +121,7 @@ export function useOtpField(_props: Reactivify<OTPFieldProps, 'schema'>) {
     schema: props.schema,
   });
 
-  const inputsState = ref<string[]>(field.fieldValue.value?.split('') ?? []);
+  const inputsState = ref<string[]>(withPrefix(toValue(props.modelValue) ?? toValue(props.value)).split(''));
 
   const { element: inputEl } = useConstraintsValidator({
     type: 'text',
@@ -212,6 +217,20 @@ export function useOtpField(_props: Reactivify<OTPFieldProps, 'schema'>) {
     return slots.indexOf(currentSlot);
   }
 
+  watch(field.fieldValue, value => {
+    if (!value) {
+      inputsState.value = withPrefix('').split('');
+      return;
+    }
+
+    const expected = withPrefix(inputsState.value.join(''));
+    if (expected === value) {
+      return;
+    }
+
+    inputsState.value = value.split('');
+  });
+
   provide(OtpContextKey, {
     useSlotRegistration() {
       const slotId = useUniqId(FieldTypePrefixes.OTPSlot);
@@ -227,9 +246,12 @@ export function useOtpField(_props: Reactivify<OTPFieldProps, 'schema'>) {
           }
 
           inputsState.value[index] = value;
-          const nextValue = withPrefix(inputsState.value.join(''));
-
-          field.setValue(nextValue?.length === getRequiredLength() ? nextValue : withPrefix(''));
+          const nextValue = inputsState.value.join('');
+          const isCompleted = nextValue?.length === getRequiredLength();
+          field.setValue(nextValue);
+          if (isCompleted) {
+            props.onCompleted?.(nextValue);
+          }
         },
       };
     },
