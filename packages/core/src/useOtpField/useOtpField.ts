@@ -9,7 +9,7 @@ import { useInputValidity, useConstraintsValidator } from '../validation';
 import { OtpSlotProps } from './useOtpSlot';
 import { createDisabledContext } from '../helpers/createDisabledContext';
 import { registerField } from '@formwerk/devtools';
-import { isValueAccepted } from './utils';
+import { DEFAULT_MASK, isValueAccepted } from './utils';
 import { blockEvent } from '../utils/events';
 
 export interface OTPFieldProps {
@@ -41,7 +41,7 @@ export interface OTPFieldProps {
   /**
    * Whether the OTP field is masked.
    */
-  masked?: boolean;
+  mask?: boolean | string;
 
   /**
    * Whether the OTP field is readonly.
@@ -205,7 +205,7 @@ export function useOtpField(_props: Reactivify<OTPFieldProps, 'schema' | 'onComp
       disabled: prefix.length ? prefix.length > index : isDisabled.value,
       readonly: toValue(props.readonly),
       accept: toValue(props.accept),
-      masked: prefix.length <= index && toValue(props.masked),
+      masked: prefix.length <= index && !!toValue(props.mask),
     }));
   });
 
@@ -217,6 +217,12 @@ export function useOtpField(_props: Reactivify<OTPFieldProps, 'schema' | 'onComp
     }
 
     return slots.indexOf(currentSlot);
+  }
+
+  function focusIndex(index: number) {
+    const slots = Array.from(controlEl.value?.querySelectorAll('[data-otp-slot]') ?? []) as HTMLElement[];
+
+    slots[index]?.focus();
   }
 
   watch(field.fieldValue, value => {
@@ -250,6 +256,8 @@ export function useOtpField(_props: Reactivify<OTPFieldProps, 'schema' | 'onComp
         inputsState.value[index] = value;
       });
 
+      // Focuses the last slot
+      focusIndex(getRequiredLength() - 1);
       updateFieldValue();
       return;
     }
@@ -275,6 +283,8 @@ export function useOtpField(_props: Reactivify<OTPFieldProps, 'schema' | 'onComp
       }
     }
 
+    // Focuses the next slot
+    focusIndex(Math.min(currentIndex + textToFill.length, getRequiredLength() - 1));
     updateFieldValue();
   }
 
@@ -292,6 +302,11 @@ export function useOtpField(_props: Reactivify<OTPFieldProps, 'schema' | 'onComp
   let registeredSlots = 0;
 
   provide(OtpContextKey, {
+    getMaskCharacter: () => {
+      const mask = toValue(props.mask);
+
+      return typeof mask === 'string' ? mask[0] : DEFAULT_MASK;
+    },
     useSlotRegistration() {
       const slotId = useUniqId(FieldTypePrefixes.OTPSlot);
       const index = registeredSlots++;
