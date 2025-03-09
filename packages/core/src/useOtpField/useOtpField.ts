@@ -1,4 +1,4 @@
-import { computed, provide, ref, toValue, watch } from 'vue';
+import { computed, nextTick, provide, ref, toValue, watch } from 'vue';
 import { MaybeAsync, Reactivify, StandardSchema } from '../types';
 import { OtpContextKey, OtpSlotAcceptType } from './types';
 import { createDescribedByProps, normalizeProps, useUniqId, withRefCapture } from '../utils/common';
@@ -283,7 +283,9 @@ export function useOtpField(_props: Reactivify<OTPFieldProps, 'schema' | 'onComp
     const isCompleted = nextValue?.length === getRequiredLength();
     field.setValue(nextValue);
     if (isCompleted) {
-      props.onCompleted?.(nextValue);
+      nextTick(() => {
+        props.onCompleted?.(nextValue);
+      });
     }
   }
 
