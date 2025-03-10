@@ -251,6 +251,11 @@ export function useOtpField(_props: Reactivify<OTPFieldProps, 'schema' | 'onComp
   });
 
   function onPaste(event: ClipboardEvent) {
+    if (toValue(props.readonly) || isDisabled.value) {
+      blockEvent(event);
+      return;
+    }
+
     const text = event.clipboardData?.getData('text/plain') || '';
     blockEvent(event);
     if (!text.length) {

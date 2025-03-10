@@ -108,6 +108,10 @@ export function useOtpSlot(_props: Reactivify<OtpSlotProps>) {
       }
 
       blockEvent(e);
+      if (toValue(props.readonly) || isDisabled.value) {
+        return;
+      }
+
       if (isValueAccepted(e.data, toValue(props.accept) || 'all')) {
         setElementValue(e.data);
         registration?.focusNext();
