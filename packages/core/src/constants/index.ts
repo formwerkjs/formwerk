@@ -21,6 +21,8 @@ export const FieldTypePrefixes = {
   DateTimeField: 'dtf',
   DateTimeSegment: 'dts',
   Calendar: 'cal',
+  OTPField: 'otp',
+  OTPSlot: 'otps',
 } as const;
 
 export const NOOP = () => {};

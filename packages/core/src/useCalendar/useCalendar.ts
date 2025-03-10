@@ -16,7 +16,7 @@ import { useInputValidity } from '../validation';
 import { fromDateToCalendarZonedDateTime, useTemporalStore } from '../useDateTimeField/useTemporalStore';
 import { PickerContextKey } from '../usePicker';
 import { registerField } from '@formwerk/devtools';
-import { useConstraintsValidator } from '../validation/useContraintsValidator';
+import { useConstraintsValidator } from '../validation/useConstraintsValidator';
 
 export interface CalendarProps {
   /**

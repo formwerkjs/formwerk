@@ -1,11 +1,17 @@
 <script setup lang="ts">
-import DateField from '@/components/DateField.vue';
+import OtpField from '@/components/OtpField.vue';
+import { useForm } from '@formwerk/core';
+const form = useForm();
 
-const min = new Date(2025, 0, 4, 0, 0, 0, 0);
-const value = new Date('2025-01-15');
-const max = new Date('2025-01-20');
+function onCompleted(value: string) {
+  alert(`onCompleted: ${value}`);
+}
 </script>
 
 <template>
-  <DateField name="birthdate" label="Birth Date" />
+  <OtpField name="otp" label="OTP" accept="numeric" :length="4" @completed="onCompleted" />
+
+  <div class="flex w-full">
+    <button @click="form.setValue('otp', 'G-4321')">Set OTP</button>
+  </div>
 </template>
