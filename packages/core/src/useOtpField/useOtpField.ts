@@ -12,7 +12,7 @@ import { registerField } from '@formwerk/devtools';
 import { DEFAULT_MASK, isValueAccepted } from './utils';
 import { blockEvent } from '../utils/events';
 
-export interface OTPFieldProps {
+export interface OtpFieldProps {
   /**
    * The label of the OTP field.
    */
@@ -89,7 +89,7 @@ export interface OTPFieldProps {
   onCompleted?: (value: string) => MaybeAsync<void>;
 }
 
-export function useOtpField(_props: Reactivify<OTPFieldProps, 'schema' | 'onCompleted'>) {
+export function useOtpField(_props: Reactivify<OtpFieldProps, 'schema' | 'onCompleted'>) {
   const props = normalizeProps(_props, ['schema', 'onCompleted']);
   const controlEl = ref<HTMLElement>();
   const id = useUniqId(FieldTypePrefixes.OTPField);

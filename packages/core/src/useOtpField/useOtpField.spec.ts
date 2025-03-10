@@ -1,4 +1,4 @@
-import { OTPFieldProps, useOtpField, OtpSlot } from '.';
+import { OtpFieldProps, useOtpField, OtpSlot } from '.';
 import { isValueAccepted } from './utils';
 import { fireEvent, render, screen } from '@testing-library/vue';
 import { axe } from 'vitest-axe';
@@ -16,7 +16,7 @@ const InputBase: string = `
   </div>
 `;
 
-function createOtpField(props: OTPFieldProps, template = InputBase, slotType = 'span'): Component {
+function createOtpField(props: OtpFieldProps, template = InputBase, slotType = 'span'): Component {
   return defineComponent({
     template,
     inheritAttrs: false,
