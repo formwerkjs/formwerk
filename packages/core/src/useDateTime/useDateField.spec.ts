@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/vue';
 import { axe } from 'vitest-axe';
-import { useDateTimeField } from './';
+import { useDateField } from '.';
 import { flush } from '@test-utils/flush';
 import { createCalendar, now, toCalendar } from '@internationalized/date';
 import { DateTimeSegment } from './useDateTimeSegment';
@@ -8,7 +8,7 @@ import { ref, toValue } from 'vue';
 import { StandardSchema } from '../types';
 import { fireEvent } from '@testing-library/vue';
 
-describe('useDateTimeField', () => {
+describe('useDateField', () => {
   const currentDate = new Date('2024-03-15T12:00:00Z');
 
   describe('initialization', () => {
@@ -16,7 +16,7 @@ describe('useDateTimeField', () => {
       await render({
         components: { DateTimeSegment },
         setup() {
-          const { segments, controlProps, labelProps } = useDateTimeField({
+          const { segments, controlProps, labelProps } = useDateField({
             label: 'Date',
             name: 'date',
             value: currentDate,
@@ -60,7 +60,7 @@ describe('useDateTimeField', () => {
       await render({
         components: { DateTimeSegment },
         setup() {
-          const { segments, controlProps, labelProps } = useDateTimeField({
+          const { segments, controlProps, labelProps } = useDateField({
             label: 'Date',
             name: 'date',
             modelValue,
@@ -102,7 +102,7 @@ describe('useDateTimeField', () => {
       await render({
         components: { DateTimeSegment },
         setup() {
-          const { segments, controlProps, labelProps } = useDateTimeField({
+          const { segments, controlProps, labelProps } = useDateField({
             label: 'Date',
             name: 'date',
             calendar,
@@ -145,7 +145,7 @@ describe('useDateTimeField', () => {
       await render({
         components: { DateTimeSegment },
         setup() {
-          const { segments, controlProps, labelProps, descriptionProps } = useDateTimeField({
+          const { segments, controlProps, labelProps, descriptionProps } = useDateField({
             label: 'Birth Date',
             name: 'birthDate',
             description: 'Enter your date of birth',
@@ -206,7 +206,7 @@ describe('useDateTimeField', () => {
       await render({
         components: { DateTimeSegment },
         setup() {
-          const { segments, controlProps, labelProps, errorMessageProps, errorMessage } = useDateTimeField({
+          const { segments, controlProps, labelProps, errorMessageProps, errorMessage } = useDateField({
             label: 'Date',
             name: 'date',
             schema,
@@ -272,7 +272,7 @@ describe('useDateTimeField', () => {
       await render({
         components: { DateTimeSegment },
         setup() {
-          const { segments, controlProps, labelProps, errorMessageProps, errorMessage, setValue } = useDateTimeField({
+          const { segments, controlProps, labelProps, errorMessageProps, errorMessage, setValue } = useDateField({
             label: 'Date',
             name: 'date',
             modelValue,
@@ -326,7 +326,7 @@ describe('useDateTimeField', () => {
       await render({
         components: { DateTimeSegment },
         setup() {
-          const { segments, controlProps, labelProps, isTouched } = useDateTimeField({
+          const { segments, controlProps, labelProps, isTouched } = useDateField({
             label: 'Date',
             name: 'date',
           });
@@ -376,7 +376,7 @@ describe('useDateTimeField', () => {
       await render({
         components: { DateTimeSegment },
         setup() {
-          const props = useDateTimeField({
+          const props = useDateField({
             label: 'Date',
             name: 'date',
             timeZone: 'UTC',
