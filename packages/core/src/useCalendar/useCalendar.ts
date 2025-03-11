@@ -12,7 +12,7 @@ import { CalendarView, useCalendarView } from './useCalendarView';
 import { Calendar, ZonedDateTime, now, toCalendar } from '@internationalized/date';
 import { exposeField, FormField, useFormField } from '../useFormField';
 import { useInputValidity } from '../validation';
-import { fromDateToCalendarZonedDateTime, useTemporalStore } from '../useDateTimeField/useTemporalStore';
+import { fromDateToCalendarZonedDateTime, useTemporalStore } from '../useDateTime/useTemporalStore';
 import { PickerContextKey } from '../usePicker';
 import { registerField } from '@formwerk/devtools';
 import { useConstraintsValidator } from '../validation/useConstraintsValidator';

@@ -13,7 +13,7 @@ import { useInputValidity } from '../validation';
 import { registerField } from '@formwerk/devtools';
 import { useConstraintsValidator } from '../validation/useConstraintsValidator';
 
-export interface DateTimeFieldProps {
+export interface DateFieldProps {
   /**
    * The label to use for the field.
    */
@@ -95,7 +95,7 @@ export interface DateTimeFieldProps {
   max?: Date;
 }
 
-export function useDateTimeField(_props: Reactivify<DateTimeFieldProps, 'schema'>) {
+export function useDateField(_props: Reactivify<DateFieldProps, 'schema'>) {
   const props = normalizeProps(_props, ['schema']);
   const controlEl = shallowRef<HTMLInputElement>();
   const { locale, direction, timeZone, calendar } = useLocale(props.locale, {
