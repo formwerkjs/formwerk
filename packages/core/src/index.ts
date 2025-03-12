@@ -15,6 +15,7 @@ export * from './useHiddenField';
 export * from './useCustomField';
 export * from './useOtpField';
 export * from './useDateTime';
+export * from './useFileField';
 export * from './useCalendar';
 export * from './usePicker';
 export * from './types';

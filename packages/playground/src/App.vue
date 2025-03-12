@@ -1,13 +1,12 @@
 <script setup lang="ts">
-import { useForm } from '@formwerk/core';
-import TimeField from '@/components/TimeField.vue';
-const form = useForm();
-
-function onCompleted(value: string) {
-  alert(`onCompleted: ${value}`);
-}
+import FileInput from './components/FileInput.vue';
+import Dropzone from './components/Dropzone.vue';
 </script>
 
 <template>
-  <TimeField name="time" label="Appointment time" min="09:00" max="17:00" required />
+  <div class="w-full">
+    <FileInput label="Upload a file" name="file" />
+
+    <Dropzone label="Upload a file" name="file" multiple class="mt-8" />
+  </div>
 </template>
