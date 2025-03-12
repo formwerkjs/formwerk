@@ -1,15 +1,27 @@
-import { computed, type DefineComponent, defineComponent, h, inject, toRefs, toValue, type VNode } from 'vue';
+import {
+  computed,
+  type DefineComponent,
+  defineComponent,
+  h,
+  inject,
+  onUnmounted,
+  ref,
+  shallowRef,
+  toValue,
+  type VNode,
+  watch,
+} from 'vue';
 import { Reactivify } from '../types';
-import { normalizeProps, warn } from '../utils/common';
+import { normalizeProps, warn, withRefCapture } from '../utils/common';
 import { FileEntryCollectionKey } from './types';
 import { Simplify } from 'type-fest';
 import { useControlButtonProps } from '../helpers/useControlButtonProps';
 
 export interface FileEntryProps {
   /**
-   * The key of the file entry.
+   * The id of the file entry.
    */
-  key: string;
+  id: string;
 
   /**
    * The file object.
@@ -35,14 +47,22 @@ export interface FileEntryProps {
 export function useFileEntry(_props: Reactivify<FileEntryProps>) {
   const props = normalizeProps(_props);
   const collection = inject(FileEntryCollectionKey);
+  const previewEl = ref<HTMLElement>();
+  const currentObjectURL = shallowRef<string>();
+
   if (__DEV__) {
     if (!collection) {
       warn('File entries require a parent FileField to be used, some features may not work as expected.');
     }
   }
 
+  // Clear the current object URL when the file changes
+  watch(props.file, () => {
+    currentObjectURL.value = undefined;
+  });
+
   const removeEntry = () => {
-    collection?.removeEntry(toValue(props.key));
+    collection?.removeEntry(toValue(props.id));
   };
 
   const isUploaded = computed(() => {
@@ -55,9 +75,52 @@ export function useFileEntry(_props: Reactivify<FileEntryProps>) {
     'aria-label': toValue(props.removeButtonLabel) || 'Remove file',
   }));
 
+  function createPreviewProps() {
+    if (!currentObjectURL.value) {
+      // TODO: Maybe file is too large to be previewed?
+      currentObjectURL.value = URL.createObjectURL(toValue(props.file));
+    }
+
+    const file = toValue(props.file);
+    if (previewEl.value?.tagName === 'IMG' || file.type.startsWith('image/')) {
+      return {
+        as: 'img',
+        src: currentObjectURL.value,
+        alt: props.file.name,
+      };
+    }
+
+    if (previewEl.value?.tagName === 'VIDEO' || file.type.startsWith('video/')) {
+      return {
+        as: 'video',
+        src: currentObjectURL.value,
+        controls: false,
+        muted: true,
+        loop: true,
+        autoplay: true,
+        playsinline: true,
+      };
+    }
+
+    return {};
+  }
+
+  onUnmounted(() => {
+    if (currentObjectURL.value) {
+      URL.revokeObjectURL(currentObjectURL.value);
+    }
+
+    currentObjectURL.value = undefined;
+  });
+
+  const previewProps = computed(() => {
+    return withRefCapture(createPreviewProps(), previewEl);
+  });
+
   return {
     removeEntry,
     isUploaded,
+    previewProps,
     removeButtonProps,
   };
 }
@@ -68,6 +131,8 @@ export interface FileEntrySlotProps {
   removeEntry: () => void;
   isUploaded: boolean;
   isUploading: boolean;
+  hasPreview: boolean;
+  previewProps: { as: string };
   removeButtonProps: {
     onClick: () => void;
     disabled: boolean;
@@ -79,25 +144,23 @@ export interface FileEntrySlotProps {
  */
 const FileEntryImpl = /*#__PURE__*/ defineComponent<KeyLessFileEntryProps & { as?: string }>({
   name: 'FileEntry',
-  props: ['file', 'isUploading', 'uploadResult', 'as'],
-  setup(props, { slots, attrs }) {
-    const refs = toRefs(props);
-    const { removeEntry, isUploaded, removeButtonProps } = useFileEntry({
-      ...refs,
-      key: attrs.key as string,
-    });
+  props: ['id', 'file', 'isUploading', 'uploadResult', 'as'],
+  setup(props, { slots }) {
+    const { removeEntry, isUploaded, removeButtonProps, previewProps } = useFileEntry(props);
 
     return () =>
       h(
         props.as || 'span',
-        {},
+        { key: props.id },
         {
           default: () =>
             slots.default?.({
               removeEntry,
               isUploaded: isUploaded.value,
               isUploading: props.isUploading,
+              hasPreview: !!previewProps.value.as,
               removeButtonProps: removeButtonProps.value,
+              previewProps: previewProps.value,
             }),
         },
       );

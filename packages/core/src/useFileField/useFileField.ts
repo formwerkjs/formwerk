@@ -146,7 +146,7 @@ export function useFileField(_props: Reactivify<FileFieldProps, 'schema' | 'onUp
     for (const file of fileList) {
       const key = `${inputId}-${idCounter++}`;
       const entry: FileEntryProps = {
-        key,
+        id: key,
         file: markRaw(file),
         isUploading: false,
       };
@@ -156,32 +156,32 @@ export function useFileField(_props: Reactivify<FileFieldProps, 'schema' | 'onUp
       if (!props.onUpload) {
         setValue(
           file,
-          entries.value.findIndex(e => e.key === entry.key),
+          entries.value.findIndex(e => e.id === entry.id),
         );
         continue;
       }
 
-      const reEntry = entries.value.find(e => e.key === entry.key);
+      const reEntry = entries.value.find(e => e.id === entry.id);
       if (!reEntry) {
         continue;
       }
 
       entry.isUploading = true;
       const controller = new AbortController();
-      abortControllers.set(entry.key, controller);
+      abortControllers.set(entry.id, controller);
       props
-        .onUpload({ file, key: entry.key, signal: controller.signal })
+        .onUpload({ file, key: entry.id, signal: controller.signal })
         .then(result => {
           if (result) {
             entry.uploadResult = result;
             setValue(
               result,
-              entries.value.findIndex(e => e.key === entry.key),
+              entries.value.findIndex(e => e.id === entry.id),
             );
           }
         })
         .finally(() => {
-          abortControllers.delete(entry.key);
+          abortControllers.delete(entry.id);
           reEntry.isUploading = false;
         });
     }
@@ -280,14 +280,14 @@ export function useFileField(_props: Reactivify<FileFieldProps, 'schema' | 'onUp
 
   function removeEntry(key?: string) {
     if (key) {
-      removeFirst(entries.value, f => f.key === key);
+      removeFirst(entries.value, f => f.id === key);
       abortControllers.delete(key);
       return;
     }
 
     const entry = entries.value.pop();
     if (entry) {
-      abortControllers.delete(entry.key);
+      abortControllers.delete(entry.id);
     }
   }
 

@@ -34,8 +34,10 @@ const {
           v-bind="entry"
           class="size-24 border border-zinc-700 rounded-md relative"
           remove-button-label="Remove"
-          v-slot="{ removeButtonProps }"
+          v-slot="{ removeButtonProps, previewProps, hasPreview }"
         >
+          <component :is="previewProps.as" v-bind="previewProps" class="size-full object-cover" />
+
           <button
             v-bind="removeButtonProps"
             class="bg-blue-500 rounded-full absolute -top-2 -right-2 p-1 hover:bg-blue-600 transition-colors cursor-pointer"
@@ -47,7 +49,7 @@ const {
             </svg>
           </button>
 
-          {{ entry.file.name }}
+          <span v-if="!hasPreview">{{ entry.file.name }}</span>
         </FileEntry>
       </ul>
     </div>
