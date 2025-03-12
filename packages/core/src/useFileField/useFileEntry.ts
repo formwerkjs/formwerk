@@ -86,13 +86,14 @@ export function useFileEntry(_props: Reactivify<FileEntryProps>) {
       return {
         as: 'img',
         src: currentObjectURL.value,
-        alt: props.file.name,
+        alt: file.name,
       };
     }
 
     if (previewEl.value?.tagName === 'VIDEO' || file.type.startsWith('video/')) {
       return {
         as: 'video',
+        'aria-label': file.name,
         src: currentObjectURL.value,
         controls: false,
         muted: true,
