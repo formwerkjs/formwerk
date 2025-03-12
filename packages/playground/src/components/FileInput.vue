@@ -3,23 +3,13 @@ import { useFileField, FileFieldProps } from '@formwerk/core';
 
 const props = defineProps<FileFieldProps>();
 
-const {
-  inputProps,
-  triggerProps,
-  entries,
-  clearFiles,
-  removeFile,
-  labelProps,
-  descriptionProps,
-  errorMessageProps,
-  errorMessage,
-} = useFileField(props);
+const { inputProps, triggerProps, entries, labelProps, errorMessageProps, errorMessage } = useFileField(props);
 </script>
 
 <template>
   <div class="flex flex-col gap-2">
-    <label for="file-input" class="text-sm text-zinc-300">Upload a file</label>
-    <input v-bind="inputProps" type="file" id="file-input" class="sr-only" />
+    <label v-bind="labelProps" class="text-sm text-zinc-300">Upload a file</label>
+    <input v-bind="inputProps" class="sr-only" />
 
     <button
       v-bind="triggerProps"
@@ -37,8 +27,12 @@ const {
 
     <div v-else>
       <ul>
-        <li v-for="entry in entries" :key="entry.key">{{ entry.file.name }}</li>
+        <li v-for="entry in entries" :key="entry.id">{{ entry.file.name }}</li>
       </ul>
+    </div>
+
+    <div v-if="errorMessage" v-bind="errorMessageProps" class="text-red-500 text-sm">
+      {{ errorMessage }}
     </div>
   </div>
 </template>

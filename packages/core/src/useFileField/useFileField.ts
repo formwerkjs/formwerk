@@ -2,8 +2,6 @@ import { computed, markRaw, provide, readonly, ref, toValue } from 'vue';
 import { Arrayable, Reactivify, StandardSchema } from '../types';
 import {
   createDescribedByProps,
-  isButtonElement,
-  isInputElement,
   isNullOrUndefined,
   normalizeArrayable,
   normalizeProps,
@@ -20,6 +18,7 @@ import { blockEvent } from '../utils/events';
 import { registerField } from '@formwerk/devtools';
 import { FileEntryProps } from './useFileEntry';
 import { FileEntryCollectionKey } from './types';
+import { useControlButtonProps } from '../helpers/useControlButtonProps';
 
 export interface FileUploadContext {
   /**
@@ -91,7 +90,7 @@ export function useFileField(_props: Reactivify<FileFieldProps, 'schema' | 'onUp
   const inputEl = ref<HTMLInputElement>();
   const entries = ref<FileEntryProps[]>([]);
   const inputId = useUniqId(FieldTypePrefixes.FileField);
-  const triggerEl = ref<HTMLElement>();
+  const dropzoneEl = ref<HTMLElement>();
   const abortControllers = new Map<string, AbortController>();
 
   const field = useFormField<Arrayable<File | string>>({
@@ -187,82 +186,88 @@ export function useFileField(_props: Reactivify<FileFieldProps, 'schema' | 'onUp
     }
   }
 
-  const inputHandlers = {
-    onBlur() {
-      field.setTouched(true);
-    },
-    onChange(evt: Event) {
-      if (field.isDisabled.value) {
-        return;
-      }
+  function onBlur() {
+    field.setTouched(true);
+  }
 
-      field.setTouched(true);
-      processFiles(Array.from((evt.target as HTMLInputElement).files ?? []));
-      // Makes sure the input is empty to allow for re-picking the same files
-      if (inputEl.value) {
-        inputEl.value.value = '';
-      }
-    },
-  };
+  function onChange(evt: Event) {
+    if (field.isDisabled.value) {
+      return;
+    }
 
-  const handlers = {
-    onDrop(evt: DragEvent) {
-      if (field.isDisabled.value) {
-        blockEvent(evt);
-        return;
-      }
+    field.setTouched(true);
+    processFiles(Array.from((evt.target as HTMLInputElement).files ?? []));
+    // Makes sure the input is empty to allow for re-picking the same files
+    if (inputEl.value) {
+      inputEl.value.value = '';
+    }
+  }
 
-      // TODO: Implement drop
-    },
-    async onClick(evt: MouseEvent) {
-      if (field.isDisabled.value) {
-        blockEvent(evt);
-        return;
-      }
-
-      if (isInputElement(triggerEl.value)) {
-        inputEl.value?.showPicker();
-        return;
-      }
-
-      // Must be itself clicked
+  async function onClick(evt: MouseEvent) {
+    if (field.isDisabled.value) {
       blockEvent(evt);
-      if (triggerEl.value === evt.target) {
-        inputEl.value?.showPicker();
-      }
-    },
-  };
+      return;
+    }
+
+    inputEl.value?.showPicker();
+  }
 
   const inputProps = computed(() => {
     return withRefCapture(
       {
         id: inputId,
+        type: 'file',
         tabindex: -1,
         ...propsToValues(props, ['name', 'accept', 'multiple', 'required', 'disabled']),
         ...describedByProps.value,
         ...accessibleErrorProps.value,
         ...labelledByProps.value,
-        ...inputHandlers,
+        onBlur,
+        onChange,
       },
       inputEl,
     );
   });
 
-  const triggerProps = computed(() => {
-    const isBtn = isButtonElement(triggerEl.value);
+  const triggerProps = useControlButtonProps(() => ({
+    disabled: field.isDisabled.value,
+    onClick,
+    onBlur,
+  }));
 
-    const baseProps: Record<string, unknown> = {
-      [isBtn ? 'disabled' : 'aria-disabled']: field.isDisabled.value,
-      onDrop: handlers.onDrop,
-      onClick: handlers.onClick,
-      onBlur: inputHandlers.onBlur,
-    };
+  const isDragging = ref(false);
 
-    if (isBtn) {
-      baseProps.type = 'button';
-    }
+  const dropzoneHandlers = {
+    onDragenter(evt: DragEvent) {
+      blockEvent(evt);
+    },
+    onDragover(evt: DragEvent) {
+      blockEvent(evt);
+      isDragging.value = true;
+    },
+    onDragleave(evt: DragEvent) {
+      blockEvent(evt);
+      isDragging.value = false;
+    },
+    onDrop(evt: DragEvent) {
+      blockEvent(evt);
+      if (field.isDisabled.value) {
+        return;
+      }
 
-    return withRefCapture(baseProps, triggerEl);
+      processFiles(Array.from(evt.dataTransfer?.files ?? []));
+    },
+  };
+
+  const dropzoneProps = computed(() => {
+    return withRefCapture(
+      {
+        role: 'group',
+        'data-dragover': isDragging.value,
+        ...dropzoneHandlers,
+      },
+      dropzoneEl,
+    );
   });
 
   function clear() {
@@ -318,6 +323,11 @@ export function useFileField(_props: Reactivify<FileFieldProps, 'schema' | 'onUp
       triggerProps,
 
       /**
+       * The props for the dropzone element.
+       */
+      dropzoneProps,
+
+      /**
        * The props for the label element.
        */
       labelProps,
@@ -351,6 +361,11 @@ export function useFileField(_props: Reactivify<FileFieldProps, 'schema' | 'onUp
        * Remove a an entry from the list, if no key is provided, the last entry will be removed.
        */
       removeEntry,
+
+      /**
+       * Whether the dropzone is being dragged over.
+       */
+      isDragging,
     },
     field,
   );
