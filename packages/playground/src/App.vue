@@ -1,17 +1,13 @@
 <script setup lang="ts">
-import OtpField from '@/components/OtpField.vue';
 import { useForm } from '@formwerk/core';
-const form = useForm();
-
-function onCompleted(value: string) {
-  alert(`onCompleted: ${value}`);
-}
+import FileInput from './components/FileInput.vue';
+import Dropzone from './components/Dropzone.vue';
 </script>
 
 <template>
-  <OtpField name="otp" label="OTP" />
+  <div class="w-full">
+    <FileInput label="Upload a file" name="file1" required />
 
-  <div class="flex w-full">
-    <button @click="form.setValue('otp', 'G-4321')">Set OTP</button>
+    <Dropzone label="Drop file" name="file2" required multiple class="mt-8" />
   </div>
 </template>

@@ -23,6 +23,7 @@ export const FieldTypePrefixes = {
   Calendar: 'cal',
   OTPField: 'otp',
   OTPSlot: 'otps',
+  FileField: 'ff',
 } as const;
 
 export const NOOP = () => {};
