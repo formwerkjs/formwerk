@@ -289,6 +289,8 @@ export function useFileField(_props: Reactivify<FileFieldProps, 'schema' | 'onUp
 
   function removeEntry(key?: string) {
     if (key) {
+      const controller = abortControllers.get(key);
+      controller?.abort();
       removeFirst(entries.value, f => f.id === key);
       abortControllers.delete(key);
       updateFieldValue();
@@ -297,6 +299,8 @@ export function useFileField(_props: Reactivify<FileFieldProps, 'schema' | 'onUp
 
     const entry = entries.value.pop();
     if (entry) {
+      const controller = abortControllers.get(entry.id);
+      controller?.abort();
       abortControllers.delete(entry.id);
       updateFieldValue();
     }
