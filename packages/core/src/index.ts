@@ -14,7 +14,7 @@ export * from './useComboBox';
 export * from './useHiddenField';
 export * from './useCustomField';
 export * from './useOtpField';
-export * from './useDateTimeField';
+export * from './useDateTime';
 export * from './useCalendar';
 export * from './usePicker';
 export * from './types';

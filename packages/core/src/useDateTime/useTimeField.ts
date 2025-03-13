@@ -1,20 +1,25 @@
 import { Maybe, Reactivify, StandardSchema } from '../types';
-import type { CalendarProps } from '../useCalendar';
-import { createDescribedByProps, normalizeProps, useUniqId, withRefCapture } from '../utils/common';
+import { createDescribedByProps, isNullOrUndefined, normalizeProps, useUniqId, withRefCapture } from '../utils/common';
 import { computed, shallowRef, toValue } from 'vue';
 import { exposeField, useFormField } from '../useFormField';
 import { useDateTimeSegmentGroup } from './useDateTimeSegmentGroup';
 import { FieldTypePrefixes } from '../constants';
 import { useDateFormatter, useLocale } from '../i18n';
 import { useErrorMessage, useLabel } from '../a11y';
-import { fromDateToCalendarZonedDateTime, useTemporalStore } from './useTemporalStore';
-import { ZonedDateTime, Calendar } from '@internationalized/date';
+import { useTemporalStore } from './useTemporalStore';
+import { ZonedDateTime } from '@internationalized/date';
 import { useInputValidity } from '../validation';
 import { createDisabledContext } from '../helpers/createDisabledContext';
 import { registerField } from '@formwerk/devtools';
 import { useConstraintsValidator } from '../validation/useConstraintsValidator';
+import { merge } from '../../../shared/src';
+import { Simplify } from 'type-fest';
 
-export interface DateTimeFieldProps {
+export type TimeFormatOptions = Simplify<
+  Pick<Intl.DateTimeFormatOptions, 'hour' | 'minute' | 'second' | 'dayPeriod' | 'timeZone' | 'hour12'>
+>;
+
+export interface TimeFieldProps {
   /**
    * The label to use for the field.
    */
@@ -36,19 +41,9 @@ export interface DateTimeFieldProps {
   locale?: string;
 
   /**
-   * The calendar type to use for the field, e.g. `gregory`, `islamic-umalqura`, etc.
+   * A partial of the Intl.DateTimeFormatOptions to use for the field, used to format the time value.
    */
-  calendar?: Calendar;
-
-  /**
-   * The time zone to use for the field, e.g. `UTC`, `America/New_York`, etc.
-   */
-  timeZone?: string;
-
-  /**
-   * The Intl.DateTimeFormatOptions to use for the field, used to format the date value.
-   */
-  formatOptions?: Intl.DateTimeFormatOptions;
+  formatOptions?: TimeFormatOptions;
 
   /**
    * The description to use for the field.
@@ -73,42 +68,51 @@ export interface DateTimeFieldProps {
   /**
    * The value to use for the field.
    */
-  value?: Date;
+  value?: string;
 
   /**
    * The model value to use for the field.
    */
-  modelValue?: Date;
+  modelValue?: string;
 
   /**
    * The schema to use for the field.
    */
-  schema?: StandardSchema<Date>;
+  schema?: StandardSchema<string>;
 
   /**
-   * The minimum date to use for the field.
+   * The minimum value to use for the field. String format: HH:MM:SS
    */
-  min?: Date;
+  min?: string;
 
   /**
-   * The maximum date to use for the field.
+   * The maximum value to use for the field. String format: HH:MM:SS
    */
-  max?: Date;
+  max?: string;
 }
 
-export function useDateTimeField(_props: Reactivify<DateTimeFieldProps, 'schema'>) {
+function getDefaultFormatOptions(): TimeFormatOptions {
+  return {
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  };
+}
+
+export function useTimeField(_props: Reactivify<TimeFieldProps, 'schema'>) {
   const props = normalizeProps(_props, ['schema']);
   const controlEl = shallowRef<HTMLInputElement>();
-  const { locale, direction, timeZone, calendar } = useLocale(props.locale, {
-    calendar: () => toValue(props.calendar),
-    timeZone: () => toValue(props.timeZone),
-  });
+  const { locale, direction, calendar, timeZone } = useLocale(props.locale);
+
+  const formatOptions = computed(
+    () => merge(getDefaultFormatOptions(), toValue(props.formatOptions) || {}) as TimeFormatOptions,
+  );
 
   const isDisabled = createDisabledContext(props.disabled);
-  const formatter = useDateFormatter(locale, props.formatOptions);
+  const formatter = useDateFormatter(locale, formatOptions);
   const controlId = useUniqId(FieldTypePrefixes.DateTimeField);
 
-  const field = useFormField<Maybe<Date>>({
+  const field = useFormField<Maybe<string>>({
     path: props.name,
     disabled: props.disabled,
     initialValue: toValue(props.modelValue) ?? toValue(props.value),
@@ -116,7 +120,7 @@ export function useDateTimeField(_props: Reactivify<DateTimeFieldProps, 'schema'
   });
 
   const { element: inputEl } = useConstraintsValidator({
-    type: 'date',
+    type: 'time',
     required: props.required,
     value: field.fieldValue,
     source: controlEl,
@@ -126,19 +130,14 @@ export function useDateTimeField(_props: Reactivify<DateTimeFieldProps, 'schema'
 
   useInputValidity({ field, inputEl });
 
-  const min = computed(() => fromDateToCalendarZonedDateTime(toValue(props.min), calendar.value, timeZone.value));
-  const max = computed(() => fromDateToCalendarZonedDateTime(toValue(props.max), calendar.value, timeZone.value));
-
   const temporalValue = useTemporalStore({
     calendar: calendar,
     timeZone: timeZone,
     locale: locale,
     model: {
-      get: () => field.fieldValue.value,
-      set: value => field.setValue(value),
+      get: () => timeStringToDate(field.fieldValue.value),
+      set: value => field.setValue(dateToTimeString(value, formatOptions.value)),
     },
-    min,
-    max,
   });
 
   function onValueChange(value: ZonedDateTime) {
@@ -155,8 +154,6 @@ export function useDateTimeField(_props: Reactivify<DateTimeFieldProps, 'schema'
     readonly: props.readonly,
     onValueChange,
     onTouched: () => field.setTouched(true),
-    min,
-    max,
     dispatchEvent: (type: string) => inputEl.value?.dispatchEvent(new Event(type)),
   });
 
@@ -176,20 +173,6 @@ export function useDateTimeField(_props: Reactivify<DateTimeFieldProps, 'schema'
     errorMessage: field.errorMessage,
   });
 
-  const calendarProps = computed(() => {
-    const propsObj: CalendarProps = {
-      label: toValue(props.label),
-      locale: locale.value,
-      name: undefined,
-      calendar: calendar.value,
-      min: toValue(props.min),
-      max: toValue(props.max),
-      field,
-    };
-
-    return propsObj;
-  });
-
   const controlProps = computed(() => {
     return withRefCapture(
       {
@@ -205,7 +188,7 @@ export function useDateTimeField(_props: Reactivify<DateTimeFieldProps, 'schema'
   });
 
   if (__DEV__) {
-    registerField(field, 'Date');
+    registerField(field, 'Time');
   }
 
   return exposeField(
@@ -231,14 +214,9 @@ export function useDateTimeField(_props: Reactivify<DateTimeFieldProps, 'schema'
       errorMessageProps,
 
       /**
-       * The datetime segments, you need to render these with the `DateTimeSegment` component.
+       * The time segments, you need to render these with the `DateTimeSegment` component.
        */
       segments,
-
-      /**
-       * The props to use for the calendar composable/component.
-       */
-      calendarProps,
 
       /**
        * The direction of the field.
@@ -247,4 +225,38 @@ export function useDateTimeField(_props: Reactivify<DateTimeFieldProps, 'schema'
     },
     field,
   );
+}
+
+function timeStringToDate(time: Maybe<string>) {
+  if (!time) {
+    return null;
+  }
+
+  const [hours, minutes, seconds] = time.split(':').map(Number);
+  const now = new Date();
+
+  now.setHours(hours);
+  now.setMinutes(minutes);
+  now.setMilliseconds(0);
+  if (!Number.isNaN(seconds) && !isNullOrUndefined(seconds)) {
+    now.setSeconds(seconds);
+  }
+
+  return now;
+}
+
+function dateToTimeString(date: Maybe<Date>, formatOptions?: TimeFormatOptions) {
+  const hours = date?.getHours();
+  const minutes = date?.getMinutes();
+  const seconds = date?.getSeconds();
+
+  if (Number.isNaN(hours) || Number.isNaN(minutes) || isNullOrUndefined(hours) || isNullOrUndefined(minutes)) {
+    return undefined;
+  }
+
+  if (formatOptions?.second && !Number.isNaN(seconds) && !isNullOrUndefined(seconds)) {
+    return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+  }
+
+  return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
 }

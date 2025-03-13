@@ -33,7 +33,18 @@ interface DateConstraints extends BaseConstraints<Date> {
   max?: MaybeRefOrGetter<Maybe<Date>>;
 }
 
-export type Constraints = TextualConstraints | SelectConstraints | NumericConstraints | DateConstraints;
+interface TimeConstraints extends BaseConstraints<string> {
+  type: 'time';
+  min?: MaybeRefOrGetter<Maybe<string>>;
+  max?: MaybeRefOrGetter<Maybe<string>>;
+}
+
+export type Constraints =
+  | TextualConstraints
+  | SelectConstraints
+  | NumericConstraints
+  | DateConstraints
+  | TimeConstraints;
 
 export function useConstraintsValidator(constraints: Constraints) {
   const element = shallowRef<HTMLInputElement>();
@@ -72,6 +83,15 @@ export function useConstraintsValidator(constraints: Constraints) {
 
       return;
     }
+
+    if (constraints.type === 'time') {
+      const min = toValue(constraints.min);
+      const max = toValue(constraints.max);
+      element.value.setAttribute('min', min || '');
+      element.value.setAttribute('max', max || '');
+
+      return;
+    }
   });
 
   watchEffect(() => {
@@ -98,6 +118,11 @@ export function useConstraintsValidator(constraints: Constraints) {
     if (constraints.type === 'date') {
       const date = toValue(constraints.value);
       element.value.value = date ? dateToString(date) : '';
+    }
+
+    if (constraints.type === 'time') {
+      const time = toValue(constraints.value);
+      element.value.value = time ? time : '';
     }
   });
 
