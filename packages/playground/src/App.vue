@@ -5,8 +5,8 @@ import Dropzone from './components/Dropzone.vue';
 
 <template>
   <div class="w-full">
-    <FileInput label="Upload a file" name="file" />
+    <FileInput label="Upload a file" name="file" required />
 
-    <Dropzone label="Upload a file" name="file" multiple class="mt-8" />
+    <Dropzone label="Upload a file" name="file" required multiple class="mt-8" />
   </div>
 </template>

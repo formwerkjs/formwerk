@@ -13,7 +13,7 @@ import {
 import { FieldTypePrefixes } from '../constants';
 import { useErrorMessage, useLabel } from '../a11y';
 import { exposeField, useFormField } from '../useFormField';
-import { useInputValidity } from '../validation';
+import { useConstraintsValidator, useInputValidity } from '../validation';
 import { blockEvent } from '../utils/events';
 import { registerField } from '@formwerk/devtools';
 import { FileEntryProps } from './useFileEntry';
@@ -99,7 +99,15 @@ export function useFileField(_props: Reactivify<FileFieldProps, 'schema' | 'onUp
     schema: props.schema,
   });
 
-  const { validityDetails } = useInputValidity({ inputEl, field });
+  const { element: fakeInputEl } = useConstraintsValidator({
+    type: 'text',
+    source: inputEl,
+    required: props.required,
+    // We don't have to send in the real value since we are just checking required.
+    value: () => (field.fieldValue.value ? '_' : ''),
+  });
+
+  const { validityDetails } = useInputValidity({ inputEl: fakeInputEl, field });
 
   const { labelProps, labelledByProps } = useLabel({
     for: inputId,
@@ -363,7 +371,7 @@ export function useFileField(_props: Reactivify<FileFieldProps, 'schema' | 'onUp
       removeEntry,
 
       /**
-       * Whether the dropzone is being dragged over.
+       * Whether the dropzone element has items being dragged over it.
        */
       isDragging,
     },
