@@ -1,11 +1,10 @@
-import { computed, markRaw, provide, readonly, ref, toValue } from 'vue';
+import { computed, markRaw, onMounted, provide, readonly, ref, toValue, watchEffect } from 'vue';
 import { Arrayable, Reactivify, StandardSchema } from '../types';
 import {
   createDescribedByProps,
   isNullOrUndefined,
   normalizeArrayable,
   normalizeProps,
-  propsToValues,
   removeFirst,
   useUniqId,
   withRefCapture,
@@ -19,6 +18,7 @@ import { registerField } from '@formwerk/devtools';
 import { FileEntryProps } from './useFileEntry';
 import { FileEntryCollectionKey } from './types';
 import { useControlButtonProps } from '../helpers/useControlButtonProps';
+import { useEventListener } from '../helpers/useEventListener';
 
 export interface FileUploadContext {
   /**
@@ -87,7 +87,6 @@ export interface FileFieldProps {
 export function useFileField(_props: Reactivify<FileFieldProps, 'schema' | 'onUpload'>) {
   let idCounter = 0;
   const props = normalizeProps(_props, ['schema', 'onUpload']);
-  const inputEl = ref<HTMLInputElement>();
   const entries = ref<FileEntryProps[]>([]);
   const inputId = useUniqId(FieldTypePrefixes.FileField);
   const dropzoneEl = ref<HTMLElement>();
@@ -97,6 +96,11 @@ export function useFileField(_props: Reactivify<FileFieldProps, 'schema' | 'onUp
     path: props.name,
     disabled: props.disabled,
     schema: props.schema,
+  });
+
+  const inputEl = useFileElement({
+    ...props,
+    onChange,
   });
 
   const { element: fakeInputEl } = useConstraintsValidator({
@@ -220,24 +224,8 @@ export function useFileField(_props: Reactivify<FileFieldProps, 'schema' | 'onUp
     inputEl.value?.showPicker();
   }
 
-  const inputProps = computed(() => {
-    return withRefCapture(
-      {
-        id: inputId,
-        type: 'file',
-        tabindex: -1,
-        ...propsToValues(props, ['name', 'accept', 'multiple', 'required', 'disabled']),
-        ...describedByProps.value,
-        ...accessibleErrorProps.value,
-        ...labelledByProps.value,
-        onBlur,
-        onChange,
-      },
-      inputEl,
-    );
-  });
-
   const triggerProps = useControlButtonProps(() => ({
+    id: inputId,
     disabled: field.isDisabled.value,
     onClick,
     onBlur,
@@ -267,12 +255,18 @@ export function useFileField(_props: Reactivify<FileFieldProps, 'schema' | 'onUp
     },
   };
 
-  const dropzoneProps = computed(() => {
+  const groupProps = computed(() => {
     return withRefCapture(
       {
+        id: `${inputId}-group`,
         role: 'group',
         'data-dragover': isDragging.value,
         ...dropzoneHandlers,
+        ...labelledByProps.value,
+        ...describedByProps.value,
+        ...accessibleErrorProps.value,
+        'aria-disabled': field.isDisabled.value,
+        'aria-required': toValue(props.required),
       },
       dropzoneEl,
     );
@@ -316,12 +310,7 @@ export function useFileField(_props: Reactivify<FileFieldProps, 'schema' | 'onUp
   return exposeField(
     {
       /**
-       * The props for the input element.
-       */
-      inputProps,
-
-      /**
-       * The captured input element.
+       * The underlying input element.
        */
       inputEl,
 
@@ -331,9 +320,9 @@ export function useFileField(_props: Reactivify<FileFieldProps, 'schema' | 'onUp
       triggerProps,
 
       /**
-       * The props for the dropzone element.
+       * The props for the group element, usually the root element.
        */
-      dropzoneProps,
+      groupProps,
 
       /**
        * The props for the label element.
@@ -377,4 +366,30 @@ export function useFileField(_props: Reactivify<FileFieldProps, 'schema' | 'onUp
     },
     field,
   );
+}
+
+function useFileElement(props: Reactivify<FileFieldProps & { onChange: (evt: Event) => void }, 'onChange'>) {
+  const inputEl = ref<HTMLInputElement>();
+
+  onMounted(() => {
+    inputEl.value = document.createElement('input');
+    inputEl.value.type = 'file';
+  });
+
+  watchEffect(() => {
+    if (!inputEl.value) {
+      return;
+    }
+
+    inputEl.value.accept = toValue(props.accept) ?? '';
+    inputEl.value.multiple = toValue(props.multiple) ?? false;
+    inputEl.value.required = toValue(props.required) ?? false;
+    inputEl.value.disabled = toValue(props.disabled) ?? false;
+  });
+
+  useEventListener(inputEl, 'change', evt => {
+    props.onChange(evt);
+  });
+
+  return inputEl;
 }
