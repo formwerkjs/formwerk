@@ -98,7 +98,7 @@ export function useFileField(_props: Reactivify<FileFieldProps, 'schema' | 'onUp
     source: inputEl,
     required: props.required,
     // We don't have to send in the real value since we are just checking required.
-    value: () => (field.fieldValue.value ? '_' : ''),
+    value: () => (normalizeArrayable(field.fieldValue.value ?? []).length > 0 ? '_' : ''),
   });
 
   const { validityDetails } = useInputValidity({ inputEl: fakeInputEl, field });
@@ -125,6 +125,15 @@ export function useFileField(_props: Reactivify<FileFieldProps, 'schema' | 'onUp
     const nextValue = normalizeArrayable(field.fieldValue.value ?? []);
     nextValue[idx] = value;
     field.setValue(nextValue);
+  }
+
+  function updateFieldValue() {
+    if (!isMultiple()) {
+      field.setValue(entries.value[0].uploadResult ?? entries.value[0].file);
+      return;
+    }
+
+    field.setValue(entries.value.map(e => e.uploadResult ?? e.file));
   }
 
   async function processFiles(fileList: File[]) {
@@ -274,18 +283,22 @@ export function useFileField(_props: Reactivify<FileFieldProps, 'schema' | 'onUp
     if (inputEl.value) {
       inputEl.value.value = '';
     }
+
+    updateFieldValue();
   }
 
   function removeEntry(key?: string) {
     if (key) {
       removeFirst(entries.value, f => f.id === key);
       abortControllers.delete(key);
+      updateFieldValue();
       return;
     }
 
     const entry = entries.value.pop();
     if (entry) {
       abortControllers.delete(entry.id);
+      updateFieldValue();
     }
   }
 
