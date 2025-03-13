@@ -1,7 +1,6 @@
 import { computed, markRaw, provide, readonly, ref, toValue } from 'vue';
 import { Arrayable, Reactivify, StandardSchema } from '../types';
 import {
-  createDescribedByProps,
   isNullOrUndefined,
   normalizeArrayable,
   normalizeProps,
@@ -11,7 +10,7 @@ import {
   withRefCapture,
 } from '../utils/common';
 import { FieldTypePrefixes } from '../constants';
-import { useErrorMessage, useLabel } from '../a11y';
+import { useErrorMessage } from '../a11y';
 import { exposeField, useFormField } from '../useFormField';
 import { useConstraintsValidator, useInputValidity } from '../validation';
 import { blockEvent } from '../utils/events';
@@ -64,11 +63,6 @@ export interface FileFieldProps {
   required?: boolean;
 
   /**
-   * The description text of the field. Usually contains directions for the user.
-   */
-  description?: string;
-
-  /**
    * Whether the field is disabled.
    */
   disabled?: boolean;
@@ -108,17 +102,6 @@ export function useFileField(_props: Reactivify<FileFieldProps, 'schema' | 'onUp
   });
 
   const { validityDetails } = useInputValidity({ inputEl: fakeInputEl, field });
-
-  const { labelProps, labelledByProps } = useLabel({
-    for: inputId,
-    label: props.label,
-    targetRef: inputEl,
-  });
-
-  const { descriptionProps, describedByProps } = createDescribedByProps({
-    inputId,
-    description: props.description,
-  });
 
   const { accessibleErrorProps, errorMessageProps } = useErrorMessage({
     inputId,
@@ -227,18 +210,20 @@ export function useFileField(_props: Reactivify<FileFieldProps, 'schema' | 'onUp
         type: 'file',
         tabindex: -1,
         ...propsToValues(props, ['name', 'accept', 'multiple', 'required', 'disabled']),
-        ...describedByProps.value,
-        ...accessibleErrorProps.value,
-        ...labelledByProps.value,
         onBlur,
         onChange,
+        style: {
+          display: 'none',
+        },
       },
       inputEl,
     );
   });
 
   const triggerProps = useControlButtonProps(() => ({
+    id: `${inputId}-trigger`,
     disabled: field.isDisabled.value,
+    ...accessibleErrorProps.value,
     onClick,
     onBlur,
   }));
@@ -267,7 +252,7 @@ export function useFileField(_props: Reactivify<FileFieldProps, 'schema' | 'onUp
     },
   };
 
-  const dropzoneProps = computed(() => {
+  const groupProps = computed(() => {
     return withRefCapture(
       {
         role: 'group',
@@ -331,24 +316,14 @@ export function useFileField(_props: Reactivify<FileFieldProps, 'schema' | 'onUp
       triggerProps,
 
       /**
-       * The props for the dropzone element.
+       * The props for the group element, usually the root element.
        */
-      dropzoneProps,
-
-      /**
-       * The props for the label element.
-       */
-      labelProps,
+      groupProps,
 
       /**
        * Props for the error message element.
        */
       errorMessageProps,
-
-      /**
-       * Props for the description element.
-       */
-      descriptionProps,
 
       /**
        * Validity details for the input element.
