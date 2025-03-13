@@ -3,16 +3,25 @@ import { useFileField, FileFieldProps, FileEntry } from '@formwerk/core';
 
 const props = defineProps<FileFieldProps>();
 
-const { groupProps, triggerProps, entries, labelProps, descriptionProps, errorMessageProps, errorMessage } =
-  useFileField(props);
+const {
+  inputProps,
+  dropzoneProps,
+  triggerProps,
+  entries,
+  labelProps,
+  descriptionProps,
+  errorMessageProps,
+  errorMessage,
+} = useFileField(props);
 </script>
 
 <template>
   <div
-    v-bind="groupProps"
+    v-bind="dropzoneProps"
     class="flex flex-col gap-2 border-2 border-dashed border-zinc-600 rounded-md p-4 w-full max-w-lg hover:bg-zinc-900 transition-colors hover:border-zinc-300 items-center"
   >
-    <div v-bind="labelProps" class="text-lg font-medium text-zinc-300">{{ label }}</div>
+    <label v-bind="labelProps" class="text-lg font-medium text-zinc-300">Upload a file</label>
+    <input v-bind="inputProps" class="sr-only" />
 
     <div v-if="entries.length === 0" class="mt-3 flex flex-col items-center gap-1">
       <button
