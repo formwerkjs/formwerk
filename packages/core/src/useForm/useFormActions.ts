@@ -8,6 +8,7 @@ import {
   IssueCollection,
   StandardSchema,
   TouchedSchema,
+  PathValue,
 } from '../types';
 import { createEventDispatcher } from '../utils/events';
 import { BaseFormContext, SetValueOptions } from './formContext';
@@ -17,9 +18,9 @@ import { appendToFormData } from '../utils/formData';
 import type { Jsonify } from 'type-fest';
 import { FormIdAttr } from '../constants';
 
-export interface ResetState<TForm extends FormObject> {
-  values: Partial<TForm>;
-  touched: Partial<TouchedSchema<TForm>>;
+export interface ResetState<TValues> {
+  values: Partial<TValues>;
+  touched: TValues extends FormObject ? Partial<TouchedSchema<TValues>> : Partial<Record<string, boolean>>;
   revalidate?: boolean;
 }
 
@@ -177,14 +178,14 @@ export function useFormActions<TForm extends FormObject = FormObject, TOutput ex
   async function reset(state: Partial<ResetState<TForm>>, opts?: SetValueOptions): Promise<void>;
   async function reset<TPath extends Path<TForm>>(
     path: TPath,
-    state: Partial<ResetState<TForm>>,
+    state: Partial<ResetState<PathValue<TForm, TPath>>>,
     opts?: SetValueOptions,
   ): Promise<void>;
 
   // Implementation signature
   async function reset<TPath extends Path<TForm>>(
     pathOrStateOrUndefined?: TPath | Partial<ResetState<TForm>>,
-    stateOrOptsOrUndefined?: Partial<ResetState<TForm>> | SetValueOptions,
+    stateOrOptsOrUndefined?: Partial<ResetState<PathValue<TForm, TPath>>> | SetValueOptions,
     optsOrUndefined?: SetValueOptions,
   ): Promise<void> {
     // Extract state, path, and options based on arguments
@@ -225,7 +226,8 @@ export function useFormActions<TForm extends FormObject = FormObject, TOutput ex
       }
 
       if (state.touched) {
-        form.setInitialTouched(state.touched, opts);
+        // Add type assertion here to help TypeScript understand the structure
+        form.setInitialTouched(state.touched as Partial<TouchedSchema<TForm>>, opts);
       }
 
       wasSubmitted.value = false;
