@@ -23,7 +23,8 @@ const { values, ...form } = useForm({
 });
 
 const reset = () => {
-  form.reset('company', { values: { company: 'Reset Company' } });
+  form.reset('employee', { values: {} });
+  // form.reset('company', { values: { company: 'Reset Company' } });
 };
 </script>
 
