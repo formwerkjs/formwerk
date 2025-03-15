@@ -45,7 +45,7 @@ const makeTest = (props?: SetOptional<FileFieldProps, 'label'>): Component => ({
       errorMessageProps,
       entries,
       clear,
-      removeEntry,
+      remove,
       isDragging,
       validityDetails,
       isTouched,
@@ -63,7 +63,7 @@ const makeTest = (props?: SetOptional<FileFieldProps, 'label'>): Component => ({
       errorMessageProps,
       entries,
       clear,
-      removeEntry,
+      remove,
       isDragging,
       validityDetails,
       isTouched,
@@ -211,10 +211,10 @@ test('clear method removes all entries', async () => {
   expect(screen.getByTestId('entries')).toHaveTextContent('0 files');
 });
 
-test('removeEntry removes a specific entry', async () => {
+test('remove removes a specific entry', async () => {
   await render({
     setup() {
-      const { inputProps, entries, removeEntry, fieldValue } = useFileField({
+      const { inputProps, entries, remove, fieldValue } = useFileField({
         label,
         multiple: true,
       });
@@ -222,7 +222,7 @@ test('removeEntry removes a specific entry', async () => {
       return {
         inputProps,
         entries,
-        removeEntry,
+        remove,
         fieldValue,
         label,
         printValue,
@@ -232,7 +232,7 @@ test('removeEntry removes a specific entry', async () => {
       <div data-testid="fixture">
         <label :for="inputProps.id">{{ label }}</label>
         <input v-bind="inputProps" data-testid="input" />
-        <button data-testid="remove-btn" @click="removeEntry(entries[0]?.id)">Remove First</button>
+        <button data-testid="remove-btn" @click="remove(entries[0]?.id)">Remove First</button>
         <div data-testid="entries">{{ entries.length }} files</div>
         <div data-testid="value">{{ printValue(fieldValue) }}</div>
       </div>
@@ -257,10 +257,10 @@ test('removeEntry removes a specific entry', async () => {
   expect(screen.getByTestId('value')).toHaveTextContent('test2.txt');
 });
 
-test('removeEntry removes a the last entry when no key is provided', async () => {
+test('remove removes a the last entry when no key is provided', async () => {
   await render({
     setup() {
-      const { inputProps, entries, removeEntry, fieldValue } = useFileField({
+      const { inputProps, entries, remove, fieldValue } = useFileField({
         label,
         multiple: true,
       });
@@ -268,7 +268,7 @@ test('removeEntry removes a the last entry when no key is provided', async () =>
       return {
         inputProps,
         entries,
-        removeEntry,
+        remove,
         fieldValue,
         label,
       };
@@ -277,7 +277,7 @@ test('removeEntry removes a the last entry when no key is provided', async () =>
       <div data-testid="fixture">
         <label :for="inputProps.id">{{ label }}</label>
         <input v-bind="inputProps" data-testid="input" />
-        <button data-testid="remove-btn" @click="() => removeEntry()">Remove Last</button>
+        <button data-testid="remove-btn" @click="() => remove()">Remove Last</button>
         <div data-testid="entries">{{ entries.length }} files</div>
         <div data-testid="value">{{ JSON.stringify(fieldValue) }}</div>
       </div>
@@ -348,7 +348,7 @@ test('aborting an upload when removing an entry', async () => {
 
   await render({
     setup() {
-      const { inputProps, entries, removeEntry, fieldValue } = useFileField({
+      const { inputProps, entries, remove, fieldValue } = useFileField({
         label,
         multiple: true,
         onUpload: onUploadMock,
@@ -357,7 +357,7 @@ test('aborting an upload when removing an entry', async () => {
       return {
         inputProps,
         entries,
-        removeEntry,
+        remove,
         fieldValue,
         label,
         printValue,
@@ -367,7 +367,7 @@ test('aborting an upload when removing an entry', async () => {
       <div data-testid="fixture">
         <label :for="inputProps.id">{{ label }}</label>
         <input v-bind="inputProps" data-testid="input" />
-        <button data-testid="remove-btn" @click="removeEntry(entries[0]?.id)">Remove First</button>
+        <button data-testid="remove-btn" @click="remove(entries[0]?.id)">Remove First</button>
         <div data-testid="entries">{{ entries.length }} files</div>
         <div data-testid="value">{{ printValue(fieldValue) }}</div>
         <div data-testid="uploading">{{ entries.filter(e => e.isUploading).length }} uploading</div>
@@ -538,7 +538,7 @@ test('nested FileEntry components can access the FileEntryCollection', async () 
             :uploadResult="entry.uploadResult"
             data-testid="file-entry"
           >
-            <template #default="{ removeEntry, isUploading, removeButtonProps }">
+            <template #default="{ remove, isUploading, removeButtonProps }">
               <div>
                 <span>{{ entry.file.name }}</span>
                 <span v-if="isUploading">Uploading...</span>

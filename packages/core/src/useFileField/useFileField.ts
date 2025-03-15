@@ -76,6 +76,11 @@ export interface FileFieldProps {
    * The schema for the field.
    */
   schema?: StandardSchema<Arrayable<File>>;
+
+  /**
+   * The label for the remove file button.
+   */
+  removeButtonLabel?: string;
 }
 
 export function useFileField(_props: Reactivify<FileFieldProps, 'schema' | 'onUpload'>) {
@@ -128,12 +133,16 @@ export function useFileField(_props: Reactivify<FileFieldProps, 'schema' | 'onUp
   }
 
   function updateFieldValue() {
-    if (!isMultiple()) {
-      field.setValue(entries.value[0].uploadResult ?? entries.value[0].file);
+    if (isMultiple()) {
+      field.setValue(entries.value.map(e => e.uploadResult ?? e.file));
       return;
     }
 
-    field.setValue(entries.value.map(e => e.uploadResult ?? e.file));
+    if (entries.value[0]) {
+      field.setValue(entries.value[0].uploadResult ?? entries.value[0].file);
+    } else {
+      field.setValue(undefined);
+    }
   }
 
   async function processFiles(fileList: File[]) {
@@ -237,6 +246,13 @@ export function useFileField(_props: Reactivify<FileFieldProps, 'schema' | 'onUp
     onBlur,
   }));
 
+  const removeButtonProps = useControlButtonProps(() => ({
+    id: `${inputId}-remove`,
+    ariaLabel: toValue(props.removeButtonLabel) ?? 'Remove file',
+    disabled: field.isDisabled.value,
+    onClick: () => remove(),
+  }));
+
   const isDragging = ref(false);
 
   const dropzoneHandlers = {
@@ -287,7 +303,15 @@ export function useFileField(_props: Reactivify<FileFieldProps, 'schema' | 'onUp
     updateFieldValue();
   }
 
-  function removeEntry(key?: string) {
+  function remove(key?: string | FileEntryProps | Event) {
+    if (key instanceof Event) {
+      key = undefined;
+    }
+
+    if (key && typeof key === 'object') {
+      key = key.id;
+    }
+
     if (key) {
       const controller = abortControllers.get(key);
       controller?.abort();
@@ -311,7 +335,7 @@ export function useFileField(_props: Reactivify<FileFieldProps, 'schema' | 'onUp
   }
 
   provide(FileEntryCollectionKey, {
-    removeEntry,
+    removeEntry: remove,
     isDisabled: () => field.isDisabled.value,
   });
 
@@ -353,6 +377,11 @@ export function useFileField(_props: Reactivify<FileFieldProps, 'schema' | 'onUp
       entries: readonly(entries),
 
       /**
+       * The file entry that is currently picked.
+       */
+      entry: computed(() => entries.value[entries.value.length - 1]),
+
+      /**
        * Clear the files, aborts any pending uploads.
        */
       clear,
@@ -360,12 +389,17 @@ export function useFileField(_props: Reactivify<FileFieldProps, 'schema' | 'onUp
       /**
        * Remove a an entry from the list, if no key is provided, the last entry will be removed.
        */
-      removeEntry,
+      remove,
 
       /**
        * Whether the dropzone element has items being dragged over it.
        */
       isDragging,
+
+      /**
+       * The props for the remove file button.
+       */
+      removeButtonProps,
     },
     field,
   );
