@@ -3,7 +3,7 @@ import { useFileField, FileFieldProps } from '@formwerk/core';
 
 const props = defineProps<FileFieldProps>();
 
-const { inputProps, triggerProps, entries, errorMessageProps, errorMessage } = useFileField(props);
+const { inputProps, triggerProps, entries, errorMessageProps, errorMessage, remove } = useFileField(props);
 </script>
 
 <template>
@@ -21,6 +21,8 @@ const { inputProps, triggerProps, entries, errorMessageProps, errorMessage } = u
       </svg>
       Choose a file
     </button>
+
+    <button @click="remove">Clear</button>
 
     <p v-if="entries.length === 0" class="text-sm text-zinc-300">No file selected</p>
 

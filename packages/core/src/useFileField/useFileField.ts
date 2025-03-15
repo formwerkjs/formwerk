@@ -68,6 +68,16 @@ export interface FileFieldProps {
   disabled?: boolean;
 
   /**
+   * The model value for the field.
+   */
+  modelValue?: string;
+
+  /**
+   * The value of the field.
+   */
+  value?: string;
+
+  /**
    * Handles the file upload, this function is called when the user selects a file, and is called for new picked files.
    */
   onUpload?: (context: FileUploadContext) => Promise<string | undefined>;
