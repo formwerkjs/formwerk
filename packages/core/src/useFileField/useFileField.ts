@@ -92,6 +92,8 @@ export function useFileField(_props: Reactivify<FileFieldProps, 'schema' | 'onUp
   const dropzoneEl = ref<HTMLElement>();
   const abortControllers = new Map<string, AbortController>();
 
+  const isUploading = computed(() => entries.value.some(e => e.isUploading));
+
   const field = useFormField<Arrayable<File | string>>({
     path: props.name,
     disabled: props.disabled,
@@ -140,9 +142,10 @@ export function useFileField(_props: Reactivify<FileFieldProps, 'schema' | 'onUp
 
     if (entries.value[0]) {
       field.setValue(entries.value[0].uploadResult ?? entries.value[0].file);
-    } else {
-      field.setValue(undefined);
+      return;
     }
+
+    field.setValue(undefined);
   }
 
   async function processFiles(fileList: File[]) {
@@ -326,8 +329,9 @@ export function useFileField(_props: Reactivify<FileFieldProps, 'schema' | 'onUp
       const controller = abortControllers.get(entry.id);
       controller?.abort();
       abortControllers.delete(entry.id);
-      updateFieldValue();
     }
+
+    updateFieldValue();
   }
 
   if (__DEV__) {
@@ -337,6 +341,7 @@ export function useFileField(_props: Reactivify<FileFieldProps, 'schema' | 'onUp
   provide(FileEntryCollectionKey, {
     removeEntry: remove,
     isDisabled: () => field.isDisabled.value,
+    getRemoveButtonLabel: () => toValue(props.removeButtonLabel) ?? 'Remove file',
   });
 
   return exposeField(
@@ -400,6 +405,11 @@ export function useFileField(_props: Reactivify<FileFieldProps, 'schema' | 'onUp
        * The props for the remove file button.
        */
       removeButtonProps,
+
+      /**
+       * Whether the field is uploading, if multiple files are picked, this will be true if any of the files are uploading.
+       */
+      isUploading,
     },
     field,
   );

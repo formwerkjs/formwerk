@@ -37,11 +37,6 @@ export interface FileEntryProps {
    * The result of the upload.
    */
   uploadResult?: string;
-
-  /**
-   * The label of the remove button.
-   */
-  removeButtonLabel?: string;
 }
 
 export function useFileEntry(_props: Reactivify<FileEntryProps>) {
@@ -61,18 +56,18 @@ export function useFileEntry(_props: Reactivify<FileEntryProps>) {
     currentObjectURL.value = undefined;
   });
 
-  const removeEntry = () => {
+  function remove() {
     collection?.removeEntry(toValue(props.id));
-  };
+  }
 
   const isUploaded = computed(() => {
     return !toValue(props.isUploading) && toValue(props.uploadResult);
   });
 
   const removeButtonProps = useControlButtonProps(() => ({
-    onClick: removeEntry,
+    onClick: remove,
     disabled: toValue(props.isUploading) || collection?.isDisabled(),
-    'aria-label': toValue(props.removeButtonLabel) || 'Remove file',
+    'aria-label': collection?.getRemoveButtonLabel(),
   }));
 
   function createPreviewProps() {
@@ -119,7 +114,8 @@ export function useFileEntry(_props: Reactivify<FileEntryProps>) {
   });
 
   return {
-    removeEntry,
+    name: computed(() => toValue(props.file).name),
+    remove,
     isUploaded,
     previewProps,
     removeButtonProps,
@@ -129,15 +125,12 @@ export function useFileEntry(_props: Reactivify<FileEntryProps>) {
 type KeyLessFileEntryProps = Simplify<Omit<FileEntryProps, 'key'>>;
 
 export interface FileEntrySlotProps {
-  removeEntry: () => void;
+  remove: () => void;
   isUploaded: boolean;
   isUploading: boolean;
   hasPreview: boolean;
   previewProps: { as: string };
-  removeButtonProps: {
-    onClick: () => void;
-    disabled: boolean;
-  };
+  removeButtonProps: Record<string, unknown>;
 }
 
 /**
@@ -147,7 +140,7 @@ const FileEntryImpl = /*#__PURE__*/ defineComponent<KeyLessFileEntryProps & { as
   name: 'FileEntry',
   props: ['id', 'file', 'isUploading', 'uploadResult', 'as'],
   setup(props, { slots }) {
-    const { removeEntry, isUploaded, removeButtonProps, previewProps } = useFileEntry(props);
+    const { remove, isUploaded, removeButtonProps, previewProps, name } = useFileEntry(props);
 
     return () =>
       h(
@@ -156,13 +149,14 @@ const FileEntryImpl = /*#__PURE__*/ defineComponent<KeyLessFileEntryProps & { as
         {
           default: () =>
             slots.default?.({
-              removeEntry,
+              remove,
+              name: name.value,
               isUploaded: isUploaded.value,
               isUploading: props.isUploading,
               hasPreview: !!previewProps.value.as,
               removeButtonProps: removeButtonProps.value,
               previewProps: previewProps.value,
-            }),
+            } as FileEntrySlotProps),
         },
       );
   },
