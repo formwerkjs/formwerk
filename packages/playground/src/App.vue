@@ -1,27 +1,19 @@
 <script setup lang="ts">
+import { useForm } from '@formwerk/core';
 import FileInput from './components/FileInput.vue';
 import Dropzone from './components/Dropzone.vue';
-import { ref } from 'vue';
-import { FileUploadContext } from '@formwerk/core';
 
-function handleUpload(context: FileUploadContext) {
-  console.log(context);
+const form = useForm();
 
-  return new Promise<string>(resolve => {
-    setTimeout(() => {
-      resolve('https://example.com/file.png');
-    }, 1000);
-  });
+function handleUpload(file: File) {
+  console.log(file);
 }
-
-const value = ref<string>();
 </script>
 
 <template>
   <div class="w-full">
-    {{ value }}
-    <FileInput label="Upload a file" name="file1" required @upload="handleUpload" v-model="value" />
+    <FileInput label="Upload a file" name="file1" required allow-directory />
 
-    <Dropzone label="Upload a file" name="file2" multiple class="mt-8" />
+    <Dropzone label="Drop file" name="file2" required multiple class="mt-8" allow-directory />
   </div>
 </template>

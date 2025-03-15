@@ -91,6 +91,11 @@ export interface FileFieldProps {
    * The label for the remove file button.
    */
   removeButtonLabel?: string;
+
+  /**
+   * Whether the field allows directory selection.
+   */
+  allowDirectory?: boolean;
 }
 
 export function useFileField(_props: Reactivify<FileFieldProps, 'schema' | 'onUpload'>) {
@@ -243,6 +248,7 @@ export function useFileField(_props: Reactivify<FileFieldProps, 'schema' | 'onUp
         ...propsToValues(props, ['name', 'accept', 'multiple', 'required', 'disabled']),
         onBlur,
         onChange,
+        webkitdirectory: isMultiple() ? toValue(props.allowDirectory) : undefined,
         style: {
           display: 'none',
         },
