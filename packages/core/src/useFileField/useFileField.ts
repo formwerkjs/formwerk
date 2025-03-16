@@ -303,6 +303,16 @@ export function useFileField(_props: Reactivify<FileFieldProps, 'schema' | 'onUp
 
       processFiles(Array.from(evt.dataTransfer?.files ?? []));
     },
+    onClick(e: MouseEvent) {
+      if (field.isDisabled.value) {
+        blockEvent(e);
+        return;
+      }
+
+      if (e.target === dropzoneEl.value) {
+        inputEl.value?.showPicker();
+      }
+    },
   };
 
   const dropzoneProps = computed(() => {
@@ -310,6 +320,7 @@ export function useFileField(_props: Reactivify<FileFieldProps, 'schema' | 'onUp
       {
         role: 'group',
         'data-dragover': isDragging.value,
+        'aria-label': toValue(props.label),
         ...dropzoneHandlers,
       },
       dropzoneEl,

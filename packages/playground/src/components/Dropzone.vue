@@ -3,12 +3,12 @@ import { useFileField, FileFieldProps, FileEntry } from '@formwerk/core';
 
 const props = defineProps<FileFieldProps>();
 
-const { inputProps, groupProps, triggerProps, entries, errorMessageProps, errorMessage } = useFileField(props);
+const { inputProps, dropzoneProps, triggerProps, entries, errorMessageProps, errorMessage } = useFileField(props);
 </script>
 
 <template>
   <div
-    v-bind="groupProps"
+    v-bind="dropzoneProps"
     class="flex flex-col gap-2 border-2 border-dashed border-zinc-600 rounded-md p-4 w-full max-w-lg hover:bg-zinc-900 transition-colors hover:border-zinc-300 items-center"
   >
     <input v-bind="inputProps" />
