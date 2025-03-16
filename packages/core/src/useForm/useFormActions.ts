@@ -68,9 +68,25 @@ export interface FormActions<TForm extends FormObject, TOutput extends FormObjec
    * Resets the form to its initial state.
    */
   reset(): Promise<void>;
-  reset(state: Partial<ResetState<TForm>>): Promise<void>;
-  reset<TPath extends Path<TForm>>(path: TPath);
-  reset<TPath extends Path<TForm>>(path: TPath, state: Partial<ResetState<PathValue<TForm, TPath>>>): Promise<void>;
+
+  /**
+   *  Resets the form to a specific state.
+   */
+  reset(state: Partial<ResetState<TForm>>, opts?: SetValueOptions): Promise<void>;
+
+  /**
+   * Resets a specific part of the form.
+   */
+  reset<TPath extends Path<TForm>>(path: TPath): Promise<void>;
+
+  /**
+   * Resets a specific part of the form to a specific state.
+   */
+  reset<TPath extends Path<TForm>>(
+    path: TPath,
+    state: Partial<ResetState<PathValue<TForm, TPath>>>,
+    opts?: SetValueOptions,
+  ): Promise<void>;
 
   /**
    * Validates the form.
