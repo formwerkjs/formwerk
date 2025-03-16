@@ -305,7 +305,7 @@ export function useFileField(_props: Reactivify<FileFieldProps, 'schema' | 'onUp
     },
   };
 
-  const groupProps = computed(() => {
+  const dropzoneProps = computed(() => {
     return withRefCapture(
       {
         role: 'group',
@@ -393,9 +393,9 @@ export function useFileField(_props: Reactivify<FileFieldProps, 'schema' | 'onUp
       triggerProps,
 
       /**
-       * The props for the group element, usually the root element.
+       * The props for the dropzone element, usually the root element.
        */
-      groupProps,
+      dropzoneProps,
 
       /**
        * Props for the error message element.

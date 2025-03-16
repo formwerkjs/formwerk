@@ -41,7 +41,7 @@ const makeTest = (props?: SetOptional<FileFieldProps, 'label'>): Component => ({
     const {
       inputProps,
       triggerProps,
-      groupProps,
+      dropzoneProps,
       errorMessageProps,
       entries,
       clear,
@@ -59,7 +59,7 @@ const makeTest = (props?: SetOptional<FileFieldProps, 'label'>): Component => ({
     return {
       inputProps,
       triggerProps,
-      groupProps,
+      dropzoneProps,
       errorMessageProps,
       entries,
       clear,
@@ -75,7 +75,7 @@ const makeTest = (props?: SetOptional<FileFieldProps, 'label'>): Component => ({
   },
   template: `
     <div data-testid="fixture" :class="{ 'touched': isTouched, 'dragging': isDragging }">
-      <div v-bind="groupProps">
+      <div v-bind="dropzoneProps">
         <input v-bind="inputProps" data-testid="input" />
         <button v-bind="triggerProps">{{ label }}</button>
         <span v-bind="errorMessageProps">{{ errorMessage }}</span>
