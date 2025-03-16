@@ -20,10 +20,26 @@ const schema = z.object({
 });
 const { values, ...form } = useForm({
   schema,
+  initialValues: {
+    employee: {
+      name: 'John Doe',
+    },
+  },
+  initialTouched: {
+    company: true,
+    employee: {
+      name: true,
+      email: true,
+    },
+  },
 });
 
 const reset = () => {
-  form.reset('employee', { values: {} });
+  form.reset('employee', { value: { name: 'Bob' } });
+  form.setValue;
+
+  // form.reset('employee');
+  // form.reset('employee', { value: { email: 'Bob' } });
   // form.reset('company', { values: { company: 'Reset Company' } });
 };
 </script>

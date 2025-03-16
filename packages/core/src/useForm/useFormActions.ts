@@ -232,13 +232,7 @@ export function useFormActions<TForm extends FormObject = FormObject, TOutput ex
       submitAttemptsCount.value = 0;
       isSubmitAttempted.value = false;
 
-      if (state?.revalidate ?? true) {
-        await validate();
-        return;
-      }
-
-      form.clearErrors();
-      form.clearSubmitErrors();
+      await validate();
 
       return Promise.resolve();
 
@@ -281,13 +275,40 @@ export function useFormActions<TForm extends FormObject = FormObject, TOutput ex
        * CASE 3: reset(path)
        * Reset a specific part of the form.
        */
-    } else if (pathReset) {
+    } else if (pathReset && !pathResetWithValue) {
+      form.revertValues(pathOrStateOrUndefined as TPath);
+      form.revertTouched(pathOrStateOrUndefined as TPath);
+      form.revertDirty(pathOrStateOrUndefined as TPath);
+      form.clearErrors(pathOrStateOrUndefined as TPath);
+
       return Promise.resolve();
       /**
        * CASE 4: reset(path, state, opts?)
        * Reset a specific part of the form to a specific state.
        */
     } else if (pathResetWithValue) {
+      state = stateOrOptsOrUndefined as Partial<ResetState<TForm>>;
+
+      if (state.value) {
+        form.setInitialValues(state.value);
+      }
+
+      if (state.touched) {
+        form.setInitialTouched(state.touched as Partial<TouchedSchema<TForm>>, opts);
+      }
+
+      form.revertValues(pathOrStateOrUndefined as unknown as TPath);
+      form.revertTouched(pathOrStateOrUndefined as unknown as TPath);
+      form.revertDirty(pathOrStateOrUndefined as unknown as TPath);
+      form.clearErrors(pathOrStateOrUndefined as unknown as TPath);
+
+      if (state.revalidate ?? true) {
+        await validate();
+        return;
+      }
+
+      form.clearErrors(pathOrStateOrUndefined as unknown as TPath);
+
       return Promise.resolve();
     }
   }

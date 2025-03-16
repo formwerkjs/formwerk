@@ -267,6 +267,28 @@ describe('form reset', () => {
     expect(isTouched('foo')).toBe(true);
   });
 
+  test('can reset form path values and touched to their original state', async () => {
+    const { values, reset, setValue, isTouched, setTouched } = await renderSetup(() => {
+      return useForm({
+        initialValues: { company: { name: 'Foo', employee: { firstName: 'John', lastName: 'Doe' } } },
+        initialTouched: { company: true },
+      });
+    });
+
+    setValue('company.name', 'bar');
+    setValue('company.employee.firstName', 'Jane');
+    setTouched('company', false);
+    expect(values).toEqual({ company: { name: 'bar', employee: { firstName: 'Jane', lastName: 'Doe' } } });
+    expect(isTouched('company')).toBe(false);
+    reset('company.name');
+
+    // Only company.name should be reset
+    // expect(values).toEqual({ company: { name: 'Foo', employee: { firstName: 'Jane', lastName: 'Doe' } } });
+    // expect(isTouched('company')).toBe(true);
+  });
+
+  test('can reset from path values and touched to a new state', async () => {});
+
   test('handleReset creates a handler that resets the form and calls afterReset', async () => {
     const afterResetMock = vi.fn();
     const { values, handleReset, setValue } = await renderSetup(() => {

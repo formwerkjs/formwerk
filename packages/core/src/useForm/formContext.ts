@@ -53,13 +53,13 @@ export interface BaseFormContext<TForm extends FormObject = FormObject> {
   setFieldSubmitErrors<TPath extends Path<TForm>>(path: TPath, message: Arrayable<string>): void;
   getValidationMode(): FormValidationMode;
   getSubmitErrors: () => IssueCollection[];
-  clearErrors: (path?: string) => void;
+  clearErrors<TPath extends Path<TForm>>(path?: TPath): void;
   clearSubmitErrors: (path?: string) => void;
   getValues: () => TForm;
   setValues: (newValues: Partial<TForm>, opts?: SetValueOptions) => void;
-  revertValues: () => void;
-  revertTouched: () => void;
-  revertDirty: () => void;
+  revertValues<TPath extends Path<TForm>>(path?: TPath): void;
+  revertTouched<TPath extends Path<TForm>>(path?: TPath): void;
+  revertDirty<TPath extends Path<TForm>>(path?: TPath): void;
   isPathDisabled: (path: Path<TForm>) => boolean;
 }
 
@@ -338,16 +338,28 @@ export function createFormContext<TForm extends FormObject = FormObject, TOutput
     });
   }
 
-  function revertValues() {
-    setValues(cloneDeep(snapshots.values.originals.value), { behavior: 'replace' });
+  function revertValues<TPath extends Path<TForm>>(path?: TPath) {
+    if (!path) {
+      setValues(cloneDeep(snapshots.values.originals.value), { behavior: 'replace' });
+      return;
+    }
+
+    const originalValue = getFieldOriginalValue(path);
+    setValue(path, originalValue);
   }
 
-  function revertTouched() {
-    updateTouched(cloneDeep(snapshots.touched.originals.value), { behavior: 'replace' });
+  function revertTouched<TPath extends Path<TForm>>(path?: TPath) {
+    if (!path) {
+      updateTouched(cloneDeep(snapshots.touched.originals.value), { behavior: 'replace' });
+      return;
+    }
   }
 
-  function revertDirty() {
-    updateDirty(cloneDeep(snapshots.dirty.originals.value), { behavior: 'replace' });
+  function revertDirty<TPath extends Path<TForm>>(path?: TPath) {
+    if (!path) {
+      updateDirty(cloneDeep(snapshots.dirty.originals.value), { behavior: 'replace' });
+      return;
+    }
   }
 
   function getValidationMode(): FormValidationMode {
