@@ -1,4 +1,4 @@
-import { computed, markRaw, provide, readonly, ref, toValue } from 'vue';
+import { computed, markRaw, nextTick, provide, readonly, ref, toValue } from 'vue';
 import { Arrayable, Reactivify, StandardSchema } from '../types';
 import {
   isNullOrUndefined,
@@ -16,7 +16,7 @@ import { useConstraintsValidator, useInputValidity } from '../validation';
 import { blockEvent } from '../utils/events';
 import { registerField } from '@formwerk/devtools';
 import { FileEntryProps } from './useFileEntry';
-import { FileEntryCollectionKey } from './types';
+import { FileEntryCollectionKey, FilePickerOptions } from './types';
 import { useControlButtonProps } from '../helpers/useControlButtonProps';
 
 export interface FileUploadContext {
@@ -106,6 +106,7 @@ export function useFileField(_props: Reactivify<FileFieldProps, 'schema' | 'onUp
   const inputId = useUniqId(FieldTypePrefixes.FileField);
   const dropzoneEl = ref<HTMLElement>();
   const abortControllers = new Map<string, AbortController>();
+  const overridePickOptions = ref<FilePickerOptions>();
 
   const isUploading = computed(() => entries.value.some(e => e.isUploading));
 
@@ -218,6 +219,7 @@ export function useFileField(_props: Reactivify<FileFieldProps, 'schema' | 'onUp
   }
 
   function onChange(evt: Event) {
+    overridePickOptions.value = undefined;
     if (field.isDisabled.value) {
       return;
     }
@@ -231,12 +233,17 @@ export function useFileField(_props: Reactivify<FileFieldProps, 'schema' | 'onUp
   }
 
   async function onClick(evt: MouseEvent) {
+    overridePickOptions.value = undefined;
     if (field.isDisabled.value) {
       blockEvent(evt);
       return;
     }
 
     inputEl.value?.showPicker();
+  }
+
+  function onCancel() {
+    overridePickOptions.value = undefined;
   }
 
   const inputProps = computed(() => {
@@ -246,8 +253,10 @@ export function useFileField(_props: Reactivify<FileFieldProps, 'schema' | 'onUp
         type: 'file',
         tabindex: -1,
         ...propsToValues(props, ['name', 'accept', 'multiple', 'required', 'disabled']),
+        ...overridePickOptions.value,
         onBlur,
         onChange,
+        onCancel,
         webkitdirectory: isMultiple() ? toValue(props.allowDirectory) : undefined,
         style: {
           display: 'none',
@@ -320,6 +329,12 @@ export function useFileField(_props: Reactivify<FileFieldProps, 'schema' | 'onUp
     }
 
     updateFieldValue();
+  }
+
+  async function showPicker(opts?: FilePickerOptions) {
+    overridePickOptions.value = opts;
+    await nextTick();
+    inputEl.value?.showPicker();
   }
 
   function remove(key?: string | FileEntryProps | Event) {
@@ -426,6 +441,11 @@ export function useFileField(_props: Reactivify<FileFieldProps, 'schema' | 'onUp
        * Whether the field is uploading, if multiple files are picked, this will be true if any of the files are uploading.
        */
       isUploading,
+
+      /**
+       * Shows the file picker with the given options. Useful for a picker-type implementations.
+       */
+      showPicker,
     },
     field,
   );

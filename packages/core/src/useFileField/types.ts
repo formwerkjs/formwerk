@@ -7,3 +7,8 @@ export interface FileEntryCollection {
 }
 
 export const FileEntryCollectionKey: InjectionKey<FileEntryCollection> = Symbol('FileEntryCollection');
+
+export interface FilePickerOptions {
+  multiple?: boolean;
+  accept?: string;
+}

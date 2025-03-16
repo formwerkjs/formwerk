@@ -11,7 +11,7 @@ const { inputProps, groupProps, triggerProps, entries, errorMessageProps, errorM
     v-bind="groupProps"
     class="flex flex-col gap-2 border-2 border-dashed border-zinc-600 rounded-md p-4 w-full max-w-lg hover:bg-zinc-900 transition-colors hover:border-zinc-300 items-center"
   >
-    <input v-bind="inputProps" class="sr-only" />
+    <input v-bind="inputProps" />
 
     <div v-if="entries.length === 0" class="mt-3 flex flex-col items-center gap-1">
       <button
@@ -36,7 +36,6 @@ const { inputProps, groupProps, triggerProps, entries, errorMessageProps, errorM
           v-for="entry in entries"
           v-bind="entry"
           class="size-24 border border-zinc-700 rounded-md relative"
-          remove-button-label="Remove"
           v-slot="{ removeButtonProps, previewProps, hasPreview }"
         >
           <component :is="previewProps.as" v-bind="previewProps" class="size-full object-cover" />
