@@ -257,7 +257,7 @@ describe('form reset', () => {
       return useForm({ initialValues: { foo: 'bar' } });
     });
 
-    reset({ values: { foo: 'baz' }, touched: { foo: true } });
+    reset({ value: { foo: 'baz' }, touched: { foo: true } });
     expect(values).toEqual({ foo: 'baz' });
     expect(isTouched('foo')).toBe(true);
     setTouched('foo', false);

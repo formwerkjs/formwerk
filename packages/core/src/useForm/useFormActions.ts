@@ -19,7 +19,7 @@ import type { Jsonify } from 'type-fest';
 import { FormIdAttr } from '../constants';
 
 export interface ResetState<TValues> {
-  values: Partial<TValues>;
+  value: Partial<TValues>;
   touched: TValues extends FormObject ? Partial<TouchedSchema<TValues>> : Partial<Record<string, boolean>>;
   revalidate?: boolean;
 }
@@ -234,8 +234,8 @@ export function useFormActions<TForm extends FormObject = FormObject, TOutput ex
       state = pathOrStateOrUndefined as Partial<ResetState<TForm>>;
       opts = stateOrOptsOrUndefined as SetValueOptions;
 
-      if (state.values) {
-        form.setInitialValues(state.values);
+      if (state.value) {
+        form.setInitialValues(state.value);
       }
 
       if (state.touched) {
