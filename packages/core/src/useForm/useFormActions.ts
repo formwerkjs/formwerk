@@ -177,6 +177,7 @@ export function useFormActions<TForm extends FormObject = FormObject, TOutput ex
 
   async function reset(): Promise<void>;
   async function reset(state: Partial<ResetState<TForm>>, opts?: SetValueOptions): Promise<void>;
+  async function reset<TPath extends Path<TForm>>(path: TPath);
   async function reset<TPath extends Path<TForm>>(
     path: TPath,
     state: Partial<ResetState<PathValue<TForm, TPath>>>,
@@ -189,36 +190,47 @@ export function useFormActions<TForm extends FormObject = FormObject, TOutput ex
     stateOrOptsOrUndefined?: Partial<ResetState<PathValue<TForm, TPath>>> | SetValueOptions,
     optsOrUndefined?: SetValueOptions,
   ): Promise<void> {
-    // Extract state, path, and options based on arguments
-    // let path: TPath | undefined;
     let state: Partial<ResetState<TForm>> | undefined;
     let opts: SetValueOptions | undefined = optsOrUndefined;
 
-    // Case 1: reset()
-    if (!pathOrStateOrUndefined && !stateOrOptsOrUndefined) {
+    const formReset = !pathOrStateOrUndefined && !stateOrOptsOrUndefined;
+    const formResetWithValue =
+      pathOrStateOrUndefined &&
+      typeof pathOrStateOrUndefined === 'object' &&
+      (stateOrOptsOrUndefined === undefined ||
+        typeof stateOrOptsOrUndefined !== 'object' ||
+        'debounced' in stateOrOptsOrUndefined);
+    const pathReset = typeof pathOrStateOrUndefined === 'string' || Array.isArray(pathOrStateOrUndefined);
+    const pathResetWithValue = pathReset && typeof stateOrOptsOrUndefined === 'object';
+
+    /**
+     * CASE 1: reset()
+     * Reset the form to its initial state.
+     */
+    if (formReset) {
       wasSubmitted.value = false;
-      submitAttemptsCount.value = 0;
-      isSubmitAttempted.value = false;
 
       form.revertValues();
       form.revertTouched();
       form.revertDirty();
+      submitAttemptsCount.value = 0;
+      isSubmitAttempted.value = false;
+
+      if (state?.revalidate ?? true) {
+        await validate();
+        return;
+      }
 
       form.clearErrors();
       form.clearSubmitErrors();
 
       return Promise.resolve();
-    }
 
-    // Case 2: reset(state, opts?)
-    if (
-      pathOrStateOrUndefined &&
-      typeof pathOrStateOrUndefined === 'object' &&
-      (stateOrOptsOrUndefined === undefined ||
-        typeof stateOrOptsOrUndefined !== 'object' ||
-        'silentKey' in stateOrOptsOrUndefined ||
-        'debounced' in stateOrOptsOrUndefined)
-    ) {
+      /**
+       * CASE 2: reset(state, opts?)
+       * Reset the form to a specific state.
+       */
+    } else if (formResetWithValue) {
       state = pathOrStateOrUndefined as Partial<ResetState<TForm>>;
       opts = stateOrOptsOrUndefined as SetValueOptions;
 
@@ -241,22 +253,27 @@ export function useFormActions<TForm extends FormObject = FormObject, TOutput ex
 
       if (state.revalidate ?? true) {
         await validate();
-        return Promise.resolve();
+        return;
       }
 
       form.clearErrors();
       form.clearSubmitErrors();
 
       return Promise.resolve();
+
+      /**
+       * CASE 3: reset(path)
+       * Reset a specific part of the form.
+       */
+    } else if (pathReset) {
+      return Promise.resolve();
+      /**
+       * CASE 4: reset(path, state, opts?)
+       * Reset a specific part of the form to a specific state.
+       */
+    } else if (pathResetWithValue) {
+      return Promise.resolve();
     }
-
-    // Case 3: reset(path, state, opts?)
-    // @TODO: Implement this logic for resetting part of the form
-    // const path = pathOrStateOrUndefined as TPath;
-    // const state = stateOrOptsOrUndefined as Partial<ResetState<TForm>>;
-
-    // console.log('reset', path, state, opts);
-    return Promise.resolve();
   }
 
   const actions: FormActions<TForm, TOutput> = {
