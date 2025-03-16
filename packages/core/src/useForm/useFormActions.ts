@@ -69,6 +69,7 @@ export interface FormActions<TForm extends FormObject, TOutput extends FormObjec
    */
   reset(): Promise<void>;
   reset(state: Partial<ResetState<TForm>>): Promise<void>;
+  reset<TPath extends Path<TForm>>(path: TPath);
   reset<TPath extends Path<TForm>>(path: TPath, state: Partial<ResetState<PathValue<TForm, TPath>>>): Promise<void>;
 
   /**
