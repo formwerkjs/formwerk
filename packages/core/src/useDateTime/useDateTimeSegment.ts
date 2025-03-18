@@ -174,7 +174,7 @@ export function useDateTimeSegment(_props: Reactivify<DateTimeSegmentProps>) {
       if (hasKeyCode(evt, 'ArrowUp')) {
         blockEvent(evt);
         if (!isNonEditable()) {
-          increment();
+          increment(evt.shiftKey ? 10 : 1);
         }
         return;
       }
@@ -182,7 +182,7 @@ export function useDateTimeSegment(_props: Reactivify<DateTimeSegmentProps>) {
       if (hasKeyCode(evt, 'ArrowDown')) {
         blockEvent(evt);
         if (!isNonEditable()) {
-          decrement();
+          decrement(evt.shiftKey ? -10 : -1);
         }
         return;
       }

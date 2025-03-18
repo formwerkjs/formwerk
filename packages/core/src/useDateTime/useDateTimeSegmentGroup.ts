@@ -25,8 +25,8 @@ export interface DateTimeSegmentRegistration {
 export interface DateTimeSegmentGroupContext {
   useDateSegmentRegistration(segment: DateTimeSegmentRegistration): {
     parser: NumberParserContext;
-    increment(): void;
-    decrement(): void;
+    increment(step: number): void;
+    decrement(step: number): void;
     setValue(value: number): void;
     getMetadata(): { min: number | null; max: number | null; maxLength: number | null };
     onDone(): void;
@@ -150,16 +150,16 @@ export function useDateTimeSegmentGroup({
       renderedSegments.value = renderedSegments.value.filter(s => s.id !== segment.id);
     });
 
-    function increment() {
+    function increment(step: number = 1) {
       const type = segment.getType();
-      const date = addToPart(type, 1);
+      const date = addToPart(type, step);
 
       onValueChange(withAllPartsSet(date));
     }
 
-    function decrement() {
+    function decrement(step: number = -1) {
       const type = segment.getType();
-      const date = addToPart(type, -1);
+      const date = addToPart(type, step);
 
       onValueChange(withAllPartsSet(date));
     }
