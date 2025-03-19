@@ -217,6 +217,26 @@ export function createFormContext<TForm extends FormObject = FormObject, TOutput
     snapshots.values.originals.value = cloneDeep(newValues) as TForm;
   }
 
+  // TODO: Use this somehow?
+  function setInitialValuesPath<TPath extends Path<TForm>, TPathValue extends PathValue<TForm, TPath>>(
+    path: TPath,
+    newValues: Partial<TPathValue>,
+    opts?: SetValueOptions,
+  ) {
+    if (opts?.behavior === 'replace') {
+      setInPath(snapshots.values.initials.value, path, newValues);
+      setInPath(snapshots.values.originals.value, path, newValues);
+
+      return;
+    }
+
+    const currentInitials = getFromPath(snapshots.values.initials.value, path);
+    const currentOriginals = getFromPath(snapshots.values.originals.value, path);
+
+    setInPath(snapshots.values.initials.value, path, merge(currentInitials, newValues));
+    setInPath(snapshots.values.originals.value, path, merge(currentOriginals, newValues));
+  }
+
   function setInitialTouched(newTouched: Partial<TouchedSchema<TForm>>, opts?: SetValueOptions) {
     if (opts?.behavior === 'merge') {
       snapshots.touched.initials.value = merge(cloneDeep(snapshots.touched.initials.value), cloneDeep(newTouched));
@@ -297,6 +317,23 @@ export function createFormContext<TForm extends FormObject = FormObject, TOutput
     merge(touched, newTouched);
   }
 
+  function updateTouchedPath<TPath extends Path<TForm>, TPathValue extends PathValue<TForm, TPath>>(
+    path: TPath,
+    newTouched: TPathValue extends FormObject ? TouchedSchema<TPathValue> : boolean,
+    opts?: SetValueOptions,
+  ) {
+    const pathExists = isPathSet(touched, path);
+    if (opts?.behavior === 'merge' || !pathExists) {
+      const newFullTouched = {} as TouchedSchema<TForm>;
+      setInPath(newFullTouched, path, newTouched);
+      merge(touched, newFullTouched);
+
+      return;
+    }
+
+    setInPath(touched, path, newTouched);
+  }
+
   function updateDirty(newDirty: Partial<DirtySchema<TForm>>, opts?: SetValueOptions) {
     if (opts?.behavior === 'merge') {
       merge(dirty, newDirty);
@@ -310,6 +347,23 @@ export function createFormContext<TForm extends FormObject = FormObject, TOutput
     });
 
     merge(dirty, newDirty);
+  }
+
+  function updateDirtyPath<TPath extends Path<TForm>, TPathValue extends PathValue<TForm, TPath>>(
+    path: TPath,
+    newDirty: TPathValue extends FormObject ? DirtySchema<TPathValue> : boolean,
+    opts?: SetValueOptions,
+  ) {
+    const pathExists = isPathSet(dirty, path);
+    if (opts?.behavior === 'merge' || !pathExists) {
+      const newFullDirty = {} as DirtySchema<TForm>;
+      setInPath(newFullDirty, path, newDirty);
+      merge(dirty, newFullDirty);
+
+      return;
+    }
+
+    setInPath(dirty, path, newDirty);
   }
 
   function clearErrors(path?: string) {
@@ -353,6 +407,8 @@ export function createFormContext<TForm extends FormObject = FormObject, TOutput
       updateTouched(cloneDeep(snapshots.touched.originals.value), { behavior: 'replace' });
       return;
     }
+
+    updateTouchedPath(path, getFromPath(snapshots.touched.originals.value, path) as any, { behavior: 'replace' });
   }
 
   function revertDirty<TPath extends Path<TForm>>(path?: TPath) {
@@ -360,6 +416,8 @@ export function createFormContext<TForm extends FormObject = FormObject, TOutput
       updateDirty(cloneDeep(snapshots.dirty.originals.value), { behavior: 'replace' });
       return;
     }
+
+    updateDirtyPath(path, getFromPath(snapshots.dirty.originals.value, path) as any, { behavior: 'replace' });
   }
 
   function getValidationMode(): FormValidationMode {

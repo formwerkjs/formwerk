@@ -209,7 +209,7 @@ export function useFormActions<TForm extends FormObject = FormObject, TOutput ex
 
   async function reset(): Promise<void>;
   async function reset(state: Partial<ResetState<TForm>>, opts?: SetValueOptions): Promise<void>;
-  async function reset<TPath extends Path<TForm>>(path: TPath);
+  async function reset<TPath extends Path<TForm>>(path: TPath): Promise<void>;
   async function reset<TPath extends Path<TForm>>(
     path: TPath,
     state: Partial<ResetState<PathValue<TForm, TPath>>>,
