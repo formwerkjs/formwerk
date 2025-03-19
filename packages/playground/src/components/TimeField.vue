@@ -27,7 +27,7 @@ const { controlProps, isTouched, labelProps, errorMessageProps, errorMessage, se
 @reference "../style.css";
 
 .InputDate {
-  font-family: 'Monaspace Neon Var';
+  font-family: 'Monaspace Neon Var', monospace;
   @apply relative w-max;
   margin-bottom: calc(1em * 1.5);
 
