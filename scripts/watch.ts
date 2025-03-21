@@ -1,10 +1,10 @@
 import { consola } from 'consola';
 import { fileURLToPath } from 'url';
-import { watch } from 'rollup';
+import { watch } from 'rolldown';
 import { createConfig, pkgNameMap } from './config';
 import { generateDts } from './generate-dts';
 import path, { dirname } from 'path';
-import { ModuleFormat } from 'rollup';
+import { ModuleFormat } from 'rolldown';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
