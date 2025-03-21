@@ -235,10 +235,10 @@ export function useFormActions<TForm extends FormObject = FormObject, TOutput ex
       submitAttemptsCount.value = 0;
       isSubmitAttempted.value = false;
 
-      await validate();
-
       form.clearErrors();
       form.clearSubmitErrors();
+
+      await validate();
 
       return Promise.resolve();
     }
@@ -291,10 +291,10 @@ export function useFormActions<TForm extends FormObject = FormObject, TOutput ex
      * Reset a specific part of the form.
      */
     if (stateOrOptsOrUndefined === undefined) {
-      form.revertValues(pathOrStateOrUndefined as TPath);
-      form.revertTouched(pathOrStateOrUndefined as TPath);
-      form.revertDirty(pathOrStateOrUndefined as TPath);
-      form.clearErrors(pathOrStateOrUndefined as TPath);
+      form.revertValues(path);
+      form.revertTouched(path);
+      form.revertDirty(path);
+      form.clearErrors(path);
 
       return Promise.resolve();
     }
@@ -308,19 +308,15 @@ export function useFormActions<TForm extends FormObject = FormObject, TOutput ex
       const opts = optsOrUndefined;
 
       if (state.value) {
-        // form.setInitialValues(state.value, );
-        console.warn('setInitialValues', state.value);
+        form.setInitialValuesPath(path, state.value, opts);
       }
 
       if (state.touched) {
-        // form.setInitialTouched(state.touched, opts);
-        console.warn('setInitialTouched', state.touched, opts);
+        form.updateTouchedPath(path, state.touched as any, opts);
       }
 
       form.revertValues(path);
-      form.revertTouched(path);
       form.revertDirty(path);
-      form.clearErrors(path);
 
       if (state.revalidate ?? true) {
         await validate();

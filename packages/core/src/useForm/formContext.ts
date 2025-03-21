@@ -43,7 +43,17 @@ export interface BaseFormContext<TForm extends FormObject = FormObject> {
   getFieldOriginalValue<TPath extends Path<TForm>>(path: TPath): PathValue<TForm, TPath>;
   unsetInitialValue<TPath extends Path<TForm>>(path: TPath): void;
   setInitialValues: (newValues: Partial<TForm>, opts?: SetValueOptions) => void;
+  setInitialValuesPath<TPath extends Path<TForm>, TPathValue extends PathValue<TForm, TPath>>(
+    path: TPath,
+    newValues: Partial<TPathValue>,
+    opts?: SetValueOptions,
+  ): void;
   setInitialTouched: (newTouched: Partial<TouchedSchema<TForm>>, opts?: SetValueOptions) => void;
+  updateTouchedPath<TPath extends Path<TForm>, TPathValue extends PathValue<TForm, TPath>>(
+    path: TPath,
+    newTouched: TPathValue extends FormObject ? TouchedSchema<TPathValue> : boolean,
+    opts?: SetValueOptions,
+  ): void;
   setFieldDisabled<TPath extends Path<TForm>>(path: TPath, value: boolean): void;
   getErrors<TPath extends Path<TForm>>(path?: TPath): string[];
   getIssues<TPath extends Path<TForm>>(path?: TPath): IssueCollection[];
@@ -217,24 +227,23 @@ export function createFormContext<TForm extends FormObject = FormObject, TOutput
     snapshots.values.originals.value = cloneDeep(newValues) as TForm;
   }
 
-  // TODO: Use this somehow?
   function setInitialValuesPath<TPath extends Path<TForm>, TPathValue extends PathValue<TForm, TPath>>(
     path: TPath,
     newValues: Partial<TPathValue>,
     opts?: SetValueOptions,
   ) {
-    if (opts?.behavior === 'replace') {
-      setInPath(snapshots.values.initials.value, path, newValues);
-      setInPath(snapshots.values.originals.value, path, newValues);
+    if (opts?.behavior === 'merge') {
+      const currentInitials = getFromPath(snapshots.values.initials.value, path);
+      const currentOriginals = getFromPath(snapshots.values.originals.value, path);
+
+      setInPath(snapshots.values.initials.value, path, merge(cloneDeep(currentInitials), cloneDeep(newValues)));
+      setInPath(snapshots.values.originals.value, path, merge(cloneDeep(currentOriginals), cloneDeep(newValues)));
 
       return;
     }
 
-    const currentInitials = getFromPath(snapshots.values.initials.value, path);
-    const currentOriginals = getFromPath(snapshots.values.originals.value, path);
-
-    setInPath(snapshots.values.initials.value, path, merge(currentInitials, newValues));
-    setInPath(snapshots.values.originals.value, path, merge(currentOriginals, newValues));
+    setInPath(snapshots.values.initials.value, path, cloneDeep(newValues));
+    setInPath(snapshots.values.originals.value, path, cloneDeep(newValues));
   }
 
   function setInitialTouched(newTouched: Partial<TouchedSchema<TForm>>, opts?: SetValueOptions) {
@@ -470,8 +479,10 @@ export function createFormContext<TForm extends FormObject = FormObject, TOutput
     revertValues,
     revertTouched,
     setInitialValues,
+    setInitialValuesPath,
     revertDirty,
     setInitialTouched,
+    updateTouchedPath,
     getFieldOriginalValue,
     setFieldDisabled,
     setErrors,
