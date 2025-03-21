@@ -237,6 +237,9 @@ export function useFormActions<TForm extends FormObject = FormObject, TOutput ex
 
       await validate();
 
+      form.clearErrors();
+      form.clearSubmitErrors();
+
       return Promise.resolve();
     }
 
