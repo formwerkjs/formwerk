@@ -24,7 +24,7 @@ import { useFormSnapshots } from './formSnapshot';
 import { getConfig } from '../config';
 import { FieldTypePrefixes } from '../constants';
 import { appendToFormData, clearFormData } from '../utils/formData';
-import { PartialDeep } from 'type-fest';
+import { PartialDeep, Simplify } from 'type-fest';
 import { createDisabledContext } from '../helpers/createDisabledContext';
 
 export interface FormProps<
@@ -312,7 +312,7 @@ export function useForm<
 /**
  * Just a utility type helper to get the return type of the useForm composable.
  */
-export type FormReturns = ReturnType<typeof useForm>;
+export type FormReturns = Simplify<ReturnType<typeof useForm>>;
 
 export function useFormContext<TInput extends FormObject = FormObject, TOutput extends FormObject = TInput>() {
   const ctx = inject(FormContextKey, null);
