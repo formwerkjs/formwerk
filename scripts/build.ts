@@ -2,7 +2,7 @@ import { consola } from 'consola';
 import path, { dirname } from 'path';
 import { fileURLToPath } from 'url';
 import fs from 'fs-extra';
-import { rollup, type ModuleFormat } from 'rollup';
+import { rolldown, type ModuleFormat } from 'rolldown';
 import * as Terser from 'terser';
 import { createConfig, pkgNameMap } from './config';
 import { reportSize } from './info';
@@ -44,7 +44,7 @@ async function build(pkg: string) {
   await fs.emptyDir(pkgout);
   for (const format of ['esm', 'iife', 'cjs'] as ModuleFormat[]) {
     const { input, output, bundleName } = await createConfig(pkg as 'core', format);
-    const bundle = await rollup(input);
+    const bundle = await rolldown(input);
     const {
       output: [{ code }],
     } = await bundle.generate(output);

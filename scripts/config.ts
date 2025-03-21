@@ -1,10 +1,6 @@
 import path, { dirname } from 'path';
 import { fileURLToPath } from 'url';
-import { ModuleFormat } from 'rollup';
-import typescript from '@rollup/plugin-typescript';
-import replace from '@rollup/plugin-replace';
-import resolve from '@rollup/plugin-node-resolve';
-import commonjs from '@rollup/plugin-commonjs';
+import { InputOptions, ModuleFormat, OutputOptions } from 'rolldown';
 import { normalizePath, slashes } from './normalize-path';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -31,29 +27,6 @@ function testEsm(format: string) {
   return ['es', 'esm'].includes(format);
 }
 
-const createPlugins = ({ version, format, pkg }: { version: string; format: ModuleFormat; pkg: string }) => {
-  const isEsm = testEsm(format);
-  const tsPlugin = typescript({
-    tsconfig: normalizePath(path.resolve(__dirname, `../tsconfig.lib.json`)),
-    declarationDir: normalizePath(path.resolve(__dirname, `../packages/${pkg}/dist`)),
-  });
-
-  return [
-    replace({
-      preventAssignment: true,
-      values: {
-        __VERSION__: version,
-        __DEV__: isEsm ? `(process.env.NODE_ENV !== 'production')` : 'false',
-      },
-    }),
-    tsPlugin,
-    resolve({
-      dedupe: ['klona', 'klona/full'],
-    }),
-    commonjs(),
-  ];
-};
-
 async function createConfig(pkg: keyof typeof pkgNameMap, format: ModuleFormat) {
   // An import assertion in a dynamic import
   const { default: info } = await import(normalizePath(path.resolve(__dirname, `../packages/${pkg}/package.json`)), {
@@ -63,14 +36,23 @@ async function createConfig(pkg: keyof typeof pkgNameMap, format: ModuleFormat) 
   });
 
   const { version } = info;
+  const isEsm = testEsm(format);
 
-  const config = {
+  const config: { input: InputOptions; output: OutputOptions; bundleName: string } = {
     bundleName: `${pkgNameMap[pkg]}.${formatExt[format] ?? 'js'}`,
     input: {
+      resolve: {
+        tsconfigFilename: normalizePath(path.resolve(__dirname, `../tsconfig.lib.json`)),
+      },
+      define: {
+        __VERSION__: JSON.stringify(version),
+        __DEV__: isEsm ? `(process.env.NODE_ENV !== 'production')` : 'false',
+      },
       input: slashes(path.resolve(__dirname, `../packages/${pkg}/src/index.ts`)),
       external: [
         'vue',
         'klona',
+        'klona/full',
         'type-fest',
         pkg === 'core' ? '@formwerk/devtools' : undefined,
         pkg === 'core' ? '@standard-schema/utils' : undefined,
@@ -79,7 +61,6 @@ async function createConfig(pkg: keyof typeof pkgNameMap, format: ModuleFormat) 
         pkg === 'devtools' ? '@vue/devtools-api' : undefined,
         pkg === 'devtools' ? '@vue/devtools-kit' : undefined,
       ].filter(Boolean) as string[],
-      plugins: createPlugins({ version, pkg, format }),
     },
     output: {
       banner: `/**
@@ -98,4 +79,4 @@ async function createConfig(pkg: keyof typeof pkgNameMap, format: ModuleFormat) 
   return config;
 }
 
-export { formatNameMap, pkgNameMap, formatExt, createConfig, createPlugins };
+export { formatNameMap, pkgNameMap, formatExt, createConfig };
