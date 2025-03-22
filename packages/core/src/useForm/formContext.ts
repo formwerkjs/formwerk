@@ -49,6 +49,11 @@ export interface BaseFormContext<TForm extends FormObject = FormObject> {
     opts?: SetValueOptions,
   ): void;
   setInitialTouched: (newTouched: Partial<TouchedSchema<TForm>>, opts?: SetValueOptions) => void;
+  setInitialTouchedPath<TPath extends Path<TForm>, TPathValue extends PathValue<TForm, TPath>>(
+    path: TPath,
+    newTouched: TPathValue extends FormObject ? TouchedSchema<TPathValue> : boolean,
+    opts?: SetValueOptions,
+  ): void;
   updateTouchedPath<TPath extends Path<TForm>, TPathValue extends PathValue<TForm, TPath>>(
     path: TPath,
     newTouched: TPathValue extends FormObject ? TouchedSchema<TPathValue> : boolean,
@@ -343,6 +348,25 @@ export function createFormContext<TForm extends FormObject = FormObject, TOutput
     setInPath(touched, path, newTouched);
   }
 
+  function setInitialTouchedPath<TPath extends Path<TForm>, TPathValue extends PathValue<TForm, TPath>>(
+    path: TPath,
+    newTouched: TPathValue extends FormObject ? TouchedSchema<TPathValue> : boolean,
+    opts?: SetValueOptions,
+  ) {
+    const pathExists = isPathSet(snapshots.touched.initials.value, path);
+    if (opts?.behavior === 'merge' || !pathExists) {
+      const newFullTouched = {} as TouchedSchema<TForm>;
+      setInPath(newFullTouched, path, newTouched);
+      merge(snapshots.touched.initials.value, newFullTouched);
+      merge(snapshots.touched.originals.value, newFullTouched);
+
+      return;
+    }
+
+    setInPath(snapshots.touched.initials.value, path, newTouched);
+    setInPath(snapshots.touched.originals.value, path, newTouched);
+  }
+
   function updateDirty(newDirty: Partial<DirtySchema<TForm>>, opts?: SetValueOptions) {
     if (opts?.behavior === 'merge') {
       merge(dirty, newDirty);
@@ -482,6 +506,7 @@ export function createFormContext<TForm extends FormObject = FormObject, TOutput
     setInitialValuesPath,
     revertDirty,
     setInitialTouched,
+    setInitialTouchedPath,
     updateTouchedPath,
     getFieldOriginalValue,
     setFieldDisabled,
