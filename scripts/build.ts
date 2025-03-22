@@ -3,29 +3,12 @@ import path, { dirname } from 'path';
 import { fileURLToPath } from 'url';
 import fs from 'fs-extra';
 import { rolldown, type ModuleFormat } from 'rolldown';
-import * as Terser from 'terser';
 import { createConfig, pkgNameMap } from './config';
 import { reportSize } from './info';
 import { generateDts } from './generate-dts';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
-
-async function minify({ code, pkg, bundleName }: { code: string; pkg: string; bundleName: string }) {
-  const pkgout = path.join(__dirname, `../packages/${pkg}/dist`);
-  const output = await Terser.minify(code, {
-    compress: true,
-    mangle: true,
-  });
-
-  if (!output.code) {
-    throw new Error(`🚨 Minification error: ${pkg}/${bundleName}`);
-  }
-
-  const fileName = bundleName.replace(/\.js$/, '.prod.js');
-  const filePath = `${pkgout}/${fileName}`;
-  fs.outputFileSync(filePath, output.code);
-}
 
 function logPkgSize(pkg: string) {
   const pkgout = path.join(__dirname, `../packages/${pkg}/dist`);
@@ -53,7 +36,20 @@ async function build(pkg: string) {
     fs.outputFileSync(outputPath, code);
 
     if (format === 'iife') {
-      await minify({ bundleName, pkg, code });
+      const {
+        output: [{ code }],
+      } = await bundle.generate({
+        ...output,
+        minify: true,
+      });
+
+      if (!code) {
+        throw new Error(`🚨 Minification error: ${pkg}/${bundleName}`);
+      }
+
+      const fileName = bundleName.replace(/\.js$/, '.prod.js');
+      const filePath = `${pkgout}/${fileName}`;
+      fs.outputFileSync(filePath, code);
     }
   }
 
