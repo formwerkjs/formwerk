@@ -30,6 +30,6 @@ export const NOOP = () => {};
 
 export const SCHEMA_BATCH_MS = 10;
 
-export const version = '__VERSION__';
+export const version = __VERSION__;
 
 export const FormIdAttr = 'data-fw-form-id';
