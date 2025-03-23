@@ -191,22 +191,6 @@ export function useFormActions<TForm extends FormObject = FormObject, TOutput ex
     }
   }
 
-  /**
-   * Typeguard for checking if a value is a Partial<ResetState<T>>.
-   *
-   * @template T - Type parameter for ResetState
-   * @param value - Value to check
-   * @returns True if value has ResetState properties
-   */
-  function isResetState<T>(value: unknown): value is Partial<ResetState<T>> {
-    return (
-      typeof value === 'object' &&
-      value !== null &&
-      !Array.isArray(value) &&
-      ('value' in value || 'touched' in value || 'revalidate' in value)
-    );
-  }
-
   async function reset(): Promise<void>;
   async function reset(state: Partial<ResetState<TForm>>, opts?: SetValueOptions): Promise<void>;
   async function reset<TPath extends Path<TForm>>(path: TPath): Promise<void>;
@@ -247,7 +231,7 @@ export function useFormActions<TForm extends FormObject = FormObject, TOutput ex
      * CASE 2: reset(state, opts?)
      * Reset the form to a specific state.
      */
-    if (isResetState<TForm>(pathOrStateOrUndefined)) {
+    if (typeof pathOrStateOrUndefined !== 'string') {
       const state = pathOrStateOrUndefined;
       const opts = stateOrOptsOrUndefined as SetValueOptions;
 
@@ -303,8 +287,8 @@ export function useFormActions<TForm extends FormObject = FormObject, TOutput ex
      * CASE 4: reset(path, state, opts?)
      * Reset a specific part of the form to a specific state.
      */
-    if (isResetState<PathValue<TForm, TPath>>(stateOrOptsOrUndefined)) {
-      const state = stateOrOptsOrUndefined;
+    if (typeof stateOrOptsOrUndefined === 'object') {
+      const state = stateOrOptsOrUndefined as Partial<ResetState<PathValue<TForm, TPath>>>;
       const opts = optsOrUndefined;
 
       if (state.value) {
