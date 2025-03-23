@@ -29,7 +29,7 @@ html {
 }
 
 body {
-  @apply w-full overflow-auto;
+  @apply w-full overflow-auto h-full;
 }
 
 #app {

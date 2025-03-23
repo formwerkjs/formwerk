@@ -1,5 +1,19 @@
 # @formwerk/core
 
+## 0.10.0
+
+### Minor Changes
+
+- 672c8f4: feat: implement file field
+
+### Patch Changes
+
+- 34f129d: feat: implement the time field
+- 672c8f4: feat: added support for picker mode
+- cbe9394: refactor: remove some disabled context redundencies
+- c49b072: feat: overload set errors to set multiple errors at once closes #149
+  - @formwerk/devtools@0.10.0
+
 ## 0.9.2
 
 ### Patch Changes

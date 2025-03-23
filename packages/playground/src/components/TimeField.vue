@@ -1,42 +1,20 @@
 <script setup lang="ts">
-import { useDateField, DateFieldProps, DateTimeSegment, usePicker } from '@formwerk/core';
-import Calendar from './Calendar.vue';
+import { useTimeField, TimeFieldProps, DateTimeSegment } from '@formwerk/core';
 
-const props = defineProps<DateFieldProps>();
+const props = defineProps<TimeFieldProps>();
 
-const {
-  controlProps,
-  isTouched,
-  labelProps,
-  errorMessageProps,
-  errorMessage,
-  segments,
-  fieldValue,
-  calendarProps,
-  direction,
-} = useDateField(props);
-
-const { pickerProps, pickerTriggerProps } = usePicker({
-  label: 'Pick a date',
-});
+const { controlProps, isTouched, labelProps, errorMessageProps, errorMessage, segments, fieldValue, direction } =
+  useTimeField(props);
 </script>
 
 <template>
   <div class="InputDate" :class="{ touched: isTouched }" :dir="direction">
     <span class="label" v-bind="labelProps">{{ label }}</span>
 
-    {{ fieldValue }}
-
     <div class="flex items-center gap-1 control">
       <div v-bind="controlProps">
         <DateTimeSegment v-for="segment in segments" v-bind="segment" class="segment" />
       </div>
-
-      <button v-bind="pickerTriggerProps">📅</button>
-    </div>
-
-    <div v-bind="pickerProps" popover>
-      <Calendar v-bind="calendarProps" />
     </div>
 
     <span v-bind="errorMessageProps" class="w-full truncate error-message">
@@ -50,7 +28,7 @@ const { pickerProps, pickerTriggerProps } = usePicker({
 
 .InputDate {
   font-family: 'Monaspace Neon Var';
-  @apply relative w-full;
+  @apply relative w-max;
   margin-bottom: calc(1em * 1.5);
 
   .label {

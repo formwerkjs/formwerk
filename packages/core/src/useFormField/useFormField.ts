@@ -457,6 +457,12 @@ export type ExposedField<TValue> = {
    * Sets the value for the field.
    */
   setValue: (value: TValue) => void;
+
+  /**
+   * Validates the field.
+   * @param mutate - Whether to set errors on the field as a result of the validation call, defaults to `true`.
+   */
+  validate: (mutate?: boolean) => Promise<ValidationResult>;
 };
 
 export function exposeField<TReturns extends object, TValue>(
@@ -485,6 +491,7 @@ export function exposeField<TReturns extends object, TValue>(
       : field.setErrors,
     setTouched: field.setTouched,
     setValue: field.setValue,
+    validate: (mutate = true) => field.validate(mutate),
   } satisfies ExposedField<TValue>;
 
   return {

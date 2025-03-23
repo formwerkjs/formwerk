@@ -39,7 +39,7 @@ export interface FormProps<
   /**
    * The initial values for the form fields.
    */
-  initialValues?: MaybeGetter<MaybeAsync<PartialDeep<StandardSchemaV1.InferInput<TSchema>>>>;
+  initialValues?: MaybeGetter<MaybeAsync<PartialDeep<TInput>>>;
 
   /**
    * The initial touched state for form fields.

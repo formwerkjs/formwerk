@@ -21,7 +21,6 @@ import { useInputValidity } from '../validation/useInputValidity';
 import { useLabel, useErrorMessage } from '../a11y';
 import { useFormField, exposeField } from '../useFormField';
 import { FieldTypePrefixes } from '../constants';
-import { createDisabledContext } from '../helpers/createDisabledContext';
 import { registerField } from '@formwerk/devtools';
 
 export interface SearchInputDOMAttributes extends TextInputBaseAttributes {
@@ -126,15 +125,14 @@ export function useSearchField(
   const props = normalizeProps(_props, ['onSubmit', 'schema']);
   const inputId = useUniqId(FieldTypePrefixes.SearchField);
   const inputEl = elementRef || ref<HTMLInputElement>();
-  const isDisabled = createDisabledContext(props.disabled);
   const field = useFormField<string | undefined>({
     path: props.name,
     initialValue: toValue(props.modelValue) ?? toValue(props.value),
-    disabled: isDisabled,
+    disabled: props.disabled,
     schema: props.schema,
   });
 
-  const isMutable = () => !toValue(props.readonly) && !isDisabled.value;
+  const isMutable = () => !toValue(props.readonly) && !field.isDisabled.value;
 
   const { validityDetails, updateValidity } = useInputValidity({
     inputEl,
@@ -217,7 +215,7 @@ export function useSearchField(
         ...accessibleErrorProps.value,
         id: inputId,
         value: fieldValue.value,
-        disabled: isDisabled.value ? true : undefined,
+        disabled: field.isDisabled.value ? true : undefined,
         type: 'search',
         maxlength: toValue(props.maxLength),
         minlength: toValue(props.minLength),

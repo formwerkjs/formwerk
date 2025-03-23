@@ -10,13 +10,13 @@ import { useControlButtonProps } from '../helpers/useControlButtonProps';
 import { CalendarContextKey, YEAR_CELLS_COUNT } from './constants';
 import { CalendarView, useCalendarView } from './useCalendarView';
 import { Calendar, ZonedDateTime, now, toCalendar } from '@internationalized/date';
-import { createDisabledContext } from '../helpers/createDisabledContext';
 import { exposeField, FormField, useFormField } from '../useFormField';
 import { useInputValidity } from '../validation';
-import { fromDateToCalendarZonedDateTime, useTemporalStore } from '../useDateTimeField/useTemporalStore';
+import { fromDateToCalendarZonedDateTime, useTemporalStore } from '../useDateTime/useTemporalStore';
 import { PickerContextKey } from '../usePicker';
 import { registerField } from '@formwerk/devtools';
 import { useConstraintsValidator } from '../validation/useConstraintsValidator';
+import { createDisabledContext } from '../helpers/createDisabledContext';
 
 export interface CalendarProps {
   /**
@@ -164,7 +164,7 @@ export function useCalendar(_props: Reactivify<CalendarProps, 'field' | 'schema'
     useInputValidity({ field, inputEl: element });
   }
 
-  const isDisabled = createDisabledContext(props.disabled);
+  const isDisabled = field.isDisabled || createDisabledContext(props.disabled);
   const selectedDate = computed(() => temporalValue.value ?? toCalendar(now(toValue(timeZone)), calendar.value));
   const focusedDay = shallowRef<ZonedDateTime>();
 

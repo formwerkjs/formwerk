@@ -7,7 +7,6 @@ import { useErrorMessage, useLabel } from '../a11y';
 import { exposeField, useFormField } from '../useFormField';
 import { useInputValidity, useConstraintsValidator } from '../validation';
 import { OtpSlotProps } from './useOtpSlot';
-import { createDisabledContext } from '../helpers/createDisabledContext';
 import { registerField } from '@formwerk/devtools';
 import { DEFAULT_MASK, isValueAccepted } from './utils';
 import { blockEvent } from '../utils/events';
@@ -93,7 +92,6 @@ export function useOtpField(_props: Reactivify<OtpFieldProps, 'schema' | 'onComp
   const props = normalizeProps(_props, ['schema', 'onCompleted']);
   const controlEl = ref<HTMLElement>();
   const id = useUniqId(FieldTypePrefixes.OTPField);
-  const isDisabled = createDisabledContext(props.disabled);
 
   function withPrefix(value: string | undefined) {
     const prefix = toValue(props.prefix);
@@ -213,7 +211,7 @@ export function useOtpField(_props: Reactivify<OtpFieldProps, 'schema' | 'onComp
 
     return Array.from({ length }, (_, index) => ({
       value: inputsState.value[index] ?? '',
-      disabled: prefix.length ? prefix.length > index : isDisabled.value,
+      disabled: prefix.length ? prefix.length > index : field.isDisabled.value,
       readonly: toValue(props.readonly),
       accept: toValue(props.accept),
       masked: prefix.length <= index && !!toValue(props.mask),
@@ -251,7 +249,7 @@ export function useOtpField(_props: Reactivify<OtpFieldProps, 'schema' | 'onComp
   });
 
   function onPaste(event: ClipboardEvent) {
-    if (toValue(props.readonly) || isDisabled.value) {
+    if (toValue(props.readonly) || field.isDisabled.value) {
       blockEvent(event);
       return;
     }
