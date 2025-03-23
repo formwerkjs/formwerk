@@ -307,7 +307,7 @@ describe('form reset', () => {
     reset('company.employee.name');
 
     expect(values).toEqual({ company: { employee: { name: 'Alice' } } });
-    // expect(isTouched('company.employee.name')).toBe(true);
+    expect(isTouched('company.employee.name')).toBe(true);
   });
 
   test('handleReset creates a handler that resets the form and calls afterReset', async () => {

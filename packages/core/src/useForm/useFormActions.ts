@@ -312,11 +312,13 @@ export function useFormActions<TForm extends FormObject = FormObject, TOutput ex
       }
 
       if (state.touched) {
-        form.updateTouchedPath(path, state.touched as any, opts);
+        form.setInitialTouchedPath(path, state.touched as any, opts);
       }
 
       form.revertValues(path);
+      form.revertTouched(path);
       form.revertDirty(path);
+      form.clearErrors(path);
 
       if (state.revalidate ?? true) {
         await validate();
