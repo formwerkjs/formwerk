@@ -14,6 +14,7 @@ export interface OtpSlotRegistration {
 export interface OtpContext {
   useSlotRegistration(): OtpSlotRegistration;
   getMaskCharacter(): string;
+  onBlur(): void;
 }
 
 export const OtpContextKey: InjectionKey<OtpContext> = Symbol('otp-context');

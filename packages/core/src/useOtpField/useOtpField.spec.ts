@@ -14,6 +14,7 @@ const InputBase: string = `
     <label v-bind="labelProps">{{ label }}</label>
     <span v-bind="errorMessageProps">{{ errorMessage }}</span>
     <span data-testid="value">{{ fieldValue }}</span>
+    <span data-testid="touched">{{ isTouched }}</span>
   </div>
 `;
 
@@ -139,6 +140,24 @@ describe('useOtpField', () => {
       expect(fieldSlots.value[0].masked).toBe(false);
       expect(fieldSlots.value[1].masked).toBe(false);
       expect(fieldSlots.value[2].masked).toBe(true);
+    });
+  });
+
+  describe('blur behavior', () => {
+    test('sets touched state to true when a slot is blurred', async () => {
+      const OtpField = createOtpField({ label: 'OTP Code', length: 4 });
+
+      await render({
+        components: { OtpField },
+        template: `<OtpField />`,
+      });
+
+      // Find the first slot and trigger blur
+      const slot = screen.getAllByTestId('slot')[0];
+      await fireEvent.blur(slot);
+
+      // Verify that the slot has the touched state by checking its aria attributes
+      expect(screen.getByTestId('touched')).toHaveTextContent('true');
     });
   });
 

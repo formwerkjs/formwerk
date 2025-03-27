@@ -349,6 +349,9 @@ export function useOtpField(_props: Reactivify<OtpFieldProps, 'schema' | 'onComp
         setValue: fillSlots,
       };
     },
+    onBlur() {
+      field.setTouched(true);
+    },
   });
 
   if (__DEV__) {

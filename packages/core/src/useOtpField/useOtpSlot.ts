@@ -74,6 +74,9 @@ export function useOtpSlot(_props: Reactivify<OtpSlotProps>) {
     onPaste(e: ClipboardEvent) {
       registration?.handlePaste(e);
     },
+    onBlur() {
+      context?.onBlur();
+    },
     onKeydown(e: KeyboardEvent) {
       if (hasKeyCode(e, 'Backspace') || hasKeyCode(e, 'Delete')) {
         blockEvent(e);
