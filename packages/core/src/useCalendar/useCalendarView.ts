@@ -4,8 +4,7 @@ import { useDateFormatter } from '../i18n';
 import { Reactivify } from '../types';
 import { normalizeProps } from '../utils/common';
 import { YEAR_CELLS_COUNT } from './constants';
-import { now, toCalendar, toCalendarDate } from '@internationalized/date';
-
+import { Temporal } from 'temporal-polyfill';
 export interface CalendarWeeksView {
   type: 'weeks';
   days: CalendarDayCell[];
@@ -110,13 +109,16 @@ function useCalendarDaysView(
 
     // Always use 6 weeks (42 days) for consistent layout
     const gridDays = 42;
-    const rightNow = toCalendar(now(timeZone.value), calendar.value);
+    const rightNow = Temporal.ZonedDateTime.from({
+      epochMilliseconds: Temporal.Now.instant().epochMilliseconds,
+      timeZone: timeZone.value,
+    }).withCalendar(calendar.value);
     const minDate = getMinDate();
     const maxDate = getMaxDate();
 
-    const rightNowDate = toCalendarDate(rightNow);
-    const focusedDate = toCalendarDate(focused);
-    const currentDate = toCalendarDate(current);
+    const rightNowDate = rightNow.toInstant();
+    const focusedDate = focused.toInstant();
+    const currentDate = current.toInstant();
 
     return Array.from({ length: gridDays }, (_, i) => {
       const dayOfMonth = firstDay.add({ days: i });
@@ -130,16 +132,16 @@ function useCalendarDaysView(
         disabled = true;
       }
 
-      const domDate = toCalendarDate(dayOfMonth);
+      const domDate = dayOfMonth.toInstant();
 
       return {
         value: dayOfMonth,
         label: dayNumberFormatter.value.format(dayOfMonth.toDate()),
         dayOfMonth: dayOfMonth.day,
-        isToday: rightNowDate.compare(domDate) === 0,
-        selected: currentDate.compare(domDate) === 0,
+        isToday: rightNowDate.equals(domDate),
+        selected: currentDate.equals(domDate),
         isOutsideMonth: domDate.month !== focusedDate.month,
-        focused: focusedDate.compare(domDate) === 0,
+        focused: focusedDate.equals(domDate),
         disabled,
         type: 'day',
       } as CalendarDayCell;

@@ -1,11 +1,11 @@
 import { WeekInfo } from '../i18n/getWeekInfo';
 import { Ref } from 'vue';
 import { Maybe } from '../types';
-import type { ZonedDateTime, Calendar } from '@internationalized/date';
+import { Temporal } from 'temporal-polyfill';
 
 export interface CalendarDayCell {
   type: 'day';
-  value: ZonedDateTime;
+  value: Temporal.ZonedDateTime;
   dayOfMonth: number;
   label: string;
   isToday: boolean;
@@ -18,7 +18,7 @@ export interface CalendarDayCell {
 export interface CalendarMonthCell {
   type: 'month';
   label: string;
-  value: ZonedDateTime;
+  value: Temporal.ZonedDateTime;
   monthOfYear: number;
   selected: boolean;
   disabled: boolean;
@@ -28,7 +28,7 @@ export interface CalendarMonthCell {
 export interface CalendarYearCell {
   type: 'year';
   label: string;
-  value: ZonedDateTime;
+  value: Temporal.ZonedDateTime;
   year: number;
   selected: boolean;
   disabled: boolean;
@@ -42,12 +42,12 @@ export type CalendarViewType = 'weeks' | 'months' | 'years';
 export interface CalendarContext {
   locale: Ref<string>;
   weekInfo: Ref<WeekInfo>;
-  calendar: Ref<Calendar>;
+  calendar: Ref<string>;
   timeZone: Ref<string>;
-  getSelectedDate: () => ZonedDateTime;
-  getMinDate: () => Maybe<ZonedDateTime>;
-  getMaxDate: () => Maybe<ZonedDateTime>;
-  getFocusedDate: () => ZonedDateTime;
-  setFocusedDate: (date: ZonedDateTime) => void;
-  setDate: (date: ZonedDateTime, view?: CalendarViewType) => void;
+  getSelectedDate: () => Temporal.ZonedDateTime;
+  getMinDate: () => Maybe<Temporal.ZonedDateTime>;
+  getMaxDate: () => Maybe<Temporal.ZonedDateTime>;
+  getFocusedDate: () => Temporal.ZonedDateTime;
+  setFocusedDate: (date: Temporal.ZonedDateTime) => void;
+  setDate: (date: Temporal.ZonedDateTime, view?: CalendarViewType) => void;
 }

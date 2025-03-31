@@ -1,4 +1,3 @@
-import { createCalendar, fromDate, now } from '@internationalized/date';
 import { useTemporalStore } from './useTemporalStore';
 import { createTemporalPartial, isTemporalPartial } from './temporalPartial';
 import { ref } from 'vue';
@@ -7,7 +6,6 @@ import { flush } from '@test-utils/flush';
 import { vi } from 'vitest';
 
 describe('useTemporalStore', () => {
-  const calendar = createCalendar('gregory');
   const timeZone = 'UTC';
   const locale = 'en-US';
 
@@ -18,7 +16,7 @@ describe('useTemporalStore', () => {
         model: {
           get: () => date,
         },
-        calendar,
+        calendar: 'gregory',
         timeZone,
         locale,
       });
@@ -33,7 +31,7 @@ describe('useTemporalStore', () => {
         model: {
           get: () => date.toDate(),
         },
-        calendar,
+        calendar: 'gregory',
         timeZone,
         locale,
       });

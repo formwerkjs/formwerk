@@ -14,7 +14,7 @@ import {
 } from './constants';
 import { NumberParserContext, useNumberParser } from '../i18n';
 import { isTemporalPartial, isTemporalPartSet, toTemporalPartial } from './temporalPartial';
-import { ZonedDateTime, DateFormatter } from '@internationalized/date';
+import { Temporal, Intl as TemporalIntl } from 'temporal-polyfill';
 
 export interface DateTimeSegmentRegistration {
   id: string;
@@ -43,16 +43,16 @@ export interface DateTimeSegmentGroupContext {
 export const DateTimeSegmentGroupKey: InjectionKey<DateTimeSegmentGroupContext> = Symbol('DateTimeSegmentGroupKey');
 
 export interface DateTimeSegmentGroupProps {
-  formatter: Ref<DateFormatter>;
+  formatter: Ref<TemporalIntl.DateTimeFormat>;
   locale: MaybeRefOrGetter<string | undefined>;
   formatOptions: MaybeRefOrGetter<Maybe<Intl.DateTimeFormatOptions>>;
-  temporalValue: MaybeRefOrGetter<ZonedDateTime | TemporalPartial>;
+  temporalValue: MaybeRefOrGetter<Temporal.ZonedDateTime | TemporalPartial>;
   direction?: MaybeRefOrGetter<Direction>;
   controlEl: Ref<HTMLElement | undefined>;
   readonly?: MaybeRefOrGetter<boolean | undefined>;
-  min?: MaybeRefOrGetter<Maybe<ZonedDateTime>>;
-  max?: MaybeRefOrGetter<Maybe<ZonedDateTime>>;
-  onValueChange: (value: ZonedDateTime) => void;
+  min?: MaybeRefOrGetter<Maybe<Temporal.ZonedDateTime>>;
+  max?: MaybeRefOrGetter<Maybe<Temporal.ZonedDateTime>>;
+  onValueChange: (value: Temporal.ZonedDateTime) => void;
   onTouched: () => void;
   dispatchEvent: (type: string) => void;
 }
@@ -85,7 +85,7 @@ export function useDateTimeSegmentGroup({
 
   const segments = computed(() => {
     const date = toValue(temporalValue);
-    let parts = formatter.value.formatToParts(date.toDate()) as {
+    let parts = formatter.value.formatToParts(date) as {
       type: DateTimeSegmentType;
       value: string;
     }[];
@@ -132,9 +132,10 @@ export function useDateTimeSegmentGroup({
     });
   }
 
-  function withAllPartsSet(value: ZonedDateTime) {
+  function withAllPartsSet(value: Temporal.ZonedDateTime) {
     if (isTemporalPartial(value) && isAllPartsSet(value)) {
-      return value.copy(); // clones the value and drops the partial flag
+      // clones the value and drops the partial flag
+      return Temporal.ZonedDateTime.from(value);
     }
 
     return value;
@@ -187,8 +188,8 @@ export function useDateTimeSegmentGroup({
       const type = segment.getType();
       const date = toValue(temporalValue);
       const maxPartsRecord: Partial<Record<DateTimeSegmentType, number>> = {
-        day: date.calendar.getDaysInMonth(date),
-        month: date.calendar.getMonthsInYear(date),
+        day: date.daysInMonth,
+        month: date.monthsInYear,
         year: 9999,
         hour: toValue(formatOptions)?.hour12 ? 12 : 23,
         minute: 59,
@@ -350,21 +351,21 @@ export function useDateTimeSegmentGroup({
 }
 
 interface ArithmeticInit {
-  currentDate: MaybeRefOrGetter<ZonedDateTime | TemporalPartial>;
-  min?: MaybeRefOrGetter<Maybe<ZonedDateTime>>;
-  max?: MaybeRefOrGetter<Maybe<ZonedDateTime>>;
+  currentDate: MaybeRefOrGetter<Temporal.ZonedDateTime | TemporalPartial>;
+  min?: MaybeRefOrGetter<Maybe<Temporal.ZonedDateTime>>;
+  max?: MaybeRefOrGetter<Maybe<Temporal.ZonedDateTime>>;
 }
 
 function useDateArithmetic({ currentDate, min, max }: ArithmeticInit) {
-  function clampDate(date: ZonedDateTime) {
+  function clampDate(date: Temporal.ZonedDateTime) {
     const minDate = toValue(min);
     const maxDate = toValue(max);
 
-    if (minDate && date.compare(minDate) < 0) {
+    if (minDate && Temporal.ZonedDateTime.compare(minDate, date) < 0) {
       return toValue(currentDate);
     }
 
-    if (maxDate && date.compare(maxDate) > 0) {
+    if (maxDate && Temporal.ZonedDateTime.compare(date, maxDate) > 0) {
       return toValue(currentDate);
     }
 
@@ -381,7 +382,7 @@ function useDateArithmetic({ currentDate, min, max }: ArithmeticInit) {
       return date;
     }
 
-    const newDate = date.set({
+    const newDate = date.with({
       [part]: value,
     });
 
@@ -411,7 +412,7 @@ function useDateArithmetic({ currentDate, min, max }: ArithmeticInit) {
     }
 
     if (isTemporalPartial(date)) {
-      let newDate: ZonedDateTime | TemporalPartial = date;
+      let newDate: Temporal.ZonedDateTime | TemporalPartial = date;
       if (isTemporalPartSet(date, part)) {
         newDate = date.add({
           [durationPart]: diff,
@@ -420,7 +421,7 @@ function useDateArithmetic({ currentDate, min, max }: ArithmeticInit) {
         newDate =
           part === 'dayPeriod'
             ? date
-            : date.set({
+            : date.with({
                 [part]: part === 'year' ? date.year : 1,
               });
       }
@@ -443,7 +444,7 @@ function useDateArithmetic({ currentDate, min, max }: ArithmeticInit) {
         .add({
           [durationPart]: diff,
         })
-        .set({
+        .with({
           day: part !== 'day' && part !== 'weekday' ? day : undefined,
           month: part !== 'month' ? month : undefined,
           year: part !== 'year' ? year : undefined,

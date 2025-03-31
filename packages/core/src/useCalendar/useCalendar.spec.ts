@@ -2,7 +2,7 @@ import { fireEvent, render, screen } from '@testing-library/vue';
 import { axe } from 'vitest-axe';
 import { useCalendar, CalendarCell } from './index';
 import { flush } from '@test-utils/flush';
-import { createCalendar, fromDate } from '@internationalized/date';
+import { Temporal } from 'temporal-polyfill';
 
 describe('useCalendar', () => {
   describe('a11y', () => {
@@ -44,7 +44,12 @@ describe('useCalendar', () => {
 
   describe('date selection', () => {
     test('calls onUpdateModelValue when a date is selected', async () => {
-      const currentDate = fromDate(new Date(2025, 2, 11), 'UTC');
+      const currentDate = Temporal.ZonedDateTime.from({
+        year: 2025,
+        month: 3,
+        day: 11,
+        timeZone: 'UTC',
+      });
 
       const vm = await render({
         components: {

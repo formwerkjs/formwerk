@@ -3,14 +3,14 @@ import { getConfig } from '../config';
 import { getDirection } from './getDirection';
 import { getWeekInfo } from './getWeekInfo';
 import { Maybe, Reactivify } from '../types';
-import { Calendar, GregorianCalendar } from '@internationalized/date';
 import { getTimeZone } from './getTimezone';
+import { getCalendar } from './getCalendar';
 
 export type NumberLocaleExtension = `nu-${string}`;
 
 export interface LocaleExtension {
   number: Maybe<NumberLocaleExtension>;
-  calendar: Maybe<Calendar>;
+  calendar: Maybe<string>;
   timeZone: Maybe<string>;
 }
 
@@ -37,8 +37,8 @@ export function useLocale(
     }
 
     // Add the calendar locale extension if it's not already present
-    if (!code.includes('-ca-') && calExt?.identifier) {
-      code += `-ca-${calExt.identifier}`;
+    if (!code.includes('-ca-') && calExt) {
+      code += `-ca-${calExt}`;
     }
 
     code = code.replaceAll('--', '-');
@@ -49,7 +49,7 @@ export function useLocale(
   const localeInstance = computed(() => new Intl.Locale(localeString.value));
   const direction = computed(() => getDirection(localeInstance.value));
   const weekInfo = computed(() => getWeekInfo(localeInstance.value));
-  const calendar = computed(() => toValue(extensions.calendar) ?? (new GregorianCalendar() as Calendar));
+  const calendar = computed(() => toValue(extensions.calendar) ?? getCalendar(localeInstance.value));
   const timeZone = computed(() => toValue(extensions.timeZone) ?? getTimeZone(localeInstance.value));
   const locale = computed(() => localeInstance.value.toString());
 

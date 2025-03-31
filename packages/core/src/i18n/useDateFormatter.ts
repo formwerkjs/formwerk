@@ -1,16 +1,16 @@
 import { MaybeRefOrGetter, shallowRef, toValue, watch } from 'vue';
-import { DateFormatter } from '@internationalized/date';
 import { getUserLocale } from './getUserLocale';
 import { isEqual } from '../utils/common';
+import { Intl as TemporalIntl } from 'temporal-polyfill';
 
 // TODO: May memory leak in SSR
-const dateFormatterCache = new Map<string, DateFormatter>();
+const dateFormatterCache = new Map<string, TemporalIntl.DateTimeFormat>();
 
 function getFormatter(locale: string, options: Intl.DateTimeFormatOptions = {}) {
   const cacheKey = locale + JSON.stringify(options);
   let formatter = dateFormatterCache.get(cacheKey);
   if (!formatter) {
-    formatter = new DateFormatter(locale, options);
+    formatter = new TemporalIntl.DateTimeFormat(locale, options);
     dateFormatterCache.set(cacheKey, formatter);
   }
 

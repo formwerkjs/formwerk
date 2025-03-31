@@ -1,5 +1,4 @@
-import { ZonedDateTime } from '@internationalized/date';
-
+import { Temporal } from 'temporal-polyfill';
 /**
  * lib.es2017.intl.d.ts
  */
@@ -16,9 +15,9 @@ export type DateTimeSegmentType =
   | 'weekday'
   | 'year';
 
-export type DateValue = Date | ZonedDateTime;
+export type DateValue = Date | Temporal.ZonedDateTime;
 
-export type TemporalPartial = ZonedDateTime & {
+export type TemporalPartial = Temporal.ZonedDateTime & {
   [`~fw_temporal_partial`]: {
     [key: string]: boolean | undefined;
   };

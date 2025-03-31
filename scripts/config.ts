@@ -57,7 +57,6 @@ async function createConfig(pkg: keyof typeof pkgNameMap, format: ModuleFormat) 
         pkg === 'core' ? '@formwerk/devtools' : undefined,
         pkg === 'core' ? '@standard-schema/utils' : undefined,
         pkg === 'core' ? '@standard-schema/spec' : undefined,
-        pkg === 'core' ? '@internationalized/date' : undefined,
         pkg === 'devtools' ? '@vue/devtools-api' : undefined,
         pkg === 'devtools' ? '@vue/devtools-kit' : undefined,
       ].filter(Boolean) as string[],
