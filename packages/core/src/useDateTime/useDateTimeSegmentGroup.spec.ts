@@ -1,5 +1,5 @@
 import { useDateTimeSegmentGroup } from './useDateTimeSegmentGroup';
-import { Ref, ref } from 'vue';
+import { ref } from 'vue';
 import { fireEvent, render, screen } from '@testing-library/vue';
 import { flush } from '@test-utils/flush';
 import { DateTimeSegment } from './useDateTimeSegment';
