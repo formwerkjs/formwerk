@@ -1,4 +1,4 @@
-import { DateTimeSegmentType, TemporalPartial } from './types';
+import { DateTimeSegmentType, TemporalPartial, TemporalType } from './types';
 import { isObject } from '../../../shared/src';
 import { Maybe } from '../types';
 import { getOrderedSegmentTypes, isEqualPart } from './constants';
@@ -49,7 +49,7 @@ export function toTemporalPartial(
   value: Temporal.ZonedDateTime | TemporalPartial,
   setParts?: DateTimeSegmentType[],
 ): TemporalPartial {
-  const clone = Temporal.ZonedDateTime.from(value);
+  const clone = Temporal.ZonedDateTime.from(value) as TemporalPartial;
   clone['~fw_temporal_partial'] = isTemporalPartial(value) ? value['~fw_temporal_partial'] : {};
   if (setParts) {
     setParts.forEach(part => {
@@ -60,7 +60,7 @@ export function toTemporalPartial(
   return clone as TemporalPartial;
 }
 
-export function isTemporalPartial(value: Temporal.ZonedDateTime | TemporalPartial): value is TemporalPartial {
+export function isTemporalPartial(value: TemporalType | TemporalPartial): value is TemporalPartial {
   return isObject((value as TemporalPartial)['~fw_temporal_partial']);
 }
 

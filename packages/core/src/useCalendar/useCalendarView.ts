@@ -75,14 +75,14 @@ export function useCalendarView(_props: Reactivify<CalendarViewProps>, context: 
 
   const viewLabel = computed(() => {
     if (viewType.value === 'weeks') {
-      return `${monthFormatter.value.format(context.getFocusedDate().toDate())} ${yearFormatter.value.format(context.getFocusedDate().toDate())}`;
+      return `${monthFormatter.value.format(context.getFocusedDate().toPlainDateTime())} ${yearFormatter.value.format(context.getFocusedDate().toPlainDateTime())}`;
     }
 
     if (viewType.value === 'months') {
-      return yearFormatter.value.format(context.getFocusedDate().toDate());
+      return yearFormatter.value.format(context.getFocusedDate().toPlainDateTime());
     }
 
-    return `${yearFormatter.value.format(years.value[0].value.toDate())} - ${yearFormatter.value.format(years.value[years.value.length - 1].value.toDate())}`;
+    return `${yearFormatter.value.format(years.value[0].value.toPlainDateTime())} - ${yearFormatter.value.format(years.value[years.value.length - 1].value.toPlainDateTime())}`;
   });
 
   return { currentView, setView, viewLabel };
@@ -98,10 +98,10 @@ function useCalendarDaysView(
   const days = computed<CalendarDayCell[]>(() => {
     const current = getSelectedDate();
     const focused = getFocusedDate();
-    const startOfMonth = focused.set({ day: 1, hour: 0, minute: 0, second: 0, millisecond: 0 });
+    const startOfMonth = focused.with({ day: 1, hour: 0, minute: 0, second: 0, millisecond: 0 });
 
     const firstDayOfWeek = weekInfo.value.firstDay;
-    const startDayOfWeek = startOfMonth.toDate().getDay();
+    const startDayOfWeek = startOfMonth.day;
     const daysToSubtract = (startDayOfWeek - firstDayOfWeek + 7) % 7;
 
     // Move to first day of week
@@ -109,39 +109,36 @@ function useCalendarDaysView(
 
     // Always use 6 weeks (42 days) for consistent layout
     const gridDays = 42;
-    const rightNow = Temporal.ZonedDateTime.from({
-      epochMilliseconds: Temporal.Now.instant().epochMilliseconds,
-      timeZone: timeZone.value,
-    }).withCalendar(calendar.value);
+    const rightNow = Temporal.Now.zonedDateTimeISO(timeZone.value).withCalendar(calendar.value);
+
     const minDate = getMinDate();
     const maxDate = getMaxDate();
-
-    const rightNowDate = rightNow.toInstant();
-    const focusedDate = focused.toInstant();
-    const currentDate = current.toInstant();
+    const currentPlain = current.toPlainDate();
+    const focusedPlain = focused.toPlainDate();
+    const rightNowPlain = rightNow.toPlainDate();
 
     return Array.from({ length: gridDays }, (_, i) => {
       const dayOfMonth = firstDay.add({ days: i });
       let disabled = false;
 
-      if (minDate && dayOfMonth.compare(minDate) < 0) {
+      if (minDate && Temporal.ZonedDateTime.compare(dayOfMonth, minDate) < 0) {
         disabled = true;
       }
 
-      if (maxDate && dayOfMonth.compare(maxDate) > 0) {
+      if (maxDate && Temporal.ZonedDateTime.compare(dayOfMonth, maxDate) > 0) {
         disabled = true;
       }
 
-      const domDate = dayOfMonth.toInstant();
+      const domDate = dayOfMonth.toPlainDate();
 
       return {
         value: dayOfMonth,
-        label: dayNumberFormatter.value.format(dayOfMonth.toDate()),
+        label: dayNumberFormatter.value.format(dayOfMonth.toPlainDateTime()),
         dayOfMonth: dayOfMonth.day,
-        isToday: rightNowDate.equals(domDate),
-        selected: currentDate.equals(domDate),
-        isOutsideMonth: domDate.month !== focusedDate.month,
-        focused: focusedDate.equals(domDate),
+        isToday: rightNowPlain.equals(domDate),
+        selected: currentPlain.equals(domDate),
+        isOutsideMonth: domDate.month !== focusedPlain.month,
+        focused: focusedPlain.equals(domDate),
         disabled,
         type: 'day',
       } as CalendarDayCell;
@@ -153,7 +150,7 @@ function useCalendarDaysView(
     const daysPerWeek = 7;
     const firstDayOfWeek = weekInfo.value.firstDay;
     // Get the current date's day of week (0-6)
-    const currentDayOfWeek = focused.toDate().getDay();
+    const currentDayOfWeek = focused.day;
 
     // Calculate how many days to go back to reach first day of week
     const daysToSubtract = (currentDayOfWeek - firstDayOfWeek + 7) % 7;
@@ -163,7 +160,7 @@ function useCalendarDaysView(
 
     const days: string[] = [];
     for (let i = 0; i < daysPerWeek; i++) {
-      days.push(dayFormatter.value.format(focused.add({ days: i }).toDate()));
+      days.push(dayFormatter.value.format(focused.add({ days: i }).toPlainDateTime()));
     }
 
     return days;
@@ -184,8 +181,8 @@ function useCalendarMonthsView(
     const minDate = getMinDate();
     const maxDate = getMaxDate();
 
-    return Array.from({ length: focused.calendar.getMonthsInYear(focused) }, (_, i) => {
-      const date = focused.set({ month: i + 1, day: 1, hour: 0, minute: 0, second: 0, millisecond: 0 });
+    return Array.from({ length: focused.monthsInYear }, (_, i) => {
+      const date = focused.with({ month: i + 1, day: 1, hour: 0, minute: 0, second: 0, millisecond: 0 });
       let disabled = false;
 
       if (minDate && minDate.month < date.month) {
@@ -198,7 +195,7 @@ function useCalendarMonthsView(
 
       const cell: CalendarMonthCell = {
         type: 'month',
-        label: monthFormatter.value.format(date.toDate()),
+        label: monthFormatter.value.format(date.toPlainDateTime()),
         value: date,
         monthOfYear: date.month,
         selected: date.month === current.month && date.year === current.year,
@@ -227,7 +224,7 @@ function useCalendarYearsView(
 
     return Array.from({ length: YEAR_CELLS_COUNT }, (_, i) => {
       const startYear = Math.floor(focused.year / YEAR_CELLS_COUNT) * YEAR_CELLS_COUNT;
-      const date = focused.set({
+      const date = focused.with({
         year: startYear + i,
         month: 1,
         day: 1,
@@ -249,7 +246,7 @@ function useCalendarYearsView(
 
       const cell: CalendarYearCell = {
         type: 'year',
-        label: yearFormatter.value.format(date.toDate()),
+        label: yearFormatter.value.format(date.toPlainDateTime()),
         value: date,
         year: date.year,
         selected: date.year === current.year,

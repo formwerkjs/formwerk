@@ -61,7 +61,7 @@ export function useTemporalStore(init: TemporalValueStoreInit) {
       return zonedDateTime;
     }
 
-    return new Date(zonedDateTime.toInstant().epochMilliseconds);
+    return fromZonedDateTimeToDate(zonedDateTime);
   }
 
   const temporalValue = computed({
@@ -98,4 +98,8 @@ export function toZonedDateTime(value: Maybe<DateValue>, timeZone: string): Mayb
   }
 
   return value;
+}
+
+export function fromZonedDateTimeToDate(value: Temporal.ZonedDateTime): Date {
+  return new Date(value.toInstant().epochMilliseconds);
 }

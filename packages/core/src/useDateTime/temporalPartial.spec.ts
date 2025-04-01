@@ -1,11 +1,11 @@
-import { createCalendar, now } from '@internationalized/date';
+import { Temporal } from 'temporal-polyfill';
 import { createTemporalPartial, isTemporalPartial, isTemporalPartSet, toTemporalPartial } from './temporalPartial';
 import { DateTimeSegmentType } from './types';
 
 describe('Temporal Partial', () => {
   describe('createTemporalPartial', () => {
     test('creates a temporal partial with empty set parts', () => {
-      const calendar = createCalendar('gregory');
+      const calendar = 'gregory';
       const partial = createTemporalPartial(calendar, 'UTC');
 
       expect(partial['~fw_temporal_partial']).toEqual({});
@@ -13,17 +13,17 @@ describe('Temporal Partial', () => {
     });
 
     test('creates temporal partial with different calendar systems', () => {
-      const islamicCalendar = createCalendar('islamic-umalqura');
+      const islamicCalendar = 'islamic-umalqura';
       const partial = createTemporalPartial(islamicCalendar, 'UTC');
 
-      expect(partial.calendar.identifier).toBe('islamic-umalqura');
+      expect(partial.calendarId).toBe('islamic-umalqura');
       expect(isTemporalPartial(partial)).toBe(true);
     });
   });
 
   describe('toTemporalPartial', () => {
     test('converts ZonedDateTime to temporal partial', () => {
-      const date = now('UTC');
+      const date = Temporal.Now.zonedDateTimeISO('UTC');
       const partial = toTemporalPartial(date);
 
       expect(isTemporalPartial(partial)).toBe(true);
@@ -31,7 +31,7 @@ describe('Temporal Partial', () => {
     });
 
     test('clones existing temporal partial', () => {
-      const date = now('UTC');
+      const date = Temporal.Now.zonedDateTimeISO('UTC');
       const partial1 = toTemporalPartial(date, ['day']);
       const partial2 = toTemporalPartial(partial1);
 
@@ -40,7 +40,7 @@ describe('Temporal Partial', () => {
     });
 
     test('sets specified parts as true', () => {
-      const date = now('UTC');
+      const date = Temporal.Now.zonedDateTimeISO('UTC');
       const parts: DateTimeSegmentType[] = ['year', 'month', 'day'];
       const partial = toTemporalPartial(date, parts);
 
@@ -50,7 +50,7 @@ describe('Temporal Partial', () => {
     });
 
     test('preserves existing set parts when adding new ones', () => {
-      const date = now('UTC');
+      const date = Temporal.Now.zonedDateTimeISO('UTC');
       const partial1 = toTemporalPartial(date, ['year']);
       const partial2 = toTemporalPartial(partial1, ['month']);
 
@@ -63,14 +63,14 @@ describe('Temporal Partial', () => {
 
   describe('isTemporalPartial', () => {
     test('returns true for temporal partials', () => {
-      const calendar = createCalendar('gregory');
+      const calendar = 'gregory';
       const partial = createTemporalPartial(calendar, 'UTC');
 
       expect(isTemporalPartial(partial)).toBe(true);
     });
 
     test('returns false for regular ZonedDateTime', () => {
-      const date = now('UTC');
+      const date = Temporal.Now.zonedDateTimeISO('UTC');
 
       expect(isTemporalPartial(date)).toBe(false);
     });
@@ -78,7 +78,7 @@ describe('Temporal Partial', () => {
 
   describe('isTemporalPartSet', () => {
     test('returns true for set parts', () => {
-      const date = now('UTC');
+      const date = Temporal.Now.zonedDateTimeISO('UTC');
       const partial = toTemporalPartial(date, ['year', 'month']);
 
       expect(isTemporalPartSet(partial, 'year')).toBe(true);
@@ -86,7 +86,7 @@ describe('Temporal Partial', () => {
     });
 
     test('returns false for unset parts', () => {
-      const date = now('UTC');
+      const date = Temporal.Now.zonedDateTimeISO('UTC');
       const partial = toTemporalPartial(date, ['year']);
 
       expect(isTemporalPartSet(partial, 'month')).toBe(false);
@@ -94,7 +94,7 @@ describe('Temporal Partial', () => {
     });
 
     test('handles multiple operations on the same partial', () => {
-      const date = now('UTC');
+      const date = Temporal.Now.zonedDateTimeISO('UTC');
       let partial = toTemporalPartial(date, ['year']);
       partial = toTemporalPartial(partial, ['month']);
       partial = toTemporalPartial(partial, ['day']);
@@ -107,7 +107,7 @@ describe('Temporal Partial', () => {
   });
 
   test('temporal partial maintains date values', () => {
-    const date = now('UTC');
+    const date = Temporal.Now.zonedDateTimeISO('UTC');
     const partial = toTemporalPartial(date, ['year', 'month', 'day']);
 
     expect(partial.year).toBe(date.year);

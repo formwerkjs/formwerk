@@ -46,7 +46,7 @@ export interface DateTimeSegmentGroupProps {
   formatter: Ref<TemporalIntl.DateTimeFormat>;
   locale: MaybeRefOrGetter<string | undefined>;
   formatOptions: MaybeRefOrGetter<Maybe<Intl.DateTimeFormatOptions>>;
-  temporalValue: MaybeRefOrGetter<Temporal.ZonedDateTime | TemporalPartial>;
+  temporalValue: MaybeRefOrGetter<Temporal.ZonedDateTime>;
   direction?: MaybeRefOrGetter<Direction>;
   controlEl: Ref<HTMLElement | undefined>;
   readonly?: MaybeRefOrGetter<boolean | undefined>;
@@ -85,7 +85,7 @@ export function useDateTimeSegmentGroup({
 
   const segments = computed(() => {
     const date = toValue(temporalValue);
-    let parts = formatter.value.formatToParts(date) as {
+    let parts = formatter.value.formatToParts(date.toPlainDateTime()) as {
       type: DateTimeSegmentType;
       value: string;
     }[];

@@ -3,6 +3,7 @@ import { axe } from 'vitest-axe';
 import { useCalendar, CalendarCell } from './index';
 import { flush } from '@test-utils/flush';
 import { Temporal } from 'temporal-polyfill';
+import { fromZonedDateTimeToDate } from '../useDateTime/useTemporalStore';
 
 describe('useCalendar', () => {
   describe('a11y', () => {
@@ -49,6 +50,7 @@ describe('useCalendar', () => {
         month: 3,
         day: 11,
         timeZone: 'UTC',
+        calendar: 'gregory',
       });
 
       const vm = await render({
@@ -59,7 +61,7 @@ describe('useCalendar', () => {
           const { calendarProps } = useCalendar({
             label: 'Calendar',
             timeZone: 'UTC',
-            modelValue: currentDate.toDate(),
+            modelValue: new Date(currentDate.epochMilliseconds),
           });
 
           return {
@@ -79,11 +81,11 @@ describe('useCalendar', () => {
       await flush();
       await fireEvent.click(screen.getByText('Select Date'));
       await flush();
-      expect(vm.emitted('update:modelValue')[0]).toEqual([currentDate.toDate()]);
+      expect(vm.emitted('update:modelValue')[0]).toEqual([fromZonedDateTimeToDate(currentDate)]);
     });
 
     test('uses provided calendar type', async () => {
-      const calendar = createCalendar('islamic-umalqura');
+      const calendar = 'islamic-umalqura';
 
       await render({
         setup() {
@@ -98,7 +100,7 @@ describe('useCalendar', () => {
         },
         template: `
           <div data-testid="fixture">
-            <div>{{ selectedDate.calendar.identifier }}</div>
+            <div>{{ selectedDate.calendarId }}</div>
           </div>
         `,
       });
@@ -108,7 +110,13 @@ describe('useCalendar', () => {
     });
 
     test('handles Enter key on calendar cell', async () => {
-      const currentDate = fromDate(new Date(2025, 2, 11), 'UTC');
+      const currentDate = Temporal.ZonedDateTime.from({
+        year: 2025,
+        month: 3,
+        day: 11,
+        timeZone: 'UTC',
+        calendar: 'gregory',
+      });
 
       const vm = await render({
         components: {
@@ -117,7 +125,7 @@ describe('useCalendar', () => {
         setup() {
           const { calendarProps, focusedDate } = useCalendar({
             label: 'Calendar',
-            modelValue: currentDate.toDate(),
+            modelValue: new Date(currentDate.epochMilliseconds),
             timeZone: 'UTC',
           });
 
@@ -147,17 +155,23 @@ describe('useCalendar', () => {
 
       // Test Enter key selects the date
       await fireEvent.keyDown(cell, { code: 'Enter' });
-      expect(vm.emitted('update:modelValue')[0]).toEqual([currentDate.toDate()]);
+      expect(vm.emitted('update:modelValue')[0]).toEqual([fromZonedDateTimeToDate(currentDate)]);
     });
 
     test('handles Enter key in different panels', async () => {
-      const currentDate = fromDate(new Date(2025, 2, 11), 'UTC');
+      const currentDate = Temporal.ZonedDateTime.from({
+        year: 2025,
+        month: 3,
+        day: 11,
+        timeZone: 'UTC',
+        calendar: 'gregory',
+      });
 
       const vm = await render({
         setup() {
           const { calendarProps, focusedDate, gridLabelProps, currentView } = useCalendar({
             label: 'Calendar',
-            modelValue: currentDate.toDate(),
+            modelValue: new Date(currentDate.epochMilliseconds),
             timeZone: 'UTC',
           });
 
@@ -185,7 +199,7 @@ describe('useCalendar', () => {
 
       // Test Enter in day panel
       await fireEvent.keyDown(calendar, { code: 'Enter' });
-      expect(vm.emitted('update:modelValue')[0]).toEqual([currentDate.toDate()]);
+      expect(vm.emitted('update:modelValue')[0]).toEqual([fromZonedDateTimeToDate(currentDate)]);
 
       // Switch to month panel
       await fireEvent.click(panelLabel);
@@ -260,13 +274,19 @@ describe('useCalendar', () => {
     });
 
     test('navigates months using next/previous buttons in month panel', async () => {
-      const currentDate = fromDate(new Date(2025, 2, 11), 'UTC');
+      const currentDate = Temporal.ZonedDateTime.from({
+        year: 2025,
+        month: 3,
+        day: 11,
+        timeZone: 'UTC',
+        calendar: 'gregory',
+      });
 
       await render({
         setup() {
           const { nextButtonProps, previousButtonProps, gridLabelProps, focusedDate, calendarProps } = useCalendar({
             label: 'Calendar',
-            modelValue: currentDate.toDate(),
+            modelValue: new Date(currentDate.epochMilliseconds),
             timeZone: 'UTC',
           });
 
@@ -314,13 +334,19 @@ describe('useCalendar', () => {
     });
 
     test('navigates years using next/previous buttons in year panel', async () => {
-      const currentDate = fromDate(new Date(2025, 2, 11), 'UTC');
+      const currentDate = Temporal.ZonedDateTime.from({
+        year: 2025,
+        month: 3,
+        day: 11,
+        timeZone: 'UTC',
+        calendar: 'gregory',
+      });
 
       await render({
         setup() {
           const { nextButtonProps, previousButtonProps, gridLabelProps, focusedDate, calendarProps } = useCalendar({
             label: 'Calendar',
-            modelValue: currentDate.toDate(),
+            modelValue: new Date(currentDate.epochMilliseconds),
             timeZone: 'UTC',
           });
 
@@ -357,7 +383,7 @@ describe('useCalendar', () => {
         screen.getByText(
           currentDate
             .add({ years: 9 })
-            .set({ month: 1, day: 1, hour: 0, minute: 0, second: 0, millisecond: 0 })
+            .with({ month: 1, day: 1, hour: 0, minute: 0, second: 0, millisecond: 0 })
             .toString(),
         ),
       ).toBeInTheDocument();
@@ -368,7 +394,7 @@ describe('useCalendar', () => {
         screen.getByText(
           currentDate
             .add({ years: 8 })
-            .set({ month: 1, day: 1, hour: 0, minute: 0, second: 0, millisecond: 0 })
+            .with({ month: 1, day: 1, hour: 0, minute: 0, second: 0, millisecond: 0 })
             .toString(),
         ),
       ).toBeInTheDocument();
@@ -380,7 +406,7 @@ describe('useCalendar', () => {
         screen.getByText(
           currentDate
             .subtract({ years: 10 })
-            .set({ month: 1, day: 1, hour: 0, minute: 0, second: 0, millisecond: 0 })
+            .with({ month: 1, day: 1, hour: 0, minute: 0, second: 0, millisecond: 0 })
             .toString(),
         ),
       ).toBeInTheDocument();
@@ -390,7 +416,7 @@ describe('useCalendar', () => {
         screen.getByText(
           currentDate
             .subtract({ years: 9 })
-            .set({ month: 1, day: 1, hour: 0, minute: 0, second: 0, millisecond: 0 })
+            .with({ month: 1, day: 1, hour: 0, minute: 0, second: 0, millisecond: 0 })
             .toString(),
         ),
       ).toBeInTheDocument();
@@ -399,13 +425,19 @@ describe('useCalendar', () => {
 
   describe('keyboard navigation', () => {
     test('handles arrow key navigation in day panel', async () => {
-      const currentDate = fromDate(new Date(2025, 2, 11), 'UTC');
+      const currentDate = Temporal.ZonedDateTime.from({
+        year: 2025,
+        month: 3,
+        day: 11,
+        timeZone: 'UTC',
+        calendar: 'gregory',
+      });
 
       await render({
         setup() {
           const { calendarProps, selectedDate, focusedDate } = useCalendar({
             label: 'Calendar',
-            modelValue: currentDate.toDate(),
+            modelValue: new Date(currentDate.epochMilliseconds),
             timeZone: 'UTC',
           });
 
@@ -453,23 +485,27 @@ describe('useCalendar', () => {
 
       // Test Home (start of month)
       await fireEvent.keyDown(calendar, { code: 'Home' });
-      expect(screen.getByText(currentDate.set({ day: 1 }).toString())).toBeInTheDocument();
+      expect(screen.getByText(currentDate.with({ day: 1 }).toString())).toBeInTheDocument();
 
       // Test End (end of month)
       await fireEvent.keyDown(calendar, { code: 'End' });
-      expect(
-        screen.getByText(currentDate.set({ day: currentDate.calendar.getDaysInMonth(currentDate) }).toString()),
-      ).toBeInTheDocument();
+      expect(screen.getByText(currentDate.with({ day: currentDate.daysInMonth }).toString())).toBeInTheDocument();
     });
 
     test('handles arrow key navigation in month panel', async () => {
-      const currentDate = fromDate(new Date(2025, 2, 11), 'UTC');
+      const currentDate = Temporal.ZonedDateTime.from({
+        year: 2025,
+        month: 3,
+        day: 11,
+        timeZone: 'UTC',
+        calendar: 'gregory',
+      });
 
       await render({
         setup() {
           const { calendarProps, selectedDate, focusedDate, gridLabelProps } = useCalendar({
             label: 'Calendar',
-            modelValue: currentDate.toDate(),
+            modelValue: new Date(currentDate.epochMilliseconds),
             timeZone: 'UTC',
           });
 
@@ -523,23 +559,27 @@ describe('useCalendar', () => {
 
       // Test Home (start of year)
       await fireEvent.keyDown(calendar, { code: 'Home' });
-      expect(screen.getByText(currentDate.set({ month: 1 }).toString())).toBeInTheDocument();
+      expect(screen.getByText(currentDate.with({ month: 1 }).toString())).toBeInTheDocument();
 
       // Test End (end of year)
       await fireEvent.keyDown(calendar, { code: 'End' });
-      expect(
-        screen.getByText(currentDate.set({ month: currentDate.calendar.getMonthsInYear(currentDate) }).toString()),
-      ).toBeInTheDocument();
+      expect(screen.getByText(currentDate.with({ month: currentDate.monthsInYear }).toString())).toBeInTheDocument();
     });
 
     test('handles arrow key navigation in year panel', async () => {
-      const currentDate = fromDate(new Date(2025, 2, 11), 'UTC');
+      const currentDate = Temporal.ZonedDateTime.from({
+        year: 2025,
+        month: 3,
+        day: 11,
+        timeZone: 'UTC',
+        calendar: 'gregory',
+      });
 
       await render({
         setup() {
           const { calendarProps, selectedDate, focusedDate, gridLabelProps } = useCalendar({
             label: 'Calendar',
-            modelValue: currentDate.toDate(),
+            modelValue: new Date(currentDate.epochMilliseconds),
             timeZone: 'UTC',
           });
 
@@ -602,7 +642,14 @@ describe('useCalendar', () => {
     });
 
     test('respects min and max date boundaries', async () => {
-      const currentDate = fromDate(new Date(2025, 2, 11), 'UTC');
+      const currentDate = Temporal.ZonedDateTime.from({
+        year: 2025,
+        month: 3,
+        day: 11,
+        timeZone: 'UTC',
+        calendar: 'gregory',
+      });
+
       const minDate = currentDate.subtract({ days: 1 });
       const maxDate = currentDate.add({ days: 1 });
 
@@ -610,10 +657,10 @@ describe('useCalendar', () => {
         setup() {
           const { calendarProps, selectedDate, focusedDate } = useCalendar({
             label: 'Calendar',
-            modelValue: currentDate.toDate(),
+            modelValue: new Date(currentDate.epochMilliseconds),
             timeZone: 'UTC',
-            min: minDate.toDate(),
-            max: maxDate.toDate(),
+            min: new Date(minDate.epochMilliseconds),
+            max: new Date(maxDate.epochMilliseconds),
           });
 
           return {
@@ -647,7 +694,13 @@ describe('useCalendar', () => {
 
   describe('disabled state', () => {
     test('prevents all interactions when disabled', async () => {
-      const currentDate = fromDate(new Date(2025, 2, 11), 'UTC');
+      const currentDate = Temporal.ZonedDateTime.from({
+        year: 2025,
+        month: 3,
+        day: 11,
+        timeZone: 'UTC',
+        calendar: 'gregory',
+      });
 
       await render({
         components: {
@@ -657,7 +710,7 @@ describe('useCalendar', () => {
           const { calendarProps, gridLabelProps, nextButtonProps, previousButtonProps, focusedDate, currentView } =
             useCalendar({
               label: 'Calendar',
-              modelValue: currentDate.toDate(),
+              modelValue: new Date(currentDate.epochMilliseconds),
               timeZone: 'UTC',
               disabled: true,
             });
@@ -727,7 +780,13 @@ describe('useCalendar', () => {
 
   describe('readonly state', () => {
     test('prevents all interactions when readonly', async () => {
-      const currentDate = fromDate(new Date(2025, 2, 11), 'UTC');
+      const currentDate = Temporal.ZonedDateTime.from({
+        year: 2025,
+        month: 3,
+        day: 11,
+        timeZone: 'UTC',
+        calendar: 'gregory',
+      });
 
       await render({
         components: {
@@ -737,7 +796,7 @@ describe('useCalendar', () => {
           const { calendarProps, gridLabelProps, nextButtonProps, previousButtonProps, focusedDate, currentView } =
             useCalendar({
               label: 'Calendar',
-              modelValue: currentDate.toDate(),
+              modelValue: new Date(currentDate.epochMilliseconds),
               timeZone: 'UTC',
               readonly: true,
             });
