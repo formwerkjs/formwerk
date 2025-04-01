@@ -268,21 +268,14 @@ export function createFormContext<TForm extends FormObject = FormObject, TOutput
    * TODO: Maybe have two different signatures for this method? A partial for merge mode and a full for replace mode?
    */
   function setValues(newValues: Partial<TForm>, opts?: SetValueOptions) {
-    if (opts?.behavior === 'merge') {
-      merge(values, newValues);
-
-      return;
+    if (opts?.behavior !== 'merge') {
+      // Clear the Object
+      Object.keys(values).forEach(key => {
+        delete values[key as keyof typeof values];
+      });
     }
 
-    // Clear the Object
-    Object.keys(values).forEach(key => {
-      delete values[key as keyof typeof values];
-    });
-
-    // We escape paths automatically
-    Object.keys(newValues).forEach(key => {
-      setValue(escapePath(key) as Path<TForm>, newValues[key] as PathValue<TForm, Path<TForm>>);
-    });
+    merge(values, newValues);
   }
 
   function getErrors<TPath extends Path<TForm>>(path?: TPath) {
