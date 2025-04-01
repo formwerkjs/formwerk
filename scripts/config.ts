@@ -59,6 +59,7 @@ async function createConfig(pkg: keyof typeof pkgNameMap, format: ModuleFormat) 
         pkg === 'core' ? '@standard-schema/spec' : undefined,
         pkg === 'devtools' ? '@vue/devtools-api' : undefined,
         pkg === 'devtools' ? '@vue/devtools-kit' : undefined,
+        pkg === 'core' ? 'temporal-polyfill' : undefined,
       ].filter(Boolean) as string[],
     },
     output: {
