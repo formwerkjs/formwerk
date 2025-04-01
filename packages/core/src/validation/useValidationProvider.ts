@@ -7,7 +7,7 @@ import {
   StandardSchema,
   ValidationResult,
 } from '../types';
-import { batchAsync, cloneDeep, combineIssues, withLatestCall } from '../utils/common';
+import { batchAsync, cloneDeep, combineIssues, combineStandardIssues, withLatestCall } from '../utils/common';
 import { createEventDispatcher } from '../utils/events';
 import { SCHEMA_BATCH_MS } from '../constants';
 import { prefixPath, setInPath } from '../utils/path';
@@ -46,20 +46,22 @@ export function useValidationProvider<
     // But field-level and group-level validations are async, so we need to wait for them.
     await dispatchValidate(enqueue);
     const results = await Promise.all(validationQueue);
-    const fieldErrors = results.flatMap(r => r.errors).filter(e => e.messages.length);
+    const fieldIssues: IssueCollection[] = results
+      .flatMap(r => r.errors.map(e => ({ ...e, path: r.path })))
+      .filter(e => e.messages.length);
 
     // If we are using native validation, then we don't stop the state mutation
     // Because it already has happened, since validations are sourced from the fields.
     if (!schema) {
       return createValidationResult({
-        isValid: !fieldErrors.length,
-        errors: fieldErrors,
+        isValid: !fieldIssues.length,
+        errors: fieldIssues,
         output: stitchOutput(getValues() as unknown as TOutput, results),
       });
     }
 
     const result = await schema['~standard']['validate'](getValues());
-    let errors: IssueCollection[] = combineIssues(result.issues || []);
+    let errors: IssueCollection[] = combineStandardIssues(result.issues || []);
     const prefix = getPath?.();
     if (prefix) {
       errors = errors.map(e => {
@@ -70,7 +72,7 @@ export function useValidationProvider<
       });
     }
 
-    const allErrors = [...errors, ...fieldErrors];
+    const allErrors = combineIssues([...errors, ...fieldIssues]);
     const output = 'value' in result ? result.value : undefined;
 
     dispatchValidateDone();

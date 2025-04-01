@@ -345,15 +345,15 @@ test('validation cascades', async () => {
   });
 
   await flush();
-  expect(form.getErrors()).toHaveLength(2);
-  expect(form.getErrors()).toEqual(['Constraints not satisfied', 'Constraints not satisfied']);
+  expect(form.getErrors()).toHaveLength(4);
+  expect(form.getErrors()).toEqual(['error', 'Constraints not satisfied', 'error', 'Constraints not satisfied']);
 
   await fireEvent.update(screen.getByTestId('field'), 'test');
   await fireEvent.blur(screen.getByTestId('field'));
 
   await flush();
-  expect(form.getErrors()).toHaveLength(2);
-  expect(form.getErrors()).toEqual(['Constraints not satisfied', 'error']);
+  expect(form.getErrors()).toHaveLength(3);
+  expect(form.getErrors()).toEqual(['error', 'Constraints not satisfied', 'error']);
   await fireEvent.update(screen.getByTestId('other'), 'test');
   await fireEvent.blur(screen.getByTestId('other'));
   await flush();

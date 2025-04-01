@@ -368,13 +368,13 @@ export function hasKeyCode(e: Event, code: string) {
   return (e as KeyboardEvent).code === code || (e as KeyboardEvent).key === code;
 }
 
-/**
- * Aggregates issues by path.
- */
-export function combineIssues(issues: StandardIssue[] | readonly StandardIssue[]): IssueCollection[] {
+function _combineIssueItems<TItem extends StandardIssue | IssueCollection>(
+  items: TItem[] | readonly TItem[],
+  getPath: (item: TItem) => string,
+) {
   const issueMap: Record<string, IssueCollection> = {};
-  for (const issue of issues) {
-    const path = issue.path ? (getDotPath(issue) ?? '') : '';
+  for (const item of items) {
+    const path = getPath(item);
     if (!issueMap[path]) {
       issueMap[path] = {
         path,
@@ -382,10 +382,28 @@ export function combineIssues(issues: StandardIssue[] | readonly StandardIssue[]
       };
     }
 
-    issueMap[path].messages.push(issue.message);
+    if ('messages' in item) {
+      issueMap[path].messages.push(...item.messages);
+    } else {
+      issueMap[path].messages.push(item.message);
+    }
   }
 
   return Object.values(issueMap);
+}
+
+/**
+ * Aggregates standard schema issues by path.
+ */
+export function combineStandardIssues(issues: StandardIssue[] | readonly StandardIssue[]): IssueCollection[] {
+  return _combineIssueItems(issues, issue => (issue.path ? (getDotPath(issue) ?? '') : ''));
+}
+
+/**
+ * Aggregates formwerk's issues by path.
+ */
+export function combineIssues(issues: IssueCollection[]): IssueCollection[] {
+  return _combineIssueItems(issues, issue => issue.path ?? '');
 }
 
 export function fromNumberish(value: MaybeRefOrGetter<Numberish | undefined>): number | undefined {
