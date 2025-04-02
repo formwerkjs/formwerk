@@ -265,7 +265,6 @@ export function createFormContext<TForm extends FormObject = FormObject, TOutput
 
   /**
    * Set values on the form.
-   * TODO: Maybe have two different signatures for this method? A partial for merge mode and a full for replace mode?
    */
   function setValues(newValues: Partial<TForm>, opts?: SetValueOptions) {
     if (opts?.behavior !== 'merge') {

@@ -342,10 +342,13 @@ function initFormPathIfNecessary({
 
   // If form does have a path set and the value is different from the initial value, set it.
   nextTick(() => {
+    const formInitialValue = form.getFieldInitialValue(path);
+    const currentValue = form.getValue(path);
+
     form.transaction((tf, { INIT_PATH }) => ({
       kind: INIT_PATH,
       path,
-      value: initialValue ?? form.getFieldInitialValue(path),
+      value: initialValue ?? currentValue ?? formInitialValue,
       touched: initialTouched,
       dirty: initialDirty,
       disabled: toValue(isDisabled),
