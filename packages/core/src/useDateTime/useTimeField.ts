@@ -7,13 +7,13 @@ import { FieldTypePrefixes } from '../constants';
 import { useDateFormatter, useLocale } from '../i18n';
 import { useErrorMessage, useLabel } from '../a11y';
 import { useTemporalStore } from './useTemporalStore';
-import { ZonedDateTime } from '@internationalized/date';
 import { useInputValidity } from '../validation';
 import { createDisabledContext } from '../helpers/createDisabledContext';
 import { registerField } from '@formwerk/devtools';
 import { useConstraintsValidator } from '../validation/useConstraintsValidator';
 import { merge } from '../../../shared/src';
 import { Simplify } from 'type-fest';
+import { Temporal } from 'temporal-polyfill';
 
 export type TimeFormatOptions = Simplify<
   Pick<Intl.DateTimeFormatOptions, 'hour' | 'minute' | 'second' | 'dayPeriod' | 'timeZone' | 'hour12'>
@@ -140,7 +140,7 @@ export function useTimeField(_props: Reactivify<TimeFieldProps, 'schema'>) {
     },
   });
 
-  function onValueChange(value: ZonedDateTime) {
+  function onValueChange(value: Temporal.ZonedDateTime) {
     temporalValue.value = value;
   }
 

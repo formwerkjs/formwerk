@@ -1,11 +1,10 @@
-import { DateFormatter, fromDate } from '@internationalized/date';
 import { useDateTimeSegmentGroup } from './useDateTimeSegmentGroup';
-import { Ref, ref } from 'vue';
+import { ref } from 'vue';
 import { fireEvent, render, screen } from '@testing-library/vue';
 import { flush } from '@test-utils/flush';
 import { DateTimeSegment } from './useDateTimeSegment';
 import { createTemporalPartial, isTemporalPartial } from './temporalPartial';
-import { TemporalPartial } from './types';
+import { Temporal, Intl as TemporalIntl } from 'temporal-polyfill';
 
 function dispatchEvent() {
   // NOOP
@@ -14,10 +13,15 @@ function dispatchEvent() {
 describe('useDateTimeSegmentGroup', () => {
   const timeZone = 'UTC';
   const locale = 'en-US';
-  const currentDate = fromDate(new Date('2025-02-11'), timeZone);
+  const currentDate = Temporal.ZonedDateTime.from({
+    timeZone,
+    year: 2025,
+    month: 2,
+    day: 11,
+  });
 
   function createFormatter() {
-    return new DateFormatter(locale, {
+    return new TemporalIntl.DateTimeFormat(locale, {
       day: 'numeric',
       month: 'numeric',
       year: 'numeric',
@@ -284,7 +288,7 @@ describe('useDateTimeSegmentGroup', () => {
       });
 
       monthRegistration.setValue(6);
-      expect(onValueChange).toHaveBeenCalledWith(currentDate.set({ month: 6 }));
+      expect(onValueChange).toHaveBeenCalledWith(currentDate.with({ month: 6 }));
     });
 
     test('clears segment values', async () => {
@@ -542,7 +546,7 @@ describe('useDateTimeSegmentGroup', () => {
 
     test('handles non-numeric segments (dayPeriod)', async () => {
       const formatter = ref(
-        new DateFormatter(locale, {
+        new TemporalIntl.DateTimeFormat(locale, {
           hour: 'numeric',
           hour12: true,
           dayPeriod: 'short',
@@ -598,11 +602,11 @@ describe('useDateTimeSegmentGroup', () => {
 
       // Test arrow up changes period (AM -> PM)
       await fireEvent.keyDown(dayPeriodSegment, { code: 'ArrowUp' });
-      expect(onValueChange).toHaveBeenCalledWith(currentDate.add({ hours: 12 }).set({ day: currentDate.day }));
+      expect(onValueChange).toHaveBeenCalledWith(currentDate.add({ hours: 12 }).with({ day: currentDate.day }));
 
       // Test arrow down changes period (PM -> AM)
       await fireEvent.keyDown(dayPeriodSegment, { code: 'ArrowDown' });
-      expect(onValueChange).toHaveBeenCalledWith(currentDate.subtract({ hours: 12 }).set({ day: currentDate.day }));
+      expect(onValueChange).toHaveBeenCalledWith(currentDate.subtract({ hours: 12 }).with({ day: currentDate.day }));
 
       // Test clearing with backspace
       await fireEvent.keyDown(dayPeriodSegment, { code: 'Backspace' });
@@ -619,7 +623,7 @@ describe('useDateTimeSegmentGroup', () => {
       const formatter = ref(createFormatter());
       const controlEl = ref<HTMLElement>();
       const onValueChange = vi.fn();
-      const initialDate = currentDate.set({ year: 2024, month: 1, day: 1 });
+      const initialDate = currentDate.with({ year: 2024, month: 1, day: 1 });
 
       await render({
         components: {
@@ -628,7 +632,7 @@ describe('useDateTimeSegmentGroup', () => {
         setup() {
           const { segments } = useDateTimeSegmentGroup({
             formatter,
-            temporalValue: createTemporalPartial(initialDate.calendar, initialDate.timeZone),
+            temporalValue: createTemporalPartial(initialDate.calendarId, initialDate.timeZoneId),
             formatOptions: {
               day: 'numeric',
               month: 'numeric',
@@ -710,16 +714,14 @@ describe('useDateTimeSegmentGroup', () => {
       // Verify final call is not a partial
       const finalCall = onValueChange.mock.lastCall?.[0];
       expect(isTemporalPartial(finalCall)).toBe(false);
-      expect(finalCall.toString()).toBe(initialDate.set({ month: 3, day: 5 }).toString());
+      expect(finalCall.toString()).toBe(initialDate.with({ month: 3, day: 5 }).toString());
     });
 
     test('preserves partial state when not all segments are filled', async () => {
       const formatter = ref(createFormatter());
       const controlEl = ref<HTMLElement>();
-      const initialDate = currentDate.set({ year: 2024, month: 1, day: 1 });
-      const temporalValue = ref(
-        createTemporalPartial(initialDate.calendar, initialDate.timeZone),
-      ) as Ref<TemporalPartial>;
+      const initialDate = currentDate.with({ year: 2024, month: 1, day: 1 });
+      const temporalValue = ref(createTemporalPartial(initialDate.calendarId, initialDate.timeZoneId));
       const onValueChange = vi.fn(v => {
         temporalValue.value = v;
       });
@@ -775,10 +777,12 @@ describe('useDateTimeSegmentGroup', () => {
       daySegment.focus();
       const dayInput = new InputEvent('beforeinput', { data: '5', cancelable: true });
       daySegment.dispatchEvent(dayInput);
+      screen.debug();
 
       // Verify the value is still a partial since year is not set
       const lastCall = onValueChange.mock.lastCall?.[0];
       expect(isTemporalPartial(lastCall)).toBe(true);
+
       expect(lastCall['~fw_temporal_partial']).toEqual({
         day: true,
         month: true,

@@ -2,11 +2,11 @@ import { render, screen } from '@testing-library/vue';
 import { axe } from 'vitest-axe';
 import { useDateField } from '.';
 import { flush } from '@test-utils/flush';
-import { createCalendar, now, toCalendar } from '@internationalized/date';
 import { DateTimeSegment } from './useDateTimeSegment';
 import { ref, toValue } from 'vue';
 import { StandardSchema } from '../types';
 import { fireEvent } from '@testing-library/vue';
+import { Temporal } from 'temporal-polyfill';
 
 describe('useDateField', () => {
   const currentDate = new Date('2024-03-15T12:00:00Z');
@@ -96,8 +96,8 @@ describe('useDateField', () => {
 
   describe('calendar systems', () => {
     test('supports different calendar systems', async () => {
-      const calendar = createCalendar('islamic-umalqura');
-      const date = toCalendar(now('UTC'), calendar).set({ year: 1445, month: 9, day: 5 }); // Islamic date
+      const calendar = 'islamic-umalqura';
+      const date = Temporal.Now.zonedDateTimeISO('UTC').withCalendar(calendar).with({ year: 1445, month: 9, day: 5 }); // Islamic date
 
       await render({
         components: { DateTimeSegment },
@@ -106,7 +106,7 @@ describe('useDateField', () => {
             label: 'Date',
             name: 'date',
             calendar,
-            value: date.toDate(),
+            value: new Date(date.epochMilliseconds),
           });
 
           return {
@@ -370,8 +370,8 @@ describe('useDateField', () => {
 
   describe('constraints', () => {
     test('respects min and max date constraints', async () => {
-      const minDate = now('UTC');
-      const maxDate = now('UTC').add({ days: 1 });
+      const minDate = Temporal.Now.zonedDateTimeISO('UTC');
+      const maxDate = Temporal.Now.zonedDateTimeISO('UTC').add({ days: 1 });
 
       await render({
         components: { DateTimeSegment },
@@ -380,15 +380,15 @@ describe('useDateField', () => {
             label: 'Date',
             name: 'date',
             timeZone: 'UTC',
-            min: minDate.toDate(),
-            max: maxDate.toDate(),
+            min: new Date(minDate.epochMilliseconds),
+            max: new Date(maxDate.epochMilliseconds),
             value: currentDate,
           });
 
           const { segments, controlProps, labelProps } = props;
 
-          expect(toValue(props.calendarProps.value.min)).toEqual(minDate.toDate());
-          expect(toValue(props.calendarProps.value.max)).toEqual(maxDate.toDate());
+          expect(toValue(props.calendarProps.value.min?.getTime())).toEqual(minDate.epochMilliseconds);
+          expect(toValue(props.calendarProps.value.max?.getTime())).toEqual(maxDate.epochMilliseconds);
 
           return {
             segments,

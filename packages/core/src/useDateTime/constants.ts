@@ -1,5 +1,5 @@
 import { DateTimeSegmentType } from './types';
-import type { DateTimeDuration, ZonedDateTime } from '@internationalized/date';
+import type { Temporal } from 'temporal-polyfill';
 
 export function isEditableSegmentType(type: DateTimeSegmentType) {
   return !['era', 'timeZoneName', 'literal'].includes(type);
@@ -11,8 +11,8 @@ export function isOptionalSegmentType(type: DateTimeSegmentType) {
   return optionalTypes.includes(type);
 }
 
-export function segmentTypeToDurationLike(type: DateTimeSegmentType): keyof DateTimeDuration | undefined {
-  const map: Partial<Record<DateTimeSegmentType, keyof DateTimeDuration>> = {
+export function segmentTypeToDurationLike(type: DateTimeSegmentType): keyof Temporal.DurationLike | undefined {
+  const map: Partial<Record<DateTimeSegmentType, keyof Temporal.DurationLike>> = {
     year: 'years',
     month: 'months',
     day: 'days',
@@ -60,7 +60,7 @@ export function getOrderedSegmentTypes(): EditableSegmentType[] {
   return ['year', 'month', 'day', 'hour', 'minute', 'second'];
 }
 
-export function isEqualPart(min: ZonedDateTime, max: ZonedDateTime, part: DateTimeSegmentType) {
+export function isEqualPart(min: Temporal.ZonedDateTime, max: Temporal.ZonedDateTime, part: DateTimeSegmentType) {
   const editablePart = part as EditableSegmentType;
   const parts = getOrderedSegmentTypes();
   const idx = parts.indexOf(editablePart);

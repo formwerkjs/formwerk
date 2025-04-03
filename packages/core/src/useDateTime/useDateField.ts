@@ -8,10 +8,10 @@ import { FieldTypePrefixes } from '../constants';
 import { useDateFormatter, useLocale } from '../i18n';
 import { useErrorMessage, useLabel } from '../a11y';
 import { fromDateToCalendarZonedDateTime, useTemporalStore } from './useTemporalStore';
-import { ZonedDateTime, Calendar } from '@internationalized/date';
 import { useInputValidity } from '../validation';
 import { registerField } from '@formwerk/devtools';
 import { useConstraintsValidator } from '../validation/useConstraintsValidator';
+import { Temporal } from 'temporal-polyfill';
 
 export interface DateFieldProps {
   /**
@@ -37,7 +37,7 @@ export interface DateFieldProps {
   /**
    * The calendar type to use for the field, e.g. `gregory`, `islamic-umalqura`, etc.
    */
-  calendar?: Calendar;
+  calendar?: string;
 
   /**
    * The time zone to use for the field, e.g. `UTC`, `America/New_York`, etc.
@@ -139,7 +139,7 @@ export function useDateField(_props: Reactivify<DateFieldProps, 'schema'>) {
     max,
   });
 
-  function onValueChange(value: ZonedDateTime) {
+  function onValueChange(value: Temporal.ZonedDateTime) {
     temporalValue.value = value;
   }
 

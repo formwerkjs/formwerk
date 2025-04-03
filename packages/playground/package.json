@@ -9,7 +9,6 @@
   },
   "dependencies": {
     "@formwerk/core": "workspace:*",
-    "@internationalized/date": "^3.7.0",
     "@tailwindcss/postcss": "^4.0.13",
     "fuse.js": "^7.1.0",
     "tailwindcss": "^4.0.13",

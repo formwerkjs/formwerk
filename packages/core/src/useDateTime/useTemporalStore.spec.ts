@@ -1,13 +1,11 @@
-import { createCalendar, fromDate, now } from '@internationalized/date';
 import { useTemporalStore } from './useTemporalStore';
 import { createTemporalPartial, isTemporalPartial } from './temporalPartial';
 import { ref } from 'vue';
 import { Maybe } from '../types';
 import { flush } from '@test-utils/flush';
-import { vi } from 'vitest';
+import { Temporal } from 'temporal-polyfill';
 
 describe('useTemporalStore', () => {
-  const calendar = createCalendar('gregory');
   const timeZone = 'UTC';
   const locale = 'en-US';
 
@@ -18,27 +16,27 @@ describe('useTemporalStore', () => {
         model: {
           get: () => date,
         },
-        calendar,
+        calendar: 'gregory',
         timeZone,
         locale,
       });
 
-      expect(store.value.toDate()).toEqual(date);
+      expect(store.value.epochMilliseconds).toBe(date.getTime());
       expect(isTemporalPartial(store.value)).toBe(false);
     });
 
     test('initializes with ZonedDateTime value', () => {
-      const date = now(timeZone);
+      const date = Temporal.Now.zonedDateTimeISO(timeZone);
       const store = useTemporalStore({
         model: {
-          get: () => date.toDate(),
+          get: () => new Date(date.epochMilliseconds),
         },
-        calendar,
+        calendar: 'gregory',
         timeZone,
         locale,
       });
 
-      expect(store.value.toString()).toBe(date.toString());
+      expect(store.value.epochMilliseconds).toBe(date.epochMilliseconds);
       expect(isTemporalPartial(store.value)).toBe(false);
     });
 
@@ -47,14 +45,14 @@ describe('useTemporalStore', () => {
         model: {
           get: () => null,
         },
-        calendar,
+        calendar: 'gregory',
         timeZone,
         locale,
       });
 
       expect(isTemporalPartial(store.value)).toBe(true);
-      expect(store.value.timeZone).toBe(timeZone);
-      expect(store.value.calendar.identifier).toBe(calendar.identifier);
+      expect(store.value.timeZoneId).toBe(timeZone);
+      expect(store.value.calendarId).toBe('gregory');
     });
   });
 
@@ -66,7 +64,7 @@ describe('useTemporalStore', () => {
           get: () => modelValue.value,
           set: value => (modelValue.value = value),
         },
-        calendar,
+        calendar: 'gregory',
         timeZone,
         locale,
       });
@@ -75,7 +73,7 @@ describe('useTemporalStore', () => {
       modelValue.value = newDate;
       await flush();
 
-      expect(store.value.toDate()).toEqual(newDate);
+      expect(store.value.epochMilliseconds).toBe(newDate.getTime());
       expect(isTemporalPartial(store.value)).toBe(false);
     });
 
@@ -86,7 +84,7 @@ describe('useTemporalStore', () => {
           get: () => modelValue.value,
           set: value => (modelValue.value = value),
         },
-        calendar,
+        calendar: 'gregory',
         timeZone,
         locale,
       });
@@ -109,15 +107,15 @@ describe('useTemporalStore', () => {
           get: () => modelValue.value,
           set: value => (modelValue.value = value),
         },
-        calendar,
+        calendar: 'gregory',
         timeZone,
         locale,
       });
 
-      const newDate = now(timeZone);
+      const newDate = Temporal.Now.zonedDateTimeISO(timeZone);
       store.value = newDate;
 
-      expect(modelValue.value).toEqual(newDate.toDate());
+      expect(modelValue.value).toEqual(new Date(newDate.epochMilliseconds));
     });
 
     test('sets model to undefined when store value is temporal partial', () => {
@@ -127,13 +125,13 @@ describe('useTemporalStore', () => {
           get: () => modelValue.value,
           set: value => (modelValue.value = value),
         },
-        calendar,
+        calendar: 'gregory',
         timeZone,
         locale,
       });
 
       // Change to temporal partial
-      store.value = createTemporalPartial(calendar, timeZone);
+      store.value = createTemporalPartial('gregory', timeZone);
 
       expect(modelValue.value).toBeUndefined();
     });
@@ -146,17 +144,17 @@ describe('useTemporalStore', () => {
         model: {
           get: () => date,
         },
-        calendar,
+        calendar: 'gregory',
         timeZone,
         locale,
       });
 
-      const expectedZonedDateTime = fromDate(date, timeZone);
-      expect(store.value.toString()).toBe(expectedZonedDateTime.toString());
+      const expectedZonedDateTime = Temporal.Now.zonedDateTimeISO(timeZone);
+      expect(store.value.epochMilliseconds).toBe(expectedZonedDateTime.epochMilliseconds);
     });
 
     test('handles different calendar systems', () => {
-      const islamicCalendar = createCalendar('islamic-umalqura');
+      const islamicCalendar = 'islamic-umalqura';
       const date = new Date();
       const store = useTemporalStore({
         model: {
@@ -167,8 +165,8 @@ describe('useTemporalStore', () => {
         locale,
       });
 
-      expect(store.value.calendar.identifier).toBe('islamic-umalqura');
-      expect(store.value.toDate()).toEqual(date);
+      expect(store.value.calendarId).toBe('islamic-umalqura');
+      expect(store.value.epochMilliseconds).toBe(date.getTime());
     });
 
     test('updates model with correct date when temporal value changes', () => {
@@ -183,21 +181,21 @@ describe('useTemporalStore', () => {
             onModelSet(value);
           },
         },
-        calendar,
+        calendar: 'gregory',
         timeZone,
         locale,
       });
 
       // Change year
-      store.value = store.value.set({ year: 2025 });
+      store.value = store.value.with({ year: 2025 });
       expect(onModelSet).toHaveBeenLastCalledWith(new Date('2025-01-01T00:00:00Z'));
 
       // Change month
-      store.value = store.value.set({ month: 6 });
+      store.value = store.value.with({ month: 6 });
       expect(onModelSet).toHaveBeenLastCalledWith(new Date('2025-06-01T00:00:00Z'));
 
       // Change day
-      store.value = store.value.set({ day: 15 });
+      store.value = store.value.with({ day: 15 });
       expect(onModelSet).toHaveBeenLastCalledWith(new Date('2025-06-15T00:00:00Z'));
     });
 
@@ -213,13 +211,13 @@ describe('useTemporalStore', () => {
             onModelSet(value);
           },
         },
-        calendar,
+        calendar: 'gregory',
         timeZone,
         locale,
       });
 
       // Change date parts
-      store.value = store.value.set({ year: 2025, month: 6, day: 15 });
+      store.value = store.value.with({ year: 2025, month: 6, day: 15 });
 
       // Verify time components are preserved
       const expectedDate = new Date('2025-06-15T14:30:45Z');
@@ -242,14 +240,14 @@ describe('useTemporalStore', () => {
             onModelSet(value);
           },
         },
-        calendar,
+        calendar: 'gregory',
         timeZone: timeZoneRef,
         locale,
       });
 
       // Change timezone
       timeZoneRef.value = 'America/New_York';
-      store.value = store.value.set({ hour: 12 }); // Set to noon NY time
+      store.value = store.value.with({ hour: 12 }); // Set to noon NY time
 
       // Verify the UTC time in the model is correctly adjusted
       const lastSetDate = onModelSet.mock.lastCall?.[0] as Date;

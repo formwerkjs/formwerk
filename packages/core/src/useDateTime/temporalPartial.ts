@@ -1,23 +1,23 @@
-import { DateTimeSegmentType, TemporalPartial } from './types';
+import { DateTimeSegmentType, TemporalPartial, TemporalType } from './types';
 import { isObject } from '../../../shared/src';
-import { Calendar, ZonedDateTime, now, toCalendar } from '@internationalized/date';
 import { Maybe } from '../types';
 import { getOrderedSegmentTypes, isEqualPart } from './constants';
+import { Temporal } from 'temporal-polyfill';
 
 export function createTemporalPartial(
-  calendar: Calendar,
+  calendar: string,
   timeZone: string,
-  min?: Maybe<ZonedDateTime>,
-  max?: Maybe<ZonedDateTime>,
+  min?: Maybe<Temporal.ZonedDateTime>,
+  max?: Maybe<Temporal.ZonedDateTime>,
 ) {
   if (min && max) {
     // Get the middle of the min and max
-    const diff = Math.round(max.compare(min) / 2);
+    const diff = Math.round(max.since(min, { largestUnit: 'milliseconds' }).milliseconds / 2);
     const zonedDateTime = min
       .add({
         milliseconds: diff,
       })
-      .set({
+      .with({
         hour: 0,
         minute: 0,
         second: 0,
@@ -34,7 +34,7 @@ export function createTemporalPartial(
     return zonedDateTime;
   }
 
-  const zonedDateTime = toCalendar(now(timeZone), calendar).set({
+  const zonedDateTime = Temporal.Now.zonedDateTimeISO(timeZone).withCalendar(calendar).with({
     hour: 0,
     minute: 0,
     second: 0,
@@ -46,10 +46,10 @@ export function createTemporalPartial(
 }
 
 export function toTemporalPartial(
-  value: ZonedDateTime | TemporalPartial,
+  value: Temporal.ZonedDateTime | TemporalPartial,
   setParts?: DateTimeSegmentType[],
 ): TemporalPartial {
-  const clone = value.copy() as TemporalPartial;
+  const clone = Temporal.ZonedDateTime.from(value) as TemporalPartial;
   clone['~fw_temporal_partial'] = isTemporalPartial(value) ? value['~fw_temporal_partial'] : {};
   if (setParts) {
     setParts.forEach(part => {
@@ -60,7 +60,7 @@ export function toTemporalPartial(
   return clone as TemporalPartial;
 }
 
-export function isTemporalPartial(value: ZonedDateTime): value is TemporalPartial {
+export function isTemporalPartial(value: TemporalType | TemporalPartial): value is TemporalPartial {
   return isObject((value as TemporalPartial)['~fw_temporal_partial']);
 }
 

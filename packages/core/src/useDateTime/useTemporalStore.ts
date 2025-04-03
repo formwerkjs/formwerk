@@ -3,8 +3,7 @@ import { DateValue, TemporalPartial } from './types';
 import { Maybe } from '../types';
 import { isNullOrUndefined } from '../utils/common';
 import { createTemporalPartial, isTemporalPartial } from './temporalPartial';
-import { Calendar, fromDate, toCalendar, toTimeZone, type ZonedDateTime } from '@internationalized/date';
-
+import { Temporal, toTemporalInstant } from 'temporal-polyfill';
 interface TemporalValueStoreInit {
   model: {
     get: () => Maybe<Date>;
@@ -12,16 +11,16 @@ interface TemporalValueStoreInit {
   };
   locale: MaybeRefOrGetter<string>;
   timeZone: MaybeRefOrGetter<string>;
-  calendar: MaybeRefOrGetter<Calendar>;
+  calendar: MaybeRefOrGetter<string>;
   allowPartial?: boolean;
-  min?: MaybeRefOrGetter<Maybe<ZonedDateTime>>;
-  max?: MaybeRefOrGetter<Maybe<ZonedDateTime>>;
+  min?: MaybeRefOrGetter<Maybe<Temporal.ZonedDateTime>>;
+  max?: MaybeRefOrGetter<Maybe<Temporal.ZonedDateTime>>;
 }
 
 export function useTemporalStore(init: TemporalValueStoreInit) {
   const model = init.model;
 
-  function normalizeNullish(value: Maybe<ZonedDateTime>): ZonedDateTime | TemporalPartial {
+  function normalizeNullish(value: Maybe<Temporal.ZonedDateTime>): Temporal.ZonedDateTime | TemporalPartial {
     if (isNullOrUndefined(value)) {
       return createTemporalPartial(
         toValue(init.calendar),
@@ -34,7 +33,7 @@ export function useTemporalStore(init: TemporalValueStoreInit) {
     return value;
   }
 
-  const temporalVal = shallowRef<ZonedDateTime | TemporalPartial>(
+  const temporalVal = shallowRef<Temporal.ZonedDateTime | TemporalPartial>(
     normalizeNullish(fromDateToCalendarZonedDateTime(model.get(), toValue(init.calendar), toValue(init.timeZone))),
   );
 
@@ -62,7 +61,7 @@ export function useTemporalStore(init: TemporalValueStoreInit) {
       return zonedDateTime;
     }
 
-    return zonedDateTime.toDate();
+    return fromZonedDateTimeToDate(zonedDateTime);
   }
 
   const temporalValue = computed({
@@ -78,25 +77,29 @@ export function useTemporalStore(init: TemporalValueStoreInit) {
 
 export function fromDateToCalendarZonedDateTime(
   date: Maybe<Date>,
-  calendar: Calendar,
+  calendar: string,
   timeZone: string,
-): ZonedDateTime | null | undefined {
+): Temporal.ZonedDateTime | null | undefined {
   const zonedDt = toZonedDateTime(date, timeZone);
   if (!zonedDt) {
     return zonedDt;
   }
 
-  return toCalendar(toTimeZone(zonedDt, timeZone), calendar);
+  return Temporal.ZonedDateTime.from(zonedDt).withCalendar(calendar);
 }
 
-export function toZonedDateTime(value: Maybe<DateValue>, timeZone: string): Maybe<ZonedDateTime> {
+export function toZonedDateTime(value: Maybe<DateValue>, timeZone: string): Maybe<Temporal.ZonedDateTime> {
   if (isNullOrUndefined(value)) {
     return value;
   }
 
   if (value instanceof Date) {
-    value = fromDate(value, timeZone);
+    value = toTemporalInstant.call(value).toZonedDateTimeISO(timeZone);
   }
 
   return value;
+}
+
+export function fromZonedDateTimeToDate(value: Temporal.ZonedDateTime): Date {
+  return new Date(value.toInstant().epochMilliseconds);
 }
