@@ -24,6 +24,7 @@ export * from './useForm';
 export * from './useFormField';
 export * from './useFormGroup';
 export * from './useFormRepeater';
+export * from './useFormWizard';
 export * from './validation';
 export * from './i18n/useLocale';
 export { version } from './constants';
