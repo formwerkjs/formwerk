@@ -24,6 +24,7 @@ export const FieldTypePrefixes = {
   OTPField: 'otp',
   OTPSlot: 'otps',
   FileField: 'ff',
+  FormWizardStep: 'fws',
 } as const;
 
 export const NOOP = () => {};
