@@ -20,7 +20,6 @@ export function useFormWizardStep<TSchema extends GenericFormSchema>(props: Form
   const { validate, onValidationDispatch, defineValidationRequest, onValidationDone, dispatchValidateDone } =
     useValidationProvider({
       getValues: () => form?.getValues(),
-      getPath: () => '',
       schema: props.schema,
       type: 'GROUP',
     });
@@ -56,9 +55,12 @@ export function useFormWizardStep<TSchema extends GenericFormSchema>(props: Form
     );
   });
 
-  // Whenever the form is validated, it is deferred to the form group to do that.
-  // Fields should not validate in response to their form triggering a validate and instead should follow the field group event
+  // Whenever the form is validated, only validate if the step is active.
   form?.onValidationDispatch(enqueue => {
+    if (!isActive.value) {
+      return;
+    }
+
     enqueue(
       validate().then(result => {
         return {
@@ -72,6 +74,7 @@ export function useFormWizardStep<TSchema extends GenericFormSchema>(props: Form
   // When the form is done validating, the form group should also signal the same to its children.
   form?.onValidationDone(dispatchValidateDone);
 
+  // Form steps act as a form group, but they offer no path prefixing.
   provide(FormGroupKey, ctx);
 
   return {
