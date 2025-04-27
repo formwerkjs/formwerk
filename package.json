@@ -10,7 +10,7 @@
   "scripts": {
     "test": "vitest",
     "cover": "vitest run --coverage",
-    "lint": "eslint . '**/*.{js,jsx,ts,tsx}' --fix",
+    "lint": "oxlint",
     "format": "prettier \"./**/*.ts\" --write",
     "build": "tsx scripts/build.ts",
     "build:watch": "tsx scripts/watch.ts",
@@ -31,7 +31,6 @@
     "@changesets/cli": "^2.29.2",
     "@commitlint/cli": "^19.8.0",
     "@commitlint/config-conventional": "^19.8.0",
-    "@eslint/js": "9.25.1",
     "@testing-library/vue": "^8.1.0",
     "@types/fs-extra": "^11.0.4",
     "@types/node": "^22.14.1",
@@ -41,12 +40,6 @@
     "@vue/server-renderer": "^3.5.13",
     "concurrently": "^9.1.2",
     "consola": "^3.4.2",
-    "eslint": "9.25.1",
-    "eslint-config-prettier": "^10.1.2",
-    "eslint-plugin-import": "^2.31.0",
-    "eslint-plugin-n": "^17.17.0",
-    "eslint-plugin-prettier": "^5.2.6",
-    "eslint-plugin-promise": "^7.2.1",
     "filesize": "^10.1.6",
     "flush-promises": "^1.0.2",
     "fs-extra": "^11.3.0",
@@ -55,6 +48,7 @@
     "husky": "^9.1.7",
     "jsdom": "^26.1.0",
     "lint-staged": "^15.5.1",
+    "oxlint": "^0.16.7",
     "pkg-pr-new": "^0.0.43",
     "prettier": "^3.5.3",
     "rolldown": "1.0.0-beta.8",
@@ -63,7 +57,6 @@
     "tslint-config-prettier": "^1.18.0",
     "tsx": "^4.19.3",
     "typescript": "5.8.3",
-    "typescript-eslint": "^8.31.0",
     "vite-tsconfig-paths": "^5.1.4",
     "vitest": "^3.1.2",
     "vitest-axe": "1.0.0-pre.3",
@@ -72,12 +65,12 @@
   },
   "lint-staged": {
     "*.ts": [
-      "eslint --fix",
+      "oxlint",
       "prettier --write",
       "vitest run related --passWithNoTests"
     ],
     "*.js": [
-      "eslint --fix",
+      "oxlint",
       "vitest run related --passWithNoTests"
     ]
   },
