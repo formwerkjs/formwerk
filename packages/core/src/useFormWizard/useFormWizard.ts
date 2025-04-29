@@ -146,6 +146,10 @@ export function useFormWizard<
   }
 
   const currentStep = computed(() => {
+    // Make sure to register it as a dependency
+    // eslint-disable-next-line @typescript-eslint/no-unused-expressions
+    currentStepInternal.value;
+
     const step = steps.value.find(step => step[0] === currentStepInternal.value);
     if (step) {
       return toValue(step[1]) ?? step[0];
