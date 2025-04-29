@@ -15,7 +15,7 @@ export function useFormWizardStep<TSchema extends GenericFormSchema>(props: Form
     throw new Error('FormWizardStep must be used within a FormWizard');
   }
 
-  wizard.registerStep(id);
+  wizard.registerStep(id, () => props.id);
   const form = inject(FormKey, null);
 
   const { validate, onValidationDispatch, defineValidationRequest, onValidationDone, dispatchValidateDone } =
@@ -50,6 +50,7 @@ export function useFormWizardStep<TSchema extends GenericFormSchema>(props: Form
       {
         'data-form-step': true,
         'data-form-step-id': id,
+        'data-form-step-user-id': props.id,
         'data-active': isActive.value ? 'true' : undefined,
       },
       element,
@@ -96,7 +97,7 @@ export function useFormWizardStep<TSchema extends GenericFormSchema>(props: Form
 
 export const FormWizardStep = /*#__PURE__*/ defineComponent({
   name: 'FormWizardStep',
-  props: ['as', 'schema'],
+  props: ['as', 'schema', 'id'],
   setup(props, { attrs, slots }) {
     const { stepProps, isActive } = useFormWizardStep(props);
 
