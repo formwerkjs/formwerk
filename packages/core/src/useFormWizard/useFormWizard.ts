@@ -18,11 +18,14 @@ export interface FormWizardProps<TInput extends FormObject> extends SchemalessFo
 
 export function useFormWizard<TInput extends FormObject>(_props?: FormWizardProps<TInput>) {
   const currentStep = shallowRef<string>();
+  const currentStepIndex = ref(0);
   const isLastStep = ref(false);
   const wizardElement = ref<HTMLElement>();
   const values = reactive<TInput>({} as TInput);
   const stepValues = new Map<string, TInput>();
   const form = useForm(_props);
+  const steps = shallowRef<string[]>([]);
+
   const [dispatchDone, onDone] = createEventDispatcher<ConsumableData<TInput>>('done');
 
   function beforeStepChange(applyChange: () => void) {
@@ -51,21 +54,24 @@ export function useFormWizard<TInput extends FormObject>(_props?: FormWizardProp
     });
   }
 
-  const nextButtonProps = useControlButtonProps(() => ({
-    'aria-label': _props?.nextLabel ?? 'Next',
+  const nextButtonProps = useControlButtonProps(btn => ({
+    'aria-label': btn?.textContent ? undefined : (_props?.nextLabel ?? 'Next'),
     type: 'submit',
     tabindex: '0',
+    disabled: currentStepIndex.value >= steps.value.length - 1,
     onClick: isFormElement(wizardElement.value) ? undefined : next,
   }));
 
-  const previousButtonProps = useControlButtonProps(() => ({
-    'aria-label': _props?.previousLabel ?? 'Previous',
+  const previousButtonProps = useControlButtonProps(btn => ({
+    'aria-label': btn?.textContent ? undefined : (_props?.previousLabel ?? 'Previous'),
     tabindex: '0',
+    disabled: currentStepIndex.value === 0,
     onClick: previous,
   }));
 
   provide(FormWizardContextKey, {
     isStepActive: (stepId: string) => currentStep.value === stepId,
+    registerStep: (stepId: string) => steps.value.push(stepId),
   });
 
   function onSubmit(e: Event) {
@@ -100,6 +106,7 @@ export function useFormWizard<TInput extends FormObject>(_props?: FormWizardProp
 
     if (steps[newStepIndex]) {
       currentStep.value = steps[newStepIndex].dataset.formStepId;
+      currentStepIndex.value = newStepIndex;
     }
 
     isLastStep.value = newStepIndex === steps.length - 1;
