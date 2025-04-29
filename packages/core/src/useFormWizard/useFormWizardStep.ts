@@ -15,6 +15,7 @@ export function useFormWizardStep<TSchema extends GenericFormSchema>(props: Form
     throw new Error('FormWizardStep must be used within a FormWizard');
   }
 
+  wizard.registerStep(id);
   const form = inject(FormKey, null);
 
   const { validate, onValidationDispatch, defineValidationRequest, onValidationDone, dispatchValidateDone } =
