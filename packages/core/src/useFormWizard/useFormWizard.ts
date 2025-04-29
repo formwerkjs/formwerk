@@ -1,4 +1,4 @@
-import { computed, nextTick, onMounted, provide, reactive, ref, shallowRef } from 'vue';
+import { computed, MaybeRefOrGetter, nextTick, onMounted, provide, reactive, ref, shallowRef, toValue } from 'vue';
 import { Simplify } from 'type-fest';
 import { FormProps, useForm } from '../useForm';
 import { FormObject } from '../types';
@@ -16,22 +16,27 @@ export interface FormWizardProps<TInput extends FormObject> extends SchemalessFo
   previousLabel?: string;
 }
 
-export function useFormWizard<TInput extends FormObject>(_props?: FormWizardProps<TInput>) {
-  const currentStep = shallowRef<string>();
+type StepIdPair = [string, MaybeRefOrGetter<string | number | undefined>];
+
+export function useFormWizard<
+  TStepID extends number | string = number | string,
+  TInput extends FormObject = FormObject,
+>(_props?: FormWizardProps<TInput>) {
+  const currentStepInternal = shallowRef<string>();
   const currentStepIndex = ref(0);
-  const isLastStep = ref(false);
   const wizardElement = ref<HTMLElement>();
   const values = reactive<TInput>({} as TInput);
   const stepValues = new Map<string, TInput>();
   const form = useForm(_props);
-  const steps = shallowRef<string[]>([]);
+  const steps = shallowRef<StepIdPair[]>([]);
+  const isLastStep = computed(() => currentStepIndex.value >= steps.value.length - 1);
 
   const [dispatchDone, onDone] = createEventDispatcher<ConsumableData<TInput>>('done');
 
   function beforeStepChange(applyChange: () => void) {
-    if (currentStep.value) {
+    if (currentStepInternal.value) {
       merge(values, cloneDeep(form.values));
-      stepValues.set(currentStep.value, cloneDeep(form.values) as TInput);
+      stepValues.set(currentStepInternal.value, cloneDeep(form.values) as TInput);
     }
 
     applyChange();
@@ -70,8 +75,8 @@ export function useFormWizard<TInput extends FormObject>(_props?: FormWizardProp
   }));
 
   provide(FormWizardContextKey, {
-    isStepActive: (stepId: string) => currentStep.value === stepId,
-    registerStep: (stepId: string) => steps.value.push(stepId),
+    isStepActive: (stepId: string) => currentStepInternal.value === stepId,
+    registerStep: (staticId, userId) => steps.value.push([staticId, userId]),
   });
 
   function onSubmit(e: Event) {
@@ -105,20 +110,48 @@ export function useFormWizard<TInput extends FormObject>(_props?: FormWizardProp
     }
 
     if (steps[newStepIndex]) {
-      currentStep.value = steps[newStepIndex].dataset.formStepId;
+      currentStepInternal.value = steps[newStepIndex].dataset.formStepId;
       currentStepIndex.value = newStepIndex;
     }
 
-    isLastStep.value = newStepIndex === steps.length - 1;
+    restoreStepValues();
+  }
+
+  async function restoreStepValues() {
     await nextTick();
     // restore field values
-    if (currentStep.value && stepValues.has(currentStep.value)) {
-      form.setValues(stepValues.get(currentStep.value) as TInput, { behavior: 'replace' });
+    if (currentStepInternal.value && stepValues.has(currentStepInternal.value)) {
+      form.setValues(stepValues.get(currentStepInternal.value) as TInput, { behavior: 'replace' });
     }
   }
 
   onMounted(() => {
     moveRelative(0);
+  });
+
+  function goTo(stepId: TStepID) {
+    const steps = Array.from(wizardElement.value?.querySelectorAll(`[data-form-step]`) || []) as HTMLElement[];
+    const idx = steps.findIndex(step => step.dataset.formStepUserId === String(stepId));
+
+    if (idx === -1 || !steps[idx]) {
+      return;
+    }
+
+    beforeStepChange(() => {
+      currentStepInternal.value = steps[idx].dataset.formStepId;
+      currentStepIndex.value = idx;
+
+      restoreStepValues();
+    });
+  }
+
+  const currentStep = computed(() => {
+    const step = steps.value.find(step => step[0] === currentStepInternal.value);
+    if (step) {
+      return toValue(step[1]) ?? step[0];
+    }
+
+    return undefined;
   });
 
   return {
@@ -128,8 +161,10 @@ export function useFormWizard<TInput extends FormObject>(_props?: FormWizardProp
     wizardProps,
     nextButtonProps,
     previousButtonProps,
+    currentStep,
     next,
     previous,
     onDone,
+    goTo,
   };
 }

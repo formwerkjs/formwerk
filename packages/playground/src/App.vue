@@ -2,17 +2,53 @@
 import { useFormWizard, FormWizardStep } from '@formwerk/core';
 import InputText from './components/InputText.vue';
 import Switch from './components/Switch.vue';
+import { z } from 'zod';
 
-const { wizardProps, nextButtonProps, previousButtonProps } = useFormWizard();
+const { wizardProps, nextButtonProps, previousButtonProps, onDone, goTo, currentStep } = useFormWizard();
+
+const step1 = z.object({
+  name: z.string(),
+  email: z.string().email(),
+});
+
+const step2 = z.object({
+  address: z.string(),
+  terms: z.boolean(),
+});
+
+onDone(data => {
+  console.log('done', data.toJSON());
+});
 </script>
 
 <template>
-  <div v-bind="wizardProps" class="w-full h-full flex flex-col items-center justify-center`">
+  <form v-bind="wizardProps" class="w-full h-full flex flex-col items-center justify-center`">
     <div>
       <h1>Form Wizard</h1>
     </div>
 
-    <FormWizardStep>
+    <div class="mt-4 flex space-x-4 mb-6">
+      current: {{ currentStep }}
+
+      <button
+        type="button"
+        :aria-selected="currentStep === 'info'"
+        class="px-6 py-2 bg-zinc-800 hover:bg-zinc-700 text-white rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 aria-selected:bg-emerald-500 aria-selected:text-white"
+        @click="goTo('info')"
+      >
+        Basic Info
+      </button>
+      <button
+        type="button"
+        :aria-selected="currentStep === 'address'"
+        @click="goTo('address')"
+        class="px-6 py-2 bg-zinc-800 hover:bg-zinc-700 text-white rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 aria-selected:bg-emerald-500 aria-selected:text-white"
+      >
+        Address
+      </button>
+    </div>
+
+    <FormWizardStep :schema="step1" id="info">
       <div>
         <h2>Step 1</h2>
       </div>
@@ -21,7 +57,7 @@ const { wizardProps, nextButtonProps, previousButtonProps } = useFormWizard();
       <InputText name="email" label="Email" />
     </FormWizardStep>
 
-    <FormWizardStep>
+    <FormWizardStep :schema="step2" id="address">
       <div>
         <h2>Step 2</h2>
       </div>
@@ -34,5 +70,11 @@ const { wizardProps, nextButtonProps, previousButtonProps } = useFormWizard();
       <button class="bg-gray-700 p-2 rounded-md" v-bind="previousButtonProps">⬅️ Previous</button>
       <button class="bg-gray-700 p-2 rounded-md" v-bind="nextButtonProps">Next ➡️</button>
     </div>
-  </div>
+  </form>
 </template>
+
+<style>
+button:disabled {
+  @apply cursor-not-allowed opacity-50;
+}
+</style>
