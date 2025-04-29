@@ -47,7 +47,7 @@ export function useValidationProvider<
     await dispatchValidate(enqueue);
     const results = await Promise.all(validationQueue);
     const fieldIssues: IssueCollection[] = results
-      .flatMap(r => r.errors.map(e => ({ ...e, path: r.path })))
+      .flatMap(r => r.errors.map(e => ({ ...e, path: r.path || e.path })))
       .filter(e => e.messages.length);
 
     // If we are using native validation, then we don't stop the state mutation
