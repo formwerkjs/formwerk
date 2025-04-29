@@ -3,10 +3,11 @@ import { Simplify } from 'type-fest';
 import { FormProps, useForm } from '../useForm';
 import { FormObject } from '../types';
 import { merge } from '../../../shared/src';
-import { cloneDeep, withRefCapture } from '../utils/common';
+import { cloneDeep, isFormElement, withRefCapture } from '../utils/common';
 import { useControlButtonProps } from '../helpers/useControlButtonProps';
 import { FormWizardContextKey } from './types';
-import { ConsumableData } from '../useForm/useFormActions';
+import { asConsumableData, ConsumableData } from '../useForm/useFormActions';
+import { createEventDispatcher } from '../utils/events';
 
 type SchemalessFormProps<TInput extends FormObject> = Simplify<Omit<FormProps<any, TInput>, 'schema'>>;
 
@@ -18,11 +19,11 @@ export interface FormWizardProps<TInput extends FormObject> extends SchemalessFo
 export function useFormWizard<TInput extends FormObject>(_props?: FormWizardProps<TInput>) {
   const currentStep = shallowRef<string>();
   const isLastStep = ref(false);
+  const wizardElement = ref<HTMLElement>();
   const values = reactive<TInput>({} as TInput);
   const stepValues = new Map<string, TInput>();
-  const form = useForm({
-    ..._props,
-  });
+  const form = useForm(_props);
+  const [dispatchDone, onDone] = createEventDispatcher<ConsumableData<TInput>>('done');
 
   function beforeStepChange(applyChange: () => void) {
     if (currentStep.value) {
@@ -35,6 +36,7 @@ export function useFormWizard<TInput extends FormObject>(_props?: FormWizardProp
 
   const next = form.handleSubmit(async () => {
     if (isLastStep.value) {
+      dispatchDone(asConsumableData(cloneDeep(values) as TInput));
       return;
     }
 
@@ -51,11 +53,14 @@ export function useFormWizard<TInput extends FormObject>(_props?: FormWizardProp
 
   const nextButtonProps = useControlButtonProps(() => ({
     'aria-label': _props?.nextLabel ?? 'Next',
-    onClick: next,
+    type: 'submit',
+    tabindex: '0',
+    onClick: isFormElement(wizardElement.value) ? undefined : next,
   }));
 
   const previousButtonProps = useControlButtonProps(() => ({
     'aria-label': _props?.previousLabel ?? 'Previous',
+    tabindex: '0',
     onClick: previous,
   }));
 
@@ -63,9 +68,22 @@ export function useFormWizard<TInput extends FormObject>(_props?: FormWizardProp
     isStepActive: (stepId: string) => currentStep.value === stepId,
   });
 
-  const wizardElement = ref<HTMLElement>();
+  function onSubmit(e: Event) {
+    e.preventDefault();
+    next();
+  }
 
-  const wizardProps = computed(() => withRefCapture({}, wizardElement));
+  const wizardProps = computed(() => {
+    const isForm = isFormElement(wizardElement.value);
+
+    return withRefCapture(
+      {
+        novalidate: isForm ? true : undefined,
+        onSubmit: isForm ? onSubmit : undefined,
+      },
+      wizardElement,
+    );
+  });
 
   async function moveRelative(delta: number) {
     const steps = Array.from(wizardElement.value?.querySelectorAll(`[data-form-step]`) || []) as HTMLElement[];
@@ -95,12 +113,6 @@ export function useFormWizard<TInput extends FormObject>(_props?: FormWizardProp
   onMounted(() => {
     moveRelative(0);
   });
-
-  function onDone(doneCb: (values: ConsumableData<TInput>) => void) {
-    return form.handleSubmit(values => {
-      doneCb(values as ConsumableData<TInput>);
-    });
-  }
 
   return {
     values,

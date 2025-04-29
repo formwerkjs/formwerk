@@ -324,6 +324,10 @@ export function isButtonElement(el: Maybe<HTMLElement>): el is HTMLButtonElement
   return el?.tagName === 'BUTTON';
 }
 
+export function isFormElement(el: Maybe<HTMLElement>): el is HTMLFormElement {
+  return el?.tagName === 'FORM';
+}
+
 export function toggleValueSelection<TValue>(current: Arrayable<TValue>, value: TValue, force?: boolean): TValue[] {
   const nextValue = normalizeArrayable(current);
   const idx = nextValue.findIndex(v => isEqual(v, value));
