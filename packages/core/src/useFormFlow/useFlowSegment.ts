@@ -1,5 +1,5 @@
 import { computed, defineComponent, h, inject, provide, ref } from 'vue';
-import { FormWizardContextKey, FormWizardStepProps } from './types';
+import { FormFlowContextKey, FlowSegmentProps } from './types';
 import { useUniqId, withRefCapture } from '../utils/common';
 import { FieldTypePrefixes } from '../constants';
 import { useValidationProvider } from '../validation/useValidationProvider';
@@ -7,15 +7,15 @@ import { FormKey } from '../useForm';
 import { GenericFormSchema } from '../types';
 import { FormGroupContext, FormGroupKey } from '../useFormGroup';
 
-export function useFormWizardStep<TSchema extends GenericFormSchema>(props: FormWizardStepProps<TSchema>) {
+export function useFlowSegment<TSchema extends GenericFormSchema>(props: FlowSegmentProps<TSchema>) {
   const element = ref<HTMLElement>();
-  const id = useUniqId(FieldTypePrefixes.FormWizardStep);
-  const wizard = inject(FormWizardContextKey, null);
-  if (!wizard) {
-    throw new Error('FormWizardStep must be used within a FormWizard');
+  const id = useUniqId(FieldTypePrefixes.FlowSegment);
+  const formFlow = inject(FormFlowContextKey, null);
+  if (!formFlow) {
+    throw new Error('FormFlowSegment must be used within a FormFlow, did you forget to call `useFormFlow`?');
   }
 
-  wizard.registerStep(id, () => props.id);
+  formFlow.registerSegment(id, () => props.id);
   const form = inject(FormKey, null);
 
   const { validate, onValidationDispatch, defineValidationRequest, onValidationDone, dispatchValidateDone } =
@@ -43,14 +43,13 @@ export function useFormWizardStep<TSchema extends GenericFormSchema>(props: Form
     isHtmlValidationDisabled: () => false,
   };
 
-  const isActive = computed(() => wizard.isStepActive(id));
+  const isActive = computed(() => formFlow.isSegmentActive(id));
 
-  const stepProps = computed(() => {
+  const segmentProps = computed(() => {
     return withRefCapture(
       {
-        'data-form-step': true,
-        'data-form-step-id': id,
-        'data-form-step-user-id': props.id,
+        'data-form-segment-id': id,
+        'data-form-segment-user-id': props.id,
         'data-active': isActive.value ? 'true' : undefined,
       },
       element,
@@ -83,24 +82,26 @@ export function useFormWizardStep<TSchema extends GenericFormSchema>(props: Form
     /**
      * Reference to the step element.
      */
-    stepEl: element,
+    segmentElement: element,
+
     /**
      * Props for the step element.
      */
-    stepProps,
+    segmentProps,
+
     /**
-     * Whether the step is active.
+     * Whether the segment is active.
      */
     isActive,
   };
 }
 
-export const FormWizardStep = /*#__PURE__*/ defineComponent({
-  name: 'FormWizardStep',
+export const FormFlowSegment = /*#__PURE__*/ defineComponent({
+  name: 'FormFlowSegment',
   props: ['as', 'schema', 'id'],
   setup(props, { attrs, slots }) {
-    const { stepProps, isActive } = useFormWizardStep(props);
+    const { segmentProps, isActive } = useFlowSegment(props);
 
-    return () => h(props.as || 'div', { ...attrs, ...stepProps.value }, isActive.value ? slots.default?.() : []);
+    return () => h(props.as || 'div', { ...attrs, ...segmentProps.value }, isActive.value ? slots.default?.() : []);
   },
 });
