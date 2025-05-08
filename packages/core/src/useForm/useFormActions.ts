@@ -143,7 +143,7 @@ export function useFormActions<TForm extends FormObject = FormObject, TOutput ex
         unsetPath(output, path, true);
       }
 
-      const result = await onSuccess(withConsumers(output), { event: e, form: e?.target as HTMLFormElement });
+      const result = await onSuccess(asConsumableData(output), { event: e, form: e?.target as HTMLFormElement });
       isSubmitting.value = false;
       wasSubmitted.value = true;
 
@@ -335,7 +335,7 @@ export function useFormActions<TForm extends FormObject = FormObject, TOutput ex
   };
 }
 
-function withConsumers<TData extends FormObject>(data: TData): ConsumableData<TData> {
+export function asConsumableData<TData extends FormObject>(data: TData): ConsumableData<TData> {
   const toObject = () => data;
   const toFormData = () => {
     const formData = new FormData();
