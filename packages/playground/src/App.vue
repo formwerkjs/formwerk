@@ -47,7 +47,7 @@ onDone(data => {
       </button>
     </div>
 
-    <FormFlowSegment :schema="step1" id="info">
+    <FormFlowSegment :schema="step1">
       <div>
         <h2>Step 1</h2>
       </div>
@@ -56,7 +56,7 @@ onDone(data => {
       <InputText name="email" label="Email" />
     </FormFlowSegment>
 
-    <FormFlowSegment :schema="step2" id="address">
+    <FormFlowSegment :schema="step2">
       <div>
         <h2>Step 2</h2>
       </div>
