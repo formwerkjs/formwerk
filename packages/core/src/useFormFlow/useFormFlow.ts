@@ -40,7 +40,7 @@ export function useFormFlow<
   const values = reactive<TInput>({} as TInput);
   const segmentValuesMap = new Map<string, TInput>();
   const form = _props?.form ?? useForm(_props);
-  const segments = shallowRef<SegmentIdPair[]>([]);
+  const segments = ref<SegmentIdPair[]>([]);
   const isLastSegment = computed(() => _currentSegmentIndex.value >= segments.value.length - 1);
 
   const [dispatchDone, onDone] = createEventDispatcher<ConsumableData<TInput>>('done');
@@ -58,12 +58,12 @@ export function useFormFlow<
   }
 
   const next = form.handleSubmit(async () => {
-    if (isLastSegment.value) {
-      dispatchDone(asConsumableData(cloneDeep(values) as TInput));
-      return;
-    }
-
     beforeSegmentChange(() => {
+      if (isLastSegment.value) {
+        dispatchDone(asConsumableData(cloneDeep(values) as TInput));
+        return;
+      }
+
       moveRelative(1);
     });
   });
@@ -78,7 +78,7 @@ export function useFormFlow<
     'aria-label': btn?.textContent ? undefined : (_props?.nextLabel ?? 'Next'),
     type: 'submit',
     tabindex: '0',
-    disabled: _currentSegmentIndex.value >= segments.value.length - 1 || toValue(_props?.disabled),
+    disabled: toValue(_props?.disabled),
     onClick: isFormElement(formElement.value) ? undefined : next,
   }));
 
@@ -178,30 +178,12 @@ export function useFormFlow<
   });
 
   return {
+    ...form,
+
     /**
      * Combined values of all segments.
      */
     values,
-
-    /**
-     * Get the error for the current segment.
-     */
-    getError: form.getError,
-
-    /**
-     * Get all errors for the current segment.
-     */
-    getErrors: form.getErrors,
-
-    /**
-     * Whether current active segment is dirty, or a specific field in the current active segment.
-     */
-    isDirty: form.isDirty,
-
-    /**
-     * Whether the current active segment is touched, or a specific field in the current active segment.
-     */
-    isTouched: form.isTouched,
 
     /**
      * Whether the current segment is the last segment, useful for stepped forms and form wizards.
