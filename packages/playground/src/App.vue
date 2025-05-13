@@ -1,27 +1,28 @@
 <script setup lang="ts">
-import { FileUploadContext, useForm } from '@formwerk/core';
-import TimeInput from './components/TimeField.vue';
-import Dropzone from './components/Dropzone.vue';
+import { useForm } from '@formwerk/core';
 
-const form = useForm();
+import z from 'zod';
+import InputText from './components/InputText.vue';
 
-function handleUpload({ file, signal }: FileUploadContext) {
-  return new Promise<string>(resolve => {
-    setTimeout(() => {
-      resolve('https://example.com/file.png');
-    }, 1000);
-  });
-}
+const schema = z.object({
+  firstName: z.string().min(1, 'First name is required'),
+  lastName: z.string().min(1, 'Last name is required'),
+});
 
-const formatOptions = {
-  hour: '2-digit',
-  minute: '2-digit',
-  second: '2-digit',
-};
+const { values, getValue } = useForm({
+  schema,
+  initialValues: {
+    firstName: 'john',
+  },
+});
 </script>
 
 <template>
   <div class="w-full h-full flex flex-col items-center justify-center`">
-    <TimeInput label="Time" name="time" :format-options="formatOptions" />
+    <InputText name="firstName" label="First Name" />
+    <InputText name="lastName" label="Last Name" />
+    <pre>last name: {{ values.lastName }}</pre>
+    <pre>get last name: {{ getValue('lastName') }}</pre>
+    <pre>{{ values }}</pre>
   </div>
 </template>
