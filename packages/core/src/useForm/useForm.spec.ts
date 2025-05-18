@@ -98,6 +98,23 @@ describe('form values', () => {
 
     expect(values).toEqual({ 'foo.bar': 'qux' });
   });
+
+  test('set values in arrays', async () => {
+    const { values, setValue } = await renderSetup(() => {
+      return useForm<any>({ initialValues: { users: [{ isActive: false }] } });
+    });
+
+    setValue('users', [{ isActive: false }]);
+    expect(Array.isArray(values.users)).toBe(true);
+    expect(values.users.length).toBe(1);
+
+    setValue('users.0.isActive', true);
+    expect(values.users[0].isActive).toBe(true);
+
+    setValue('users', [{ isActive: false }, { isActive: true }]);
+    expect(values.users[0].isActive).toBe(false);
+    expect(values.users[1].isActive).toBe(true);
+  });
 });
 
 describe('form touched', () => {
