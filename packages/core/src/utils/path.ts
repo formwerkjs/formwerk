@@ -125,6 +125,11 @@ export function setInPath(object: NestedRecord, path: string, value: unknown, se
       return;
     }
 
+    // Defensive: If the key exists but is not a container, replace it with the correct container type
+    if (keys[i] in acc && !isNullOrUndefined(acc[keys[i]]) && !isContainerValue(acc[keys[i]])) {
+      acc[keys[i]] = isIndex(keys[i + 1]) ? [] : {};
+    }
+
     // Key does not exist, create a container for it
     if (!(keys[i] in acc) || isNullOrUndefined(acc[keys[i]])) {
       // container can be either an object or an array depending on the next key if it exists
