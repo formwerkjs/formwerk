@@ -1,27 +1,79 @@
 <script setup lang="ts">
-import { FileUploadContext, useForm } from '@formwerk/core';
-import TimeInput from './components/TimeField.vue';
-import Dropzone from './components/Dropzone.vue';
+import { useFormFlow, FormFlowSegment } from '@formwerk/core';
+import InputText from './components/InputText.vue';
+import Switch from './components/Switch.vue';
+import { z } from 'zod';
 
-const form = useForm();
+const { formProps, nextButtonProps, previousButtonProps, onDone, goTo, currentSegment } = useFormFlow();
 
-function handleUpload({ file, signal }: FileUploadContext) {
-  return new Promise<string>(resolve => {
-    setTimeout(() => {
-      resolve('https://example.com/file.png');
-    }, 1000);
-  });
-}
+const step1 = z.object({
+  name: z.string(),
+  email: z.string().email(),
+});
 
-const formatOptions = {
-  hour: '2-digit',
-  minute: '2-digit',
-  second: '2-digit',
-};
+const step2 = z.object({
+  address: z.string(),
+  terms: z.boolean(),
+});
+
+onDone(data => {
+  console.log('done', data.toJSON());
+});
 </script>
 
 <template>
-  <div class="w-full h-full flex flex-col items-center justify-center`">
-    <TimeInput label="Time" name="time" :format-options="formatOptions" />
-  </div>
+  <form v-bind="formProps" class="w-full h-full flex flex-col items-center justify-center`">
+    <div>
+      <h1>Form Wizard</h1>
+    </div>
+
+    <div class="mt-4 flex space-x-4 mb-6">
+      <button
+        type="button"
+        :aria-selected="currentSegment === 'info'"
+        class="px-6 py-2 bg-zinc-800 hover:bg-zinc-700 text-white rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 aria-selected:bg-emerald-500 aria-selected:text-white"
+        @click="goTo('info')"
+      >
+        Basic Info
+      </button>
+
+      <button
+        type="button"
+        :aria-selected="currentSegment === 'address'"
+        @click="goTo('address')"
+        class="px-6 py-2 bg-zinc-800 hover:bg-zinc-700 text-white rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 aria-selected:bg-emerald-500 aria-selected:text-white"
+      >
+        Address
+      </button>
+    </div>
+
+    <FormFlowSegment :schema="step1">
+      <div>
+        <h2>Step 1</h2>
+      </div>
+
+      <InputText name="name" label="Name" />
+      <InputText name="email" label="Email" />
+    </FormFlowSegment>
+
+    <FormFlowSegment :schema="step2">
+      <div>
+        <h2>Step 2</h2>
+      </div>
+
+      <InputText name="address" label="Address" />
+      <Switch name="terms" label="I accept the terms and conditions" />
+    </FormFlowSegment>
+
+    <div class="grid grid-cols-2 gap-4">
+      <button class="bg-gray-700 p-2 rounded-md" v-bind="previousButtonProps">⬅️ Previous</button>
+      <button class="bg-gray-700 p-2 rounded-md" v-bind="nextButtonProps">Next ➡️</button>
+    </div>
+  </form>
 </template>
+
+<style>
+button:disabled {
+  @apply cursor-not-allowed opacity-50;
+}
+</style>
