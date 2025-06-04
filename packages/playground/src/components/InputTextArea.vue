@@ -3,17 +3,17 @@ import { TextFieldProps, useTextField } from '@formwerk/core';
 
 const props = defineProps<TextFieldProps>();
 
-const { inputProps, labelProps, errorMessage, errorMessageProps } = useTextField(props);
+const { inputProps, labelProps, errorMessage, errorMessageProps, isTouched, displayError } = useTextField(props);
 </script>
 
 <template>
-  <div class="InputText">
+  <div class="InputText" :class="{ touched: isTouched }">
     <label v-bind="labelProps">{{ label }}</label>
 
     <textarea v-bind="inputProps" />
 
-    <span v-bind="errorMessageProps" class="error-message">
-      {{ errorMessage }}
+    <span v-bind="errorMessageProps" class="w-full truncate error-message">
+      {{ displayError() }}
     </span>
   </div>
 </template>
@@ -22,24 +22,33 @@ const { inputProps, labelProps, errorMessage, errorMessageProps } = useTextField
 @reference "../style.css";
 
 .InputText {
+  font-family: 'Monaspace Neon Var';
   @apply relative w-full;
   margin-bottom: calc(1em * 1.5);
 
   label {
-    @apply block mb-1 w-full;
+    @apply block mb-1 w-full font-semibold text-lg text-white;
   }
 
   textarea {
-    @apply text-gray-800 rounded-md border-2 border-transparent py-3 px-4 w-full bg-gray-100 focus:outline-hidden transition-colors duration-200 focus:border-blue-500;
-  }
-  .error-message {
-    @apply absolute left-0 text-sm text-red-500;
-    bottom: calc(-1.5 * 1em);
+    @apply max-w-xs rounded-md border-2 border-transparent py-3 px-4 w-full bg-zinc-800 focus:bg-zinc-900 focus:outline-hidden transition-colors duration-200 focus:border-emerald-500 disabled:cursor-not-allowed text-white font-medium;
   }
 
-  &.has-error {
+  .error-message {
+    @apply absolute left-0 text-sm text-red-500 font-medium;
+    bottom: calc(-1.8 * 1em);
+  }
+
+  &:has(:user-invalid),
+  &:has(.error-message:not(:empty)) {
     textarea {
-      @apply bg-red-100 text-red-600 focus:border-red-500;
+      @apply border-red-500;
+    }
+  }
+
+  &:has(:disabled) {
+    textarea {
+      @apply bg-gray-200 cursor-not-allowed;
     }
   }
 }
