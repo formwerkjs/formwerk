@@ -1,14 +1,53 @@
 import { InjectionKey, MaybeRefOrGetter } from 'vue';
-import { GenericFormSchema } from '../types';
+import { GenericFormSchema, Getter } from '../types';
 
 export interface FlowSegmentProps<TSchema extends GenericFormSchema> {
-  id?: string | number;
+  name?: string;
   schema?: TSchema;
+}
+
+export interface SegmentRegistrationMetadata {
+  /**
+   * The unique ID of the step.
+   */
+  id: string;
+
+  /**
+   * The user given name of the step.
+   */
+  name: MaybeRefOrGetter<string | undefined>;
+}
+
+export interface SegmentMetadata {
+  /**
+   * The unique ID of the step.
+   */
+  id: string;
+
+  /**
+   * The user given name of the step.
+   */
+  name: Getter<string | undefined>;
+
+  /**
+   * If the step is visited, it means that the step has been activated at least once.
+   */
+  visited: boolean;
+
+  /**
+   * If the step has been submitted or was saved.
+   */
+  submitted: boolean;
+
+  /**
+   * Get the values of the step.
+   */
+  getValues: () => Record<string, unknown> | undefined;
 }
 
 export interface FormFlowContext {
   isSegmentActive: (segmentId: string) => boolean;
-  registerSegment: (staticId: string, userSegmentId: MaybeRefOrGetter<string | number | undefined>) => void;
+  registerSegment: (metadata: SegmentRegistrationMetadata) => void;
 }
 
 export const FormFlowContextKey: InjectionKey<FormFlowContext> = Symbol('FormFlowContext');

@@ -1,10 +1,11 @@
 <script setup lang="ts">
-import { useFormFlow, FormFlowSegment } from '@formwerk/core';
+import { useStepFormFlow } from '@formwerk/core';
 import InputText from './components/InputText.vue';
-import Switch from './components/Switch.vue';
-import { z } from 'zod';
+import InputTextArea from './components/InputTextArea.vue';
+import z from 'zod';
 
-const { formProps, nextButtonProps, previousButtonProps, onDone, goTo, currentSegment } = useFormFlow();
+const { formProps, nextButtonProps, previousButtonProps, onDone, isLastStep, FormStep, goToStep, isStepActive } =
+  useStepFormFlow();
 
 const step1 = z.object({
   name: z.string(),
@@ -13,61 +14,60 @@ const step1 = z.object({
 
 const step2 = z.object({
   address: z.string(),
-  terms: z.boolean(),
 });
 
 onDone(data => {
-  console.log('done', data.toJSON());
+  console.log(data.toObject());
 });
 </script>
 
 <template>
-  <form v-bind="formProps" class="w-full h-full flex flex-col items-center justify-center`">
-    <div>
-      <h1>Form Wizard</h1>
-    </div>
-
-    <div class="mt-4 flex space-x-4 mb-6">
+  <form v-bind="formProps" class="w-full h-full flex flex-col items-center justify-center">
+    <div class="flex gap-2 my-8">
       <button
         type="button"
-        :aria-selected="currentSegment === 'info'"
-        class="px-6 py-2 bg-zinc-800 hover:bg-zinc-700 text-white rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 aria-selected:bg-emerald-500 aria-selected:text-white"
-        @click="goTo('info')"
+        class="bg-gray-700 p-2 rounded-full aria-selected:bg-emerald-500 hover:bg-gray-500"
+        :aria-selected="isStepActive(0)"
+        @click="goToStep(0)"
       >
-        Basic Info
+        Go to step 1
       </button>
-
       <button
         type="button"
-        :aria-selected="currentSegment === 'address'"
-        @click="goTo('address')"
-        class="px-6 py-2 bg-zinc-800 hover:bg-zinc-700 text-white rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 aria-selected:bg-emerald-500 aria-selected:text-white"
+        class="bg-gray-700 p-2 rounded-full aria-selected:bg-emerald-500 hover:bg-gray-500"
+        :aria-selected="isStepActive(1)"
+        @click="goToStep(1)"
       >
-        Address
+        Go to step 2
+      </button>
+      <button
+        type="button"
+        class="bg-gray-700 p-2 rounded-full aria-selected:bg-emerald-500 hover:bg-gray-500"
+        :aria-selected="isStepActive(2)"
+        @click="goToStep(2)"
+      >
+        Go to step 3
       </button>
     </div>
 
-    <FormFlowSegment :schema="step1">
-      <div>
-        <h2>Step 1</h2>
-      </div>
-
+    <FormStep name="step-1" :schema="step1">
       <InputText name="name" label="Name" />
       <InputText name="email" label="Email" />
-    </FormFlowSegment>
+    </FormStep>
 
-    <FormFlowSegment :schema="step2">
-      <div>
-        <h2>Step 2</h2>
-      </div>
+    <FormStep name="step-2" :schema="step2">
+      <InputTextArea name="address" label="Address" />
+    </FormStep>
 
-      <InputText name="address" label="Address" />
-      <Switch name="terms" label="I accept the terms and conditions" />
-    </FormFlowSegment>
+    <FormStep name="step-3">
+      <InputText name="city" label="City" />
+    </FormStep>
 
-    <div class="grid grid-cols-2 gap-4">
+    <div class="mt-10 grid grid-cols-2 gap-4">
       <button class="bg-gray-700 p-2 rounded-md" v-bind="previousButtonProps">⬅️ Previous</button>
-      <button class="bg-gray-700 p-2 rounded-md" v-bind="nextButtonProps">Next ➡️</button>
+      <button class="bg-gray-700 p-2 rounded-md" v-bind="nextButtonProps">
+        {{ isLastStep ? 'Submit' : 'Next ➡️' }}
+      </button>
     </div>
   </form>
 </template>

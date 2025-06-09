@@ -1,9 +1,10 @@
 import { defineComponent } from 'vue';
 import { fireEvent, render, screen } from '@testing-library/vue';
 import { axe } from 'vitest-axe';
-import { useFormFlow, FormFlowSegment } from '.';
+import { useStepFormFlow } from '.';
 import { flush } from '@test-utils/flush';
 import { useTextField } from '../useTextField';
+import { FormFlowSegment } from './useFlowSegment';
 
 // Simple TextField component for tests
 const TextField = defineComponent({
@@ -56,37 +57,26 @@ const SteppedFormFlow = defineComponent({
   },
   emits: ['done'],
   setup(props, { emit }) {
-    const {
-      formProps,
-      formElement,
-      values,
-      nextButtonProps,
-      previousButtonProps,
-      currentSegment,
-      isLastSegment,
-
-      onDone,
-    } = useFormFlow({
-      initialValues: props.initialValues,
-    });
+    const { formProps, values, nextButtonProps, previousButtonProps, currentStep, isLastStep, onDone } =
+      useStepFormFlow({
+        initialValues: props.initialValues,
+      });
 
     onDone(values => emit('done', values.toObject()));
 
     return {
       formProps,
-      formElement,
       values,
       nextButtonProps,
       previousButtonProps,
-      currentSegment,
-      isLastSegment,
+      currentStep,
+      isLastStep,
     };
   },
   template: `
     <div data-testid="flow-wrapper">
       <form
         v-bind="formProps"
-        ref="formElement"
         data-testid="form-flow"
       >
         <!-- Render slots (segments) -->
@@ -105,108 +95,12 @@ const SteppedFormFlow = defineComponent({
             v-bind="nextButtonProps"
             data-testid="next-button"
           >
-            {{ isLastSegment ? 'Submit' : 'Next' }}
+            {{ isLastStep ? 'Submit' : 'Next' }}
           </button>
         </div>
 
         <!-- Debug info -->
-        <div data-testid="current-segment">Current: {{ currentSegment }}</div>
-        <pre data-testid="form-values">{{ JSON.stringify(values) }}</pre>
-      </form>
-    </div>
-  `,
-});
-
-const TabbedFormFlow = defineComponent({
-  components: { FormFlowSegment, TextField },
-  props: {
-    initialValues: {
-      type: Object,
-      default: () => ({}),
-    },
-  },
-  setup(props) {
-    const {
-      formProps,
-      formElement,
-      values,
-      nextButtonProps,
-      previousButtonProps,
-      currentSegment,
-      isLastSegment,
-      goTo,
-    } = useFormFlow({
-      initialValues: props.initialValues,
-    });
-
-    return {
-      formProps,
-      formElement,
-      values,
-      nextButtonProps,
-      previousButtonProps,
-      currentSegment,
-      isLastSegment,
-      goTo,
-    };
-  },
-  template: `
-    <div data-testid="flow-wrapper">
-      <form
-        v-bind="formProps"
-        ref="formElement"
-        data-testid="form-flow"
-      >
-        <!-- Tab navigation -->
-        <div data-testid="tabs">
-          <button
-            data-testid="tab-1"
-            @click="goTo('tab-1')"
-            type="button"
-            :class="{ active: currentSegment === 'tab-1' }"
-          >
-            Personal Info
-          </button>
-          <button
-            data-testid="tab-2"
-            @click="goTo('tab-2')"
-            type="button"
-            :class="{ active: currentSegment === 'tab-2' }"
-          >
-            Address
-          </button>
-          <button
-            data-testid="tab-3"
-            @click="goTo('tab-3')"
-            type="button"
-            :class="{ active: currentSegment === 'tab-3' }"
-          >
-            Review
-          </button>
-        </div>
-
-        <!-- Render slots (segments) -->
-        <slot></slot>
-
-        <!-- Navigation controls -->
-        <div data-testid="flow-controls">
-          <button
-            v-bind="previousButtonProps"
-            data-testid="previous-button"
-          >
-            Previous
-          </button>
-
-          <button
-            v-bind="nextButtonProps"
-            data-testid="next-button"
-          >
-            {{ isLastSegment ? 'Submit' : 'Next' }}
-          </button>
-        </div>
-
-        <!-- Debug info -->
-        <div data-testid="current-segment">Current: {{ currentSegment }}</div>
+        <div data-testid="current-segment">Current: {{ currentStep?.name }}</div>
         <pre data-testid="form-values">{{ JSON.stringify(values) }}</pre>
       </form>
     </div>
@@ -448,122 +342,5 @@ describe('stepped form', () => {
       // Next button should say "Submit" on last step
       expect(screen.getByTestId('next-button')).toHaveTextContent('Submit');
     });
-  });
-});
-
-describe('tabbed form', () => {
-  test('tabbed form should not have a11y violations', async () => {
-    await render({
-      components: {
-        TabbedFormFlow,
-        FormFlowSegment,
-        TextField,
-      },
-      template: `
-          <TabbedFormFlow data-testid="fixture">
-            <FormFlowSegment id="1">
-              <div class="tab-1">
-                <TextField
-                  label="Name"
-                  name="name"
-                  testId="name-input"
-                  description="Enter your full name"
-                />
-              </div>
-            </FormFlowSegment>
-            <FormFlowSegment id="2">
-              <div class="tab-2">
-                <TextField
-                  label="Address"
-                  name="address"
-                  testId="address-input"
-                  description="Enter your mailing address"
-                />
-              </div>
-            </FormFlowSegment>
-          </TabbedFormFlow>
-        `,
-    });
-
-    await flush();
-    vi.useRealTimers();
-    expect(await axe(screen.getByTestId('fixture'))).toHaveNoViolations();
-    vi.useFakeTimers();
-  });
-
-  test('should navigate directly to any tab and preserve field values', async () => {
-    await render({
-      components: {
-        TabbedFormFlow,
-        FormFlowSegment,
-        TextField,
-      },
-      template: `
-          <TabbedFormFlow>
-            <FormFlowSegment id="tab-1">
-              <span>Tab 1</span>
-              <TextField
-                label="Name"
-                name="name"
-                />
-            </FormFlowSegment>
-
-            <FormFlowSegment id="tab-2">
-              <span>Tab 2</span>
-              <TextField
-                label="Address"
-                name="address"
-              />
-            </FormFlowSegment>
-
-            <FormFlowSegment id="tab-3">
-              <span>Tab 3</span>
-              <div data-testid="review-content">Review your information</div>
-            </FormFlowSegment>
-          </TabbedFormFlow>
-        `,
-    });
-
-    await flush();
-
-    // Should start at the first tab
-    expect(screen.getByTestId('current-segment').textContent).toContain('tab-1');
-    expect(screen.getByLabelText('Name')).toBeVisible();
-
-    // Fill in the name field
-    await fireEvent.update(screen.getByLabelText('Name'), 'John Doe');
-
-    // Go directly to the third tab
-    await fireEvent.click(screen.getByTestId('tab-3'));
-    await flush();
-
-    // Should be on the third tab
-    expect(screen.getByTestId('current-segment').textContent).toContain('tab-3');
-    expect(screen.getByText('Review your information')).toBeVisible();
-
-    // Go to the second tab
-    await fireEvent.click(screen.getByTestId('tab-2'));
-    await flush();
-
-    // Should be on the second tab
-    expect(screen.getByTestId('current-segment').textContent).toContain('tab-2');
-    expect(screen.getByLabelText('Address')).toBeVisible();
-
-    // Fill in the address field
-    await fireEvent.update(screen.getByLabelText('Address'), '123 Main St');
-
-    // Go back to the first tab
-    await fireEvent.click(screen.getByTestId('tab-1'));
-    await flush();
-
-    // Check the form values are preserved
-    expect(screen.getByLabelText('Name')).toHaveValue('John Doe');
-
-    // Go to the second tab
-    await fireEvent.click(screen.getByTestId('tab-2'));
-    await flush();
-
-    // Check the form values are preserved
-    expect(screen.getByLabelText('Address')).toHaveValue('123 Main St');
   });
 });

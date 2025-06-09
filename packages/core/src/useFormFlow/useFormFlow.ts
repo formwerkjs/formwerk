@@ -1,146 +1,147 @@
-import { computed, MaybeRefOrGetter, nextTick, onMounted, provide, reactive, ref, shallowRef, toValue } from 'vue';
+import { computed, nextTick, onMounted, provide, reactive, ref, toValue } from 'vue';
 import { Simplify } from 'type-fest';
-import { FormProps, FormReturns, useForm } from '../useForm';
-import { FormObject } from '../types';
+import { FormProps, useForm } from '../useForm';
+import { FormObject, IssueCollection, Path } from '../types';
 import { merge } from '../../../shared/src';
-import { cloneDeep, isFormElement, withRefCapture } from '../utils/common';
-import { useControlButtonProps } from '../helpers/useControlButtonProps';
-import { FormFlowContextKey } from './types';
+import { cloneDeep } from '../utils/common';
+import { FormFlowContextKey, SegmentMetadata, SegmentRegistrationMetadata } from './types';
 import { asConsumableData, ConsumableData } from '../useForm/useFormActions';
 import { createEventDispatcher } from '../utils/events';
 
 type SchemalessFormProps<TInput extends FormObject> = Simplify<Omit<FormProps<any, TInput>, 'schema'>>;
 
 export interface FormFlowProps<TInput extends FormObject> extends SchemalessFormProps<TInput> {
-  /**
-   * The label for the next button. Will be used if the button has no text content.
-   */
-  nextLabel?: string;
-
-  /**
-   * The label for the previous button. Will be used if the button has no text content.
-   */
-  previousLabel?: string;
-
-  /**
-   * The form to use for the flow. If not provided, a new form context will be created.
-   */
-  form?: FormReturns;
+  _dummy?: never;
 }
 
-type SegmentIdPair = [string, MaybeRefOrGetter<string | number | undefined>];
+interface StepState<TValues> {
+  values: TValues;
+  issues: IssueCollection<Path<TValues>>[];
+}
 
-export function useFormFlow<
-  SegmentId extends number | string = number | string,
-  TInput extends FormObject = FormObject,
->(_props?: FormFlowProps<TInput>) {
-  const _currentSegment = shallowRef<string>();
-  const _currentSegmentIndex = ref(0);
+export interface GoToPredicateContext {
+  segment: SegmentMetadata;
+  segments: SegmentMetadata[];
+  index: number;
+  relativeDistance: number;
+}
+
+export function useFormFlow<TInput extends FormObject = FormObject>(_props?: FormFlowProps<TInput>) {
+  const currentSegmentId = ref<string>();
   const formElement = ref<HTMLElement>();
   const values = reactive<TInput>({} as TInput);
-  const segmentValuesMap = new Map<string, TInput>();
-  const form = _props?.form ?? useForm(_props);
-  const segments = ref<SegmentIdPair[]>([]);
-  const isLastSegment = computed(() => _currentSegmentIndex.value >= segments.value.length - 1);
+  const segmentValuesMap = new Map<string, StepState<TInput>>();
+  const form = useForm(_props);
+  const segments = ref<SegmentMetadata[]>([]);
 
-  const [dispatchDone, onDone] = createEventDispatcher<ConsumableData<TInput>>('done');
-  const [dispatchActiveSegmentChange, onActiveSegmentChange] =
-    createEventDispatcher<ConsumableData<TInput>>('activeSegmentChange');
+  function getCurrentSegment() {
+    return segments.value.find(segment => segment.id === currentSegmentId.value);
+  }
 
-  function beforeSegmentChange(applyChange: () => void) {
-    if (_currentSegment.value) {
-      merge(values, cloneDeep(form.values));
-      segmentValuesMap.set(_currentSegment.value, cloneDeep(form.values) as TInput);
-      dispatchActiveSegmentChange(asConsumableData(cloneDeep(values) as TInput));
+  const [dispatchActiveSegmentChange, onActiveSegmentChange] = createEventDispatcher<{
+    data: ConsumableData<TInput>;
+    oldSegment: SegmentMetadata;
+    newSegment: SegmentMetadata;
+  }>('activeSegmentChange');
+
+  function beforeSegmentChange(nextSegment: SegmentMetadata, applyChange: () => void) {
+    const currentSegment = getCurrentSegment();
+    if (currentSegment) {
+      saveValues();
+      dispatchActiveSegmentChange({
+        data: asConsumableData(cloneDeep(values) as TInput),
+        oldSegment: currentSegment,
+        newSegment: nextSegment,
+      });
     }
 
     applyChange();
+    nextSegment.visited = true;
   }
 
-  const next = form.handleSubmit(async () => {
-    beforeSegmentChange(() => {
-      if (isLastSegment.value) {
-        dispatchDone(asConsumableData(cloneDeep(values) as TInput));
-        return;
-      }
-
-      moveRelative(1);
-    });
-  });
-
-  function previous() {
-    beforeSegmentChange(() => {
-      moveRelative(-1);
-    });
-  }
-
-  const nextButtonProps = useControlButtonProps(btn => ({
-    'aria-label': btn?.textContent ? undefined : (_props?.nextLabel ?? 'Next'),
-    type: 'submit',
-    tabindex: '0',
-    disabled: toValue(_props?.disabled),
-    onClick: isFormElement(formElement.value) ? undefined : next,
-  }));
-
-  const previousButtonProps = useControlButtonProps(btn => ({
-    'aria-label': btn?.textContent ? undefined : (_props?.previousLabel ?? 'Previous'),
-    tabindex: '0',
-    disabled: _currentSegmentIndex.value === 0 || toValue(_props?.disabled),
-    onClick: previous,
-  }));
-
-  provide(FormFlowContextKey, {
-    isSegmentActive: (segmentId: string) => _currentSegment.value === segmentId,
-    registerSegment: (staticId, userId) => segments.value.push([staticId, userId]),
-  });
-
-  function onSubmit(e: Event) {
-    e.preventDefault();
-    if (toValue(_props?.disabled)) {
+  function saveValues() {
+    const currentSegment = getCurrentSegment();
+    if (!currentSegment) {
       return;
     }
 
-    next();
+    merge(values, cloneDeep(form.values));
+    const state: StepState<TInput> = {
+      values: cloneDeep(form.values) as TInput,
+      issues: form.getIssues() as IssueCollection<Path<TInput>>[],
+    };
+
+    segmentValuesMap.set(currentSegment.id, state);
+    currentSegment.submitted = true;
   }
 
-  const formProps = computed(() => {
-    const isForm = isFormElement(formElement.value);
-
-    return withRefCapture(
-      {
-        novalidate: isForm ? true : undefined,
-        onSubmit: isForm ? onSubmit : undefined,
-      },
-      formElement,
-    );
+  provide(FormFlowContextKey, {
+    isSegmentActive: (segmentId: string) => getCurrentSegment()?.id === segmentId,
+    registerSegment: (metadata: SegmentRegistrationMetadata) =>
+      segments.value.push({
+        id: metadata.id,
+        name: () => toValue(metadata.name),
+        // The first segment is always visited.
+        visited: segments.value.length === 0,
+        submitted: false,
+        getValues: () => segmentValuesMap.get(metadata.id)?.values,
+      }),
   });
 
+  const currentSegment = computed(() => {
+    const curr = getCurrentSegment();
+
+    return {
+      ...curr,
+      name: toValue(curr?.name),
+    };
+  });
+
+  const currentSegmentIndex = computed(() => {
+    const current = currentSegment.value;
+    if (!current) {
+      return -1;
+    }
+
+    return getDomSegments().findIndex(segment => segment.dataset.formSegmentId === current.id);
+  });
+
+  const isLastSegment = computed(() => currentSegmentIndex.value === segments.value.length - 1);
+
   async function moveRelative(delta: number) {
-    const steps = Array.from(formElement.value?.querySelectorAll(`[data-form-segment-id]`) || []) as HTMLElement[];
-    let idx = steps.findIndex(step => step.dataset.active);
+    const domSegments = Array.from(
+      formElement.value?.querySelectorAll(`[data-form-segment-id]`) || [],
+    ) as HTMLElement[];
+    let idx = domSegments.findIndex(step => step.dataset.active);
     if (idx === -1) {
       idx = 0;
     }
 
     const newSegmentIndex = idx + delta;
 
-    if (newSegmentIndex < 0 || newSegmentIndex >= steps.length) {
+    if (newSegmentIndex < 0 || newSegmentIndex >= domSegments.length) {
       return;
     }
 
-    if (steps[newSegmentIndex]) {
-      _currentSegment.value = steps[newSegmentIndex].dataset.formSegmentId;
-      _currentSegmentIndex.value = newSegmentIndex;
-    }
+    beforeSegmentChange(segments.value[newSegmentIndex], () => {
+      if (domSegments[newSegmentIndex]) {
+        currentSegmentId.value = domSegments[newSegmentIndex].dataset.formSegmentId ?? '';
+      }
+    });
 
     restoreSegmentValues();
   }
 
   async function restoreSegmentValues() {
     await nextTick();
+    const currentSegment = getCurrentSegment();
     // restore field values
-    if (_currentSegment.value && segmentValuesMap.has(_currentSegment.value)) {
-      form.setValues(segmentValuesMap.get(_currentSegment.value) as TInput, { behavior: 'replace' });
+    if (currentSegment && hasState(currentSegment.id)) {
+      const state = segmentValuesMap.get(currentSegment.id) as StepState<TInput>;
+      if (state) {
+        form.setValues(state.values, { behavior: 'replace' });
+        form.setErrors(state.issues);
+      }
     }
   }
 
@@ -148,37 +149,70 @@ export function useFormFlow<
     moveRelative(0);
   });
 
-  function goTo(segmentId: SegmentId) {
-    const segments = Array.from(formElement.value?.querySelectorAll(`[data-form-segment-id]`) || []) as HTMLElement[];
-    const idx = segments.findIndex(segment => segment.dataset.formSegmentUserId === String(segmentId));
+  function getDomSegments() {
+    return Array.from(formElement.value?.querySelectorAll(`[data-form-segment-id]`) || []) as HTMLElement[];
+  }
 
-    if (idx === -1 || !segments[idx]) {
-      return;
+  function getSegmentAt(idx: number): { idx: number; segment: SegmentMetadata } | undefined {
+    const domSegments = getDomSegments();
+
+    const i = segments.value.findIndex(segment => segment.id === domSegments[idx].dataset.formSegmentId);
+    if (i === -1) {
+      return undefined;
     }
 
-    beforeSegmentChange(() => {
-      _currentSegment.value = segments[idx].dataset.formSegmentId;
-      _currentSegmentIndex.value = idx;
+    return {
+      idx: i,
+      segment: segments.value[i],
+    };
+  }
+
+  function goTo(segmentId: string | number, predicate?: (context: GoToPredicateContext) => boolean): string {
+    const current = currentSegment.value;
+    const currentIdx = currentSegmentIndex.value;
+
+    let idx = -1;
+    // Converts indices to strings to give it a little tolerance.
+    if (typeof segmentId === 'number') {
+      const segment = getSegmentAt(segmentId);
+      if (segment) {
+        idx = segment.idx;
+      }
+    } else {
+      idx = segments.value.findIndex(segment => toValue(segment.name) === segmentId);
+    }
+
+    if (idx === -1 || !segments.value[idx]) {
+      return String(current.id);
+    }
+
+    if (
+      predicate &&
+      !predicate({
+        segment: segments.value[idx],
+        index: idx,
+        relativeDistance: idx - currentIdx,
+        segments: segments.value,
+      })
+    ) {
+      return String(current.id);
+    }
+
+    beforeSegmentChange(segments.value[idx], () => {
+      currentSegmentId.value = segments.value[idx].id;
 
       restoreSegmentValues();
     });
+
+    return String(segments.value[idx].id);
   }
 
-  const currentSegment = computed(() => {
-    // Make sure to register it as a dependency
-    // eslint-disable-next-line @typescript-eslint/no-unused-expressions
-    _currentSegment.value;
-
-    const segment = segments.value.find(segment => segment[0] === _currentSegment.value);
-    if (segment) {
-      return toValue(segment[1]) ?? segment[0];
-    }
-
-    return undefined;
-  });
+  function hasState(segmentId: number | string) {
+    return segmentValuesMap.has(String(segmentId));
+  }
 
   return {
-    ...form,
+    form,
 
     /**
      * Combined values of all segments.
@@ -196,41 +230,6 @@ export function useFormFlow<
     formElement,
 
     /**
-     * Props to bind to the form flow element, either a form or any other HTML element.
-     */
-    formProps,
-
-    /**
-     * Props to bind to the next button.
-     */
-    nextButtonProps,
-
-    /**
-     * Props to bind to the previous button.
-     */
-    previousButtonProps,
-
-    /**
-     * The ID of the current segment.
-     */
-    currentSegment,
-
-    /**
-     * Activates the next segment in the flow. Useful for stepped forms and form wizards.
-     */
-    next,
-
-    /**
-     * Activates the previous segment in the flow. Useful for stepped forms and form wizards.
-     */
-    previous,
-
-    /**
-     * Registers a callback to be called when the form is done.
-     */
-    onDone,
-
-    /**
      * Activates the specified segment given its ID.
      */
     goTo,
@@ -239,5 +238,40 @@ export function useFormFlow<
      * Registers a callback to be called when the active segment changes.
      */
     onActiveSegmentChange,
+
+    /**
+     * Moves the form flow to the next segment.
+     */
+    moveRelative,
+
+    /**
+     * Whether the segment has a state.
+     */
+    hasState,
+
+    /**
+     * Returns the DOM segments.
+     */
+    getDomSegments,
+
+    /**
+     * The segments.
+     */
+    segments,
+
+    /**
+     * The current segment.
+     */
+    currentSegment,
+
+    /**
+     * The index of the current segment.
+     */
+    currentSegmentIndex,
+
+    /**
+     * Saves the values of the current segment.
+     */
+    saveValues,
   };
 }

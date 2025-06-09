@@ -15,7 +15,7 @@ export function useFlowSegment<TSchema extends GenericFormSchema>(props: FlowSeg
     throw new Error('FormFlowSegment must be used within a FormFlow, did you forget to call `useFormFlow`?');
   }
 
-  formFlow.registerSegment(id, () => props.id);
+  formFlow.registerSegment({ id, name: () => props.name });
   const form = inject(FormKey, null);
 
   const { validate, onValidationDispatch, defineValidationRequest, onValidationDone, dispatchValidateDone } =
@@ -49,7 +49,6 @@ export function useFlowSegment<TSchema extends GenericFormSchema>(props: FlowSeg
     return withRefCapture(
       {
         'data-form-segment-id': id,
-        'data-form-segment-user-id': props.id,
         'data-active': isActive.value ? 'true' : undefined,
       },
       element,
@@ -98,7 +97,7 @@ export function useFlowSegment<TSchema extends GenericFormSchema>(props: FlowSeg
 
 export const FormFlowSegment = /*#__PURE__*/ defineComponent({
   name: 'FormFlowSegment',
-  props: ['as', 'schema', 'id'],
+  props: ['as', 'schema', 'name'],
   setup(props, { attrs, slots }) {
     const { segmentProps, isActive } = useFlowSegment(props);
 
