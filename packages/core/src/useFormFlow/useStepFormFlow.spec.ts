@@ -61,10 +61,19 @@ const SteppedFormFlow = defineComponent({
   },
   emits: ['done'],
   setup(props, { emit }) {
-    const { formProps, values, nextButtonProps, previousButtonProps, currentStep, isLastStep, onDone, goToStep } =
-      useStepFormFlow({
-        initialValues: props.initialValues,
-      });
+    const {
+      formProps,
+      values,
+      nextButtonProps,
+      previousButtonProps,
+      currentStep,
+      isLastStep,
+      onDone,
+      goToStep,
+      isStepActive,
+    } = useStepFormFlow({
+      initialValues: props.initialValues,
+    });
 
     onDone(values => emit('done', values.toObject()));
 
@@ -76,6 +85,7 @@ const SteppedFormFlow = defineComponent({
       currentStep,
       isLastStep,
       goToStep,
+      isStepActive,
     };
   },
   template: `
@@ -85,7 +95,7 @@ const SteppedFormFlow = defineComponent({
         data-testid="form-flow"
       >
         <!-- Render slots (segments) -->
-        <slot :goToStep="goToStep"></slot>
+        <slot :goToStep="goToStep" :isStepActive="isStepActive"></slot>
 
         <!-- Navigation controls -->
         <div data-testid="flow-controls">
@@ -326,8 +336,8 @@ describe('navigation', () => {
     await flush();
 
     // Fill in the address field
-    await expect(screen.getByLabelText('Address')).toBeInTheDocument();
-    await expect(screen.queryByLabelText('Name')).not.toBeInTheDocument();
+    expect(screen.getByLabelText('Address')).toBeInTheDocument();
+    expect(screen.queryByLabelText('Name')).not.toBeInTheDocument();
 
     await fireEvent.update(screen.getByLabelText('Address'), '123 Main St');
     await fireEvent.click(screen.getByTestId('next-button'));
@@ -478,6 +488,183 @@ describe('navigation', () => {
     await flush();
 
     expect(screen.getByText('Step 3')).toBeVisible();
+  });
+
+  test('can give steps a name and use it to navigate with goToStep', async () => {
+    await render({
+      components: {
+        SteppedFormFlow,
+        FormFlowSegment,
+        TextField,
+      },
+      template: `
+          <SteppedFormFlow v-slot="{ goToStep }">
+            <button type="button" @click="goToStep('step1')">Go to Step 1</button>
+            <button type="button" @click="goToStep('step2')">Go to Step 2</button>
+            <button type="button" @click="goToStep('step3')">Go to Step 3</button>
+
+            <FormFlowSegment name="step1">
+              <span>Step 1</span>
+              <TextField
+                label="Name"
+                name="name"
+              />
+            </FormFlowSegment>
+            <FormFlowSegment  name="step2">
+              <span>Step 2</span>
+              <TextField
+                label="Address"
+                name="address"
+              />
+            </FormFlowSegment>
+            <FormFlowSegment name="step3">
+              <span>Step 3</span>
+              <TextField
+                label="Phone"
+                name="phone"
+              />
+            </FormFlowSegment>
+          </SteppedFormFlow>
+        `,
+    });
+
+    await flush();
+
+    // Should start at the first step
+    expect(screen.getByText('Step 1')).toBeVisible();
+    expect(screen.getByLabelText('Name')).toBeVisible();
+
+    // Fill in the name field
+    await fireEvent.update(screen.getByLabelText('Name'), 'John Doe');
+    await flush();
+
+    // Try to go to step 2
+    await fireEvent.click(screen.getByText('Go to Step 2'));
+    await flush();
+
+    // Won't jump to step 2, unless step 1 gets submitted
+    expect(screen.getByText('Step 1')).toBeVisible();
+    expect(screen.getByLabelText('Name')).toBeVisible();
+    expect(screen.queryByLabelText('Address')).not.toBeInTheDocument();
+
+    // Submit step 1
+    await fireEvent.click(screen.getByTestId('next-button'));
+    await flush();
+
+    // Now we are at step 2
+    expect(screen.getByText('Step 2')).toBeVisible();
+    expect(screen.getByLabelText('Address')).toBeVisible();
+
+    // We can go back to step 1
+    await fireEvent.click(screen.getByText('Go to Step 1'));
+    await flush();
+
+    expect(screen.getByText('Step 1')).toBeVisible();
+    expect(screen.getByLabelText('Name')).toBeVisible();
+
+    // Let's go back to step 2
+    await fireEvent.click(screen.getByText('Go to Step 2'));
+    await flush();
+
+    expect(screen.getByText('Step 2')).toBeVisible();
+    expect(screen.getByLabelText('Address')).toBeVisible();
+
+    await fireEvent.update(screen.getByLabelText('Address'), '123 Main St');
+    await fireEvent.click(screen.getByTestId('next-button'));
+    await flush();
+
+    // Should now be on step 3 since previous steps are filled
+    expect(screen.getByText('Step 3')).toBeVisible();
+    expect(screen.getByLabelText('Phone')).toBeVisible();
+
+    // We can go back to step 2
+    await fireEvent.click(screen.getByText('Go to Step 2'));
+    await flush();
+
+    expect(screen.getByText('Step 2')).toBeVisible();
+    expect(screen.getByLabelText('Address')).toBeVisible();
+
+    // We can go back to step 1
+    await fireEvent.click(screen.getByText('Go to Step 1'));
+    await flush();
+
+    expect(screen.getByText('Step 1')).toBeVisible();
+    expect(screen.getByLabelText('Name')).toBeVisible();
+
+    // We can go back to step 3
+    await fireEvent.click(screen.getByText('Go to Step 3'));
+    await flush();
+
+    expect(screen.getByText('Step 3')).toBeVisible();
+  });
+
+  test('can use isStepActive to conditionally render content', async () => {
+    await render({
+      components: {
+        SteppedFormFlow,
+        FormFlowSegment,
+        TextField,
+      },
+      template: `
+          <SteppedFormFlow v-slot="{ goToStep, isStepActive }">
+            <button type="button" :aria-selected="isStepActive('step1')" @click="goToStep('step1')">Go to Step 1</button>
+            <button type="button" :aria-selected="isStepActive('step2')" @click="goToStep('step2')">Go to Step 2</button>
+            <button type="button" :aria-selected="isStepActive('step3')" @click="goToStep('step3')">Go to Step 3</button>
+
+            <FormFlowSegment name="step1">
+              <span>Step 1</span>
+              <TextField
+                label="Name"
+                name="name"
+              />
+            </FormFlowSegment>
+            <FormFlowSegment  name="step2">
+              <span>Step 2</span>
+              <TextField
+                label="Address"
+                name="address"
+              />
+            </FormFlowSegment>
+            <FormFlowSegment name="step3">
+              <span>Step 3</span>
+              <TextField
+                label="Phone"
+                name="phone"
+              />
+            </FormFlowSegment>
+          </SteppedFormFlow>
+        `,
+    });
+
+    await flush();
+
+    // Should start at the first step
+    expect(screen.getByText('Step 1')).toBeVisible();
+    expect(screen.getByLabelText('Name')).toBeVisible();
+
+    expect(screen.getByText('Go to Step 1')).toHaveAttribute('aria-selected', 'true');
+    expect(screen.getByText('Go to Step 2')).toHaveAttribute('aria-selected', 'false');
+    expect(screen.getByText('Go to Step 3')).toHaveAttribute('aria-selected', 'false');
+
+    // Fill in the name field
+    await fireEvent.update(screen.getByLabelText('Name'), 'John Doe');
+    await flush();
+
+    await fireEvent.click(screen.getByTestId('next-button'));
+    await flush();
+
+    expect(screen.getByText('Go to Step 1')).toHaveAttribute('aria-selected', 'false');
+    expect(screen.getByText('Go to Step 2')).toHaveAttribute('aria-selected', 'true');
+    expect(screen.getByText('Go to Step 3')).toHaveAttribute('aria-selected', 'false');
+
+    await fireEvent.update(screen.getByLabelText('Address'), '123 Main St');
+
+    await fireEvent.click(screen.getByTestId('next-button'));
+    await flush();
+
+    expect(screen.getByText('Go to Step 1')).toHaveAttribute('aria-selected', 'false');
+    expect(screen.getByText('Go to Step 2')).toHaveAttribute('aria-selected', 'false');
+    expect(screen.getByText('Go to Step 3')).toHaveAttribute('aria-selected', 'true');
   });
 });
 
