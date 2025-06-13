@@ -42,7 +42,8 @@ export interface SegmentMetadata {
   /**
    * Get the values of the step.
    */
-  getValues: () => Record<string, unknown> | undefined;
+  getValue: () => Record<string, unknown> | undefined;
+}
 }
 
 export interface FormFlowContext {

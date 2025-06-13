@@ -83,7 +83,7 @@ export function useFormFlow<TInput extends FormObject = FormObject>(_props?: For
         // The first segment is always visited.
         visited: segments.value.length === 0,
         submitted: false,
-        getValues: () => segmentValuesMap.value.get(metadata.id)?.values,
+        getValue: () => segmentValuesMap.value.get(metadata.id)?.values,
       }),
   });
 
