@@ -61,11 +61,12 @@ interface _FormProps<TInput extends FormObject> {
   scrollToInvalidFieldOnSubmit?: ScrollIntoViewOptions | boolean;
 }
 
-interface NoSchemaFormProps<TInput extends FormObject> extends _FormProps<TInput> {
+export interface NoSchemaFormProps<TInput extends FormObject> extends _FormProps<TInput> {
   initialValues?: MaybeGetter<MaybeAsync<PartialDeep<TInput>>>;
 }
 
-interface SchemaFormProps<TSchema extends GenericFormSchema> extends _FormProps<StandardSchemaV1.InferInput<TSchema>> {
+export interface SchemaFormProps<TSchema extends GenericFormSchema>
+  extends _FormProps<StandardSchemaV1.InferInput<TSchema>> {
   /**
    * The validation schema for the form.
    */

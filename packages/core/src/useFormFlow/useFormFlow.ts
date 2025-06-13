@@ -1,21 +1,21 @@
 import { computed, nextTick, onMounted, provide, reactive, ref, toValue } from 'vue';
-import { Simplify } from 'type-fest';
-import { FormProps, useForm } from '../useForm';
+import { NoSchemaFormProps, useForm } from '../useForm';
 import { FormObject, IssueCollection, Path } from '../types';
 import { merge } from '../../../shared/src';
 import { cloneDeep } from '../utils/common';
 import { FormFlowContextKey, SegmentMetadata, SegmentRegistrationMetadata } from './types';
 import { asConsumableData, ConsumableData } from '../useForm/useFormActions';
 import { createEventDispatcher } from '../utils/events';
+import { PartialDeep } from 'type-fest';
 
-type SchemalessFormProps<TInput extends FormObject> = Simplify<Omit<FormProps<any, TInput>, 'schema'>>;
+type SchemalessFormProps<TInput extends FormObject> = NoSchemaFormProps<TInput>;
 
 export interface FormFlowProps<TInput extends FormObject> extends SchemalessFormProps<TInput> {
   _dummy?: never;
 }
 
 interface StepState<TValues> {
-  values: TValues;
+  values: PartialDeep<TValues>;
   issues: IssueCollection<Path<TValues>>[];
 }
 
@@ -29,7 +29,7 @@ export interface GoToPredicateContext {
 export function useFormFlow<TInput extends FormObject = FormObject>(_props?: FormFlowProps<TInput>) {
   const currentSegmentId = ref<string>();
   const formElement = ref<HTMLElement>();
-  const values = reactive<TInput>({} as TInput);
+  const values = reactive<PartialDeep<TInput>>({} as PartialDeep<TInput>);
   const segmentValuesMap = new Map<string, StepState<TInput>>();
   const form = useForm(_props);
   const segments = ref<SegmentMetadata[]>([]);
@@ -66,12 +66,11 @@ export function useFormFlow<TInput extends FormObject = FormObject>(_props?: For
     }
 
     merge(values, cloneDeep(form.values));
-    const state: StepState<TInput> = {
-      values: cloneDeep(form.values) as TInput,
+    segmentValuesMap.set(currentSegment.id, {
+      values: cloneDeep(form.values),
       issues: form.getIssues() as IssueCollection<Path<TInput>>[],
-    };
+    });
 
-    segmentValuesMap.set(currentSegment.id, state);
     currentSegment.submitted = true;
   }
 
