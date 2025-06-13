@@ -5,6 +5,7 @@ import { useStepFormFlow } from '.';
 import { flush } from '@test-utils/flush';
 import { useTextField } from '../useTextField';
 import { FormFlowSegment } from './useFlowSegment';
+import { z } from 'zod';
 
 // Simple TextField component for tests
 const TextField = defineComponent({
@@ -23,7 +24,7 @@ const TextField = defineComponent({
     },
   },
   setup(props) {
-    const { inputProps, labelProps, fieldValue } = useTextField({
+    const { inputProps, labelProps, fieldValue, errorMessage, errorMessageProps } = useTextField({
       name: () => props.name,
       label: props.label,
     });
@@ -32,6 +33,8 @@ const TextField = defineComponent({
       inputProps,
       labelProps,
       fieldValue,
+      errorMessage,
+      errorMessageProps,
     };
   },
   template: `
@@ -42,6 +45,7 @@ const TextField = defineComponent({
       />
 
       {{ fieldValue }}
+      <div v-bind="errorMessageProps">{{ errorMessage }}</div>
     </div>
   `,
 });
@@ -57,7 +61,7 @@ const SteppedFormFlow = defineComponent({
   },
   emits: ['done'],
   setup(props, { emit }) {
-    const { formProps, values, nextButtonProps, previousButtonProps, currentStep, isLastStep, onDone } =
+    const { formProps, values, nextButtonProps, previousButtonProps, currentStep, isLastStep, onDone, goToStep } =
       useStepFormFlow({
         initialValues: props.initialValues,
       });
@@ -71,6 +75,7 @@ const SteppedFormFlow = defineComponent({
       previousButtonProps,
       currentStep,
       isLastStep,
+      goToStep,
     };
   },
   template: `
@@ -80,7 +85,7 @@ const SteppedFormFlow = defineComponent({
         data-testid="form-flow"
       >
         <!-- Render slots (segments) -->
-        <slot></slot>
+        <slot :goToStep="goToStep"></slot>
 
         <!-- Navigation controls -->
         <div data-testid="flow-controls">
@@ -107,38 +112,7 @@ const SteppedFormFlow = defineComponent({
   `,
 });
 
-describe('stepped form', () => {
-  test('stepped form should not have a11y violations', async () => {
-    await render({
-      components: {
-        SteppedFormFlow,
-        FormFlowSegment,
-        TextField,
-      },
-      template: `
-          <SteppedFormFlow data-testid="fixture">
-            <FormFlowSegment>
-              <TextField
-                label="Name"
-                name="name"
-              />
-            </FormFlowSegment>
-            <FormFlowSegment>
-              <TextField
-                label="Address"
-                name="address"
-              />
-            </FormFlowSegment>
-          </SteppedFormFlow>
-        `,
-    });
-
-    await flush();
-    vi.useRealTimers();
-    expect(await axe(screen.getByTestId('fixture'))).toHaveNoViolations();
-    vi.useFakeTimers();
-  });
-
+describe('navigation', () => {
   test('should navigate between steps with next and previous buttons and maintain field values', async () => {
     await render({
       components: {
@@ -270,6 +244,273 @@ describe('stepped form', () => {
       name: 'John Doe',
       address: '123 Main St',
     });
+  });
+
+  test('should not allow moving to the next step unless previous step passes validation', async () => {
+    const step1 = z.object({
+      name: z.string().min(1),
+    });
+
+    const step2 = z.object({
+      address: z.string().min(1),
+    });
+
+    const step3 = z.object({
+      phone: z.string().min(1),
+    });
+
+    const onDone = vi.fn();
+
+    await render({
+      setup() {
+        return {
+          step1,
+          step2,
+          step3,
+          onDone,
+        };
+      },
+      components: {
+        SteppedFormFlow,
+        FormFlowSegment,
+        TextField,
+      },
+      template: `
+          <SteppedFormFlow @done="onDone">
+            <FormFlowSegment :schema="step1">
+              <span>Step 1</span>
+              <TextField
+                label="Name"
+                name="name"
+              />
+            </FormFlowSegment>
+            <FormFlowSegment :schema="step2">
+              <span>Step 2</span>
+              <TextField
+                label="Address"
+                name="address"
+              />
+            </FormFlowSegment>
+            <FormFlowSegment :schema="step3">
+              <span>Step 3</span>
+              <TextField
+                label="Phone"
+                name="phone"
+              />
+            </FormFlowSegment>
+          </SteppedFormFlow>
+        `,
+    });
+
+    await flush();
+
+    // Should start at the first step
+    expect(screen.getByText('Step 1')).toBeVisible();
+    expect(screen.getByLabelText('Name')).toBeVisible();
+
+    // Try to go to step 2 without filling step 1
+    await fireEvent.click(screen.getByTestId('next-button'));
+    await flush();
+
+    // Should still be on step 1
+    expect(screen.getByText('Step 1')).toBeVisible();
+    expect(screen.getByLabelText('Name')).toBeVisible();
+    expect(screen.queryByLabelText('Address')).not.toBeInTheDocument();
+    expect(screen.getByLabelText('Name')).toHaveErrorMessage();
+
+    // Fill in the name field
+    await fireEvent.update(screen.getByLabelText('Name'), 'John Doe');
+
+    // Go to the next step
+    await fireEvent.click(screen.getByTestId('next-button'));
+    await flush();
+
+    // Fill in the address field
+    await expect(screen.getByLabelText('Address')).toBeInTheDocument();
+    await expect(screen.queryByLabelText('Name')).not.toBeInTheDocument();
+
+    await fireEvent.update(screen.getByLabelText('Address'), '123 Main St');
+    await fireEvent.click(screen.getByTestId('next-button'));
+    await flush();
+
+    // Should now be on step 3 since previous steps are filled
+    expect(screen.getByText('Step 3')).toBeVisible();
+    expect(screen.getByLabelText('Phone')).toBeVisible();
+    expect(screen.queryByLabelText('Address')).not.toBeInTheDocument();
+
+    await fireEvent.update(screen.getByLabelText('Phone'), '1234567890');
+    await fireEvent.click(screen.getByTestId('next-button'));
+    await flush();
+
+    expect(onDone).toHaveBeenCalledTimes(1);
+    expect(onDone).toHaveBeenCalledWith({
+      name: 'John Doe',
+      address: '123 Main St',
+      phone: '1234567890',
+    });
+  });
+
+  test('should allow jumping to later steps if previous steps are valid and submitted', async () => {
+    const step1 = z.object({
+      name: z.string().min(1),
+    });
+
+    const step2 = z.object({
+      address: z.string().min(1),
+    });
+
+    const step3 = z.object({
+      phone: z.string().min(1),
+    });
+
+    const onDone = vi.fn();
+
+    await render({
+      setup() {
+        return {
+          step1,
+          step2,
+          step3,
+          onDone,
+        };
+      },
+      components: {
+        SteppedFormFlow,
+        FormFlowSegment,
+        TextField,
+      },
+      template: `
+          <SteppedFormFlow @done="onDone" v-slot="{ goToStep }">
+            <button type="button" @click="goToStep(0)">Go to Step 1</button>
+            <button type="button" @click="goToStep(1)">Go to Step 2</button>
+            <button type="button" @click="goToStep(2)">Go to Step 3</button>
+
+            <FormFlowSegment :schema="step1">
+              <span>Step 1</span>
+              <TextField
+                label="Name"
+                name="name"
+              />
+            </FormFlowSegment>
+            <FormFlowSegment :schema="step2">
+              <span>Step 2</span>
+              <TextField
+                label="Address"
+                name="address"
+              />
+            </FormFlowSegment>
+            <FormFlowSegment :schema="step3">
+              <span>Step 3</span>
+              <TextField
+                label="Phone"
+                name="phone"
+              />
+            </FormFlowSegment>
+          </SteppedFormFlow>
+        `,
+    });
+
+    await flush();
+
+    // Should start at the first step
+    expect(screen.getByText('Step 1')).toBeVisible();
+    expect(screen.getByLabelText('Name')).toBeVisible();
+
+    // Fill in the name field
+    await fireEvent.update(screen.getByLabelText('Name'), 'John Doe');
+    await flush();
+
+    // Try to go to step 2
+    await fireEvent.click(screen.getByText('Go to Step 2'));
+    await flush();
+
+    // Won't jump to step 2, unless step 1 gets submitted
+    expect(screen.getByText('Step 1')).toBeVisible();
+    expect(screen.getByLabelText('Name')).toBeVisible();
+    expect(screen.queryByLabelText('Address')).not.toBeInTheDocument();
+
+    // Submit step 1
+    await fireEvent.click(screen.getByTestId('next-button'));
+    await flush();
+
+    // Now we are at step 2
+    expect(screen.getByText('Step 2')).toBeVisible();
+    expect(screen.getByLabelText('Address')).toBeVisible();
+
+    // We can go back to step 1
+    await fireEvent.click(screen.getByText('Go to Step 1'));
+    await flush();
+
+    expect(screen.getByText('Step 1')).toBeVisible();
+    expect(screen.getByLabelText('Name')).toBeVisible();
+
+    // Let's go back to step 2
+    await fireEvent.click(screen.getByText('Go to Step 2'));
+    await flush();
+
+    expect(screen.getByText('Step 2')).toBeVisible();
+    expect(screen.getByLabelText('Address')).toBeVisible();
+
+    await fireEvent.update(screen.getByLabelText('Address'), '123 Main St');
+    await fireEvent.click(screen.getByTestId('next-button'));
+    await flush();
+
+    // Should now be on step 3 since previous steps are filled
+    expect(screen.getByText('Step 3')).toBeVisible();
+    expect(screen.getByLabelText('Phone')).toBeVisible();
+
+    // We can go back to step 2
+    await fireEvent.click(screen.getByText('Go to Step 2'));
+    await flush();
+
+    expect(screen.getByText('Step 2')).toBeVisible();
+    expect(screen.getByLabelText('Address')).toBeVisible();
+
+    // We can go back to step 1
+    await fireEvent.click(screen.getByText('Go to Step 1'));
+    await flush();
+
+    expect(screen.getByText('Step 1')).toBeVisible();
+    expect(screen.getByLabelText('Name')).toBeVisible();
+
+    // We can go back to step 3
+    await fireEvent.click(screen.getByText('Go to Step 3'));
+    await flush();
+
+    expect(screen.getByText('Step 3')).toBeVisible();
+  });
+});
+
+describe('a11y', () => {
+  test('stepped form should not have a11y violations', async () => {
+    await render({
+      components: {
+        SteppedFormFlow,
+        FormFlowSegment,
+        TextField,
+      },
+      template: `
+          <SteppedFormFlow data-testid="fixture">
+            <FormFlowSegment>
+              <TextField
+                label="Name"
+                name="name"
+              />
+            </FormFlowSegment>
+            <FormFlowSegment>
+              <TextField
+                label="Address"
+                name="address"
+              />
+            </FormFlowSegment>
+          </SteppedFormFlow>
+        `,
+    });
+
+    await flush();
+    vi.useRealTimers();
+    expect(await axe(screen.getByTestId('fixture'))).toHaveNoViolations();
+    vi.useFakeTimers();
   });
 
   describe('button accessibility', () => {
