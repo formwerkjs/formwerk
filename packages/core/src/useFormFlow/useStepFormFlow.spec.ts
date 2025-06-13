@@ -71,6 +71,7 @@ const SteppedFormFlow = defineComponent({
       onDone,
       goToStep,
       isStepActive,
+      getStepValue,
     } = useStepFormFlow({
       initialValues: props.initialValues,
     });
@@ -86,6 +87,7 @@ const SteppedFormFlow = defineComponent({
       isLastStep,
       goToStep,
       isStepActive,
+      getStepValue,
     };
   },
   template: `
@@ -95,7 +97,7 @@ const SteppedFormFlow = defineComponent({
         data-testid="form-flow"
       >
         <!-- Render slots (segments) -->
-        <slot :goToStep="goToStep" :isStepActive="isStepActive"></slot>
+        <slot :goToStep="goToStep" :isStepActive="isStepActive" :getStepValue="getStepValue"></slot>
 
         <!-- Navigation controls -->
         <div data-testid="flow-controls">
@@ -665,6 +667,61 @@ describe('navigation', () => {
     expect(screen.getByText('Go to Step 1')).toHaveAttribute('aria-selected', 'false');
     expect(screen.getByText('Go to Step 2')).toHaveAttribute('aria-selected', 'false');
     expect(screen.getByText('Go to Step 3')).toHaveAttribute('aria-selected', 'true');
+  });
+});
+
+describe('state', () => {
+  test('can get step values by index', async () => {
+    await render({
+      components: {
+        SteppedFormFlow,
+        FormFlowSegment,
+        TextField,
+      },
+      template: `
+      <SteppedFormFlow v-slot="{ getStepValue }">
+        <pre data-testid="step-1-values">{{ getStepValue(0) }}</pre>
+        <pre data-testid="step-2-values">{{ getStepValue(1) }}</pre>
+
+        <FormFlowSegment name="step1">
+          <span>Step 1</span>
+          <TextField
+            label="Name"
+            name="name"
+          />
+        </FormFlowSegment>
+        <FormFlowSegment  name="step2">
+          <span>Step 2</span>
+          <TextField
+            label="Address"
+            name="address"
+          />
+        </FormFlowSegment>
+      </SteppedFormFlow>
+    `,
+    });
+
+    await flush();
+
+    expect(screen.getByTestId('step-1-values')).toHaveTextContent('{}');
+    expect(screen.getByTestId('step-2-values')).toHaveTextContent('{}');
+
+    // Fill in the name field
+    await fireEvent.update(screen.getByLabelText('Name'), 'John Doe');
+    await flush();
+
+    await fireEvent.click(screen.getByTestId('next-button'));
+    await flush();
+
+    expect(screen.getByTestId('step-1-values')).toHaveTextContent('{ "name": "John Doe" }');
+    expect(screen.getByTestId('step-2-values')).toHaveTextContent('{}');
+
+    await fireEvent.update(screen.getByLabelText('Address'), '123 Main St');
+    await fireEvent.click(screen.getByTestId('next-button'));
+    await flush();
+
+    expect(screen.getByTestId('step-1-values')).toHaveTextContent('{ "name": "John Doe" }');
+    expect(screen.getByTestId('step-2-values')).toHaveTextContent('{ "address": "123 Main St" }');
   });
 });
 

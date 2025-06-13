@@ -4,8 +4,17 @@ import InputText from './components/InputText.vue';
 import InputTextArea from './components/InputTextArea.vue';
 import z from 'zod';
 
-const { formProps, nextButtonProps, previousButtonProps, onDone, isLastStep, FormStep, goToStep, isStepActive } =
-  useStepFormFlow();
+const {
+  formProps,
+  nextButtonProps,
+  previousButtonProps,
+  onDone,
+  isLastStep,
+  FormStep,
+  goToStep,
+  isStepActive,
+  getStepValue,
+} = useStepFormFlow();
 
 const step1 = z.object({
   name: z.string(),
@@ -51,15 +60,21 @@ onDone(data => {
     </div>
 
     <FormStep name="step-1" :schema="step1">
+      {{ getStepValue(0) }}
+
       <InputText name="name" label="Name" />
       <InputText name="email" label="Email" />
     </FormStep>
 
     <FormStep name="step-2" :schema="step2">
+      {{ getStepValue(1) }}
+
       <InputTextArea name="address" label="Address" />
     </FormStep>
 
     <FormStep name="step-3">
+      {{ getStepValue(2) }}
+
       <InputText name="city" label="City" />
     </FormStep>
 

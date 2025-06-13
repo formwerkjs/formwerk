@@ -100,6 +100,10 @@ export function useStepFormFlow<TInput extends FormObject>(props?: StepFormFlowP
     return segmentId === flow.currentSegment.value.name;
   }
 
+  function getStepValue(segmentId: number | string) {
+    return flow.getSegmentValues(segmentId);
+  }
+
   return {
     ...form,
 
@@ -158,5 +162,10 @@ export function useStepFormFlow<TInput extends FormObject>(props?: StepFormFlowP
      * Whether the given step is active.
      */
     isStepActive,
+
+    /**
+     * Gets the values of a step.
+     */
+    getStepValue,
   };
 }

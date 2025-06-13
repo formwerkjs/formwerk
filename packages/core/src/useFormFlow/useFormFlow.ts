@@ -1,4 +1,4 @@
-import { computed, nextTick, onMounted, provide, reactive, ref, toValue } from 'vue';
+import { computed, nextTick, onMounted, provide, reactive, Ref, ref, toValue } from 'vue';
 import { NoSchemaFormProps, useForm } from '../useForm';
 import { FormObject, IssueCollection, Path } from '../types';
 import { merge } from '../../../shared/src';
@@ -30,7 +30,7 @@ export function useFormFlow<TInput extends FormObject = FormObject>(_props?: For
   const currentSegmentId = ref<string>();
   const formElement = ref<HTMLElement>();
   const values = reactive<PartialDeep<TInput>>({} as PartialDeep<TInput>);
-  const segmentValuesMap = new Map<string, StepState<TInput>>();
+  const segmentValuesMap = ref(new Map<string, StepState<TInput>>()) as Ref<Map<string, StepState<TInput>>>;
   const form = useForm(_props);
   const segments = ref<SegmentMetadata[]>([]);
 
@@ -66,7 +66,7 @@ export function useFormFlow<TInput extends FormObject = FormObject>(_props?: For
     }
 
     merge(values, cloneDeep(form.values));
-    segmentValuesMap.set(currentSegment.id, {
+    segmentValuesMap.value.set(currentSegment.id, {
       values: cloneDeep(form.values),
       issues: form.getIssues() as IssueCollection<Path<TInput>>[],
     });
@@ -83,7 +83,7 @@ export function useFormFlow<TInput extends FormObject = FormObject>(_props?: For
         // The first segment is always visited.
         visited: segments.value.length === 0,
         submitted: false,
-        getValues: () => segmentValuesMap.get(metadata.id)?.values,
+        getValues: () => segmentValuesMap.value.get(metadata.id)?.values,
       }),
   });
 
@@ -136,7 +136,7 @@ export function useFormFlow<TInput extends FormObject = FormObject>(_props?: For
     const currentSegment = getCurrentSegment();
     // restore field values
     if (currentSegment && hasState(currentSegment.id)) {
-      const state = segmentValuesMap.get(currentSegment.id) as StepState<TInput>;
+      const state = segmentValuesMap.value.get(currentSegment.id) as StepState<TInput>;
       if (state) {
         form.setValues(state.values, { behavior: 'replace' });
         form.setErrors(state.issues);
@@ -207,7 +207,26 @@ export function useFormFlow<TInput extends FormObject = FormObject>(_props?: For
   }
 
   function hasState(segmentId: number | string) {
-    return segmentValuesMap.has(String(segmentId));
+    return segmentValuesMap.value.has(String(segmentId));
+  }
+
+  function getSegmentValues(segmentId: string | number): PartialDeep<TInput> {
+    let idx = -1;
+    if (typeof segmentId === 'number') {
+      const segment = getSegmentAt(segmentId);
+      if (segment) {
+        idx = segment.idx;
+      }
+    } else {
+      idx = segments.value.findIndex(segment => toValue(segment.name) === segmentId);
+    }
+
+    const segment = segments.value[idx];
+    if (!segment) {
+      return {} as PartialDeep<TInput>;
+    }
+
+    return segmentValuesMap.value.get(segment.id)?.values ?? ({} as PartialDeep<TInput>);
   }
 
   return {
@@ -272,5 +291,10 @@ export function useFormFlow<TInput extends FormObject = FormObject>(_props?: For
      * Saves the values of the current segment.
      */
     saveValues,
+
+    /**
+     * Gets the values of a segment.
+     */
+    getSegmentValues,
   };
 }
