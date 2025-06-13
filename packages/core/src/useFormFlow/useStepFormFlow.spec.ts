@@ -70,7 +70,7 @@ const SteppedFormFlow = defineComponent({
       isLastStep,
       onDone,
       goToStep,
-      isStepActive,
+      isCurrentStep,
       getStepValue,
     } = useStepFormFlow({
       initialValues: props.initialValues,
@@ -86,7 +86,7 @@ const SteppedFormFlow = defineComponent({
       currentStep,
       isLastStep,
       goToStep,
-      isStepActive,
+      isCurrentStep,
       getStepValue,
     };
   },
@@ -97,7 +97,7 @@ const SteppedFormFlow = defineComponent({
         data-testid="form-flow"
       >
         <!-- Render slots (segments) -->
-        <slot :goToStep="goToStep" :isStepActive="isStepActive" :getStepValue="getStepValue"></slot>
+        <slot :goToStep="goToStep" :isCurrentStep="isCurrentStep" :getStepValue="getStepValue"></slot>
 
         <!-- Navigation controls -->
         <div data-testid="flow-controls">
@@ -600,7 +600,7 @@ describe('navigation', () => {
     expect(screen.getByText('Step 3')).toBeVisible();
   });
 
-  test('can use isStepActive to conditionally render content', async () => {
+  test('can use isCurrentStep to conditionally render content', async () => {
     await render({
       components: {
         SteppedFormFlow,
@@ -608,10 +608,10 @@ describe('navigation', () => {
         TextField,
       },
       template: `
-          <SteppedFormFlow v-slot="{ goToStep, isStepActive }">
-            <button type="button" :aria-selected="isStepActive('step1')" @click="goToStep('step1')">Go to Step 1</button>
-            <button type="button" :aria-selected="isStepActive('step2')" @click="goToStep('step2')">Go to Step 2</button>
-            <button type="button" :aria-selected="isStepActive('step3')" @click="goToStep('step3')">Go to Step 3</button>
+          <SteppedFormFlow v-slot="{ goToStep, isCurrentStep }">
+            <button type="button" :aria-selected="isCurrentStep('step1')" @click="goToStep('step1')">Go to Step 1</button>
+            <button type="button" :aria-selected="isCurrentStep('step2')" @click="goToStep('step2')">Go to Step 2</button>
+            <button type="button" :aria-selected="isCurrentStep('step3')" @click="goToStep('step3')">Go to Step 3</button>
 
             <FormFlowSegment name="step1">
               <span>Step 1</span>

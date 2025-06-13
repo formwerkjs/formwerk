@@ -12,7 +12,7 @@ const {
   isLastStep,
   FormStep,
   goToStep,
-  isStepActive,
+  isCurrentStep,
   getStepValue,
 } = useStepFormFlow();
 
@@ -36,7 +36,7 @@ onDone(data => {
       <button
         type="button"
         class="bg-gray-700 p-2 rounded-full aria-selected:bg-emerald-500 hover:bg-gray-500"
-        :aria-selected="isStepActive(0)"
+        :aria-selected="isCurrentStep(0)"
         @click="goToStep(0)"
       >
         Go to step 1
@@ -44,7 +44,7 @@ onDone(data => {
       <button
         type="button"
         class="bg-gray-700 p-2 rounded-full aria-selected:bg-emerald-500 hover:bg-gray-500"
-        :aria-selected="isStepActive(1)"
+        :aria-selected="isCurrentStep(1)"
         @click="goToStep(1)"
       >
         Go to step 2
@@ -52,7 +52,7 @@ onDone(data => {
       <button
         type="button"
         class="bg-gray-700 p-2 rounded-full aria-selected:bg-emerald-500 hover:bg-gray-500"
-        :aria-selected="isStepActive(2)"
+        :aria-selected="isCurrentStep(2)"
         @click="goToStep(2)"
       >
         Go to step 3

@@ -92,7 +92,7 @@ export function useStepFormFlow<TInput extends FormObject>(props?: StepFormFlowP
     });
   }
 
-  function isStepActive(segmentId: number | string) {
+  function isCurrentStep(segmentId: number | string) {
     if (typeof segmentId === 'number') {
       return segmentId === flow.currentSegmentIndex.value;
     }
@@ -159,9 +159,9 @@ export function useStepFormFlow<TInput extends FormObject>(props?: StepFormFlowP
     FormStep: FormFlowSegment,
 
     /**
-     * Whether the given step is active.
+     * Whether the given step is active (i.e. the current step).
      */
-    isStepActive,
+    isCurrentStep,
 
     /**
      * Gets the values of a step.
