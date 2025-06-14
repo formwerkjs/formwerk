@@ -1,12 +1,13 @@
 import { computed, nextTick, onMounted, provide, reactive, Ref, ref, toValue } from 'vue';
 import { NoSchemaFormProps, useForm } from '../useForm';
 import { FormObject, IssueCollection, Path } from '../types';
-import { merge } from '../../../shared/src';
+import { isObject, merge } from '../../../shared/src';
 import { cloneDeep } from '../utils/common';
 import { FormFlowContextKey, SegmentMetadata, SegmentRegistrationMetadata } from './types';
 import { asConsumableData, ConsumableData } from '../useForm/useFormActions';
 import { createEventDispatcher } from '../utils/events';
 import { PartialDeep } from 'type-fest';
+import { resolveSegmentMetadata } from './utils';
 
 type SchemalessFormProps<TInput extends FormObject> = NoSchemaFormProps<TInput>;
 
@@ -89,11 +90,11 @@ export function useFormFlow<TInput extends FormObject = FormObject>(_props?: For
 
   const currentSegment = computed(() => {
     const curr = getCurrentSegment();
+    if (!curr) {
+      return null;
+    }
 
-    return {
-      ...curr,
-      name: toValue(curr?.name),
-    };
+    return resolveSegmentMetadata(curr);
   });
 
   const currentSegmentIndex = computed(() => {
@@ -107,7 +108,7 @@ export function useFormFlow<TInput extends FormObject = FormObject>(_props?: For
 
   const isLastSegment = computed(() => currentSegmentIndex.value === segments.value.length - 1);
 
-  async function moveRelative(delta: number) {
+  function resolveRelative(delta: number): SegmentMetadata | null {
     const domSegments = Array.from(
       formElement.value?.querySelectorAll(`[data-form-segment-id]`) || [],
     ) as HTMLElement[];
@@ -117,18 +118,11 @@ export function useFormFlow<TInput extends FormObject = FormObject>(_props?: For
     }
 
     const newSegmentIndex = idx + delta;
-
     if (newSegmentIndex < 0 || newSegmentIndex >= domSegments.length) {
-      return;
+      return null;
     }
 
-    beforeSegmentChange(segments.value[newSegmentIndex], () => {
-      if (domSegments[newSegmentIndex]) {
-        currentSegmentId.value = domSegments[newSegmentIndex].dataset.formSegmentId ?? '';
-      }
-    });
-
-    restoreSegmentValues();
+    return segments.value[newSegmentIndex] ?? null;
   }
 
   async function restoreSegmentValues() {
@@ -143,10 +137,6 @@ export function useFormFlow<TInput extends FormObject = FormObject>(_props?: For
       }
     }
   }
-
-  onMounted(() => {
-    moveRelative(0);
-  });
 
   function getDomSegments() {
     return Array.from(formElement.value?.querySelectorAll(`[data-form-segment-id]`) || []) as HTMLElement[];
@@ -166,7 +156,10 @@ export function useFormFlow<TInput extends FormObject = FormObject>(_props?: For
     };
   }
 
-  function goTo(segmentId: string | number, predicate?: (context: GoToPredicateContext) => boolean): string {
+  function goTo(
+    segmentId: string | number | SegmentMetadata,
+    predicate?: (context: GoToPredicateContext) => boolean,
+  ): string {
     const current = currentSegment.value;
     const currentIdx = currentSegmentIndex.value;
 
@@ -177,12 +170,14 @@ export function useFormFlow<TInput extends FormObject = FormObject>(_props?: For
       if (segment) {
         idx = segment.idx;
       }
+    } else if (isObject<SegmentMetadata>(segmentId)) {
+      idx = segments.value.findIndex(segment => segment.id === segmentId.id);
     } else {
       idx = segments.value.findIndex(segment => toValue(segment.name) === segmentId);
     }
 
     if (idx === -1 || !segments.value[idx]) {
-      return String(current.id);
+      return current?.id ?? '';
     }
 
     if (
@@ -194,7 +189,7 @@ export function useFormFlow<TInput extends FormObject = FormObject>(_props?: For
         segments: segments.value,
       })
     ) {
-      return String(current.id);
+      return current?.id ?? '';
     }
 
     beforeSegmentChange(segments.value[idx], () => {
@@ -229,6 +224,17 @@ export function useFormFlow<TInput extends FormObject = FormObject>(_props?: For
     return segmentValuesMap.value.get(segment.id)?.values ?? ({} as PartialDeep<TInput>);
   }
 
+  function moveRelative(delta: number) {
+    const next = resolveRelative(delta);
+    if (next) {
+      goTo(next);
+    }
+  }
+
+  onMounted(() => {
+    moveRelative(0);
+  });
+
   return {
     form,
 
@@ -258,7 +264,12 @@ export function useFormFlow<TInput extends FormObject = FormObject>(_props?: For
     onActiveSegmentChange,
 
     /**
-     * Moves the form flow to the next segment.
+     * Resolves the step that is relative to the current step by the given delta.
+     */
+    resolveRelative,
+
+    /**
+     * Moves the form flow relative to the current step by the given delta.
      */
     moveRelative,
 

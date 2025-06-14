@@ -1,11 +1,14 @@
 import { computed, toValue } from 'vue';
 import { useControlButtonProps } from '../helpers/useControlButtonProps';
-import { cloneDeep, isFormElement, withRefCapture } from '../utils/common';
+import { cloneDeep, isFormElement, warn, withRefCapture } from '../utils/common';
 import { asConsumableData, ConsumableData } from '../useForm/useFormActions';
 import { createEventDispatcher } from '../utils/events';
-import { FormObject } from '../types';
+import { FormObject, MaybeAsync } from '../types';
 import { FormFlowProps, useFormFlow } from './useFormFlow';
 import { FormFlowSegment } from './useFlowSegment';
+import { ResolvedSegmentMetadata, SegmentMetadata } from './types';
+import { PartialDeep } from 'type-fest';
+import { resolveSegmentMetadata } from './utils';
 
 export interface StepFormFlowProps<TInput extends FormObject> extends FormFlowProps<TInput> {
   /**
@@ -19,8 +22,25 @@ export interface StepFormFlowProps<TInput extends FormObject> extends FormFlowPr
   previousLabel?: string;
 }
 
+type StepResolver<TInput extends FormObject> = (
+  ctx: StepResolveContext<TInput>,
+) => MaybeAsync<SegmentMetadata | ResolvedSegmentMetadata | string | number | null | void>;
+
+export interface StepResolveContext<TInput extends FormObject> {
+  currentStep: ResolvedSegmentMetadata;
+  currentIndex: number;
+  visitedSteps: ResolvedSegmentMetadata[];
+  isLastStep: boolean;
+  steps: ResolvedSegmentMetadata[];
+  values: PartialDeep<TInput>;
+  direction: 'next' | 'previous';
+  next(): MaybeAsync<SegmentMetadata | null>;
+  previous(): MaybeAsync<SegmentMetadata | null>;
+}
+
 export function useStepFormFlow<TInput extends FormObject>(props?: StepFormFlowProps<TInput>) {
   const { form, ...flow } = useFormFlow(props);
+  let stepResolver: StepResolver<TInput> | null = null;
   const [dispatchDone, onDone] = createEventDispatcher<ConsumableData<TInput>>('done');
 
   function onSubmit(e: Event) {
@@ -44,7 +64,50 @@ export function useStepFormFlow<TInput extends FormObject>(props?: StepFormFlowP
     );
   });
 
-  const next = form.handleSubmit(async () => {
+  function createStepResolverContext(direction: 'next' | 'previous'): StepResolveContext<TInput> {
+    const current = flow.currentSegment.value;
+    if (!current) {
+      if (__DEV__) {
+        warn(
+          'There is no current step resolved, maybe you are trying to resolve a step before the first step is resolved?',
+        );
+      }
+
+      return {
+        currentStep: {
+          id: '',
+          name: '',
+          visited: false,
+          submitted: false,
+          getValue: () => undefined,
+        },
+        currentIndex: 0,
+        visitedSteps: [],
+        isLastStep: false,
+        steps: [],
+        values: {} as PartialDeep<TInput>,
+        direction,
+        next: () => null,
+        previous: () => null,
+      };
+    }
+
+    const resolvedSteps = flow.segments.value.map(resolveSegmentMetadata);
+
+    return {
+      currentStep: current,
+      currentIndex: flow.currentSegmentIndex.value,
+      steps: resolvedSteps,
+      visitedSteps: resolvedSteps.filter(segment => segment.visited),
+      isLastStep: flow.isLastSegment.value,
+      values: flow.values as PartialDeep<TInput>,
+      direction,
+      next: () => flow.resolveRelative(1),
+      previous: () => flow.resolveRelative(-1),
+    };
+  }
+
+  function defaultNext() {
     if (flow.isLastSegment.value) {
       flow.saveValues();
       dispatchDone(asConsumableData(cloneDeep(flow.values) as TInput));
@@ -52,10 +115,23 @@ export function useStepFormFlow<TInput extends FormObject>(props?: StepFormFlowP
     }
 
     flow.moveRelative(1);
+  }
+
+  const next = form.handleSubmit(async () => {
+    if (!stepResolver) {
+      return defaultNext();
+    }
+
+    await stepResolver(createStepResolverContext('next'));
   });
 
-  function previous() {
-    flow.moveRelative(-1);
+  async function previous() {
+    if (!stepResolver) {
+      flow.moveRelative(-1);
+      return;
+    }
+
+    await stepResolver(createStepResolverContext('previous'));
   }
 
   const nextButtonProps = useControlButtonProps(btn => ({
@@ -97,11 +173,15 @@ export function useStepFormFlow<TInput extends FormObject>(props?: StepFormFlowP
       return segmentId === flow.currentSegmentIndex.value;
     }
 
-    return segmentId === flow.currentSegment.value.name;
+    return segmentId === flow.currentSegment.value?.name;
   }
 
   function getStepValue(segmentId: number | string) {
     return flow.getSegmentValues(segmentId);
+  }
+
+  function onBeforeStepResolve(resolver: StepResolver<TInput>) {
+    stepResolver = resolver;
   }
 
   return {
@@ -167,5 +247,10 @@ export function useStepFormFlow<TInput extends FormObject>(props?: StepFormFlowP
      * Gets the values of a step.
      */
     getStepValue,
+
+    /**
+     * A callback to be called before a step is resolved.
+     */
+    onBeforeStepResolve,
   };
 }

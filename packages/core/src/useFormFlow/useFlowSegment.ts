@@ -15,7 +15,7 @@ export function useFlowSegment<TSchema extends GenericFormSchema>(props: FlowSeg
     throw new Error('FormFlowSegment must be used within a FormFlow, did you forget to call `useFormFlow`?');
   }
 
-  formFlow.registerSegment({ id, name: () => props.name });
+  formFlow.registerSegment({ id, name: () => props.name ?? id });
   const form = inject(FormKey, null);
 
   const { validate, onValidationDispatch, defineValidationRequest, onValidationDone, dispatchValidateDone } =

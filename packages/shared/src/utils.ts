@@ -47,8 +47,9 @@ export function isIndex(value: unknown): value is number {
   return Number(value) >= 0;
 }
 
-export const isObject = (obj: unknown): obj is Record<string, unknown> =>
-  obj !== null && !!obj && typeof obj === 'object' && !Array.isArray(obj);
+export function isObject<TObj = Record<string, unknown>>(obj: unknown): obj is TObj {
+  return obj !== null && !!obj && typeof obj === 'object' && !Array.isArray(obj);
+}
 
 // https://github.com/bameyrick/throttle-typescript
 type ThrottledFunction<T extends (...args: any) => any> = (...args: Parameters<T>) => ReturnType<T>;

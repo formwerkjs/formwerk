@@ -44,6 +44,9 @@ export interface SegmentMetadata {
    */
   getValue: () => Record<string, unknown> | undefined;
 }
+
+export interface ResolvedSegmentMetadata extends Omit<SegmentMetadata, 'name'> {
+  name: string;
 }
 
 export interface FormFlowContext {
