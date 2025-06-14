@@ -1,11 +1,12 @@
 import { defineComponent } from 'vue';
 import { fireEvent, render, screen } from '@testing-library/vue';
 import { axe } from 'vitest-axe';
-import { useStepFormFlow } from '.';
+import { StepResolveContext, useStepFormFlow } from '.';
 import { flush } from '@test-utils/flush';
 import { useTextField } from '../useTextField';
 import { FormFlowSegment } from './useFlowSegment';
 import { z } from 'zod';
+import { FormObject } from '../types';
 
 // Simple TextField component for tests
 const TextField = defineComponent({
@@ -58,6 +59,7 @@ const SteppedFormFlow = defineComponent({
       type: Object,
       default: () => ({}),
     },
+    resolver: null,
   },
   emits: ['done'],
   setup(props, { emit }) {
@@ -72,9 +74,14 @@ const SteppedFormFlow = defineComponent({
       goToStep,
       isCurrentStep,
       getStepValue,
+      onBeforeStepResolve,
     } = useStepFormFlow({
       initialValues: props.initialValues,
     });
+
+    if (props.resolver) {
+      onBeforeStepResolve(props.resolver);
+    }
 
     onDone(values => emit('done', values.toObject()));
 
@@ -667,6 +674,175 @@ describe('navigation', () => {
     expect(screen.getByText('Go to Step 1')).toHaveAttribute('aria-selected', 'false');
     expect(screen.getByText('Go to Step 2')).toHaveAttribute('aria-selected', 'false');
     expect(screen.getByText('Go to Step 3')).toHaveAttribute('aria-selected', 'true');
+  });
+
+  test('should use custom step resolver to determine next step', async () => {
+    const step1 = z.object({
+      name: z.string().min(1),
+    });
+
+    const step2 = z.object({
+      address: z.string().min(1),
+    });
+
+    const step3 = z.object({
+      phone: z.string().min(1),
+    });
+
+    const onDone = vi.fn();
+
+    await render({
+      setup() {
+        // Custom step resolver that skips step 2 if name is "skip"
+        const resolver = (ctx: StepResolveContext<FormObject>) => {
+          if (ctx.currentStep.name === 'step1' && ctx.values.name === 'skip') {
+            return 'step3';
+          }
+
+          return ctx.next();
+        };
+
+        return {
+          step1,
+          step2,
+          step3,
+          resolver,
+          onDone,
+        };
+      },
+      components: {
+        SteppedFormFlow,
+        FormFlowSegment,
+        TextField,
+      },
+      template: `
+      <SteppedFormFlow :resolver="resolver" @done="onDone">
+        <FormFlowSegment name="step1" :schema="step1">
+          <span>Step 1</span>
+          <TextField
+            label="Name"
+            name="name"
+          />
+        </FormFlowSegment>
+        <FormFlowSegment name="step2" :schema="step2">
+          <span>Step 2</span>
+          <TextField
+            label="Address"
+            name="address"
+          />
+        </FormFlowSegment>
+        <FormFlowSegment name="step3" :schema="step3">
+          <span>Step 3</span>
+          <TextField
+            label="Phone"
+            name="phone"
+          />
+        </FormFlowSegment>
+      </SteppedFormFlow>
+        `,
+    });
+
+    await flush();
+
+    // Should start at the first step
+    expect(screen.getByText('Step 1')).toBeVisible();
+    expect(screen.getByLabelText('Name')).toBeVisible();
+
+    // Fill in the name field with "skip" to trigger custom resolver
+    await fireEvent.update(screen.getByLabelText('Name'), 'skip');
+    await flush();
+
+    // Go to next step
+    await fireEvent.click(screen.getByTestId('next-button'));
+    await flush();
+
+    // Should skip step 2 and go directly to step 3
+    expect(screen.getByText('Step 3')).toBeVisible();
+    expect(screen.getByLabelText('Phone')).toBeVisible();
+    expect(screen.queryByLabelText('Address')).not.toBeInTheDocument();
+
+    // Fill in the phone field
+    await fireEvent.update(screen.getByLabelText('Phone'), '1234567890');
+    await flush();
+
+    // Submit the form
+    await fireEvent.click(screen.getByTestId('next-button'));
+    await flush();
+
+    // Verify onDone was called with the correct values
+    expect(onDone).toHaveBeenCalledWith({
+      name: 'skip',
+      phone: '1234567890',
+    });
+  });
+
+  test('can use custom step resolver to signal done at any step', async () => {
+    const onDone = vi.fn();
+
+    await render({
+      setup() {
+        // Custom step resolver that skips step 2 if name is "skip"
+        const resolver = (ctx: StepResolveContext<FormObject>) => {
+          if (ctx.currentStep.name === 'step1' && ctx.values.name === 'skip') {
+            return ctx.done();
+          }
+
+          return ctx.next();
+        };
+
+        return {
+          resolver,
+          onDone,
+        };
+      },
+      components: {
+        SteppedFormFlow,
+        FormFlowSegment,
+        TextField,
+      },
+      template: `
+      <SteppedFormFlow :resolver="resolver" @done="onDone">
+        <FormFlowSegment name="step1" :schema="step1">
+          <span>Step 1</span>
+          <TextField
+            label="Name"
+            name="name"
+          />
+        </FormFlowSegment>
+        <FormFlowSegment name="step2" :schema="step2">
+          <span>Step 2</span>
+          <TextField
+            label="Address"
+            name="address"
+          />
+        </FormFlowSegment>
+        <FormFlowSegment name="step3" :schema="step3">
+          <span>Step 3</span>
+          <TextField
+            label="Phone"
+            name="phone"
+          />
+        </FormFlowSegment>
+      </SteppedFormFlow>
+        `,
+    });
+
+    await flush();
+
+    // Should start at the first step
+    expect(screen.getByText('Step 1')).toBeVisible();
+    expect(screen.getByLabelText('Name')).toBeVisible();
+
+    // Fill in the name field with "skip" to trigger custom resolver
+    await fireEvent.update(screen.getByLabelText('Name'), 'skip');
+    await flush();
+    await fireEvent.click(screen.getByTestId('next-button'));
+    await flush();
+
+    // Verify onDone was called with the correct values
+    expect(onDone).toHaveBeenCalledWith({
+      name: 'skip',
+    });
   });
 });
 

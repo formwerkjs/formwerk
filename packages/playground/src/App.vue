@@ -34,7 +34,7 @@ onBeforeStepResolve(ctx => {
   console.log(ctx.currentStep.name, ctx.values.name);
 
   if (ctx.currentStep.name === 'step-1' && ctx.values.name === 'test') {
-    return 'step-3';
+    return ctx.done();
   }
 
   return ctx.next();

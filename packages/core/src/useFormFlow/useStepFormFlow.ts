@@ -68,18 +68,14 @@ export interface StepResolveContext<TInput extends FormObject> {
   next(): MaybeAsync<StepIdentifier | null>;
 
   /**
-   * Resolves the previous step in the flow.
-   */
-  previous(): MaybeAsync<StepIdentifier | null>;
-
-  /**
    * Fires the done event, use it to "submit" the entire collected data across all steps.
    */
-  done(): void;
+  done(): symbol;
 }
 
 export function useStepFormFlow<TInput extends FormObject>(props?: StepFormFlowProps<TInput>) {
   const { form, ...flow } = useFormFlow(props);
+  const DONE_EVENT = Symbol('done');
   const resolvedSteps = computed(() => flow.segments.value.map(resolveSegmentMetadata));
   let stepResolver: StepResolver<TInput> | null = null;
   const [dispatchDone, onDone] = createEventDispatcher<ConsumableData<TInput>>('done');
@@ -129,8 +125,7 @@ export function useStepFormFlow<TInput extends FormObject>(props?: StepFormFlowP
         values: {} as PartialDeep<TInput>,
         direction,
         next: () => null,
-        previous: () => null,
-        done: () => {},
+        done: () => DONE_EVENT,
       };
     }
 
@@ -147,8 +142,7 @@ export function useStepFormFlow<TInput extends FormObject>(props?: StepFormFlowP
       }) as PartialDeep<TInput>,
       direction,
       next: () => flow.resolveRelative(direction === 'next' ? 1 : -1),
-      previous: () => flow.resolveRelative(direction === 'next' ? -1 : 1),
-      done: fireDone,
+      done: () => DONE_EVENT,
     };
   }
 
@@ -162,12 +156,18 @@ export function useStepFormFlow<TInput extends FormObject>(props?: StepFormFlowP
   }
 
   async function executeStepResolver(resolver: StepResolver<TInput>, direction: 'next' | 'previous') {
-    const step = await resolver(createStepResolverContext(direction));
+    const ctx = createStepResolverContext(direction);
+    const step = await resolver(ctx);
+    if (step === DONE_EVENT) {
+      fireDone();
+      return;
+    }
+
     if (step) {
       const success = flow.goTo(step);
       if (__DEV__) {
         if (!success) {
-          warn(`onBeforeStepResolve returned an invalid step identifier: ${step}. Skipping step change.`);
+          warn(`onBeforeStepResolve returned an invalid step identifier: ${String(step)}. Skipping step change.`);
         }
       }
 
@@ -176,9 +176,11 @@ export function useStepFormFlow<TInput extends FormObject>(props?: StepFormFlowP
 
     if (isNullOrUndefined(step)) {
       if (__DEV__) {
-        warn(
-          `onBeforeStepResolve returned an empty step identifier: ${step}. Executing the default ${direction} step resolver.`,
-        );
+        if (direction === 'next' && !ctx.isLastStep) {
+          warn(
+            `onBeforeStepResolve returned an empty step identifier: ${step}. Executing the default ${direction} step resolver.`,
+          );
+        }
       }
 
       // eslint-disable-next-line @typescript-eslint/no-unused-expressions
@@ -189,6 +191,8 @@ export function useStepFormFlow<TInput extends FormObject>(props?: StepFormFlowP
   function fireDone() {
     flow.saveValues();
     dispatchDone(asConsumableData(cloneDeep(flow.values) as TInput));
+
+    return DONE_EVENT;
   }
 
   const next = form.handleSubmit(async () => {
