@@ -54,4 +54,6 @@ export interface FormFlowContext {
   registerSegment: (metadata: SegmentRegistrationMetadata) => void;
 }
 
+export type StepIdentifier = string | number | SegmentMetadata | ResolvedSegmentMetadata;
+
 export const FormFlowContextKey: InjectionKey<FormFlowContext> = Symbol('FormFlowContext');

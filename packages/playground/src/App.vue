@@ -14,6 +14,7 @@ const {
   goToStep,
   isCurrentStep,
   getStepValue,
+  onBeforeStepResolve,
 } = useStepFormFlow();
 
 const step1 = z.object({
@@ -27,6 +28,16 @@ const step2 = z.object({
 
 onDone(data => {
   console.log(data.toObject());
+});
+
+onBeforeStepResolve(ctx => {
+  console.log(ctx.currentStep.name, ctx.values.name);
+
+  if (ctx.currentStep.name === 'step-1' && ctx.values.name === 'test') {
+    return 'step-3';
+  }
+
+  return ctx.next();
 });
 </script>
 

@@ -3,7 +3,7 @@ import { NoSchemaFormProps, useForm } from '../useForm';
 import { FormObject, IssueCollection, Path } from '../types';
 import { isObject, merge } from '../../../shared/src';
 import { cloneDeep } from '../utils/common';
-import { FormFlowContextKey, SegmentMetadata, SegmentRegistrationMetadata } from './types';
+import { FormFlowContextKey, SegmentMetadata, SegmentRegistrationMetadata, StepIdentifier } from './types';
 import { asConsumableData, ConsumableData } from '../useForm/useFormActions';
 import { createEventDispatcher } from '../utils/events';
 import { PartialDeep } from 'type-fest';
@@ -156,11 +156,7 @@ export function useFormFlow<TInput extends FormObject = FormObject>(_props?: For
     };
   }
 
-  function goTo(
-    segmentId: string | number | SegmentMetadata,
-    predicate?: (context: GoToPredicateContext) => boolean,
-  ): string {
-    const current = currentSegment.value;
+  function goTo(segmentId: StepIdentifier, predicate?: (context: GoToPredicateContext) => boolean): boolean {
     const currentIdx = currentSegmentIndex.value;
 
     let idx = -1;
@@ -177,7 +173,7 @@ export function useFormFlow<TInput extends FormObject = FormObject>(_props?: For
     }
 
     if (idx === -1 || !segments.value[idx]) {
-      return current?.id ?? '';
+      return false;
     }
 
     if (
@@ -189,7 +185,7 @@ export function useFormFlow<TInput extends FormObject = FormObject>(_props?: For
         segments: segments.value,
       })
     ) {
-      return current?.id ?? '';
+      return false;
     }
 
     beforeSegmentChange(segments.value[idx], () => {
@@ -198,7 +194,7 @@ export function useFormFlow<TInput extends FormObject = FormObject>(_props?: For
       restoreSegmentValues();
     });
 
-    return String(segments.value[idx].id);
+    return true;
   }
 
   function hasState(segmentId: number | string) {
