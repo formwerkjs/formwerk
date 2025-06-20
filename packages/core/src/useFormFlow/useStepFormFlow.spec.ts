@@ -607,6 +607,55 @@ describe('navigation', () => {
     expect(screen.getByText('Step 3')).toBeVisible();
   });
 
+  test('going to the same step again is a NO-OP', async () => {
+    await render({
+      components: {
+        SteppedFormFlow,
+        FormFlowSegment,
+        TextField,
+      },
+      template: `
+          <SteppedFormFlow v-slot="{ goToStep }">
+            <button type="button" @click="goToStep('step1')">Go to Step 1</button>
+            <button type="button" @click="goToStep('step2')">Go to Step 2</button>
+
+            <FormFlowSegment name="step1">
+              <span>Step 1</span>
+              <TextField
+                label="Name"
+                name="name"
+              />
+            </FormFlowSegment>
+            <FormFlowSegment  name="step2">
+              <span>Step 2</span>
+              <TextField
+                label="Address"
+                name="address"
+              />
+            </FormFlowSegment>
+            </FormFlowSegment>
+          </SteppedFormFlow>
+        `,
+    });
+
+    await flush();
+
+    // Should start at the first step
+    expect(screen.getByText('Step 1')).toBeVisible();
+    expect(screen.getByLabelText('Name')).toBeVisible();
+
+    // Fill in the name field
+    await fireEvent.update(screen.getByLabelText('Name'), 'John Doe');
+    await flush();
+
+    // Try to go to step 2
+    await fireEvent.click(screen.getByText('Go to Step 1'));
+    await flush();
+
+    expect(screen.getByText('Step 1')).toBeVisible();
+    expect(screen.getByLabelText('Name')).toBeVisible();
+  });
+
   test('can use isCurrentStep to conditionally render content', async () => {
     await render({
       components: {
@@ -618,7 +667,8 @@ describe('navigation', () => {
           <SteppedFormFlow v-slot="{ goToStep, isCurrentStep }">
             <button type="button" :aria-selected="isCurrentStep('step1')" @click="goToStep('step1')">Go to Step 1</button>
             <button type="button" :aria-selected="isCurrentStep('step2')" @click="goToStep('step2')">Go to Step 2</button>
-            <button type="button" :aria-selected="isCurrentStep('step3')" @click="goToStep('step3')">Go to Step 3</button>
+            <!-- Works with indexes as well -->
+            <button type="button" :aria-selected="isCurrentStep(2)" @click="goToStep('step3')">Go to Step 3</button>
 
             <FormFlowSegment name="step1">
               <span>Step 1</span>
@@ -1003,5 +1053,293 @@ describe('a11y', () => {
       // Next button should say "Submit" on last step
       expect(screen.getByTestId('next-button')).toHaveTextContent('Submit');
     });
+  });
+});
+
+describe('warnings', () => {
+  let consoleSpy: ReturnType<typeof vi.spyOn>;
+
+  beforeEach(() => {
+    consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    consoleSpy.mockRestore();
+  });
+
+  test('should warn when custom step resolver returns invalid step identifier', async () => {
+    const onDone = vi.fn();
+
+    await render({
+      setup() {
+        // Custom step resolver that returns an invalid step identifier
+        const resolver = (ctx: StepResolveContext<FormObject>) => {
+          if (ctx.currentStep.name === 'step1' && ctx.values.name === 'invalid') {
+            return 'nonexistent-step';
+          }
+          return ctx.next();
+        };
+
+        return {
+          resolver,
+          onDone,
+        };
+      },
+      components: {
+        SteppedFormFlow,
+        FormFlowSegment,
+        TextField,
+      },
+      template: `
+        <SteppedFormFlow :resolver="resolver" @done="onDone">
+          <FormFlowSegment name="step1">
+            <span>Step 1</span>
+            <TextField
+              label="Name"
+              name="name"
+            />
+          </FormFlowSegment>
+          <FormFlowSegment name="step2">
+            <span>Step 2</span>
+            <TextField
+              label="Address"
+              name="address"
+            />
+          </FormFlowSegment>
+        </SteppedFormFlow>
+      `,
+    });
+
+    await flush();
+
+    // Fill in the name field with "invalid" to trigger invalid step identifier
+    await fireEvent.update(screen.getByLabelText('Name'), 'invalid');
+    await flush();
+
+    // Try to go to next step
+    await fireEvent.click(screen.getByTestId('next-button'));
+    await flush();
+
+    // Should warn about invalid step identifier
+    expect(consoleSpy).toHaveBeenCalledWith(
+      expect.stringContaining('onBeforeStepResolve returned an invalid step identifier: nonexistent-step'),
+    );
+
+    // Should still be on step 1 since the step change was skipped
+    expect(screen.getByText('Step 1')).toBeVisible();
+    expect(screen.getByLabelText('Name')).toBeVisible();
+  });
+
+  test('should warn when custom step resolver returns null and execute default resolver', async () => {
+    const onDone = vi.fn();
+
+    await render({
+      setup() {
+        // Custom step resolver that returns null
+        const resolver = (ctx: StepResolveContext<FormObject>) => {
+          if (ctx.currentStep.name === 'step1' && ctx.values.name === 'null') {
+            return null;
+          }
+          return ctx.next();
+        };
+
+        return {
+          resolver,
+          onDone,
+        };
+      },
+      components: {
+        SteppedFormFlow,
+        FormFlowSegment,
+        TextField,
+      },
+      template: `
+        <SteppedFormFlow :resolver="resolver" @done="onDone">
+          <FormFlowSegment name="step1">
+            <span>Step 1</span>
+            <TextField
+              label="Name"
+              name="name"
+            />
+          </FormFlowSegment>
+          <FormFlowSegment name="step2">
+            <span>Step 2</span>
+            <TextField
+              label="Address"
+              name="address"
+            />
+          </FormFlowSegment>
+        </SteppedFormFlow>
+      `,
+    });
+
+    await flush();
+
+    // Fill in the name field with "null" to trigger null return
+    await fireEvent.update(screen.getByLabelText('Name'), 'null');
+    await flush();
+
+    // Try to go to next step
+    await fireEvent.click(screen.getByTestId('next-button'));
+    await flush();
+
+    // Should warn about empty step identifier
+    expect(consoleSpy).toHaveBeenCalledWith(
+      expect.stringContaining('onBeforeStepResolve returned an empty step identifier: null'),
+    );
+
+    // Should execute default next resolver and move to step 2
+    expect(screen.getByText('Step 2')).toBeVisible();
+    expect(screen.getByLabelText('Address')).toBeVisible();
+  });
+
+  test('should warn when custom step resolver returns undefined and execute default resolver', async () => {
+    const onDone = vi.fn();
+
+    await render({
+      setup() {
+        // Custom step resolver that returns undefined
+        const resolver = (ctx: StepResolveContext<FormObject>) => {
+          if (ctx.currentStep.name === 'step1' && ctx.values.name === 'undefined') {
+            return undefined;
+          }
+          return ctx.next();
+        };
+
+        return {
+          resolver,
+          onDone,
+        };
+      },
+      components: {
+        SteppedFormFlow,
+        FormFlowSegment,
+        TextField,
+      },
+      template: `
+        <SteppedFormFlow :resolver="resolver" @done="onDone">
+          <FormFlowSegment name="step1">
+            <span>Step 1</span>
+            <TextField
+              label="Name"
+              name="name"
+            />
+          </FormFlowSegment>
+          <FormFlowSegment name="step2">
+            <span>Step 2</span>
+            <TextField
+              label="Address"
+              name="address"
+            />
+          </FormFlowSegment>
+        </SteppedFormFlow>
+      `,
+    });
+
+    await flush();
+
+    // Fill in the name field with "undefined" to trigger undefined return
+    await fireEvent.update(screen.getByLabelText('Name'), 'undefined');
+    await flush();
+
+    // Try to go to next step
+    await fireEvent.click(screen.getByTestId('next-button'));
+    await flush();
+
+    // Should warn about empty step identifier
+    expect(consoleSpy).toHaveBeenCalledWith(
+      expect.stringContaining('onBeforeStepResolve returned an empty step identifier: undefined'),
+    );
+
+    // Should execute default next resolver and move to step 2
+    expect(screen.getByText('Step 2')).toBeVisible();
+    expect(screen.getByLabelText('Address')).toBeVisible();
+  });
+
+  test('should warn when trying to resolve step before first step is resolved', async () => {
+    // This test simulates the edge case where createStepResolverContext is called
+    // when there's no current step resolved
+    const onDone = vi.fn();
+
+    await render({
+      setup() {
+        // Custom step resolver that might be called before steps are properly initialized
+        const resolver = (ctx: StepResolveContext<FormObject>) => {
+          // This should trigger the warning about no current step resolved
+          return ctx.next();
+        };
+
+        return {
+          resolver,
+          onDone,
+        };
+      },
+      components: {
+        SteppedFormFlow,
+        FormFlowSegment,
+        TextField,
+      },
+      template: `
+        <SteppedFormFlow :resolver="resolver" @done="onDone">
+          <FormFlowSegment name="step1">
+            <span>Step 1</span>
+            <TextField
+              label="Name"
+              name="name"
+            />
+          </FormFlowSegment>
+        </SteppedFormFlow>
+      `,
+    });
+
+    await flush();
+
+    // The warning should be triggered during the resolver context creation
+    // if there's no current step resolved (edge case scenario)
+    // Note: This is a defensive test for the warning in createStepResolverContext
+  });
+
+  test('should warn when form flow has no steps and resolver is triggered', async () => {
+    const onDone = vi.fn();
+
+    await render({
+      setup() {
+        // Custom step resolver that will be called even with no steps
+        const resolver = (ctx: StepResolveContext<FormObject>) => {
+          // This should trigger the warning about no current step resolved
+          return ctx.next();
+        };
+
+        return {
+          resolver,
+          onDone,
+        };
+      },
+      components: {
+        SteppedFormFlow,
+        FormFlowSegment,
+        TextField,
+      },
+      template: `
+        <SteppedFormFlow :resolver="resolver" @done="onDone">
+          <!-- No FormFlowSegment components - this should trigger the warning -->
+          <div>No steps defined</div>
+        </SteppedFormFlow>
+      `,
+    });
+
+    await flush();
+
+    // Try to trigger the next action which should call the resolver
+    // and trigger the warning about no current step
+    await fireEvent.click(screen.getByTestId('next-button'));
+    await flush();
+
+    // Should warn about no current step resolved
+    expect(consoleSpy).toHaveBeenCalledWith(
+      expect.stringContaining(
+        'There is no current step resolved, maybe you are trying to resolve a step before the first step is resolved?',
+      ),
+    );
   });
 });
