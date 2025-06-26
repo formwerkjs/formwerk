@@ -11,9 +11,7 @@ import { resolveSegmentMetadata } from './utils';
 
 type SchemalessFormProps<TInput extends FormObject> = NoSchemaFormProps<TInput>;
 
-export interface FormFlowProps<TInput extends FormObject> extends SchemalessFormProps<TInput> {
-  _dummy?: never;
-}
+export type FormFlowProps<TInput extends FormObject> = SchemalessFormProps<TInput>;
 
 interface StepState<TValues> {
   values: PartialDeep<TValues>;
