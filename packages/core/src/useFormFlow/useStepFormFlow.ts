@@ -231,7 +231,15 @@ export function useStepFormFlow<TInput extends FormObject>(props?: StepFormFlowP
     onClick: previous,
   }));
 
-  function goToStep(segmentId: number | string) {
+  /**
+   * @param segmentId - The name or index of the step to activate.
+   * @param opts.force - If true, the step will be activated even if it has never been activated before.
+   */
+  function goToStep(segmentId: number | string, opts?: { force?: true }) {
+    if (opts?.force) {
+      return flow.goTo(segmentId);
+    }
+
     flow.goTo(segmentId, ({ segments, index, relativeDistance }) => {
       // Going backward is always allowed.
       if (relativeDistance < 0) {

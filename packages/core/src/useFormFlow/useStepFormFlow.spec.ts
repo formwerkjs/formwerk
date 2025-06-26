@@ -726,6 +726,97 @@ describe('navigation', () => {
     expect(screen.getByText('Go to Step 3')).toHaveAttribute('aria-selected', 'true');
   });
 
+  test('can force jump to any step even if previous steps are not visited', async () => {
+    const step1 = z.object({
+      name: z.string().min(1),
+    });
+
+    const step2 = z.object({
+      address: z.string().min(1),
+    });
+
+    const step3 = z.object({
+      phone: z.string().min(1),
+    });
+
+    await render({
+      setup() {
+        return {
+          step1,
+          step2,
+          step3,
+        };
+      },
+      components: {
+        SteppedFormFlow,
+        FormFlowSegment,
+        TextField,
+      },
+      template: `
+          <SteppedFormFlow v-slot="{ goToStep }">
+            <button type="button" @click="goToStep('step1')">Go to Step 1</button>
+            <button type="button" @click="goToStep('step2')">Go to Step 2</button>
+            <button type="button" @click="goToStep('step3')">Go to Step 3</button>
+            <button type="button" @click="goToStep('step3', { force: true })">Force Go to Step 3</button>
+
+            <FormFlowSegment name="step1" :schema="step1">
+              <span>Step 1</span>
+              <TextField
+                label="Name"
+                name="name"
+              />
+            </FormFlowSegment>
+            <FormFlowSegment name="step2" :schema="step2">
+              <span>Step 2</span>
+              <TextField
+                label="Address"
+                name="address"
+              />
+            </FormFlowSegment>
+            <FormFlowSegment name="step3" :schema="step3">
+              <span>Step 3</span>
+              <TextField
+                label="Phone"
+                name="phone"
+              />
+            </FormFlowSegment>
+          </SteppedFormFlow>
+        `,
+    });
+
+    await flush();
+
+    // Should start at the first step
+    expect(screen.getByText('Step 1')).toBeVisible();
+    expect(screen.getByLabelText('Name')).toBeVisible();
+
+    // Try to go to step 3 without force - should not work since step 1 is not submitted
+    await fireEvent.click(screen.getByText('Go to Step 3'));
+    await flush();
+
+    // Should still be on step 1
+    expect(screen.getByText('Step 1')).toBeVisible();
+    expect(screen.getByLabelText('Name')).toBeVisible();
+    expect(screen.queryByLabelText('Phone')).not.toBeInTheDocument();
+
+    // Now try with force option - should work
+    await fireEvent.click(screen.getByText('Force Go to Step 3'));
+    await flush();
+
+    // Should now be on step 3
+    expect(screen.getByText('Step 3')).toBeVisible();
+    expect(screen.getByLabelText('Phone')).toBeVisible();
+    expect(screen.queryByLabelText('Name')).not.toBeInTheDocument();
+
+    // Can go back to step 1 with force
+    await fireEvent.click(screen.getByText('Go to Step 1'));
+    await flush();
+
+    expect(screen.getByText('Step 1')).toBeVisible();
+    expect(screen.getByLabelText('Name')).toBeVisible();
+    expect(screen.queryByLabelText('Phone')).not.toBeInTheDocument();
+  });
+
   test('should use custom step resolver to determine next step', async () => {
     const step1 = z.object({
       name: z.string().min(1),
