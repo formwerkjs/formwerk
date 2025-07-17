@@ -294,10 +294,11 @@ export function useFileField(_props: Reactivify<FileFieldProps, 'schema' | 'onUp
     },
     onDrop(evt: DragEvent) {
       blockEvent(evt);
+      isDragging.value = false;
       if (field.isDisabled.value) {
         return;
       }
-
+      
       processFiles(Array.from(evt.dataTransfer?.files ?? []));
     },
     onClick(e: MouseEvent) {
