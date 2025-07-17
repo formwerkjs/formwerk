@@ -2,4 +2,4 @@
 '@formwerk/core': patch
 ---
 
-fix: useFileField, change isDragging variable to false on file drop
+fix(useFileField): reset isDragging on file drop
