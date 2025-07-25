@@ -111,7 +111,14 @@ export interface SearchFieldProps {
    * Handler called when the search field is submitted via the Enter key.
    */
   onSubmit?: (value: string) => void;
-
+/**
+   * Handler called when the search field is inputted when user typing.
+   */
+  onInput?: (value: string) => void;
+/**
+   * Handler called when the search field is cleared.
+   */
+  onClear?: () => void;
   /**
    * Whether to disable HTML5 form validation.
    */
@@ -166,6 +173,9 @@ export function useSearchField(_props: Reactivify<SearchFieldProps, 'onSubmit' |
 
         setValue('');
         updateValidity();
+        if (props.onClear){
+          props.onClear()
+        }
       },
     };
   });
@@ -173,6 +183,13 @@ export function useSearchField(_props: Reactivify<SearchFieldProps, 'onSubmit' |
   const handlers: InputEvents = {
     onInput: (event: Event) => {
       setValue((event.target as HTMLInputElement).value);
+      if (props.onInput){
+         e.preventDefault();
+        setTouched(true);
+        if (isValid.value) {
+          props.onInput(fieldValue.value || '');
+        }
+      }
     },
     onChange: (event: Event) => {
       setValue((event.target as HTMLInputElement).value);
