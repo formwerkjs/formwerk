@@ -48,7 +48,8 @@ interface _FormProps<TInput extends FormObject> {
   /**
    * Whether HTML5 validation should be disabled for this form.
    */
-  disableHtmlValidation?: boolean;
+  // eslint-disable-next-line @typescript-eslint/no-wrapper-object-types
+  disableHtmlValidation?: Boolean;
 
   /**
    * Whether the form is disabled.

@@ -75,7 +75,8 @@ export interface OtpFieldProps {
   /**
    * Whether to disable HTML validation.
    */
-  disableHtmlValidation?: boolean;
+  // eslint-disable-next-line @typescript-eslint/no-wrapper-object-types
+  disableHtmlValidation?: Boolean;
 
   /**
    * The prefix of the OTP field. If you prefix your codes with a character, you can set it here (e.g "G-").

@@ -42,7 +42,8 @@ export interface FormGroupProps<TInput extends FormObject = FormObject, TOutput 
   /**
    * Whether HTML5 validation should be disabled for this form group.
    */
-  disableHtmlValidation?: boolean;
+  // eslint-disable-next-line @typescript-eslint/no-wrapper-object-types
+  disableHtmlValidation?: Boolean;
 }
 
 interface GroupProps extends AriaLabelableProps {
@@ -83,7 +84,9 @@ export function useFormGroup<TInput extends FormObject = FormObject, TOutput ext
   const parentGroup = inject(FormGroupKey, null);
   const isDisabled = createDisabledContext(props.disabled);
   const isHtmlValidationDisabled = () =>
-    toValue(props.disableHtmlValidation) ?? form?.isHtmlValidationDisabled() ?? getConfig().disableHtmlValidation;
+    (toValue(props.disableHtmlValidation) as boolean) ??
+    form?.isHtmlValidationDisabled() ??
+    getConfig().disableHtmlValidation;
   const { validate, onValidationDispatch, defineValidationRequest, onValidationDone, dispatchValidateDone } =
     useValidationProvider({
       getValues: () => getValue(),

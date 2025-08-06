@@ -107,7 +107,8 @@ export interface CheckboxGroupProps<TCheckbox = unknown> {
   /**
    * Whether HTML5 validation should be disabled for this checkbox group.
    */
-  disableHtmlValidation?: boolean;
+  // eslint-disable-next-line @typescript-eslint/no-wrapper-object-types
+  disableHtmlValidation?: Boolean;
 }
 
 interface CheckboxGroupDomProps extends AriaLabelableProps, AriaDescribableProps, AriaValidatableProps {

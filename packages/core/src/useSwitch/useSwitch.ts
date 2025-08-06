@@ -92,7 +92,8 @@ export type SwitchProps<TValue = boolean> = {
   /**
    * Whether to disable HTML5 validation.
    */
-  disableHtmlValidation?: boolean;
+  // eslint-disable-next-line @typescript-eslint/no-wrapper-object-types
+  disableHtmlValidation?: Boolean;
 };
 
 export function useSwitch<TValue = boolean>(_props: Reactivify<SwitchProps<TValue>, 'schema'>) {

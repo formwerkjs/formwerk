@@ -135,7 +135,8 @@ export interface NumberFieldProps {
   /**
    * Whether to disable HTML5 form validation.
    */
-  disableHtmlValidation?: boolean;
+  // eslint-disable-next-line @typescript-eslint/no-wrapper-object-types
+  disableHtmlValidation?: Boolean;
 }
 
 export function useNumberField(_props: Reactivify<NumberFieldProps, 'schema'>) {

@@ -115,7 +115,8 @@ export interface SearchFieldProps {
   /**
    * Whether to disable HTML5 form validation.
    */
-  disableHtmlValidation?: boolean;
+  // eslint-disable-next-line @typescript-eslint/no-wrapper-object-types
+  disableHtmlValidation?: Boolean;
 }
 
 export function useSearchField(_props: Reactivify<SearchFieldProps, 'onSubmit' | 'schema'>) {

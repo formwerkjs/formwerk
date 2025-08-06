@@ -101,7 +101,8 @@ export interface RadioGroupProps<TValue = string> {
   /**
    * Whether to disable HTML5 form validation.
    */
-  disableHtmlValidation?: boolean;
+  // eslint-disable-next-line @typescript-eslint/no-wrapper-object-types
+  disableHtmlValidation?: Boolean;
 }
 
 interface RadioGroupDomProps extends AriaLabelableProps, AriaDescribableProps, AriaValidatableProps {

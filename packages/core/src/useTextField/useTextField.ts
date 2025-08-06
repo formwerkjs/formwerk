@@ -110,7 +110,8 @@ export interface TextFieldProps {
   /**
    * Whether to disable HTML5 validation.
    */
-  disableHtmlValidation?: boolean;
+  // eslint-disable-next-line @typescript-eslint/no-wrapper-object-types
+  disableHtmlValidation?: Boolean;
 }
 
 export function useTextField(_props: Reactivify<TextFieldProps, 'schema'>) {

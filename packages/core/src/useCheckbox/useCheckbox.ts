@@ -79,7 +79,8 @@ export interface CheckboxProps<TValue = boolean> {
   /**
    * Whether HTML5 validation should be disabled for this checkbox.
    */
-  disableHtmlValidation?: boolean;
+  // eslint-disable-next-line @typescript-eslint/no-wrapper-object-types
+  disableHtmlValidation?: Boolean;
 }
 
 export interface CheckboxDomInputProps extends AriaLabelableProps, InputBaseAttributes {

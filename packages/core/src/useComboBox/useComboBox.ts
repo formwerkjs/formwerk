@@ -80,7 +80,8 @@ export interface ComboBoxProps<TOption, TValue = TOption> {
   /**
    * Whether to disable HTML5 validation.
    */
-  disableHtmlValidation?: boolean;
+  // eslint-disable-next-line @typescript-eslint/no-wrapper-object-types
+  disableHtmlValidation?: Boolean;
 
   /**
    * Whether to open the popup when the input is focused.
