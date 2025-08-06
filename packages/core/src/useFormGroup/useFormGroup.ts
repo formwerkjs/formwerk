@@ -56,7 +56,8 @@ export interface FormGroupContext<TOutput extends FormObject = FormObject> {
   onValidationDone(cb: () => void): void;
   requestValidation(): Promise<GroupValidationResult<TOutput>>;
   getValidationMode(): FormValidationMode;
-  isHtmlValidationDisabled(): boolean;
+  // eslint-disable-next-line @typescript-eslint/no-wrapper-object-types
+  isHtmlValidationDisabled(): Boolean;
 }
 
 export const FormGroupKey: InjectionKey<FormGroupContext> = Symbol('FormGroup');
@@ -84,9 +85,7 @@ export function useFormGroup<TInput extends FormObject = FormObject, TOutput ext
   const parentGroup = inject(FormGroupKey, null);
   const isDisabled = createDisabledContext(props.disabled);
   const isHtmlValidationDisabled = () =>
-    (toValue(props.disableHtmlValidation) as boolean) ??
-    form?.isHtmlValidationDisabled() ??
-    getConfig().disableHtmlValidation;
+    toValue(props.disableHtmlValidation) ?? form?.isHtmlValidationDisabled() ?? getConfig().disableHtmlValidation;
   const { validate, onValidationDispatch, defineValidationRequest, onValidationDone, dispatchValidateDone } =
     useValidationProvider({
       getValues: () => getValue(),
