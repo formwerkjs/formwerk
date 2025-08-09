@@ -8,6 +8,7 @@ import {
   InputEvents,
   Reactivify,
   StandardSchema,
+  HtmlValidationState,
 } from '../types';
 import {
   hasKeyCode,
@@ -90,9 +91,9 @@ export type SwitchProps<TValue = boolean> = {
   schema?: StandardSchema<unknown>;
 
   /**
-   * Whether to disable HTML5 validation.
+   * Whether to enable/disable HTML5 validation.
    */
-  disableHtmlValidation?: boolean;
+  htmlValidationState?: HtmlValidationState;
 };
 
 export function useSwitch<TValue = boolean>(_props: Reactivify<SwitchProps<TValue>, 'schema'>) {
@@ -115,7 +116,7 @@ export function useSwitch<TValue = boolean>(_props: Reactivify<SwitchProps<TValu
   const { updateValidity } = useInputValidity({
     field,
     inputEl,
-    disableHtmlValidation: props.disableHtmlValidation,
+    htmlValidationState: props.htmlValidationState,
   });
 
   const { fieldValue, setValue, setTouched, errorMessage, isDisabled } = field;

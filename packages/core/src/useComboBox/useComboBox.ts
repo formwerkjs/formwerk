@@ -1,5 +1,5 @@
 import { ref, toValue, watch, shallowRef } from 'vue';
-import { InputEvents, Maybe, Reactivify, StandardSchema } from '../types';
+import { HtmlValidationState, InputEvents, Maybe, Reactivify, StandardSchema } from '../types';
 import { Orientation } from '../types';
 import {
   createDescribedByProps,
@@ -78,9 +78,9 @@ export interface ComboBoxProps<TOption, TValue = TOption> {
   schema?: StandardSchema<TValue>;
 
   /**
-   * Whether to disable HTML5 validation.
+   * Whether to enable/disable HTML5 validation.
    */
-  disableHtmlValidation?: boolean;
+  htmlValidationState?: HtmlValidationState;
 
   /**
    * Whether to open the popup when the input is focused.
@@ -124,7 +124,7 @@ export function useComboBox<TOption, TValue = TOption>(
     targetRef: inputEl,
   });
 
-  const { validityDetails } = useInputValidity({ field, inputEl, disableHtmlValidation: props.disableHtmlValidation });
+  const { validityDetails } = useInputValidity({ field, inputEl, htmlValidationState: props.htmlValidationState });
   const { descriptionProps, describedByProps } = createDescribedByProps({
     inputId,
     description: props.description,

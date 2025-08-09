@@ -1,18 +1,18 @@
 import { computed, shallowRef, toValue } from 'vue';
 import { getSiteLocale } from './i18n/getSiteLocale';
 import { merge } from '../../shared/src';
-import { Reactivify } from './types';
+import { Reactivify, HtmlValidationState } from './types';
 
 interface Config {
   locale: string;
   detectDirection: boolean;
-  disableHtmlValidation: boolean;
+  htmlValidationState: HtmlValidationState;
 }
 
 const currentConfig = shallowRef<Reactivify<Config>>({
   locale: getSiteLocale(),
   detectDirection: true,
-  disableHtmlValidation: false,
+  htmlValidationState: 'enabled',
 });
 
 const evaluatedConfig = computed(() => {

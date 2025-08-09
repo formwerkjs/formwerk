@@ -1,7 +1,7 @@
 import { Ref, inject, nextTick, onMounted, shallowRef, watch, MaybeRefOrGetter, toValue } from 'vue';
 import { EventExpression, useEventListener } from '../helpers/useEventListener';
 import { type FormContext, FormKey } from '../useForm';
-import { Arrayable, Maybe, ValidationResult } from '../types';
+import { Arrayable, Maybe, ValidationResult, HtmlValidationState } from '../types';
 import { FormField } from '../useFormField';
 import { isInputElement, normalizeArrayable, warn } from '../utils/common';
 import { FormGroupContext, FormGroupKey } from '../useFormGroup';
@@ -12,7 +12,7 @@ type ElementReference = Ref<Arrayable<Maybe<HTMLElement>>>;
 
 interface InputValidityOptions {
   inputEl?: ElementReference;
-  disableHtmlValidation?: MaybeRefOrGetter<boolean | undefined>;
+  htmlValidationState?: MaybeRefOrGetter<HtmlValidationState | undefined>;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   field: FormField<any>;
   events?: EventExpression[];
@@ -25,10 +25,24 @@ export function useInputValidity(opts: InputValidityOptions) {
   const { setErrors, errorMessage, schema, validate: validateField, getPath } = opts.field;
   const validityDetails = shallowRef<ValidityState>();
   useMessageCustomValiditySync(errorMessage, opts.inputEl, form, formGroup);
-  const isHtmlValidationDisabled = () =>
-    toValue(opts.disableHtmlValidation) ??
-    (formGroup || form)?.isHtmlValidationDisabled() ??
-    getConfig().disableHtmlValidation;
+  const isHtmlValidationDisabled = () => {
+    const fieldValidationState = toValue(opts.htmlValidationState);
+    const formGroupValidationState = formGroup?.getHtmlValidationState();
+    const formValidationState = form?.getHtmlValidationState();
+
+    // This takes the first explicitly set validation state.
+    const combinedValidationState = fieldValidationState ?? formGroupValidationState ?? formValidationState;
+
+    // If the any of the composables/components explicitly sets validation state we need to respect that always
+    if (combinedValidationState === 'enabled') {
+      return false;
+    } else if (combinedValidationState === 'disabled') {
+      return true;
+    }
+
+    // Finally if the global config has it explicitly disabled (default is enabled)
+    return getConfig().htmlValidationState === 'disabled';
+  };
 
   function validateNative(mutate?: boolean): ValidationResult {
     const baseReturns: Omit<ValidationResult, 'errors' | 'isValid'> = {

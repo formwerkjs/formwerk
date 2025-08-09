@@ -10,6 +10,7 @@ import {
   Direction,
   Reactivify,
   StandardSchema,
+  HtmlValidationState,
 } from '../types';
 import {
   useUniqId,
@@ -99,9 +100,9 @@ export interface RadioGroupProps<TValue = string> {
   schema?: StandardSchema<TValue>;
 
   /**
-   * Whether to disable HTML5 form validation.
+   * Whether to enable/disable HTML5 form validation.
    */
-  disableHtmlValidation?: boolean;
+  htmlValidationState?: HtmlValidationState;
 }
 
 interface RadioGroupDomProps extends AriaLabelableProps, AriaDescribableProps, AriaValidatableProps {
@@ -149,7 +150,7 @@ export function useRadioGroup<TValue = string>(_props: Reactivify<RadioGroupProp
     events: ['blur', 'click', ['keydown', e => hasKeyCode(e, 'Space')]],
     groupValidityBehavior: 'some',
     inputEl: computed(() => radios.value.map(r => r.getElem())),
-    disableHtmlValidation: props.disableHtmlValidation,
+    htmlValidationState: props.htmlValidationState,
   });
 
   const { fieldValue, setValue, setTouched, errorMessage, isDisabled } = field;

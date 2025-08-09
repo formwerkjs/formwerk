@@ -1,5 +1,5 @@
 import { computed, nextTick, provide, ref, toValue, watch, shallowRef } from 'vue';
-import { MaybeAsync, Reactivify, StandardSchema } from '../types';
+import { HtmlValidationState, MaybeAsync, Reactivify, StandardSchema } from '../types';
 import { OtpContextKey, OtpSlotAcceptType } from './types';
 import { createDescribedByProps, normalizeProps, useUniqId, useCaptureProps } from '../utils/common';
 import { FieldTypePrefixes } from '../constants';
@@ -73,9 +73,9 @@ export interface OtpFieldProps {
   schema?: StandardSchema<string>;
 
   /**
-   * Whether to disable HTML validation.
+   * Whether to enable/disable HTML validation.
    */
-  disableHtmlValidation?: boolean;
+  htmlValidationState?: HtmlValidationState;
 
   /**
    * The prefix of the OTP field. If you prefix your codes with a character, you can set it here (e.g "G-").
@@ -146,7 +146,7 @@ export function useOtpField(_props: Reactivify<OtpFieldProps, 'schema' | 'onComp
   const { validityDetails } = useInputValidity({
     inputEl,
     field,
-    disableHtmlValidation: props.disableHtmlValidation,
+    htmlValidationState: props.htmlValidationState,
   });
 
   const { descriptionProps, describedByProps } = createDescribedByProps({

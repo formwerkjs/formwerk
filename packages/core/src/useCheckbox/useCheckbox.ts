@@ -3,6 +3,7 @@ import { registerField } from '@formwerk/devtools';
 import { hasKeyCode, isEqual, isInputElement, normalizeProps, useUniqId, useCaptureProps } from '../utils/common';
 import {
   AriaLabelableProps,
+  HtmlValidationState,
   InputBaseAttributes,
   NormalizedProps,
   Reactivify,
@@ -77,9 +78,9 @@ export interface CheckboxProps<TValue = boolean> {
   schema?: StandardSchema<TValue>;
 
   /**
-   * Whether HTML5 validation should be disabled for this checkbox.
+   * Whether HTML5 validation should be enabled/disabled for this checkbox.
    */
-  disableHtmlValidation?: boolean;
+  htmlValidationState?: HtmlValidationState;
 }
 
 export interface CheckboxDomInputProps extends AriaLabelableProps, InputBaseAttributes {
@@ -110,7 +111,7 @@ export function useCheckbox<TValue = string>(_props: Reactivify<CheckboxProps<TV
       inputEl,
       field,
       events: ['blur', 'click', ['keydown', e => hasKeyCode(e, 'Space')]],
-      disableHtmlValidation: props.disableHtmlValidation,
+      htmlValidationState: props.htmlValidationState,
     });
   }
   const { fieldValue, setTouched, setValue, errorMessage, setErrors, isDisabled } = field;

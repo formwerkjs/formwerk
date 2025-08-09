@@ -9,6 +9,7 @@ import {
   Reactivify,
   Arrayable,
   StandardSchema,
+  HtmlValidationState,
 } from '../types';
 import {
   useUniqId,
@@ -105,9 +106,9 @@ export interface CheckboxGroupProps<TCheckbox = unknown> {
   schema?: StandardSchema<CheckboxGroupValue<TCheckbox>>;
 
   /**
-   * Whether HTML5 validation should be disabled for this checkbox group.
+   * Whether HTML5 validation should be enabled/disabled for this checkbox group.
    */
-  disableHtmlValidation?: boolean;
+  htmlValidationState?: HtmlValidationState;
 }
 
 interface CheckboxGroupDomProps extends AriaLabelableProps, AriaDescribableProps, AriaValidatableProps {
@@ -137,7 +138,7 @@ export function useCheckboxGroup<TCheckbox>(_props: Reactivify<CheckboxGroupProp
     inputEl: computed(() => checkboxes.value.map(v => v.getElem())),
     events: ['blur', 'click', ['keydown', e => hasKeyCode(e, 'Space')]],
     groupValidityBehavior: 'some',
-    disableHtmlValidation: props.disableHtmlValidation,
+    htmlValidationState: props.htmlValidationState,
   });
 
   const { fieldValue, setValue, isTouched, setTouched, errorMessage, isDisabled } = field;

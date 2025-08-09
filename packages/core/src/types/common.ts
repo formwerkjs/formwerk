@@ -83,6 +83,8 @@ export type Orientation2D = 'horizontal' | 'vertical' | 'both';
 
 export type Direction = 'ltr' | 'rtl';
 
+export type HtmlValidationState = 'enabled' | 'disabled';
+
 export type Reactivify<TProps extends object, Exclude extends keyof TProps = never> = {
   [TProp in keyof TProps]: TProp extends Exclude ? TProps[TProp] : MaybeRefOrGetter<TProps[TProp]>;
 };

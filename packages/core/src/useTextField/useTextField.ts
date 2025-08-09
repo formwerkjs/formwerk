@@ -14,7 +14,7 @@ import { useInputValidity } from '../validation/useInputValidity';
 import { useLabel, useErrorMessage } from '../a11y';
 import { useFormField, exposeField } from '../useFormField';
 import { FieldTypePrefixes } from '../constants';
-import { StandardSchema } from '../types';
+import { StandardSchema, HtmlValidationState } from '../types';
 
 export type TextInputDOMType = 'text' | 'password' | 'email' | 'number' | 'tel' | 'url';
 
@@ -108,9 +108,9 @@ export interface TextFieldProps {
   schema?: StandardSchema<string>;
 
   /**
-   * Whether to disable HTML5 validation.
+   * Whether to enable/disable HTML5 validation.
    */
-  disableHtmlValidation?: boolean;
+  htmlValidationState?: HtmlValidationState;
 }
 
 export function useTextField(_props: Reactivify<TextFieldProps, 'schema'>) {
@@ -124,7 +124,7 @@ export function useTextField(_props: Reactivify<TextFieldProps, 'schema'>) {
     schema: props.schema,
   });
 
-  const { validityDetails } = useInputValidity({ inputEl, field, disableHtmlValidation: props.disableHtmlValidation });
+  const { validityDetails } = useInputValidity({ inputEl, field, htmlValidationState: props.htmlValidationState });
   const { fieldValue, setValue, setTouched, errorMessage, isDisabled } = field;
   const { labelProps, labelledByProps } = useLabel({
     for: inputId,

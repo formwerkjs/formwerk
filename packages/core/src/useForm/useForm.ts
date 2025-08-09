@@ -1,4 +1,4 @@
-import { inject, InjectionKey, MaybeRefOrGetter, onMounted, provide, reactive, readonly, Ref, ref } from 'vue';
+import { inject, InjectionKey, MaybeRefOrGetter, onMounted, provide, reactive, readonly, Ref, ref, toValue } from 'vue';
 import type { StandardSchemaV1 } from '@standard-schema/spec';
 import { registerForm } from '@formwerk/devtools';
 import { cloneDeep, useUniqId, warn } from '../utils/common';
@@ -18,12 +18,12 @@ import {
   DirtySchema,
   IssueCollection,
   PathValue,
+  HtmlValidationState,
 } from '../types';
 import { createFormContext, BaseFormContext, SetValueOptions } from './formContext';
 import { FormTransactionManager, useFormTransactions } from './useFormTransactions';
 import { ConsumableData, FormActions, ResetState, useFormActions } from './useFormActions';
 import { useFormSnapshots } from './formSnapshot';
-import { getConfig } from '../config';
 import { FieldTypePrefixes } from '../constants';
 import { appendToFormData, clearFormData } from '../utils/formData';
 import { Arrayable, PartialDeep } from 'type-fest';
@@ -48,7 +48,7 @@ interface _FormProps<TInput extends FormObject> {
   /**
    * Whether HTML5 validation should be disabled for this form.
    */
-  disableHtmlValidation?: boolean;
+  htmlValidationState?: HtmlValidationState;
 
   /**
    * Whether the form is disabled.
@@ -231,7 +231,7 @@ export interface FormContext<TInput extends FormObject = FormObject, TOutput ext
   requestValidation(): Promise<FormValidationResult<TOutput>>;
   onSubmitAttempt(cb: () => void): void;
   onValidationDone(cb: () => void): void;
-  isHtmlValidationDisabled(): boolean;
+  getHtmlValidationState(): HtmlValidationState;
   onValidationDispatch(
     cb: (enqueue: (promise: Promise<ValidationResult | GroupValidationResult>) => void) => void,
   ): void;
@@ -267,7 +267,7 @@ export function useForm<
 
   const id = props?.id || useUniqId(FieldTypePrefixes.Form);
   const isDisabled = createDisabledContext(props?.disabled);
-  const isHtmlValidationDisabled = () => props?.disableHtmlValidation ?? getConfig().disableHtmlValidation;
+  const getHtmlValidationState = () => toValue(props?.htmlValidationState);
   const values = reactive(cloneDeep(valuesSnapshot.originals.value)) as PartialDeep<TResolvedInput>;
   const touched = reactive(cloneDeep(touchedSnapshot.originals.value)) as TouchedSchema<TResolvedInput>;
   const dirty = reactive(cloneDeep(dirtySnapshot.originals.value)) as DirtySchema<TResolvedInput>;
@@ -325,7 +325,7 @@ export function useForm<
     ...ctx,
     ...transactionsManager,
     ...privateActions,
-    isHtmlValidationDisabled,
+    getHtmlValidationState,
   } as FormContext<TInput, TOutput>);
 
   if (ctx.getValidationMode() === 'schema') {

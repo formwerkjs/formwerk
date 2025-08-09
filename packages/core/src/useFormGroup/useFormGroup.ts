@@ -5,6 +5,7 @@ import {
   AriaLabelableProps,
   FormObject,
   GroupValidationResult,
+  HtmlValidationState,
   Reactivify,
   StandardSchema,
   ValidationResult,
@@ -14,7 +15,6 @@ import { FormKey } from '../useForm';
 import { useValidationProvider } from '../validation/useValidationProvider';
 import { FormValidationMode } from '../useForm/formContext';
 import { prefixPath as _prefixPath } from '../utils/path';
-import { getConfig } from '../config';
 import { createPathPrefixer, usePathPrefixer } from '../helpers/usePathPrefixer';
 import { createDisabledContext } from '../helpers/createDisabledContext';
 
@@ -42,7 +42,7 @@ export interface FormGroupProps<TInput extends FormObject = FormObject, TOutput 
   /**
    * Whether HTML5 validation should be disabled for this form group.
    */
-  disableHtmlValidation?: boolean;
+  htmlValidationState?: HtmlValidationState;
 }
 
 interface GroupProps extends AriaLabelableProps {
@@ -55,7 +55,7 @@ export interface FormGroupContext<TOutput extends FormObject = FormObject> {
   onValidationDone(cb: () => void): void;
   requestValidation(): Promise<GroupValidationResult<TOutput>>;
   getValidationMode(): FormValidationMode;
-  isHtmlValidationDisabled(): boolean;
+  getHtmlValidationState(): HtmlValidationState | undefined;
 }
 
 export const FormGroupKey: InjectionKey<FormGroupContext> = Symbol('FormGroup');
@@ -82,8 +82,7 @@ export function useFormGroup<TInput extends FormObject = FormObject, TOutput ext
   const form = inject(FormKey, null);
   const parentGroup = inject(FormGroupKey, null);
   const isDisabled = createDisabledContext(props.disabled);
-  const isHtmlValidationDisabled = () =>
-    toValue(props.disableHtmlValidation) ?? form?.isHtmlValidationDisabled() ?? getConfig().disableHtmlValidation;
+  const getHtmlValidationState = () => toValue(props.htmlValidationState);
   const { validate, onValidationDispatch, defineValidationRequest, onValidationDone, dispatchValidateDone } =
     useValidationProvider({
       getValues: () => getValue(),
@@ -165,7 +164,7 @@ export function useFormGroup<TInput extends FormObject = FormObject, TOutput ext
     onValidationDone,
     requestValidation,
     getValidationMode: () => (props.schema ? 'schema' : 'aggregate'),
-    isHtmlValidationDisabled,
+    getHtmlValidationState,
   };
 
   // Whenever the form is validated, it is deferred to the form group to do that.

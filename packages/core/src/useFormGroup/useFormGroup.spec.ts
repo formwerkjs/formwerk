@@ -18,7 +18,7 @@ function createInputComponent(): Component {
         name,
         label: name,
         schema,
-        disableHtmlValidation: attrs.disableHtmlValidation as any,
+        htmlValidationState: attrs.htmlValidationState as any,
       });
 
       return { errorMessage: errorMessage, inputProps, name, attrs };
@@ -36,7 +36,7 @@ function createGroupComponent(fn?: (fg: ReturnType<typeof useFormGroup>) => void
     setup: (_, { attrs }) => {
       const name = (attrs.name || 'test') as string;
       const schema = attrs.schema as StandardSchema<any>;
-      const fg = useFormGroup({ name, label: name, schema, disableHtmlValidation: attrs.disableHtmlValidation as any });
+      const fg = useFormGroup({ name, label: name, schema, htmlValidationState: attrs.htmlValidationState as any });
       fn?.(fg);
 
       return {};
@@ -429,7 +429,7 @@ describe('disabling HTML validation', () => {
         return {};
       },
       template: `
-        <TGroup :disableHtmlValidation="true">
+        <TGroup htmlValidationState="disabled">
           <TInput name="field1" :required="true" />
         </TGroup>
 
@@ -450,7 +450,7 @@ describe('disabling HTML validation', () => {
     await render({
       components: { TInput: createInputComponent(), TGroup: createGroupComponent() },
       setup() {
-        useForm({ disableHtmlValidation: true });
+        useForm({ htmlValidationState: 'disabled' });
 
         return {};
       },
@@ -461,7 +461,7 @@ describe('disabling HTML validation', () => {
 
         <TInput name="field2" :required="true" />
 
-        <TGroup :disableHtmlValidation="false">
+        <TGroup htmlValidationState="enabled">
           <TInput name="field3" :required="true" />
         </TGroup>
       `,
@@ -489,10 +489,10 @@ describe('disabling HTML validation', () => {
       template: `
         <TGroup>
           <TInput name="field1" :required="true" />
-          <TInput name="field2" :required="true" :disableHtmlValidation="true" />
+          <TInput name="field2" :required="true" htmlValidationState="disabled" />
         </TGroup>
 
-        <TInput name="field3" :required="true" :disableHtmlValidation="true" />
+        <TInput name="field3" :required="true" htmlValidationState="disabled" />
       `,
     });
 
@@ -509,13 +509,13 @@ describe('disabling HTML validation', () => {
 
   test('can be disabled globally and overridden', async () => {
     configure({
-      disableHtmlValidation: true,
+      htmlValidationState: 'disabled',
     });
 
     await render({
       components: { TInput: createInputComponent(), TGroup: createGroupComponent() },
       setup() {
-        useForm({ disableHtmlValidation: true });
+        useForm({ htmlValidationState: 'disabled' });
 
         return {};
       },
@@ -526,7 +526,7 @@ describe('disabling HTML validation', () => {
 
         <TInput name="field2" :required="true" />
 
-        <TGroup :disableHtmlValidation="false">
+        <TGroup htmlValidationState="enabled">
           <TInput name="field3" :required="true" />
         </TGroup>
       `,
@@ -543,7 +543,7 @@ describe('disabling HTML validation', () => {
     expect(errors[2]).toHaveTextContent('Constraints not satisfied');
 
     configure({
-      disableHtmlValidation: false,
+      htmlValidationState: 'enabled',
     });
   });
 });

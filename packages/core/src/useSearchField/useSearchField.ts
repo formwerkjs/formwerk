@@ -8,6 +8,7 @@ import {
   Reactivify,
   TextInputBaseAttributes,
   StandardSchema,
+  HtmlValidationState,
 } from '../types';
 import {
   createDescribedByProps,
@@ -113,9 +114,9 @@ export interface SearchFieldProps {
   onSubmit?: (value: string) => void;
 
   /**
-   * Whether to disable HTML5 form validation.
+   * Whether to enable/disable HTML5 form validation.
    */
-  disableHtmlValidation?: boolean;
+  htmlValidationState?: HtmlValidationState;
 }
 
 export function useSearchField(_props: Reactivify<SearchFieldProps, 'onSubmit' | 'schema'>) {
@@ -134,7 +135,7 @@ export function useSearchField(_props: Reactivify<SearchFieldProps, 'onSubmit' |
   const { validityDetails, updateValidity } = useInputValidity({
     inputEl,
     field,
-    disableHtmlValidation: props.disableHtmlValidation,
+    htmlValidationState: props.htmlValidationState,
   });
   const { fieldValue, setValue, setTouched, errorMessage, isValid } = field;
 

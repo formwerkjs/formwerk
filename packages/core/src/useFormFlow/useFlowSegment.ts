@@ -40,7 +40,7 @@ export function useFlowSegment<TSchema extends GenericFormSchema>(props: FlowSeg
     onValidationDone,
     requestValidation,
     getValidationMode: () => (props.schema ? 'schema' : 'aggregate'),
-    isHtmlValidationDisabled: () => false,
+    getHtmlValidationState: () => 'enabled',
   };
 
   const isActive = computed(() => formFlow.isSegmentActive(id));

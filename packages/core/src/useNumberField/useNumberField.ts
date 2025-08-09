@@ -17,6 +17,7 @@ import {
   Numberish,
   Reactivify,
   StandardSchema,
+  HtmlValidationState,
 } from '../types';
 import { useInputValidity } from '../validation/useInputValidity';
 import { useLabel, useErrorMessage } from '../a11y';
@@ -133,9 +134,9 @@ export interface NumberFieldProps {
   disableWheel?: boolean;
 
   /**
-   * Whether to disable HTML5 form validation.
+   * Whether to enable/disable HTML5 form validation.
    */
-  disableHtmlValidation?: boolean;
+  htmlValidationState?: HtmlValidationState;
 }
 
 export function useNumberField(_props: Reactivify<NumberFieldProps, 'schema'>) {
@@ -156,7 +157,7 @@ export function useNumberField(_props: Reactivify<NumberFieldProps, 'schema'>) {
   const { validityDetails, updateValidity } = useInputValidity({
     inputEl,
     field,
-    disableHtmlValidation: props.disableHtmlValidation,
+    htmlValidationState: props.htmlValidationState,
   });
 
   const { fieldValue, setValue, setTouched, errorMessage, isDisabled } = field;
