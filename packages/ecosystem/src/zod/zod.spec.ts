@@ -77,5 +77,5 @@ test('collects multiple errors per field', async () => {
 
   await fireEvent.click(screen.getByText('Submit'));
   await flush();
-  expect(handler).toHaveBeenCalledWith(['Invalid email address', 'Too small: expected string to have >8 characters']);
+  expect(handler).toHaveBeenCalledWith(['Invalid email address', 'Too small: expected string to have >=8 characters']);
 });
