@@ -28,6 +28,7 @@ import { FieldTypePrefixes } from '../constants';
 import { appendToFormData, clearFormData } from '../utils/formData';
 import { Arrayable, PartialDeep } from 'type-fest';
 import { createDisabledContext } from '../helpers/createDisabledContext';
+import { TransparentWrapper } from 'packages/core/dist/core';
 
 interface _FormProps<TInput extends FormObject> {
   /**
@@ -48,7 +49,7 @@ interface _FormProps<TInput extends FormObject> {
   /**
    * Whether HTML5 validation should be disabled for this form.
    */
-  disableHtmlValidation?: boolean;
+  disableHtmlValidation?: TransparentWrapper<boolean>;
 
   /**
    * Whether the form is disabled.

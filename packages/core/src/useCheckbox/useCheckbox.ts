@@ -8,6 +8,7 @@ import {
   Reactivify,
   RovingTabIndex,
   StandardSchema,
+  TransparentWrapper,
 } from '../types';
 import { useLabel, useErrorMessage } from '../a11y';
 import { CheckboxGroupContext, CheckboxGroupKey } from './useCheckboxGroup';
@@ -79,7 +80,7 @@ export interface CheckboxProps<TValue = boolean> {
   /**
    * Whether HTML5 validation should be disabled for this checkbox.
    */
-  disableHtmlValidation?: boolean;
+  disableHtmlValidation?: TransparentWrapper<boolean>;
 }
 
 export interface CheckboxDomInputProps extends AriaLabelableProps, InputBaseAttributes {

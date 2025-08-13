@@ -24,6 +24,7 @@ import {
 import { useLocale } from '../i18n';
 import { FormField, useFormField, exposeField } from '../useFormField';
 import { FieldTypePrefixes } from '../constants';
+import { TransparentWrapper } from 'packages/core/dist/core';
 
 export type CheckboxGroupValue<TCheckbox> = TCheckbox[];
 
@@ -107,7 +108,7 @@ export interface CheckboxGroupProps<TCheckbox = unknown> {
   /**
    * Whether HTML5 validation should be disabled for this checkbox group.
    */
-  disableHtmlValidation?: boolean;
+  disableHtmlValidation?: TransparentWrapper<boolean>;
 }
 
 interface CheckboxGroupDomProps extends AriaLabelableProps, AriaDescribableProps, AriaValidatableProps {

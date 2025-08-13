@@ -7,12 +7,13 @@ import { isInputElement, normalizeArrayable, warn } from '../utils/common';
 import { FormGroupContext, FormGroupKey } from '../useFormGroup';
 import { getConfig } from '../config';
 import { checkLocaleMismatch } from '../i18n';
+import { TransparentWrapper } from 'packages/core/dist/core';
 
 type ElementReference = Ref<Arrayable<Maybe<HTMLElement>>>;
 
 interface InputValidityOptions {
   inputEl?: ElementReference;
-  disableHtmlValidation?: MaybeRefOrGetter<boolean | undefined>;
+  disableHtmlValidation?: MaybeRefOrGetter<TransparentWrapper<boolean> | undefined>;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   field: FormField<any>;
   events?: EventExpression[];
@@ -26,7 +27,7 @@ export function useInputValidity(opts: InputValidityOptions) {
   const validityDetails = shallowRef<ValidityState>();
   useMessageCustomValiditySync(errorMessage, opts.inputEl, form, formGroup);
   const isHtmlValidationDisabled = () =>
-    toValue(opts.disableHtmlValidation) ??
+    toBooleanValue(opts.disableHtmlValidation) ??
     (formGroup || form)?.isHtmlValidationDisabled() ??
     getConfig().disableHtmlValidation;
 
@@ -144,6 +145,15 @@ export function useInputValidity(opts: InputValidityOptions) {
     validityDetails,
     updateValidity,
   };
+}
+
+function toBooleanValue(val: MaybeRefOrGetter<TransparentWrapper<boolean> | undefined>): boolean | undefined {
+  const unwrapped = toValue(val);
+
+  if (typeof unwrapped === 'string' && unwrapped === '') {
+    return true;
+  }
+  return unwrapped;
 }
 
 /**
