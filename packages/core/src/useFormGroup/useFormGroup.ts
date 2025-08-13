@@ -17,6 +17,7 @@ import { prefixPath as _prefixPath } from '../utils/path';
 import { getConfig } from '../config';
 import { createPathPrefixer, usePathPrefixer } from '../helpers/usePathPrefixer';
 import { createDisabledContext } from '../helpers/createDisabledContext';
+import { TransparentWrapper } from '../types';
 
 export interface FormGroupProps<TInput extends FormObject = FormObject, TOutput extends FormObject = TInput> {
   /**
@@ -42,7 +43,7 @@ export interface FormGroupProps<TInput extends FormObject = FormObject, TOutput 
   /**
    * Whether HTML5 validation should be disabled for this form group.
    */
-  disableHtmlValidation?: boolean;
+  disableHtmlValidation?: TransparentWrapper<boolean>;
 }
 
 interface GroupProps extends AriaLabelableProps {

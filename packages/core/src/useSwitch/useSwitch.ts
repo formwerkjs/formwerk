@@ -23,6 +23,7 @@ import { useFormField, exposeField } from '../useFormField';
 import { FieldTypePrefixes } from '../constants';
 import { useInputValidity } from '../validation';
 import { registerField } from '@formwerk/devtools';
+import { TransparentWrapper } from '../types';
 
 export interface SwitchDomInputProps
   extends InputBaseAttributes,
@@ -92,7 +93,7 @@ export type SwitchProps<TValue = boolean> = {
   /**
    * Whether to disable HTML5 validation.
    */
-  disableHtmlValidation?: boolean;
+  disableHtmlValidation?: TransparentWrapper<boolean>;
 };
 
 export function useSwitch<TValue = boolean>(_props: Reactivify<SwitchProps<TValue>, 'schema'>) {

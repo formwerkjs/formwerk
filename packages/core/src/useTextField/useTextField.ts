@@ -15,6 +15,7 @@ import { useLabel, useErrorMessage } from '../a11y';
 import { useFormField, exposeField } from '../useFormField';
 import { FieldTypePrefixes } from '../constants';
 import { StandardSchema } from '../types';
+import { TransparentWrapper } from '../types';
 
 export type TextInputDOMType = 'text' | 'password' | 'email' | 'number' | 'tel' | 'url';
 
@@ -110,7 +111,7 @@ export interface TextFieldProps {
   /**
    * Whether to disable HTML5 validation.
    */
-  disableHtmlValidation?: boolean;
+  disableHtmlValidation?: TransparentWrapper<boolean>;
 }
 
 export function useTextField(_props: Reactivify<TextFieldProps, 'schema'>) {

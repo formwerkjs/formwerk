@@ -23,6 +23,7 @@ import {
 import { useLocale } from '../i18n';
 import { useFormField, exposeField } from '../useFormField';
 import { FieldTypePrefixes } from '../constants';
+import { TransparentWrapper } from '../types';
 
 export interface RadioGroupContext<TValue> {
   name: string;
@@ -101,7 +102,7 @@ export interface RadioGroupProps<TValue = string> {
   /**
    * Whether to disable HTML5 form validation.
    */
-  disableHtmlValidation?: boolean;
+  disableHtmlValidation?: TransparentWrapper<boolean>;
 }
 
 interface RadioGroupDomProps extends AriaLabelableProps, AriaDescribableProps, AriaValidatableProps {
