@@ -1,5 +1,11 @@
 # @formwerk/devtools
 
+## 0.11.5
+
+### Patch Changes
+
+- 33dde11: Fixes disable html validation config by using a thin wrapper to that Vue does not cast non-provided values as false.
+
 ## 0.11.4
 
 ## 0.11.3
