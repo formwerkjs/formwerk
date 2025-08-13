@@ -28,7 +28,7 @@ import { FieldTypePrefixes } from '../constants';
 import { appendToFormData, clearFormData } from '../utils/formData';
 import { Arrayable, PartialDeep } from 'type-fest';
 import { createDisabledContext } from '../helpers/createDisabledContext';
-import { TransparentWrapper } from 'packages/core/dist/core';
+import { TransparentWrapper } from '../types';
 
 interface _FormProps<TInput extends FormObject> {
   /**

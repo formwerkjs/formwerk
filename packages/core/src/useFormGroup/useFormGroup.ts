@@ -17,7 +17,7 @@ import { prefixPath as _prefixPath } from '../utils/path';
 import { getConfig } from '../config';
 import { createPathPrefixer, usePathPrefixer } from '../helpers/usePathPrefixer';
 import { createDisabledContext } from '../helpers/createDisabledContext';
-import { TransparentWrapper } from 'packages/core/dist/core';
+import { TransparentWrapper } from '../types';
 
 export interface FormGroupProps<TInput extends FormObject = FormObject, TOutput extends FormObject = TInput> {
   /**

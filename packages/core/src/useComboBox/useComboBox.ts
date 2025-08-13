@@ -20,7 +20,7 @@ import { useInputValidity } from '../validation';
 import { FilterFn } from '../collections';
 import { useControlButtonProps } from '../helpers/useControlButtonProps';
 import { registerField } from '@formwerk/devtools';
-import { TransparentWrapper } from 'packages/core/dist/core';
+import { TransparentWrapper } from '../types';
 
 export interface ComboBoxProps<TOption, TValue = TOption> {
   /**

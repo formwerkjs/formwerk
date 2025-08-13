@@ -23,7 +23,7 @@ import { useFormField, exposeField } from '../useFormField';
 import { FieldTypePrefixes } from '../constants';
 import { useInputValidity } from '../validation';
 import { registerField } from '@formwerk/devtools';
-import { TransparentWrapper } from 'packages/core/dist/core';
+import { TransparentWrapper } from '../types';
 
 export interface SwitchDomInputProps
   extends InputBaseAttributes,

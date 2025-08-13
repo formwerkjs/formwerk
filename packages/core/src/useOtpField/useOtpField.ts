@@ -10,7 +10,7 @@ import { OtpSlotProps } from './useOtpSlot';
 import { registerField } from '@formwerk/devtools';
 import { DEFAULT_MASK, isValueAccepted } from './utils';
 import { blockEvent } from '../utils/events';
-import { TransparentWrapper } from 'packages/core/dist/core';
+import { TransparentWrapper } from '../types';
 
 export interface OtpFieldProps {
   /**

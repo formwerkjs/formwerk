@@ -22,7 +22,7 @@ import { useLabel, useErrorMessage } from '../a11y';
 import { useFormField, exposeField } from '../useFormField';
 import { FieldTypePrefixes } from '../constants';
 import { registerField } from '@formwerk/devtools';
-import { TransparentWrapper } from 'packages/core/dist/core';
+import { TransparentWrapper } from '../types';
 
 export interface SearchInputDOMAttributes extends TextInputBaseAttributes {
   type?: 'search';

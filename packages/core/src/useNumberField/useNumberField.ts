@@ -27,7 +27,7 @@ import { exposeField, useFormField } from '../useFormField';
 import { FieldTypePrefixes } from '../constants';
 import { useEventListener } from '../helpers/useEventListener';
 import { registerField } from '@formwerk/devtools';
-import { TransparentWrapper } from 'packages/core/dist/core';
+import { TransparentWrapper } from '../types';
 
 export interface NumberInputDOMAttributes {
   name?: string;

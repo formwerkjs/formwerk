@@ -7,7 +7,7 @@ import { isInputElement, normalizeArrayable, warn } from '../utils/common';
 import { FormGroupContext, FormGroupKey } from '../useFormGroup';
 import { getConfig } from '../config';
 import { checkLocaleMismatch } from '../i18n';
-import { TransparentWrapper } from 'packages/core/dist/core';
+import { TransparentWrapper } from '../types';
 
 type ElementReference = Ref<Arrayable<Maybe<HTMLElement>>>;
 

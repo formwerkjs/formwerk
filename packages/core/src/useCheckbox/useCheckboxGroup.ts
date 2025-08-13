@@ -24,7 +24,7 @@ import {
 import { useLocale } from '../i18n';
 import { FormField, useFormField, exposeField } from '../useFormField';
 import { FieldTypePrefixes } from '../constants';
-import { TransparentWrapper } from 'packages/core/dist/core';
+import { TransparentWrapper } from '../types';
 
 export type CheckboxGroupValue<TCheckbox> = TCheckbox[];
 
