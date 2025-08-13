@@ -20,6 +20,7 @@ export interface ListBoxProps<TOption, TValue = TOption> {
   orientation?: Orientation;
   disabled?: boolean;
   autofocusOnOpen?: boolean;
+  triggerEl?: Maybe<HTMLElement>;
 
   onToggleAll?(): void;
   onToggleBefore?(): void;
@@ -76,7 +77,7 @@ export function useListBox<TOption, TValue = TOption>(
   const finder = useBasicOptionFinder(renderedOptions);
 
   // Initialize popover controller, NO-OP if the element is not a popover-enabled element.
-  const { isOpen } = usePopoverController(listBoxEl, { disabled: props.disabled });
+  const { isOpen } = usePopoverController(listBoxEl, { disabled: props.disabled, triggerEl: props.triggerEl });
   const isShiftPressed = useKeyPressed(['ShiftLeft', 'ShiftRight'], () => !isOpen.value);
   const isMetaPressed = useKeyPressed(
     isMac() ? ['MetaLeft', 'MetaRight'] : ['ControlLeft', 'ControlRight'],
