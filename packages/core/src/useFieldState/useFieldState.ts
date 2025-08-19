@@ -1,4 +1,15 @@
-import { computed, inject, MaybeRefOrGetter, nextTick, readonly, Ref, shallowRef, toValue, watch } from 'vue';
+import {
+  computed,
+  inject,
+  InjectionKey,
+  MaybeRefOrGetter,
+  nextTick,
+  readonly,
+  Ref,
+  shallowRef,
+  toValue,
+  watch,
+} from 'vue';
 import { FormContext, FormKey } from '../useForm/useForm';
 import { Arrayable, Getter, StandardSchema, ValidationResult } from '../types';
 import { useSyncModel } from '../reactivity/useModelSync';
@@ -46,6 +57,8 @@ export type FieldState<TValue> = {
   registerControl: (ctx: FormControlContext) => void;
   form?: FormContext | null;
 };
+
+export const FieldStateKey: InjectionKey<FieldState<unknown>> = Symbol('FieldStateKey');
 
 export function useFieldState<TValue = unknown>(opts?: Partial<FieldStateInit<TValue>>): FieldState<TValue> {
   const form = inject(FormKey, null);
@@ -470,6 +483,10 @@ export type ExposedField<TValue> = {
    */
   validate: (mutate?: boolean) => Promise<ValidationResult>;
 };
+
+export function useFieldStateInjection<TValue = unknown>() {
+  return inject(FieldStateKey, null) as FieldState<TValue> | null;
+}
 
 export function exposeField<TReturns extends object, TValue>(
   obj: TReturns,

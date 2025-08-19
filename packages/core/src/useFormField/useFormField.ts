@@ -60,11 +60,7 @@ export interface FormField {
   registerControl: (control: ControlApi) => void;
 }
 
-interface FormFieldContext {
-  registerControl: (control: ControlApi) => void;
-}
-
-export const FormFieldKey: InjectionKey<FormFieldContext> = Symbol('FormFieldKey');
+export const FormFieldKey: InjectionKey<FormField> = Symbol('FormFieldKey');
 
 // oxlint-disable-next-line no-explicit-any
 export function useFormField(props: Reactivify<FieldProps>, state: FieldState<any>): FormField {
@@ -91,11 +87,7 @@ export function useFormField(props: Reactivify<FieldProps>, state: FieldState<an
     control.value = api;
   }
 
-  provide(FormFieldKey, {
-    registerControl,
-  });
-
-  return {
+  const field = {
     labelProps,
     labelledByProps,
     descriptionProps,
@@ -104,11 +96,15 @@ export function useFormField(props: Reactivify<FieldProps>, state: FieldState<an
     errorMessageProps,
     registerControl,
   } satisfies FormField;
+
+  provide(FormFieldKey, field);
+
+  return field;
 }
 
 /**
  * Returns the registerControl function, used to register a control and hook the labels and descriptions.
  */
-export function useFormFieldRegisterControl() {
-  return inject(FormFieldKey, null)?.registerControl;
+export function useFormFieldInjection() {
+  return inject(FormFieldKey, null);
 }
