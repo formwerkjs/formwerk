@@ -2,7 +2,6 @@ import { ref, toValue, watch, shallowRef } from 'vue';
 import { InputEvents, Maybe, Reactivify, StandardSchema } from '../types';
 import { Orientation } from '../types';
 import {
-  createDescribedByProps,
   debounce,
   hasKeyCode,
   isEqual,
@@ -15,7 +14,7 @@ import { exposeField, useFormField } from '../useFormField';
 import { FieldTypePrefixes } from '../constants';
 import { useLabel } from '../a11y/useLabel';
 import { useListBox } from '../useListBox';
-import { useErrorMessage } from '../a11y/useErrorMessage';
+import { useErrorMessage, useDescription } from '../a11y';
 import { useInputValidity } from '../validation';
 import { FilterFn } from '../collections';
 import { useControlButtonProps } from '../helpers/useControlButtonProps';
@@ -126,7 +125,7 @@ export function useComboBox<TOption, TValue = TOption>(
   });
 
   const { validityDetails } = useInputValidity({ field, inputEl, disableHtmlValidation: props.disableHtmlValidation });
-  const { descriptionProps, describedByProps } = createDescribedByProps({
+  const { descriptionProps, describedByProps } = useDescription({
     inputId,
     description: props.description,
   });

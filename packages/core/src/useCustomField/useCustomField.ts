@@ -2,8 +2,8 @@ import { shallowRef, toValue } from 'vue';
 import { FieldTypePrefixes } from '../constants';
 import { Reactivify, StandardSchema } from '../types';
 import { exposeField, useFormField } from '../useFormField';
-import { createDescribedByProps, normalizeProps, propsToValues, useUniqId, useCaptureProps } from '../utils/common';
-import { useLabel, useErrorMessage } from '../a11y';
+import { normalizeProps, propsToValues, useUniqId, useCaptureProps } from '../utils/common';
+import { useLabel, useErrorMessage, useDescription } from '../a11y';
 import { useInputValidity } from '../validation';
 import { registerField } from '@formwerk/devtools';
 
@@ -69,7 +69,7 @@ export function useCustomField<TValue = unknown>(_props: Reactivify<CustomFieldP
     targetRef: controlEl,
   });
 
-  const { descriptionProps, describedByProps } = createDescribedByProps({
+  const { descriptionProps, describedByProps } = useDescription({
     inputId: controlId,
     description: props.description,
   });

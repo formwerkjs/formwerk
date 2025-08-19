@@ -1,6 +1,5 @@
 import { computed, nextTick, shallowRef, toValue, watch } from 'vue';
 import {
-  createDescribedByProps,
   fromNumberish,
   isEmpty,
   isNullOrUndefined,
@@ -19,7 +18,7 @@ import {
   StandardSchema,
 } from '../types';
 import { useInputValidity } from '../validation/useInputValidity';
-import { useLabel, useErrorMessage } from '../a11y';
+import { useLabel, useErrorMessage, useDescription } from '../a11y';
 import { useNumberParser } from '../i18n/useNumberParser';
 import { useSpinButton } from '../useSpinButton';
 import { useLocale } from '../i18n';
@@ -182,7 +181,7 @@ export function useNumberField(_props: Reactivify<NumberFieldProps, 'schema'>) {
     targetRef: inputEl,
   });
 
-  const { descriptionProps, describedByProps } = createDescribedByProps({
+  const { descriptionProps, describedByProps } = useDescription({
     inputId,
     description: props.description,
   });

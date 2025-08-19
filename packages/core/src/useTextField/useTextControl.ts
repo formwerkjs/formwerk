@@ -18,7 +18,6 @@ export function useTextControl(props: Reactivify<TextControlProps>, ctx?: FormCo
 
   if (field) {
     useInputValidity({ inputEl, field, disableHtmlValidation: props.disableHtmlValidation });
-    field.registerControl({ inputEl });
   }
 
   const handlers: InputEvents = {

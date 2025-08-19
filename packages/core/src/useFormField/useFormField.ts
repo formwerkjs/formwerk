@@ -1,17 +1,6 @@
 import { computed, inject, MaybeRefOrGetter, nextTick, readonly, Ref, shallowRef, toValue, watch } from 'vue';
 import { FormContext, FormKey } from '../useForm/useForm';
-import {
-  AriaDescribableProps,
-  AriaDescriptionProps,
-  AriaErrorMessageProps,
-  AriaLabelableProps,
-  AriaLabelProps,
-  Arrayable,
-  Getter,
-  Maybe,
-  StandardSchema,
-  ValidationResult,
-} from '../types';
+import { Arrayable, Getter, StandardSchema, ValidationResult } from '../types';
 import { useSyncModel } from '../reactivity/useModelSync';
 import {
   cloneDeep,
@@ -21,13 +10,11 @@ import {
   tryOnScopeDispose,
   warn,
   isLowPriority,
-  createDescribedByProps,
 } from '../utils/common';
 import { FormGroupKey } from '../useFormGroup';
 import { useErrorDisplay } from './useErrorDisplay';
 import { usePathPrefixer } from '../helpers/usePathPrefixer';
 import { createDisabledContext } from '../helpers/createDisabledContext';
-import { ErrorableAttributes, useErrorMessage, useLabel } from '../a11y';
 
 interface FormFieldOptions<TValue = unknown> {
   path: MaybeRefOrGetter<string | undefined> | undefined;
@@ -38,12 +25,6 @@ interface FormFieldOptions<TValue = unknown> {
   modelName: string;
   disabled: MaybeRefOrGetter<boolean | undefined>;
   schema: StandardSchema<TValue>;
-}
-
-interface FormFieldInit {
-  inputId: MaybeRefOrGetter<string>;
-  label: MaybeRefOrGetter<string>;
-  description?: MaybeRefOrGetter<string | undefined>;
 }
 
 export type FormField<TValue> = {
@@ -57,12 +38,6 @@ export type FormField<TValue> = {
   submitErrors: Ref<string[]>;
   submitErrorMessage: Ref<string | undefined>;
   schema: StandardSchema<TValue> | undefined;
-  descriptionProps: Ref<AriaDescriptionProps>;
-  describedByProps: Ref<AriaDescribableProps>;
-  accessibleErrorProps: Ref<ErrorableAttributes>;
-  errorMessageProps: Ref<AriaErrorMessageProps>;
-  labelProps: Ref<AriaLabelProps>;
-  labelledByProps: Ref<AriaLabelableProps>;
   validate(mutate?: boolean): Promise<ValidationResult>;
   getPath: Getter<string | undefined>;
   getName: Getter<string | undefined>;
@@ -70,22 +45,13 @@ export type FormField<TValue> = {
   setTouched: (touched: boolean) => void;
   setErrors: (messages: Arrayable<string>) => void;
   displayError: () => string | undefined;
-  registerControl: (ctx: FormControlContext) => void;
   form?: FormContext | null;
 };
 
-interface FormControlContext {
-  inputEl: Ref<Maybe<HTMLElement>>;
-}
-
-export function useFormField<TValue = unknown>(
-  init: FormFieldInit,
-  opts?: Partial<FormFieldOptions<TValue>>,
-): FormField<TValue> {
+export function useFormField<TValue = unknown>(opts?: Partial<FormFieldOptions<TValue>>): FormField<TValue> {
   const form = inject(FormKey, null);
   const formGroup = inject(FormGroupKey, null);
   const pathPrefixer = usePathPrefixer();
-  const controlContext = shallowRef<FormControlContext>();
   const isDisabled = createDisabledContext(opts?.disabled);
   const getPath = () => {
     const path = toValue(opts?.path);
@@ -158,22 +124,6 @@ export function useFormField<TValue = unknown>(
     });
   }
 
-  const { descriptionProps, describedByProps } = createDescribedByProps({
-    inputId: init.inputId,
-    description: init.description,
-  });
-
-  const { accessibleErrorProps, errorMessageProps } = useErrorMessage({
-    inputId: init.inputId,
-    errorMessage: errorMessage,
-  });
-
-  const { labelProps, labelledByProps } = useLabel({
-    for: init.inputId,
-    label: init.label,
-    targetRef: () => controlContext.value?.inputEl.value,
-  });
-
   const field: FormField<TValue> = {
     fieldValue: readonly(fieldValue) as Ref<TValue | undefined>,
     isTouched: readonly(isTouched) as Ref<boolean>,
@@ -190,15 +140,8 @@ export function useFormField<TValue = unknown>(
     setTouched,
     setErrors,
     displayError,
-    registerControl,
     submitErrors,
     submitErrorMessage,
-    descriptionProps,
-    describedByProps,
-    accessibleErrorProps,
-    errorMessageProps,
-    labelProps,
-    labelledByProps,
   };
 
   if (!form) {
@@ -265,10 +208,6 @@ export function useFormField<TValue = unknown>(
 
     form.setFieldDisabled(path, disabled);
   });
-
-  function registerControl(ctx: FormControlContext) {
-    controlContext.value = ctx;
-  }
 
   return { ...field, form };
 }
@@ -538,21 +477,6 @@ export type ExposedField<TValue> = {
    * @param mutate - Whether to set errors on the field as a result of the validation call, defaults to `true`.
    */
   validate: (mutate?: boolean) => Promise<ValidationResult>;
-
-  /**
-   * Props for the description element.
-   */
-  descriptionProps: Ref<AriaDescriptionProps>;
-
-  /**
-   * Props for the error message element.
-   */
-  errorMessageProps: Ref<AriaErrorMessageProps>;
-
-  /**
-   * Props for the label element.
-   */
-  labelProps: Ref<AriaLabelProps>;
 };
 
 export function exposeField<TReturns extends object, TValue>(
@@ -582,9 +506,6 @@ export function exposeField<TReturns extends object, TValue>(
     setTouched: field.setTouched,
     setValue: field.setValue,
     validate: (mutate = true) => field.validate(mutate),
-    descriptionProps: field.descriptionProps,
-    errorMessageProps: field.errorMessageProps,
-    labelProps: field.labelProps,
   } satisfies ExposedField<TValue>;
 
   return {
