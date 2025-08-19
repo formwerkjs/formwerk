@@ -21,7 +21,7 @@ import {
   warn,
 } from '../utils/common';
 import { useLocale } from '../i18n';
-import { FormField, useFormField, exposeField } from '../useFormField';
+import { FormField, useFieldState, exposeField } from '../useFieldState';
 import { FieldTypePrefixes } from '../constants';
 
 export type CheckboxGroupValue<TCheckbox> = TCheckbox[];
@@ -125,7 +125,7 @@ export function useCheckboxGroup<TCheckbox>(_props: Reactivify<CheckboxGroupProp
     label: props.label,
   });
 
-  const field = useFormField({
+  const field = useFieldState({
     path: props.name,
     initialValue: toValue(props.modelValue),
     schema: props.schema,

@@ -1,5 +1,5 @@
 import { toValue, shallowRef } from 'vue';
-import { useFormField, exposeField } from '../useFormField';
+import { useFieldState, exposeField } from '../useFieldState';
 import { AriaLabelableProps, Arrayable, Orientation, Reactivify, StandardSchema } from '../types';
 import {
   isEqual,
@@ -92,7 +92,7 @@ const MENU_OPEN_KEYS = ['Enter', 'Space', 'ArrowDown', 'ArrowUp'];
 export function useSelect<TOption, TValue = TOption>(_props: Reactivify<SelectProps<TOption, TValue>, 'schema'>) {
   const inputId = useUniqId(FieldTypePrefixes.Select);
   const props = normalizeProps(_props, ['schema']);
-  const field = useFormField<Arrayable<TValue>>({
+  const field = useFieldState<Arrayable<TValue>>({
     path: props.name,
     initialValue: (toValue(props.modelValue) ?? toValue(props.value)) as Arrayable<TValue>,
     disabled: props.disabled,

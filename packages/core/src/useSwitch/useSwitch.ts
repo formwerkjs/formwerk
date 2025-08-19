@@ -19,7 +19,7 @@ import {
   lowPriority,
 } from '../utils/common';
 import { useLabel, useErrorMessage } from '../a11y';
-import { useFormField, exposeField } from '../useFormField';
+import { useFieldState, exposeField } from '../useFieldState';
 import { FieldTypePrefixes } from '../constants';
 import { useInputValidity } from '../validation';
 import { registerField } from '@formwerk/devtools';
@@ -106,7 +106,7 @@ export function useSwitch<TValue = boolean>(_props: Reactivify<SwitchProps<TValu
     targetRef: inputEl,
   });
 
-  const field = useFormField<unknown>({
+  const field = useFieldState<unknown>({
     path: props.name,
     initialValue: toValue(props.modelValue) ?? toValue(props.falseValue) ?? lowPriority(false),
     disabled: props.disabled,

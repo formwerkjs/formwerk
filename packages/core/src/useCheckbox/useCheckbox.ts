@@ -11,7 +11,7 @@ import {
 } from '../types';
 import { useLabel, useErrorMessage } from '../a11y';
 import { CheckboxGroupContext, CheckboxGroupKey } from './useCheckboxGroup';
-import { useFormField, exposeField, FormField } from '../useFormField';
+import { useFieldState, exposeField, FormField } from '../useFieldState';
 import { FieldTypePrefixes } from '../constants';
 import { useInputValidity } from '../validation';
 
@@ -323,7 +323,7 @@ function useCheckboxField<TValue = string>(
     return createGroupField(group, getTrueValue);
   }
 
-  return useFormField<TValue>({
+  return useFieldState<TValue>({
     path: props.name,
     initialValue: toValue(props.modelValue) as TValue,
     disabled: props.disabled,
