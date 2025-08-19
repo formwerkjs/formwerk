@@ -1,15 +1,6 @@
-import { computed, getCurrentScope, MaybeRefOrGetter, onScopeDispose, Ref, shallowRef, toValue, useId } from 'vue';
+import { computed, getCurrentScope, MaybeRefOrGetter, onScopeDispose, Ref, toValue, useId } from 'vue';
 import { klona } from 'klona/full';
-import {
-  AriaDescriptionProps,
-  Arrayable,
-  DangerousAny,
-  IssueCollection,
-  Maybe,
-  NormalizedProps,
-  Numberish,
-  StandardIssue,
-} from '../types';
+import { Arrayable, DangerousAny, IssueCollection, Maybe, NormalizedProps, Numberish, StandardIssue } from '../types';
 import { AsyncReturnType } from 'type-fest';
 import { getDotPath } from '@standard-schema/utils';
 import { isObject } from '../../../shared/src/utils';
@@ -18,33 +9,6 @@ export const isSSR = typeof window === 'undefined';
 
 export function useUniqId(prefix?: string) {
   return prefix ? `${prefix}-${useId()}` : useId() || '';
-}
-
-export function createDescriptionProps(inputId: string): AriaDescriptionProps {
-  return {
-    id: `${inputId}-d`,
-  };
-}
-
-interface CreateDescribedByInit {
-  inputId: MaybeRefOrGetter<string>;
-  description: MaybeRefOrGetter<string | undefined>;
-}
-
-export function createDescribedByProps({ inputId, description }: CreateDescribedByInit) {
-  const descriptionRef = shallowRef<HTMLElement>();
-  const descriptionProps = useCaptureProps(() => createDescriptionProps(toValue(inputId)), descriptionRef);
-
-  const describedByProps = computed(() => {
-    return {
-      'aria-describedby': descriptionRef.value && toValue(description) ? descriptionProps.value.id : undefined,
-    };
-  });
-
-  return {
-    describedByProps,
-    descriptionProps,
-  };
 }
 
 export function createRefCapture<TEl extends HTMLElement>(elRef: Ref<Maybe<TEl>>) {

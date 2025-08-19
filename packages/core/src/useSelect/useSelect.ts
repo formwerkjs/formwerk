@@ -2,7 +2,6 @@ import { toValue, shallowRef } from 'vue';
 import { useFormField, exposeField } from '../useFormField';
 import { AriaLabelableProps, Arrayable, Orientation, Reactivify, StandardSchema } from '../types';
 import {
-  createDescribedByProps,
   isEqual,
   normalizeArrayable,
   normalizeProps,
@@ -12,7 +11,7 @@ import {
 } from '../utils/common';
 import { useInputValidity } from '../validation';
 import { useListBox } from '../useListBox';
-import { useLabel, useErrorMessage } from '../a11y';
+import { useLabel, useErrorMessage, useDescription } from '../a11y';
 import { FieldTypePrefixes } from '../constants';
 import { registerField } from '@formwerk/devtools';
 import { useConstraintsValidator } from '../validation/useConstraintsValidator';
@@ -140,7 +139,7 @@ export function useSelect<TOption, TValue = TOption>(_props: Reactivify<SelectPr
   });
 
   const { updateValidity } = useInputValidity({ field, inputEl });
-  const { descriptionProps, describedByProps } = createDescribedByProps({
+  const { descriptionProps, describedByProps } = useDescription({
     inputId,
     description: props.description,
   });

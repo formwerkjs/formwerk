@@ -9,16 +9,9 @@ import {
   TextInputBaseAttributes,
   StandardSchema,
 } from '../types';
-import {
-  createDescribedByProps,
-  hasKeyCode,
-  normalizeProps,
-  propsToValues,
-  useUniqId,
-  useCaptureProps,
-} from '../utils/common';
+import { hasKeyCode, normalizeProps, propsToValues, useUniqId, useCaptureProps } from '../utils/common';
 import { useInputValidity } from '../validation/useInputValidity';
-import { useLabel, useErrorMessage } from '../a11y';
+import { useLabel, useErrorMessage, useDescription } from '../a11y';
 import { useFormField, exposeField } from '../useFormField';
 import { FieldTypePrefixes } from '../constants';
 import { registerField } from '@formwerk/devtools';
@@ -145,7 +138,7 @@ export function useSearchField(_props: Reactivify<SearchFieldProps, 'onSubmit' |
     targetRef: inputEl,
   });
 
-  const { descriptionProps, describedByProps } = createDescribedByProps({
+  const { descriptionProps, describedByProps } = useDescription({
     inputId,
     description: props.description,
   });
