@@ -1,7 +1,7 @@
 import { nextTick, ref } from 'vue';
 import { useInputValidity } from './useInputValidity';
 import { fireEvent, render, screen } from '@testing-library/vue';
-import { FormField, useFieldState } from '../useFieldState';
+import { FieldState, useFieldState } from '../useFieldState';
 import { EventExpression } from '../helpers/useEventListener';
 
 test('updates the validity state on blur events', async () => {
@@ -76,7 +76,7 @@ test('updates the validity on specified events', async () => {
 
 test('updates the input native validity with custom validity errors', async () => {
   const input = ref<HTMLInputElement>();
-  let field!: FormField<any>;
+  let field!: FieldState<any>;
   await render({
     setup: () => {
       field = useFieldState();

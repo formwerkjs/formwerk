@@ -6,6 +6,7 @@ import { useFieldState, exposeField } from '../useFieldState';
 import { TextControlProps } from './types';
 import { useTextControl } from './useTextControl';
 import { FieldTypePrefixes } from '../constants';
+import { useFormField } from '../useFormField';
 
 export interface TextFieldProps extends TextControlProps {
   /**
@@ -21,33 +22,26 @@ export interface TextFieldProps extends TextControlProps {
 export function useTextField(_props: Reactivify<TextFieldProps, 'schema'>) {
   const props = normalizeProps(_props, ['schema']);
   const inputId = useUniqId(FieldTypePrefixes.TextField);
-  const field = useFieldState<string | undefined>({
+
+  const state = useFieldState<string | undefined>({
     path: props.name,
     initialValue: toValue(props.modelValue) ?? toValue(props.value),
     disabled: props.disabled,
     schema: props.schema,
   });
 
-  // const { descriptionProps, describedByProps } = useDescription({
-  //   inputId: init.inputId,
-  //   description: init.description,
-  // });
+  const field = useFormField(
+    {
+      label: props.label,
+      description: props.description,
+    },
+    state,
+  );
 
-  // const { accessibleErrorProps, errorMessageProps } = useErrorMessage({
-  //   inputId: init.inputId,
-  //   errorMessage: errorMessage,
-  // });
-
-  // const { labelProps, labelledByProps } = useLabel({
-  //   for: init.inputId,
-  //   label: init.label,
-  //   targetRef: () => controlContext.value?.inputEl.value,
-  // });
-
-  const { inputEl, inputProps } = useTextControl(props, { field, inputId });
+  const { inputEl, inputProps } = useTextControl(props, { state, field, inputId });
 
   if (__DEV__) {
-    registerField(field, 'Text');
+    registerField(state, 'Text');
   }
 
   return exposeField(
@@ -60,7 +54,22 @@ export function useTextField(_props: Reactivify<TextFieldProps, 'schema'>) {
        * Props for the input element.
        */
       inputProps,
+
+      /**
+       * Props for the label element.
+       */
+      labelProps: field.labelProps,
+
+      /**
+       * Props for the description element.
+       */
+      descriptionProps: field.descriptionProps,
+
+      /**
+       * Props for the error message element.
+       */
+      errorMessageProps: field.errorMessageProps,
     },
-    field,
+    state,
   );
 }
