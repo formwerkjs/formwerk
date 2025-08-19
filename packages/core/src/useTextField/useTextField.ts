@@ -1,47 +1,18 @@
-import { shallowRef, toValue } from 'vue';
+import { toValue } from 'vue';
 import { registerField } from '@formwerk/devtools';
-import { createDescribedByProps, normalizeProps, propsToValues, useUniqId, useCaptureProps } from '../utils/common';
-import {
-  AriaDescribableProps,
-  AriaLabelableProps,
-  TextInputBaseAttributes,
-  InputEvents,
-  AriaValidatableProps,
-  Numberish,
-  Reactivify,
-} from '../types/common';
-import { useInputValidity } from '../validation/useInputValidity';
-import { useLabel, useErrorMessage } from '../a11y';
+import { normalizeProps, useUniqId } from '../utils/common';
+import { Numberish, Reactivify } from '../types/common';
 import { useFormField, exposeField } from '../useFormField';
+import { TextControlProps, TextInputDOMType } from './types';
+import { useTextControl } from './useTextControl';
 import { FieldTypePrefixes } from '../constants';
 import { StandardSchema } from '../types';
 
-export type TextInputDOMType = 'text' | 'password' | 'email' | 'number' | 'tel' | 'url';
-
-export interface TextInputDOMAttributes extends TextInputBaseAttributes {
-  type?: TextInputDOMType;
-}
-
-export interface TextInputDOMProps
-  extends TextInputDOMAttributes,
-    AriaLabelableProps,
-    AriaDescribableProps,
-    AriaValidatableProps,
-    InputEvents {
-  id: string;
-}
-
-export interface TextFieldProps {
+export interface TextFieldProps extends TextControlProps {
   /**
    * The label of the text field.
    */
   label: string;
-
-  /**
-   * The v-model value of the text field.
-   */
-  modelValue?: string;
-
   /**
    * Description text that provides additional context about the field.
    */
@@ -117,60 +88,21 @@ export interface TextFieldProps {
 export function useTextField(_props: Reactivify<TextFieldProps, 'schema'>) {
   const props = normalizeProps(_props, ['schema']);
   const inputId = useUniqId(FieldTypePrefixes.TextField);
-  const inputEl = shallowRef<HTMLInputElement>();
-  const field = useFormField<string | undefined>({
-    path: props.name,
-    initialValue: toValue(props.modelValue) ?? toValue(props.value),
-    disabled: props.disabled,
-    schema: props.schema,
-  });
-
-  const { validityDetails } = useInputValidity({ inputEl, field, disableHtmlValidation: props.disableHtmlValidation });
-  const { fieldValue, setValue, setTouched, errorMessage, isDisabled } = field;
-  const { labelProps, labelledByProps } = useLabel({
-    for: inputId,
-    label: props.label,
-    targetRef: inputEl,
-  });
-
-  const { descriptionProps, describedByProps } = createDescribedByProps({
-    inputId,
-    description: props.description,
-  });
-
-  const { accessibleErrorProps, errorMessageProps } = useErrorMessage({
-    inputId,
-    errorMessage,
-  });
-
-  const handlers: InputEvents = {
-    onInput(evt) {
-      setValue((evt.target as HTMLInputElement).value);
+  const field = useFormField<string | undefined>(
+    {
+      inputId,
+      label: props.label,
+      description: props.description,
     },
-    onChange(evt) {
-      setValue((evt.target as HTMLInputElement).value);
+    {
+      path: props.name,
+      initialValue: toValue(props.modelValue) ?? toValue(props.value),
+      disabled: props.disabled,
+      schema: props.schema,
     },
-    onBlur() {
-      setTouched(true);
-    },
-  };
+  );
 
-  const inputProps = useCaptureProps(() => {
-    return {
-      ...propsToValues(props, ['name', 'type', 'placeholder', 'autocomplete', 'required', 'readonly']),
-      ...labelledByProps.value,
-      ...describedByProps.value,
-      ...accessibleErrorProps.value,
-      ...handlers,
-      id: inputId,
-      value: fieldValue.value,
-      maxlength: toValue(props.maxLength),
-      minlength: toValue(props.minLength),
-      disabled: isDisabled.value ? true : undefined,
-      // Maybe we need to find a better way to serialize RegExp to a pattern string
-      pattern: inputEl.value?.tagName === 'TEXTAREA' ? undefined : toValue(props.pattern)?.toString(),
-    };
-  }, inputEl);
+  const { inputEl, inputProps } = useTextControl(props, { field, inputId });
 
   if (__DEV__) {
     registerField(field, 'Text');
@@ -179,14 +111,6 @@ export function useTextField(_props: Reactivify<TextFieldProps, 'schema'>) {
   return exposeField(
     {
       /**
-       * Props for the description element.
-       */
-      descriptionProps,
-      /**
-       * Props for the error message element.
-       */
-      errorMessageProps,
-      /**
        * Reference to the input element.
        */
       inputEl,
@@ -194,14 +118,6 @@ export function useTextField(_props: Reactivify<TextFieldProps, 'schema'>) {
        * Props for the input element.
        */
       inputProps,
-      /**
-       * Props for the label element.
-       */
-      labelProps,
-      /**
-       * Validity details for the input element.
-       */
-      validityDetails,
     },
     field,
   );
