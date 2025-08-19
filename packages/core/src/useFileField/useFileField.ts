@@ -11,7 +11,7 @@ import {
 } from '../utils/common';
 import { FieldTypePrefixes } from '../constants';
 import { useErrorMessage } from '../a11y';
-import { exposeField, useFormField } from '../useFormField';
+import { exposeField, useFieldState } from '../useFieldState';
 import { useConstraintsValidator, useInputValidity } from '../validation';
 import { blockEvent } from '../utils/events';
 import { registerField } from '@formwerk/devtools';
@@ -110,7 +110,7 @@ export function useFileField(_props: Reactivify<FileFieldProps, 'schema' | 'onUp
 
   const isUploading = computed(() => entries.value.some(e => e.isUploading));
 
-  const field = useFormField<Arrayable<File | string>>({
+  const field = useFieldState<Arrayable<File | string>>({
     path: props.name,
     disabled: props.disabled,
     schema: props.schema,

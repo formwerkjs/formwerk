@@ -2,7 +2,7 @@ import { toValue } from 'vue';
 import { registerField } from '@formwerk/devtools';
 import { normalizeProps, useUniqId } from '../utils/common';
 import { Numberish, Reactivify } from '../types/common';
-import { useFormField, exposeField } from '../useFormField';
+import { useFieldState, exposeField } from '../useFieldState';
 import { TextControlProps, TextInputDOMType } from './types';
 import { useTextControl } from './useTextControl';
 import { FieldTypePrefixes } from '../constants';
@@ -88,28 +88,28 @@ export interface TextFieldProps extends TextControlProps {
 export function useTextField(_props: Reactivify<TextFieldProps, 'schema'>) {
   const props = normalizeProps(_props, ['schema']);
   const inputId = useUniqId(FieldTypePrefixes.TextField);
-  const field = useFormField<string | undefined>({
+  const field = useFieldState<string | undefined>({
     path: props.name,
     initialValue: toValue(props.modelValue) ?? toValue(props.value),
     disabled: props.disabled,
     schema: props.schema,
   });
 
-  const { descriptionProps, describedByProps } = useDescription({
-    inputId: init.inputId,
-    description: init.description,
-  });
+  // const { descriptionProps, describedByProps } = useDescription({
+  //   inputId: init.inputId,
+  //   description: init.description,
+  // });
 
-  const { accessibleErrorProps, errorMessageProps } = useErrorMessage({
-    inputId: init.inputId,
-    errorMessage: errorMessage,
-  });
+  // const { accessibleErrorProps, errorMessageProps } = useErrorMessage({
+  //   inputId: init.inputId,
+  //   errorMessage: errorMessage,
+  // });
 
-  const { labelProps, labelledByProps } = useLabel({
-    for: init.inputId,
-    label: init.label,
-    targetRef: () => controlContext.value?.inputEl.value,
-  });
+  // const { labelProps, labelledByProps } = useLabel({
+  //   for: init.inputId,
+  //   label: init.label,
+  //   targetRef: () => controlContext.value?.inputEl.value,
+  // });
 
   const { inputEl, inputProps } = useTextControl(props, { field, inputId });
 

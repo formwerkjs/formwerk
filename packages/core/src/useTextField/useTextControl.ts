@@ -1,6 +1,6 @@
 import { shallowRef, toValue } from 'vue';
 import { InputEvents, Reactivify } from '../types';
-import { FormField } from '../useFormField';
+import { FormField } from '../useFieldState';
 import { propsToValues, useCaptureProps, useUniqId } from '../utils/common';
 import { TextControlProps } from './types';
 import { useInputValidity } from '../validation';

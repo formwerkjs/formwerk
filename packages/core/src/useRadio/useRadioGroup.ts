@@ -13,7 +13,7 @@ import {
 } from '../types';
 import { useUniqId, getNextCycleArrIdx, normalizeProps, isEmpty, removeFirst, hasKeyCode } from '../utils/common';
 import { useLocale } from '../i18n';
-import { useFormField, exposeField } from '../useFormField';
+import { useFieldState, exposeField } from '../useFieldState';
 import { FieldTypePrefixes } from '../constants';
 
 export interface RadioGroupContext<TValue> {
@@ -130,7 +130,7 @@ export function useRadioGroup<TValue = string>(_props: Reactivify<RadioGroupProp
     label: props.label,
   });
 
-  const field = useFormField<TValue>({
+  const field = useFieldState<TValue>({
     path: props.name,
     initialValue: toValue(props.modelValue) as TValue,
     disabled: props.disabled,

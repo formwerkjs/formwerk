@@ -47,7 +47,7 @@ export type FormField<TValue> = {
   form?: FormContext | null;
 };
 
-export function useFormField<TValue = unknown>(opts?: Partial<FormFieldOptions<TValue>>): FormField<TValue> {
+export function useFieldState<TValue = unknown>(opts?: Partial<FormFieldOptions<TValue>>): FormField<TValue> {
   const form = inject(FormKey, null);
   const formGroup = inject(FormGroupKey, null);
   const pathPrefixer = usePathPrefixer();

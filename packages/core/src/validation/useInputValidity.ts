@@ -2,7 +2,7 @@ import { Ref, inject, nextTick, onMounted, shallowRef, watch, MaybeRefOrGetter, 
 import { EventExpression, useEventListener } from '../helpers/useEventListener';
 import { type FormContext, FormKey } from '../useForm';
 import { Arrayable, Maybe, ValidationResult } from '../types';
-import { FormField } from '../useFormField';
+import { FormField } from '../useFieldState';
 import { isInputElement, normalizeArrayable, toPrimitiveBooleanValue, warn } from '../utils/common';
 import { FormGroupContext, FormGroupKey } from '../useFormGroup';
 import { getConfig } from '../config';

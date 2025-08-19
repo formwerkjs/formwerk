@@ -1,6 +1,6 @@
 import { toValue, watch } from 'vue';
 import { Reactivify } from '../types';
-import { exposeField, useFormField } from '../useFormField';
+import { exposeField, useFieldState } from '../useFieldState';
 import { normalizeProps } from '../utils/common';
 import { useInputValidity } from '../validation';
 import { registerField } from '@formwerk/devtools';
@@ -25,7 +25,7 @@ export interface HiddenFieldProps<TValue = unknown> {
 export function useHiddenField<TValue = unknown>(_props: Reactivify<HiddenFieldProps<TValue>>) {
   const props = normalizeProps(_props);
 
-  const field = useFormField({
+  const field = useFieldState({
     disabled: props.disabled,
     path: props.name,
     initialValue: toValue(props.value),

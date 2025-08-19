@@ -10,7 +10,7 @@ import { useControlButtonProps } from '../helpers/useControlButtonProps';
 import { CalendarContextKey, YEAR_CELLS_COUNT } from './constants';
 import { CalendarView, useCalendarView } from './useCalendarView';
 import { Calendar, ZonedDateTime, now, toCalendar } from '@internationalized/date';
-import { exposeField, FormField, useFormField } from '../useFormField';
+import { exposeField, FormField, useFieldState } from '../useFieldState';
 import { useInputValidity } from '../validation';
 import { fromDateToCalendarZonedDateTime, useTemporalStore } from '../useDateTime/useTemporalStore';
 import { PickerContextKey } from '../usePicker';
@@ -135,7 +135,7 @@ export function useCalendar(_props: Reactivify<CalendarProps, 'field' | 'schema'
   const calendarLabelEl = shallowRef<HTMLElement>();
   const field =
     props.field ??
-    useFormField<Maybe<Date>>({
+    useFieldState<Maybe<Date>>({
       path: props.name,
       disabled: props.disabled,
       initialValue: toValue(props.modelValue) ?? toValue(props.value),

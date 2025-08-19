@@ -12,7 +12,7 @@ import {
 import { hasKeyCode, normalizeProps, propsToValues, useUniqId, useCaptureProps } from '../utils/common';
 import { useInputValidity } from '../validation/useInputValidity';
 import { useLabel, useErrorMessage, useDescription } from '../a11y';
-import { useFormField, exposeField } from '../useFormField';
+import { useFieldState, exposeField } from '../useFieldState';
 import { FieldTypePrefixes } from '../constants';
 import { registerField } from '@formwerk/devtools';
 
@@ -116,7 +116,7 @@ export function useSearchField(_props: Reactivify<SearchFieldProps, 'onSubmit' |
   const props = normalizeProps(_props, ['onSubmit', 'schema']);
   const inputId = useUniqId(FieldTypePrefixes.SearchField);
   const inputEl = ref<HTMLInputElement>();
-  const field = useFormField<string | undefined>({
+  const field = useFieldState<string | undefined>({
     path: props.name,
     initialValue: toValue(props.modelValue) ?? toValue(props.value),
     disabled: props.disabled,

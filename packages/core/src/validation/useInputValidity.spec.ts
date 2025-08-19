@@ -1,7 +1,7 @@
 import { nextTick, ref } from 'vue';
 import { useInputValidity } from './useInputValidity';
 import { fireEvent, render, screen } from '@testing-library/vue';
-import { FormField, useFormField } from '../useFormField';
+import { FormField, useFieldState } from '../useFieldState';
 import { EventExpression } from '../helpers/useEventListener';
 
 test('updates the validity state on blur events', async () => {
@@ -9,7 +9,7 @@ test('updates the validity state on blur events', async () => {
 
   await render({
     setup: () => {
-      const field = useFormField();
+      const field = useFieldState();
       useInputValidity({ inputEl: input, field });
 
       return { input, errorMessage: field.errorMessage };
@@ -31,7 +31,7 @@ test('updates the validity state on change events', async () => {
 
   await render({
     setup: () => {
-      const field = useFormField();
+      const field = useFieldState();
       useInputValidity({ inputEl: input, field });
 
       return { input, errorMessage: field.errorMessage };
@@ -55,7 +55,7 @@ test('updates the validity on specified events', async () => {
 
   await render({
     setup: () => {
-      const field = useFormField();
+      const field = useFieldState();
       useInputValidity({ inputEl: input, field, events: ['input'] });
 
       return { input, errorMessage: field.errorMessage };
@@ -79,7 +79,7 @@ test('updates the input native validity with custom validity errors', async () =
   let field!: FormField<any>;
   await render({
     setup: () => {
-      field = useFormField();
+      field = useFieldState();
       useInputValidity({ inputEl: input, field, events: ['input'] });
 
       return { input, errorMessage: field.errorMessage };
@@ -105,7 +105,7 @@ test('events can be reactive', async () => {
 
   await render({
     setup: () => {
-      const field = useFormField();
+      const field = useFieldState();
       useInputValidity({ inputEl: input, field, events });
 
       return { input, errorMessage: field.errorMessage };
