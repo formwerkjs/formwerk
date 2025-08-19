@@ -15,7 +15,7 @@ import { FormGroupKey } from '../useFormGroup';
 import { usePathPrefixer } from '../helpers/usePathPrefixer';
 import { createDisabledContext } from '../helpers/createDisabledContext';
 
-interface FormFieldOptions<TValue = unknown> {
+interface FieldStateInit<TValue = unknown> {
   path: MaybeRefOrGetter<string | undefined> | undefined;
   initialValue: TValue;
   initialTouched: boolean;
@@ -26,7 +26,7 @@ interface FormFieldOptions<TValue = unknown> {
   schema: StandardSchema<TValue>;
 }
 
-export type FormField<TValue> = {
+export type FieldState<TValue> = {
   fieldValue: Ref<TValue | undefined>;
   isTouched: Ref<boolean>;
   isDirty: Ref<boolean>;
@@ -47,7 +47,7 @@ export type FormField<TValue> = {
   form?: FormContext | null;
 };
 
-export function useFieldState<TValue = unknown>(opts?: Partial<FormFieldOptions<TValue>>): FormField<TValue> {
+export function useFieldState<TValue = unknown>(opts?: Partial<FieldStateInit<TValue>>): FieldState<TValue> {
   const form = inject(FormKey, null);
   const formGroup = inject(FormGroupKey, null);
   const pathPrefixer = usePathPrefixer();
@@ -121,7 +121,7 @@ export function useFieldState<TValue = unknown>(opts?: Partial<FormFieldOptions<
     });
   }
 
-  const field: FormField<TValue> = {
+  const field: FieldState<TValue> = {
     fieldValue: readonly(fieldValue) as Ref<TValue | undefined>,
     isTouched: readonly(isTouched) as Ref<boolean>,
     isDirty,
@@ -473,7 +473,7 @@ export type ExposedField<TValue> = {
 
 export function exposeField<TReturns extends object, TValue>(
   obj: TReturns,
-  field: FormField<TValue>,
+  field: FieldState<TValue>,
 ): ExposedField<TValue> & TReturns {
   const exposedField = {
     errorMessage: field.errorMessage,
