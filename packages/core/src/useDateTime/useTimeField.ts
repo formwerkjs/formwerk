@@ -1,11 +1,11 @@
 import { Maybe, Reactivify, StandardSchema } from '../types';
-import { createDescribedByProps, isNullOrUndefined, normalizeProps, useUniqId, useCaptureProps } from '../utils/common';
+import { isNullOrUndefined, normalizeProps, useUniqId, useCaptureProps } from '../utils/common';
 import { computed, shallowRef, toValue } from 'vue';
 import { exposeField, useFormField } from '../useFormField';
 import { useDateTimeSegmentGroup } from './useDateTimeSegmentGroup';
 import { FieldTypePrefixes } from '../constants';
 import { useDateFormatter, useLocale } from '../i18n';
-import { useErrorMessage, useLabel } from '../a11y';
+import { useErrorMessage, useLabel, useDescription } from '../a11y';
 import { useTemporalStore } from './useTemporalStore';
 import { ZonedDateTime } from '@internationalized/date';
 import { useInputValidity } from '../validation';
@@ -163,7 +163,7 @@ export function useTimeField(_props: Reactivify<TimeFieldProps, 'schema'>) {
     targetRef: controlEl,
   });
 
-  const { descriptionProps, describedByProps } = createDescribedByProps({
+  const { descriptionProps, describedByProps } = useDescription({
     inputId: controlId,
     description: props.description,
   });

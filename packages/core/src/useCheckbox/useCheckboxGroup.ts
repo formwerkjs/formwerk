@@ -1,6 +1,6 @@
 import { InjectionKey, toValue, computed, onBeforeUnmount, reactive, provide, markRaw, ref } from 'vue';
 import { useInputValidity } from '../validation/useInputValidity';
-import { useLabel, useErrorMessage } from '../a11y';
+import { useLabel, useErrorMessage, useDescription } from '../a11y';
 import {
   AriaLabelableProps,
   AriaDescribableProps,
@@ -12,7 +12,6 @@ import {
 } from '../types';
 import {
   useUniqId,
-  createDescribedByProps,
   normalizeProps,
   isEqual,
   toggleValueSelection,
@@ -142,10 +141,12 @@ export function useCheckboxGroup<TCheckbox>(_props: Reactivify<CheckboxGroupProp
   });
 
   const { fieldValue, setValue, isTouched, setTouched, errorMessage, isDisabled } = field;
-  const { describedByProps, descriptionProps } = createDescribedByProps({
+
+  const { describedByProps, descriptionProps } = useDescription({
     inputId: groupId,
     description: props.description,
   });
+
   const { accessibleErrorProps, errorMessageProps } = useErrorMessage({
     inputId: groupId,
     errorMessage,

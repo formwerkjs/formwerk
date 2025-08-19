@@ -88,19 +88,28 @@ export interface TextFieldProps extends TextControlProps {
 export function useTextField(_props: Reactivify<TextFieldProps, 'schema'>) {
   const props = normalizeProps(_props, ['schema']);
   const inputId = useUniqId(FieldTypePrefixes.TextField);
-  const field = useFormField<string | undefined>(
-    {
-      inputId,
-      label: props.label,
-      description: props.description,
-    },
-    {
-      path: props.name,
-      initialValue: toValue(props.modelValue) ?? toValue(props.value),
-      disabled: props.disabled,
-      schema: props.schema,
-    },
-  );
+  const field = useFormField<string | undefined>({
+    path: props.name,
+    initialValue: toValue(props.modelValue) ?? toValue(props.value),
+    disabled: props.disabled,
+    schema: props.schema,
+  });
+
+  const { descriptionProps, describedByProps } = useDescription({
+    inputId: init.inputId,
+    description: init.description,
+  });
+
+  const { accessibleErrorProps, errorMessageProps } = useErrorMessage({
+    inputId: init.inputId,
+    errorMessage: errorMessage,
+  });
+
+  const { labelProps, labelledByProps } = useLabel({
+    for: init.inputId,
+    label: init.label,
+    targetRef: () => controlContext.value?.inputEl.value,
+  });
 
   const { inputEl, inputProps } = useTextControl(props, { field, inputId });
 

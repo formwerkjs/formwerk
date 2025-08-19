@@ -1,9 +1,9 @@
 import { computed, nextTick, provide, ref, toValue, watch, shallowRef } from 'vue';
 import { MaybeAsync, Reactivify, StandardSchema } from '../types';
 import { OtpContextKey, OtpSlotAcceptType } from './types';
-import { createDescribedByProps, normalizeProps, useUniqId, useCaptureProps } from '../utils/common';
+import { normalizeProps, useUniqId, useCaptureProps } from '../utils/common';
 import { FieldTypePrefixes } from '../constants';
-import { useErrorMessage, useLabel } from '../a11y';
+import { useErrorMessage, useLabel, useDescription } from '../a11y';
 import { exposeField, useFormField } from '../useFormField';
 import { useInputValidity, useConstraintsValidator } from '../validation';
 import { OtpSlotProps } from './useOtpSlot';
@@ -150,7 +150,7 @@ export function useOtpField(_props: Reactivify<OtpFieldProps, 'schema' | 'onComp
     disableHtmlValidation: props.disableHtmlValidation,
   });
 
-  const { descriptionProps, describedByProps } = createDescribedByProps({
+  const { descriptionProps, describedByProps } = useDescription({
     inputId: id,
     description: props.description,
   });
