@@ -1,12 +1,12 @@
 import { Maybe, Reactivify, StandardSchema } from '../types';
 import type { CalendarProps } from '../useCalendar';
-import { createDescribedByProps, normalizeProps, useUniqId, useCaptureProps } from '../utils/common';
+import { normalizeProps, useUniqId, useCaptureProps } from '../utils/common';
 import { computed, shallowRef, toValue } from 'vue';
 import { exposeField, useFormField } from '../useFormField';
 import { useDateTimeSegmentGroup } from './useDateTimeSegmentGroup';
 import { FieldTypePrefixes } from '../constants';
 import { useDateFormatter, useLocale } from '../i18n';
-import { useErrorMessage, useLabel } from '../a11y';
+import { useErrorMessage, useLabel, useDescription } from '../a11y';
 import { fromDateToCalendarZonedDateTime, useTemporalStore } from './useTemporalStore';
 import { ZonedDateTime, Calendar } from '@internationalized/date';
 import { useInputValidity } from '../validation';
@@ -164,7 +164,7 @@ export function useDateField(_props: Reactivify<DateFieldProps, 'schema'>) {
     targetRef: controlEl,
   });
 
-  const { descriptionProps, describedByProps } = createDescribedByProps({
+  const { descriptionProps, describedByProps } = useDescription({
     inputId: controlId,
     description: props.description,
   });

@@ -1,7 +1,7 @@
 import { InjectionKey, toValue, computed, onBeforeUnmount, reactive, provide, ref } from 'vue';
 import { registerField } from '@formwerk/devtools';
 import { useInputValidity } from '../validation/useInputValidity';
-import { useLabel, useErrorMessage } from '../a11y';
+import { useLabel, useErrorMessage, useDescription } from '../a11y';
 import {
   Orientation,
   AriaLabelableProps,
@@ -11,15 +11,7 @@ import {
   Reactivify,
   StandardSchema,
 } from '../types';
-import {
-  useUniqId,
-  createDescribedByProps,
-  getNextCycleArrIdx,
-  normalizeProps,
-  isEmpty,
-  removeFirst,
-  hasKeyCode,
-} from '../utils/common';
+import { useUniqId, getNextCycleArrIdx, normalizeProps, isEmpty, removeFirst, hasKeyCode } from '../utils/common';
 import { useLocale } from '../i18n';
 import { useFormField, exposeField } from '../useFormField';
 import { FieldTypePrefixes } from '../constants';
@@ -155,7 +147,7 @@ export function useRadioGroup<TValue = string>(_props: Reactivify<RadioGroupProp
 
   const { fieldValue, setValue, setTouched, errorMessage, isDisabled } = field;
 
-  const { descriptionProps, describedByProps } = createDescribedByProps({
+  const { descriptionProps, describedByProps } = useDescription({
     inputId: groupId,
     description: props.description,
   });
