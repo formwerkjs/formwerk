@@ -88,7 +88,6 @@ export interface TextFieldProps extends TextControlProps {
 
 export function useTextField(_props: Reactivify<TextFieldProps, 'schema'>) {
   const props = normalizeProps(_props, ['schema']);
-  const inputId = useUniqId(FieldTypePrefixes.TextField);
 
   const state = useFieldState<string | undefined>({
     path: props.name,
@@ -104,6 +103,8 @@ export function useTextField(_props: Reactivify<TextFieldProps, 'schema'>) {
     },
     state,
   );
+
+  const inputId = useUniqId(FieldTypePrefixes.TextField);
 
   const { inputEl, inputProps } = useTextControl(props, { state, field, inputId });
 

@@ -3,8 +3,8 @@ import { InputEvents, Reactivify } from '../types';
 import { propsToValues, useCaptureProps } from '../utils/common';
 import { TextControlProps } from './types';
 import { useInputValidity } from '../validation';
-import { FieldState } from '../useFieldState';
-import { FormField } from '../useFormField';
+import { FieldState, useFieldStateInjection } from '../useFieldState';
+import { FormField, useFormFieldInjection } from '../useFormField';
 
 interface FormControlContext {
   inputId: string;
@@ -13,8 +13,9 @@ interface FormControlContext {
 }
 
 export function useTextControl(props: Reactivify<TextControlProps>, ctx?: FormControlContext) {
-  const { state, field } = ctx ?? {};
   const inputEl = shallowRef<HTMLInputElement>();
+  const field = ctx?.field ?? useFormFieldInjection();
+  const state = ctx?.state ?? useFieldStateInjection<string | undefined>();
 
   if (state) {
     useInputValidity({ inputEl, field: state, disableHtmlValidation: props.disableHtmlValidation });
