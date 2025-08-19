@@ -27,13 +27,13 @@ export function createDescriptionProps(inputId: string): AriaDescriptionProps {
 }
 
 interface CreateDescribedByInit {
-  inputId: string;
+  inputId: MaybeRefOrGetter<string>;
   description: MaybeRefOrGetter<string | undefined>;
 }
 
 export function createDescribedByProps({ inputId, description }: CreateDescribedByInit) {
   const descriptionRef = shallowRef<HTMLElement>();
-  const descriptionProps = useCaptureProps(() => createDescriptionProps(inputId), descriptionRef);
+  const descriptionProps = useCaptureProps(() => createDescriptionProps(toValue(inputId)), descriptionRef);
 
   const describedByProps = computed(() => {
     return {
