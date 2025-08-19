@@ -1,6 +1,6 @@
 import { flush, renderSetup, defineStandardSchema } from '@test-utils/index';
 import { useForm } from './useForm';
-import { useFormField } from '../useFormField';
+import { useFieldState } from '../useFieldState';
 import { Component, nextTick, Ref, ref } from 'vue';
 import { useInputValidity } from '../validation/useInputValidity';
 import { fireEvent, render, screen } from '@testing-library/vue';
@@ -174,7 +174,7 @@ describe('form touched', () => {
      * Initialize touched state for all fields.
      *
      * This is necessary because in a normal form, fields are initialized
-     * internally through the `useFormField` hook, which is not used in this test.
+     * internally through the `useFieldState` hook, which is not used in this test.
      * Order of operations is important here.
      */
     setTouched('someConfig.nestedField1', false);
@@ -238,7 +238,7 @@ describe('form touched', () => {
      * Initialize touched state for all fields.
      *
      * This is necessary because in a normal form, fields are initialized
-     * internally through the `useFormField` hook, which is not used in this test.
+     * internally through the `useFieldState` hook, which is not used in this test.
      * Order of operations is important here.
      */
     setTouched('[parent.child.nested]', false);
@@ -412,7 +412,7 @@ describe('form submit', () => {
         return { form };
       },
       () => {
-        const field = useFormField({ path: 'field' });
+        const field = useFieldState({ path: 'field' });
 
         return { field };
       },
@@ -449,12 +449,12 @@ describe('form submit', () => {
         return useForm({ initialValues: defaults() });
       },
       () => {
-        useFormField({ path: 'field', disabled });
-        useFormField({ path: 'multiple.0' });
-        useFormField({ path: 'multiple.1', disabled });
-        useFormField({ path: 'multiple.2' });
-        useFormField({ path: 'multiple.3.name', disabled });
-        useFormField({ path: 'multiple.4' });
+        useFieldState({ path: 'field', disabled });
+        useFieldState({ path: 'multiple.0' });
+        useFieldState({ path: 'multiple.1', disabled });
+        useFieldState({ path: 'multiple.2' });
+        useFieldState({ path: 'multiple.3.name', disabled });
+        useFieldState({ path: 'multiple.4' });
 
         return {};
       },
@@ -920,7 +920,7 @@ describe('form dirty state', () => {
         return { form: useForm({ initialValues: { field: 'foo' } }) };
       },
       () => {
-        return { field: useFormField({ initialValue: 'bar' }) };
+        return { field: useFieldState({ initialValue: 'bar' }) };
       },
     );
 
@@ -944,7 +944,7 @@ describe('form dirty state', () => {
         return { form: useForm({ initialValues: { field: 'foo' } }) };
       },
       () => {
-        return { field: useFormField({ path: 'field' }) };
+        return { field: useFieldState({ path: 'field' }) };
       },
     );
 
@@ -963,7 +963,7 @@ describe('form dirty state', () => {
         return { form: useForm<any>({ initialValues: { foo: 'bar' } }) };
       },
       () => {
-        return { field: useFormField({ path: 'field' }) };
+        return { field: useFieldState({ path: 'field' }) };
       },
     );
 
@@ -982,7 +982,7 @@ describe('form validation', () => {
     function createInputComponent(inputEl: Ref<HTMLInputElement | undefined>): Component {
       return {
         setup: () => {
-          const field = useFormField({ path: 'test' });
+          const field = useFieldState({ path: 'test' });
           useInputValidity({ inputEl, field });
 
           return { input: inputEl, errorMessage: field.errorMessage };
@@ -1080,7 +1080,7 @@ describe('form validation', () => {
       const createInputComponent = (input: Ref<HTMLInputElement | undefined>) => {
         return {
           setup: () => {
-            const field = useFormField({ path: 'test' });
+            const field = useFieldState({ path: 'test' });
             useInputValidity({ inputEl: input, field });
 
             return { input: input, errorMessage: field.errorMessage, submitErrorMessage: field.submitErrorMessage };

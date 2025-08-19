@@ -24,7 +24,7 @@ import {
 } from '../utils/common';
 import { toNearestMultipleOf } from '../utils/math';
 import { useLocale } from '../i18n';
-import { useFormField, exposeField } from '../useFormField';
+import { useFieldState, exposeField } from '../useFieldState';
 import { FieldTypePrefixes } from '../constants';
 import { useInputValidity } from '../validation';
 import { registerField } from '@formwerk/devtools';
@@ -209,7 +209,7 @@ export function useSlider<TValue>(_props: Reactivify<SliderProps<TValue>, 'schem
   const trackEl = shallowRef<HTMLElement>();
   const thumbs = ref<ThumbRegistration[]>([]);
   const { direction } = useLocale();
-  const field = useFormField<Arrayable<TValue | undefined>>({
+  const field = useFieldState<Arrayable<TValue | undefined>>({
     path: props.name,
     initialValue: (toValue(props.modelValue) ?? toValue(props.value)) as TValue,
     disabled: props.disabled,
