@@ -1,4 +1,4 @@
-import { Ref, shallowRef } from 'vue';
+import { inject, InjectionKey, provide, Ref, shallowRef } from 'vue';
 import { ErrorableAttributes, useDescription, useErrorMessage, useLabel } from '../a11y';
 import {
   AriaDescribableProps,
@@ -60,6 +60,12 @@ export interface FormField {
   registerControl: (control: ControlApi) => void;
 }
 
+interface FormFieldContext {
+  registerControl: (control: ControlApi) => void;
+}
+
+export const FormFieldKey: InjectionKey<FormFieldContext> = Symbol('FormFieldKey');
+
 // oxlint-disable-next-line no-explicit-any
 export function useFormField(props: Reactivify<FieldProps>, state: FieldState<any>): FormField {
   const control = shallowRef<ControlApi>();
@@ -85,6 +91,10 @@ export function useFormField(props: Reactivify<FieldProps>, state: FieldState<an
     control.value = api;
   }
 
+  provide(FormFieldKey, {
+    registerControl,
+  });
+
   return {
     labelProps,
     labelledByProps,
@@ -94,4 +104,11 @@ export function useFormField(props: Reactivify<FieldProps>, state: FieldState<an
     errorMessageProps,
     registerControl,
   } satisfies FormField;
+}
+
+/**
+ * Returns the registerControl function, used to register a control and hook the labels and descriptions.
+ */
+export function useFormFieldRegisterControl() {
+  return inject(FormFieldKey, null)?.registerControl;
 }
