@@ -21,7 +21,7 @@ export * from './useCalendar';
 export * from './usePicker';
 export * from './types';
 export * from './useForm';
-export * from './useFormField';
+export * from './useFieldState';
 export * from './useFormGroup';
 export * from './useFormRepeater';
 export * from './useFormFlow';

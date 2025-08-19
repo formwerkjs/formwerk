@@ -1,7 +1,7 @@
 import { shallowRef, toValue } from 'vue';
 import { FieldTypePrefixes } from '../constants';
 import { Reactivify, StandardSchema } from '../types';
-import { exposeField, useFormField } from '../useFormField';
+import { exposeField, useFieldState } from '../useFieldState';
 import { normalizeProps, propsToValues, useUniqId, useCaptureProps } from '../utils/common';
 import { useLabel, useErrorMessage, useDescription } from '../a11y';
 import { useInputValidity } from '../validation';
@@ -53,7 +53,7 @@ export function useCustomField<TValue = unknown>(_props: Reactivify<CustomFieldP
   const props = normalizeProps(_props, ['schema']);
   const controlId = useUniqId(FieldTypePrefixes.CustomField);
   const controlEl = shallowRef<HTMLInputElement>();
-  const field = useFormField<TValue | undefined>({
+  const field = useFieldState<TValue | undefined>({
     path: props.name,
     initialValue: (toValue(props.modelValue) ?? toValue(props.value)) as TValue | undefined,
     disabled: props.disabled,
