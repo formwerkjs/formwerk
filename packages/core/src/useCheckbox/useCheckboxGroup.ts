@@ -21,7 +21,7 @@ import {
   warn,
 } from '../utils/common';
 import { useLocale } from '../i18n';
-import { FormField, useFieldState, exposeField } from '../useFieldState';
+import { FieldState, useFieldState, exposeField } from '../useFieldState';
 import { FieldTypePrefixes } from '../constants';
 
 export type CheckboxGroupValue<TCheckbox> = TCheckbox[];
@@ -40,7 +40,7 @@ export interface CheckboxGroupContext<TCheckbox> {
   name: string;
   readonly: boolean;
   required: boolean;
-  field: FormField<CheckboxGroupValue<TCheckbox>>;
+  field: FieldState<CheckboxGroupValue<TCheckbox>>;
   groupState: CheckboxGroupState;
 
   readonly modelValue: CheckboxGroupValue<TCheckbox> | undefined;

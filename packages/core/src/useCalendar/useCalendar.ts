@@ -10,7 +10,7 @@ import { useControlButtonProps } from '../helpers/useControlButtonProps';
 import { CalendarContextKey, YEAR_CELLS_COUNT } from './constants';
 import { CalendarView, useCalendarView } from './useCalendarView';
 import { Calendar, ZonedDateTime, now, toCalendar } from '@internationalized/date';
-import { exposeField, FormField, useFieldState } from '../useFieldState';
+import { exposeField, FieldState, useFieldState } from '../useFieldState';
 import { useInputValidity } from '../validation';
 import { fromDateToCalendarZonedDateTime, useTemporalStore } from '../useDateTime/useTemporalStore';
 import { PickerContextKey } from '../usePicker';
@@ -112,7 +112,7 @@ export interface CalendarProps {
   /**
    * The form field to use for the calendar.
    */
-  field?: FormField<any>;
+  field?: FieldState<any>;
 
   /**
    * The schema to use for the calendar.

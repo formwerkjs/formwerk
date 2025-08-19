@@ -1,7 +1,7 @@
 import { App, type ComponentInternalInstance, getCurrentInstance, nextTick, onMounted, onUnmounted, watch } from 'vue';
 import { throttle } from '../../../packages/shared/src';
 import { isSSR } from '../../../packages/core/src/utils/common';
-import type { FormField, FormReturns } from '@core/index';
+import type { FieldState, FormReturns } from '@core/index';
 import { DevtoolsForm, PathState } from './types';
 import {
   buildFieldState,
@@ -23,7 +23,7 @@ import {
 
 let SELECTED_NODE:
   | { type: 'form'; form: FormReturns }
-  | { type: 'field'; field: FormField<unknown> }
+  | { type: 'field'; field: FieldState<unknown> }
   | null
   | {
       type: 'path';
@@ -220,7 +220,7 @@ export function initDevTools() {
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function registerField(field: FormField<any>, type: string) {
+export function registerField(field: FieldState<any>, type: string) {
   onMounted(async () => {
     const vm = initDevTools();
     // Makes sure forms are registered before fields in same component contexts
