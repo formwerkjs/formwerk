@@ -170,6 +170,10 @@ export function useComboBox<TOption, TValue = TOption>(
     },
   });
 
+  watch(selectedOption, () => {
+    inputValue.value = selectedOption.value?.label ?? '';
+  });
+
   const handlers: InputEvents & { onKeydown(evt: KeyboardEvent): void; onFocus(): void } = {
     onInput(evt) {
       inputValue.value = (evt.target as HTMLInputElement).value;
