@@ -11,7 +11,7 @@ import {
 import { ControlApi } from '../types/controls';
 import { FieldState } from '../useFieldState';
 
-interface FieldProps {
+export interface FieldProps {
   /**
    * The label of the field.
    */
