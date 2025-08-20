@@ -4,6 +4,7 @@ import {
   InjectionKey,
   MaybeRefOrGetter,
   nextTick,
+  provide,
   readonly,
   Ref,
   shallowRef,
@@ -156,6 +157,8 @@ export function useFieldState<TValue = unknown>(opts?: Partial<FieldStateInit<TV
     submitErrors,
     submitErrorMessage,
   };
+
+  provide(FieldStateKey, field as FieldState<unknown>);
 
   if (!form) {
     return field;
