@@ -42,7 +42,7 @@ async function createConfig(pkg: keyof typeof pkgNameMap, format: ModuleFormat) 
     bundleName: `${pkgNameMap[pkg]}.${formatExt[format] ?? 'js'}`,
     input: {
       resolve: {
-        tsconfigFilename: normalizePath(path.resolve(__dirname, `../tsconfig.lib.json`)),
+        tsconfigFilename: slashes(path.resolve(__dirname, `../tsconfig.lib.json`)),
       },
       define: {
         __VERSION__: JSON.stringify(version),
