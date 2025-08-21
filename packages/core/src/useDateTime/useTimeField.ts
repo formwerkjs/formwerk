@@ -1,7 +1,7 @@
 import { Maybe, Reactivify, StandardSchema } from '../types';
 import { isNullOrUndefined, normalizeProps, useUniqId, useCaptureProps } from '../utils/common';
 import { computed, shallowRef, toValue } from 'vue';
-import { exposeField, useFieldState } from '../useFieldState';
+import { exposeField, useFormField } from '../useFormField';
 import { useDateTimeSegmentGroup } from './useDateTimeSegmentGroup';
 import { FieldTypePrefixes } from '../constants';
 import { useDateFormatter, useLocale } from '../i18n';
@@ -112,7 +112,7 @@ export function useTimeField(_props: Reactivify<TimeFieldProps, 'schema'>) {
   const formatter = useDateFormatter(locale, formatOptions);
   const controlId = useUniqId(FieldTypePrefixes.DateTimeField);
 
-  const field = useFieldState<Maybe<string>>({
+  const field = useFormField<Maybe<string>>({
     path: props.name,
     disabled: props.disabled,
     initialValue: toValue(props.modelValue) ?? toValue(props.value),
