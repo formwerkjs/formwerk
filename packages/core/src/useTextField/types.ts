@@ -1,8 +1,10 @@
+import { EventExpression } from '../helpers/useEventListener';
 import { StandardSchema } from '../types';
 import {
   AriaDescribableProps,
   AriaLabelableProps,
   AriaValidatableProps,
+  Arrayable,
   InputEvents,
   Numberish,
   TextInputBaseAttributes,
@@ -94,4 +96,9 @@ export interface TextControlProps {
    * Whether to disable HTML5 validation.
    */
   disableHtmlValidation?: TransparentWrapper<boolean>;
+
+  /**
+   * Events to validate on.
+   */
+  validateOn?: Arrayable<EventExpression>;
 }
