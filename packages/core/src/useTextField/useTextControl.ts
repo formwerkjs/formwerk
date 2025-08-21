@@ -1,19 +1,20 @@
 import { shallowRef, toValue } from 'vue';
 import { InputEvents, Reactivify } from '../types';
-import { normalizeProps, propsToValues, useCaptureProps } from '../utils/common';
+import { normalizeProps, propsToValues, useCaptureProps, useUniqId } from '../utils/common';
 import { TextControlProps } from './types';
 import { useInputValidity } from '../validation';
 import { FieldState, useFieldStateInjection } from '../useFieldState';
 import { FormField, useFormFieldInjection } from '../useFormField';
+import { FieldTypePrefixes } from '../constants';
 
 interface FormControlContext {
-  inputId: string;
   field?: FormField;
   state?: FieldState<string | undefined>;
 }
 
 export function useTextControl(_props: Reactivify<TextControlProps>, ctx?: FormControlContext) {
   const inputEl = shallowRef<HTMLInputElement>();
+  const inputId = useUniqId(FieldTypePrefixes.TextField);
   const props = normalizeProps(_props);
   const field = ctx?.field ?? useFormFieldInjection();
   const state = ctx?.state ?? useFieldStateInjection<string | undefined>();
@@ -30,7 +31,7 @@ export function useTextControl(_props: Reactivify<TextControlProps>, ctx?: FormC
   if (field) {
     field.registerControl({
       getControlElement: () => inputEl.value,
-      getControlId: () => toValue(ctx?.inputId),
+      getControlId: () => inputId,
     });
   }
 
@@ -50,7 +51,7 @@ export function useTextControl(_props: Reactivify<TextControlProps>, ctx?: FormC
     return {
       ...propsToValues(props, ['name', 'type', 'placeholder', 'autocomplete', 'required', 'readonly']),
       ...handlers,
-      id: toValue(ctx?.inputId) ?? undefined,
+      id: inputId,
       ...field?.accessibleErrorProps.value,
       ...field?.describedByProps.value,
       ...field?.labelledByProps.value,

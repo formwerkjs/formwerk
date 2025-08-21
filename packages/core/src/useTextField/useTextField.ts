@@ -1,11 +1,10 @@
 import { toValue } from 'vue';
 import { registerField } from '@formwerk/devtools';
-import { normalizeProps, useUniqId } from '../utils/common';
+import { normalizeProps } from '../utils/common';
 import { Numberish, Reactivify } from '../types/common';
 import { useFieldState, exposeField } from '../useFieldState';
 import { TextControlProps, TextInputDOMType } from './types';
 import { useTextControl } from './useTextControl';
-import { FieldTypePrefixes } from '../constants';
 import { StandardSchema } from '../types';
 import { useFormField } from '../useFormField';
 
@@ -88,7 +87,6 @@ export interface TextFieldProps extends TextControlProps {
 
 export function useTextField(_props: Reactivify<TextFieldProps, 'schema'>) {
   const props = normalizeProps(_props, ['schema']);
-
   const state = useFieldState<string | undefined>({
     path: props.name,
     initialValue: toValue(props.modelValue) ?? toValue(props.value),
@@ -104,9 +102,7 @@ export function useTextField(_props: Reactivify<TextFieldProps, 'schema'>) {
     state,
   );
 
-  const inputId = useUniqId(FieldTypePrefixes.TextField);
-
-  const { inputEl, inputProps } = useTextControl(props, { state, field, inputId });
+  const { inputEl, inputProps } = useTextControl(props, { state, field });
 
   if (__DEV__) {
     registerField(state, 'Text');
