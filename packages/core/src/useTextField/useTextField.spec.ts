@@ -3,6 +3,7 @@ import { axe } from 'vitest-axe';
 import { useTextField } from './useTextField';
 import { flush } from '@test-utils/flush';
 import { describe } from 'vitest';
+import { defineComponent, ref } from 'vue';
 
 describe('should not have a11y errors', () => {
   test('with label and input combo', async () => {
@@ -211,6 +212,51 @@ test('picks up native error messages', async () => {
   vi.useRealTimers();
   expect(await axe(screen.getByTestId('fixture'))).toHaveNoViolations();
   vi.useFakeTimers();
+});
+
+test('supports v-model', async () => {
+  const model = ref('');
+  const label = 'Field';
+  const TextField = defineComponent({
+    setup() {
+      const { inputProps, labelProps } = useTextField({
+        label,
+      });
+
+      return {
+        inputProps,
+        labelProps,
+        label,
+      };
+    },
+    template: `
+      <div data-testid="fixture">
+        <label v-bind="labelProps">{{ label }}</label>
+        <input v-bind="inputProps" />
+      </div>
+    `,
+  });
+
+  await render({
+    setup() {
+      return {
+        model,
+      };
+    },
+    components: {
+      TextField,
+    },
+    template: `
+      <div data-testid="fixture">
+        <TextField v-model="model" />
+      </div>
+    `,
+  });
+
+  await flush();
+  expect(screen.getByLabelText(label)).toHaveDisplayValue('');
+  await fireEvent.update(screen.getByLabelText(label), 'New value');
+  expect(model.value).toBe('New value');
 });
 
 describe('sets initial value', () => {
