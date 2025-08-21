@@ -13,13 +13,13 @@
 </template>
 
 <script setup lang="ts">
-import { useFieldState, useFormField, FieldProps } from '@formwerk/core';
+import { useFormField, FormFieldProps } from '@formwerk/core';
 
-const props = defineProps<FieldProps>();
+const props = defineProps<FormFieldProps>();
 
-const state = useFieldState();
-const { errorMessage, fieldValue } = state;
-const { labelProps, errorMessageProps, descriptionProps } = useFormField(props, state);
+const field = useFormField();
+const { labelProps, errorMessageProps, descriptionProps } = field;
+const { errorMessage, fieldValue } = field;
 </script>
 
 <style scoped>

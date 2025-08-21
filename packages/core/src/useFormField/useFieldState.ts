@@ -1,16 +1,4 @@
-import {
-  computed,
-  inject,
-  InjectionKey,
-  MaybeRefOrGetter,
-  nextTick,
-  provide,
-  readonly,
-  Ref,
-  shallowRef,
-  toValue,
-  watch,
-} from 'vue';
+import { computed, inject, MaybeRefOrGetter, nextTick, readonly, Ref, shallowRef, toValue, watch } from 'vue';
 import { FormContext, FormKey } from '../useForm/useForm';
 import { Arrayable, Getter, StandardSchema, ValidationResult } from '../types';
 import { useSyncModel } from '../reactivity/useModelSync';
@@ -28,7 +16,7 @@ import { useErrorDisplay } from './useErrorDisplay';
 import { usePathPrefixer } from '../helpers/usePathPrefixer';
 import { createDisabledContext } from '../helpers/createDisabledContext';
 
-interface FieldStateInit<TValue = unknown> {
+export interface FieldStateInit<TValue = unknown> {
   path: MaybeRefOrGetter<string | undefined> | undefined;
   initialValue: TValue;
   initialTouched: boolean;
@@ -59,8 +47,6 @@ export type FieldState<TValue> = {
   displayError: () => string | undefined;
   form?: FormContext | null;
 };
-
-export const FieldStateKey: InjectionKey<FieldState<unknown>> = Symbol('FieldStateKey');
 
 export function useFieldState<TValue = unknown>(opts?: Partial<FieldStateInit<TValue>>): FieldState<TValue> {
   const form = inject(FormKey, null);
@@ -157,8 +143,6 @@ export function useFieldState<TValue = unknown>(opts?: Partial<FieldStateInit<TV
     submitErrors,
     submitErrorMessage,
   };
-
-  provide(FieldStateKey, field as FieldState<unknown>);
 
   if (!form) {
     return field;
@@ -423,113 +407,4 @@ function createLocalValidity() {
     pathlessValidity: api,
     ...api,
   };
-}
-
-export type ExposedField<TValue> = {
-  /**
-   * Display the error message for the field.
-   */
-  displayError: () => string | undefined;
-
-  /**
-   * The error message for the field.
-   */
-  errorMessage: Ref<string | undefined>;
-
-  /**
-   * The errors for the field.
-   */
-  errors: Ref<string[]>;
-  /**
-   * The errors for the field from the last submit attempt.
-   */
-  submitErrors: Ref<string[]>;
-  /**
-   * The error message for the field from the last submit attempt.
-   */
-  submitErrorMessage: Ref<string | undefined>;
-  /**
-   * The value of the field.
-   */
-  fieldValue: Ref<TValue>;
-
-  /**
-   * Whether the field is dirty.
-   */
-  isDirty: Ref<boolean>;
-
-  /**
-   * Whether the field is touched.
-   */
-  isTouched: Ref<boolean>;
-
-  /**
-   * Whether the field is valid.
-   */
-  isValid: Ref<boolean>;
-
-  /**
-   * Whether the field is disabled.
-   */
-  isDisabled: Ref<boolean>;
-
-  /**
-   * Sets the errors for the field.
-   */
-  setErrors: (messages: Arrayable<string>) => void;
-
-  /**
-   * Sets the touched state for the field.
-   */
-  setTouched: (touched: boolean) => void;
-
-  /**
-   * Sets the value for the field.
-   */
-  setValue: (value: TValue) => void;
-
-  /**
-   * Validates the field.
-   * @param mutate - Whether to set errors on the field as a result of the validation call, defaults to `true`.
-   */
-  validate: (mutate?: boolean) => Promise<ValidationResult>;
-};
-
-export function useFieldStateInjection<TValue = unknown>() {
-  return inject(FieldStateKey, null) as FieldState<TValue> | null;
-}
-
-export function exposeField<TReturns extends object, TValue>(
-  obj: TReturns,
-  field: FieldState<TValue>,
-): ExposedField<TValue> & TReturns {
-  const exposedField = {
-    displayError: field.displayError,
-    errorMessage: field.errorMessage,
-    errors: field.errors,
-    submitErrors: field.submitErrors,
-    submitErrorMessage: field.submitErrorMessage,
-    fieldValue: field.fieldValue as Ref<TValue>,
-    isDirty: field.isDirty,
-    isTouched: field.isTouched,
-    isValid: field.isValid,
-    isDisabled: field.isDisabled,
-    setErrors: __DEV__
-      ? (messages: Arrayable<string>) => {
-          if (field.isDisabled.value) {
-            warn('This field is disabled, setting errors will not take effect until the field is enabled.');
-          }
-
-          field.setErrors(messages);
-        }
-      : field.setErrors,
-    setTouched: field.setTouched,
-    setValue: field.setValue,
-    validate: (mutate = true) => field.validate(mutate),
-  } satisfies ExposedField<TValue>;
-
-  return {
-    ...obj,
-    ...exposedField,
-  } satisfies ExposedField<TValue> & TReturns;
 }

@@ -1,4 +1,4 @@
-import { FieldState, FormReturns, Maybe } from '@core/index';
+import { FormField, FormReturns, Maybe } from '@core/index';
 import { ComponentInternalInstance, onUnmounted } from 'vue';
 import { DevtoolsForm, DevtoolsRootForm } from './types';
 import { getRootFormId } from './constants';
@@ -47,7 +47,7 @@ export function getAllForms() {
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function registerField(field: FieldState<any>, type: string, vm: Maybe<ComponentInternalInstance>) {
+export function registerField(field: FormField<any>, type: string, vm: Maybe<ComponentInternalInstance>) {
   const id = field.getPath() ?? field.getName() ?? '';
   const formId = field.form?.id ?? getRootFormId();
 

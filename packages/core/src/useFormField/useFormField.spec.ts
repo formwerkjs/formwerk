@@ -1,11 +1,11 @@
 import { renderSetup, defineStandardSchema } from '@test-utils/index';
-import { exposeField, useFieldState } from './useFieldState';
+import { exposeField, useFormField } from './useFormField';
 import { useForm } from '../useForm/useForm';
 import { ref } from 'vue';
 
 test('it initializes the field value', async () => {
   const { fieldValue } = await renderSetup(() => {
-    return useFieldState({ path: 'field', initialValue: 'bar' });
+    return useFormField({ path: 'field', initialValue: 'bar' });
   });
 
   expect(fieldValue.value).toBe('bar');
@@ -19,7 +19,7 @@ test('it initializes the field value in a form', async () => {
       return { form };
     },
     () => {
-      const field = useFieldState({ path: 'field', initialValue: 'bar' });
+      const field = useFormField({ path: 'field', initialValue: 'bar' });
 
       return { field };
     },
@@ -36,7 +36,7 @@ test('overrides the initial value in the form with its own', async () => {
       return { form };
     },
     () => {
-      const field = useFieldState({ path: 'field', initialValue: 'bar' });
+      const field = useFormField({ path: 'field', initialValue: 'bar' });
 
       return { field };
     },
@@ -53,7 +53,7 @@ test('obtains the initial value from the form', async () => {
       return { form };
     },
     () => {
-      const field = useFieldState({ path: 'field' });
+      const field = useFormField({ path: 'field' });
 
       return { field };
     },
@@ -70,7 +70,7 @@ test('pathless field do not write to the form', async () => {
       return { form };
     },
     () => {
-      const field = useFieldState({ initialValue: 'bar' });
+      const field = useFormField({ initialValue: 'bar' });
 
       return { field };
     },
@@ -81,7 +81,7 @@ test('pathless field do not write to the form', async () => {
 
 test('pathless field maintains its own touched state', async () => {
   const { isTouched, setTouched } = await renderSetup(() => {
-    return useFieldState({ initialValue: 'bar' });
+    return useFormField({ initialValue: 'bar' });
   });
 
   expect(isTouched.value).toBe(false);
@@ -91,7 +91,7 @@ test('pathless field maintains its own touched state', async () => {
 
 test('formless fields maintain their own dirty state', async () => {
   const { isDirty, setValue } = await renderSetup(() => {
-    return useFieldState({ initialValue: 'bar' });
+    return useFormField({ initialValue: 'bar' });
   });
 
   expect(isDirty.value).toBe(false);
@@ -103,7 +103,7 @@ test('formless fields maintain their own dirty state', async () => {
 
 test('formless fields maintain their own error state', async () => {
   const { setErrors, isValid, errorMessage, errors } = await renderSetup(() => {
-    return useFieldState({ initialValue: 'bar' });
+    return useFormField({ initialValue: 'bar' });
   });
 
   expect(isValid.value).toBe(true);
@@ -118,7 +118,7 @@ test('formless fields maintain their own error state', async () => {
 
 test('can have a typed schema for validation', async () => {
   const { validate, errors } = await renderSetup(() => {
-    return useFieldState({
+    return useFormField({
       initialValue: 'bar',
       schema: defineStandardSchema(async () => {
         return { issues: [{ message: 'error', path: ['field'] }] };
@@ -134,7 +134,7 @@ test('can have a typed schema for validation', async () => {
 test('disabled fields report isValid as true and errors as empty after being invalid', async () => {
   const disabled = ref(false);
   const { validate, isValid, errors, errorMessage } = await renderSetup(() => {
-    return useFieldState({
+    return useFormField({
       initialValue: 'bar',
       disabled,
       schema: defineStandardSchema(async () => {
@@ -164,7 +164,7 @@ test('setErrors warns when trying to set errors on a disabled field', async () =
   const { isValid, errors, errorMessage, setErrors } = await renderSetup(() => {
     return exposeField(
       {},
-      useFieldState({
+      useFormField({
         initialValue: 'bar',
         disabled,
         schema: defineStandardSchema(async () => {
@@ -204,7 +204,7 @@ test('validate warns and skips validation on a disabled field', async () => {
   });
 
   const { validate, errors } = await renderSetup(() => {
-    return useFieldState({
+    return useFormField({
       initialValue: 'bar',
       disabled: true,
       schema: defineStandardSchema(schemaSpy),

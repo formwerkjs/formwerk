@@ -2,10 +2,9 @@ import { toValue } from 'vue';
 import { registerField } from '@formwerk/devtools';
 import { normalizeProps } from '../utils/common';
 import { Reactivify } from '../types/common';
-import { useFieldState, exposeField } from '../useFieldState';
+import { useFormField, exposeField } from '../useFormField';
 import { TextControlProps } from './types';
 import { useTextControl } from './useTextControl';
-import { useFormField } from '../useFormField';
 
 export interface TextFieldProps extends TextControlProps {
   /**
@@ -20,25 +19,19 @@ export interface TextFieldProps extends TextControlProps {
 
 export function useTextField(_props: Reactivify<TextFieldProps, 'schema'>) {
   const props = normalizeProps(_props, ['schema']);
-  const state = useFieldState<string | undefined>({
+  const field = useFormField<string | undefined>({
+    label: props.label,
+    description: props.description,
     path: props.name,
     initialValue: toValue(props.modelValue) ?? toValue(props.value),
     disabled: props.disabled,
     schema: props.schema,
   });
 
-  const field = useFormField(
-    {
-      label: props.label,
-      description: props.description,
-    },
-    state,
-  );
-
-  const { inputEl, inputProps } = useTextControl(props, { state, field });
+  const { inputEl, inputProps } = useTextControl(props, { field });
 
   if (__DEV__) {
-    registerField(state, 'Text');
+    registerField(field, 'Text');
   }
 
   return exposeField(
@@ -67,6 +60,6 @@ export function useTextField(_props: Reactivify<TextFieldProps, 'schema'>) {
        */
       errorMessageProps: field.errorMessageProps,
     },
-    state,
+    field,
   );
 }
