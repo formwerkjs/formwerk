@@ -11,7 +11,7 @@ export type EventExpression = string | [string, (e: Event) => boolean];
 
 export function useEventListener<TEvent extends Event>(
   targetRef: MaybeRefOrGetter<Arrayable<Maybe<EventTarget>>>,
-  event: Arrayable<EventExpression>,
+  event: MaybeRefOrGetter<Arrayable<EventExpression>>,
   listener: (e: TEvent) => unknown,
   opts?: ListenerOptions,
 ) {
@@ -26,7 +26,7 @@ export function useEventListener<TEvent extends Event>(
     }
 
     controller = new AbortController();
-    const events = normalizeArrayable(event);
+    const events = normalizeArrayable(toValue(event));
     const listenerOpts = { signal: controller.signal, passive: toValue(opts?.passive) };
     events.forEach(evt => {
       normalizeArrayable(target).forEach(el => {
@@ -49,22 +49,28 @@ export function useEventListener<TEvent extends Event>(
     });
   }
 
-  const stopWatch = watch(
-    () => [toValue(targetRef), toValue(opts?.disabled)] as const,
-    ([el, disabled]) => {
-      cleanup();
-      if (disabled) {
-        return;
-      }
+  function onArgsChange() {
+    const el = toValue(targetRef);
+    const disabled = toValue(opts?.disabled);
 
-      const targets = normalizeArrayable(el).filter(elm => !!elm);
-      setup(targets);
-    },
-    { immediate: true },
-  );
+    cleanup();
+    if (disabled) {
+      return;
+    }
+
+    const targets = normalizeArrayable(el).filter(elm => !!elm);
+    setup(targets);
+  }
+
+  const stopWatch = watch(() => [toValue(targetRef), toValue(opts?.disabled)] as const, onArgsChange, {
+    immediate: true,
+  });
+
+  const stopEventWatch = watch(() => toValue(event), onArgsChange, { deep: true });
 
   tryOnScopeDispose(() => {
-    cleanup();
     stopWatch();
+    stopEventWatch();
+    cleanup();
   });
 }
