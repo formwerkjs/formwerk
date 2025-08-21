@@ -5,6 +5,7 @@ import { fireEvent, render, screen } from '@testing-library/vue';
 import { axe } from 'vitest-axe';
 import { flush } from '@test-utils/index';
 import { useDefaultFilter } from '../collections';
+import { useForm } from '../useForm';
 
 function createComboBox(fixedProps: Partial<ComboBoxProps<any, any>> = {}) {
   const Option = defineComponent({
@@ -24,6 +25,7 @@ function createComboBox(fixedProps: Partial<ComboBoxProps<any, any>> = {}) {
   });
 
   let exposedSelectedOption: Ref<any>;
+  let exposedInputValue: Ref<any>;
 
   const component = defineComponent({
     components: { OptionItem: Option },
@@ -44,6 +46,7 @@ function createComboBox(fixedProps: Partial<ComboBoxProps<any, any>> = {}) {
       });
 
       exposedSelectedOption = selectedOption;
+      exposedInputValue = inputValue;
 
       const options = all.options || null;
       const getValue = (option: any) => option;
@@ -97,6 +100,7 @@ function createComboBox(fixedProps: Partial<ComboBoxProps<any, any>> = {}) {
 
   component.getExposedState = () => ({
     selectedOption: exposedSelectedOption.value,
+    inputValue: exposedInputValue.value,
   });
 
   return component;
@@ -132,6 +136,36 @@ describe('should not have a11y errors', () => {
     vi.useRealTimers();
     expect(await axe(screen.getByTestId('fixture'))).toHaveNoViolations();
     vi.useFakeTimers();
+  });
+});
+
+describe('reset', () => {
+  test('should set inputValue on reset with values', async () => {
+    const MyComboBox = createComboBox();
+    const options = [{ label: 'One' }, { label: 'Two' }, { label: 'Three' }];
+
+    await render({
+      components: { MyComboBox },
+      setup() {
+        const { reset, formProps } = useForm();
+
+        reset({
+          value: {
+            combo: { label: 'Two' },
+          },
+        });
+        return { options, formProps };
+      },
+      template: `
+        <div data-testid="fixture">
+          <form v-bind="formProps">
+            <MyComboBox label="Field" name="combo" :options="options" />
+          </form>
+        </div>
+      `,
+    });
+
+    expect(MyComboBox.getExposedState().inputValue).toEqual('Two');
   });
 });
 
