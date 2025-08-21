@@ -1,110 +1,140 @@
-import { inject, InjectionKey, provide, Ref, shallowRef } from 'vue';
-import { ErrorableAttributes, useDescription, useErrorMessage, useLabel } from '../a11y';
-import {
-  AriaDescribableProps,
-  AriaDescriptionProps,
-  AriaErrorMessageProps,
-  AriaLabelableProps,
-  AriaLabelProps,
-  Reactivify,
-} from '../types';
-import { ControlApi } from '../types/controls';
-import { FieldState } from '../useFieldState';
+import { inject, InjectionKey, provide, Ref } from 'vue';
+import { useFieldController, FieldController, FieldControllerProps } from './useFieldController';
+import { useFieldState, FieldState, FieldStateInit } from './useFieldState';
+import { Arrayable, Reactivify, ValidationResult } from '../types';
+import { normalizeProps, warn } from '../utils/common';
 
-export interface FieldProps {
-  /**
-   * The label of the field.
-   */
-  label: string;
+export type FormFieldInit<V = unknown> = Reactivify<FieldControllerProps> & Partial<FieldStateInit<V>>;
 
-  /**
-   * The description of the field.
-   */
-  description?: string;
-}
+export type FormFieldProps = FieldControllerProps;
 
-export interface FormField {
-  /**
-   * Props for the label element.
-   */
-  labelProps: Ref<AriaLabelProps>;
+export type FormField<TValue = unknown> = FieldController & FieldState<TValue>;
 
-  /**
-   * Props for the element to be labelled.
-   */
-  labelledByProps: Ref<AriaLabelableProps>;
+export const FormFieldKey: InjectionKey<FieldState<unknown>> = Symbol('FormFieldKey');
 
-  /**
-   * Props for the description element.
-   */
-  descriptionProps: Ref<AriaDescriptionProps>;
-
-  /**
-   * Props for the element to be described.
-   */
-  describedByProps: Ref<AriaDescribableProps>;
-
-  /**
-   * Props for the error message element.
-   */
-  errorMessageProps: Ref<AriaErrorMessageProps>;
-
-  /**
-   * Props for the element associated with an error.
-   */
-  accessibleErrorProps: Ref<ErrorableAttributes>;
-
-  /**
-   * Registers a control interface, used to get the control element and id.
-   */
-  registerControl: (control: ControlApi) => void;
-}
-
-export const FormFieldKey: InjectionKey<FormField> = Symbol('FormFieldKey');
-
-// oxlint-disable-next-line no-explicit-any
-export function useFormField(props: Reactivify<FieldProps>, state: FieldState<any>): FormField {
-  const control = shallowRef<ControlApi>();
-  const getControlId = () => control.value?.getControlId() ?? '';
-
-  const { descriptionProps, describedByProps } = useDescription({
-    inputId: getControlId,
-    description: props.description,
-  });
-
-  const { accessibleErrorProps, errorMessageProps } = useErrorMessage({
-    inputId: getControlId,
+export function useFormField<TValue = unknown>(init?: FormFieldInit<TValue>): FormField<TValue> {
+  const controllerProps = normalizeProps(init ?? { label: '' });
+  const state = useFieldState(init);
+  const controller = useFieldController({
+    ...controllerProps,
     errorMessage: state.errorMessage,
   });
 
-  const { labelProps, labelledByProps } = useLabel({
-    label: props.label,
-    for: getControlId,
-    targetRef: () => control.value?.getControlElement(),
-  });
-
-  function registerControl(api: ControlApi) {
-    control.value = api;
-  }
-
   const field = {
-    labelProps,
-    labelledByProps,
-    descriptionProps,
-    describedByProps,
-    accessibleErrorProps,
-    errorMessageProps,
-    registerControl,
-  } satisfies FormField;
+    ...controller,
+    ...state,
+  } satisfies FormField<TValue>;
 
-  provide(FormFieldKey, field);
+  provide(FormFieldKey, field as FieldState<unknown>);
 
   return field;
 }
 
-/**
- * Returns the registerControl function, used to register a control and hook the labels and descriptions.
- */
-export function useFormFieldInjection() {
-  return inject(FormFieldKey, null);
+export type ExposedField<TValue> = {
+  /**
+   * Display the error message for the field.
+   */
+  displayError: () => string | undefined;
+
+  /**
+   * The error message for the field.
+   */
+  errorMessage: Ref<string | undefined>;
+
+  /**
+   * The errors for the field.
+   */
+  errors: Ref<string[]>;
+  /**
+   * The errors for the field from the last submit attempt.
+   */
+  submitErrors: Ref<string[]>;
+  /**
+   * The error message for the field from the last submit attempt.
+   */
+  submitErrorMessage: Ref<string | undefined>;
+  /**
+   * The value of the field.
+   */
+  fieldValue: Ref<TValue>;
+
+  /**
+   * Whether the field is dirty.
+   */
+  isDirty: Ref<boolean>;
+
+  /**
+   * Whether the field is touched.
+   */
+  isTouched: Ref<boolean>;
+
+  /**
+   * Whether the field is valid.
+   */
+  isValid: Ref<boolean>;
+
+  /**
+   * Whether the field is disabled.
+   */
+  isDisabled: Ref<boolean>;
+
+  /**
+   * Sets the errors for the field.
+   */
+  setErrors: (messages: Arrayable<string>) => void;
+
+  /**
+   * Sets the touched state for the field.
+   */
+  setTouched: (touched: boolean) => void;
+
+  /**
+   * Sets the value for the field.
+   */
+  setValue: (value: TValue) => void;
+
+  /**
+   * Validates the field.
+   * @param mutate - Whether to set errors on the field as a result of the validation call, defaults to `true`.
+   */
+  validate: (mutate?: boolean) => Promise<ValidationResult>;
+};
+
+export function useFormFieldContext<TValue = unknown>() {
+  return inject(FormFieldKey, null) as FormField<TValue> | null;
+}
+
+export function exposeField<TReturns extends object, TValue>(
+  obj: TReturns,
+  field: FormField<TValue>,
+): ExposedField<TValue> & TReturns {
+  const exposedField = {
+    displayError: field.displayError,
+    errorMessage: field.errorMessage,
+    errors: field.errors,
+    submitErrors: field.submitErrors,
+    submitErrorMessage: field.submitErrorMessage,
+    fieldValue: field.fieldValue as Ref<TValue>,
+    isDirty: field.isDirty,
+    isTouched: field.isTouched,
+    isValid: field.isValid,
+    isDisabled: field.isDisabled,
+    setErrors: __DEV__
+      ? (messages: Arrayable<string>) => {
+          if (field.isDisabled.value) {
+            warn('This field is disabled, setting errors will not take effect until the field is enabled.');
+          }
+
+          field.setErrors(messages);
+        }
+      : field.setErrors,
+    setTouched: field.setTouched,
+    setValue: field.setValue,
+    validate: (mutate = true) => field.validate(mutate),
+  } satisfies ExposedField<TValue>;
+
+  return {
+    ...obj,
+    ...exposedField,
+  } satisfies ExposedField<TValue> & TReturns;
 }

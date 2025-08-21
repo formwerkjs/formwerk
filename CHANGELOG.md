@@ -309,7 +309,7 @@
 - 145bc46: feat: add `isSubmitAttempted` to `useForm`
 - 67cc35c: feat: Add `wasSubmitted` to `useForm`
 - 898b804: feat: add `submitAttemptsCount` to `useForm`
-- b3950ce: feat: adding `submitErrors` and `submitErrorMessage` in `useFieldState`. `getSubmitError` and `getSubmitErrors' in 'useForm'.
+- b3950ce: feat: adding `submitErrors` and `submitErrorMessage` in `useFormField`. `getSubmitError` and `getSubmitErrors' in 'useForm'.
 
 ## 0.4.0
 

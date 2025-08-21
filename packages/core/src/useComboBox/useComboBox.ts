@@ -10,7 +10,7 @@ import {
   useUniqId,
   useCaptureProps,
 } from '../utils/common';
-import { exposeField, useFieldState } from '../useFieldState';
+import { exposeField, useFormField } from '../useFormField';
 import { FieldTypePrefixes } from '../constants';
 import { useLabel } from '../a11y/useLabel';
 import { useListBox } from '../useListBox';
@@ -110,7 +110,7 @@ export function useComboBox<TOption, TValue = TOption>(
   const inputValue = ref('');
   const inputId = useUniqId(FieldTypePrefixes.ComboBox);
   const isReadOnly = () => toValue(props.readonly);
-  const field = useFieldState<TValue>({
+  const field = useFormField<TValue>({
     path: props.name,
     initialValue: (toValue(props.modelValue) ?? toValue(props.value)) as TValue,
     disabled: props.disabled,

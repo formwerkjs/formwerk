@@ -3,32 +3,28 @@ import { InputEvents, Reactivify } from '../types';
 import { normalizeProps, propsToValues, useCaptureProps, useUniqId } from '../utils/common';
 import { TextControlProps } from './types';
 import { useInputValidity } from '../validation';
-import { FieldState, useFieldStateInjection } from '../useFieldState';
-import { FormField, useFormFieldInjection } from '../useFormField';
+import { FormField, useFormFieldContext } from '../useFormField';
 import { FieldTypePrefixes } from '../constants';
 
 interface FormControlContext {
-  field?: FormField;
-  state?: FieldState<string | undefined>;
+  // oxlint-disable-next-line no-explicit-any
+  field?: FormField<any>;
 }
 
 export function useTextControl(_props: Reactivify<TextControlProps>, ctx?: FormControlContext) {
   const inputEl = shallowRef<HTMLInputElement>();
   const inputId = useUniqId(FieldTypePrefixes.TextField);
   const props = normalizeProps(_props);
-  const field = ctx?.field ?? useFormFieldInjection();
-  const state = ctx?.state ?? useFieldStateInjection<string | undefined>();
+  const field = ctx?.field ?? useFormFieldContext();
 
-  if (state) {
+  if (field) {
     useInputValidity({
       inputEl,
-      field: state,
+      field,
       disableHtmlValidation: props.disableHtmlValidation,
       events: () => toValue(props.validateOn) ?? ['change', 'blur'],
     });
-  }
 
-  if (field) {
     field.registerControl({
       getControlElement: () => inputEl.value,
       getControlId: () => inputId,
@@ -37,13 +33,13 @@ export function useTextControl(_props: Reactivify<TextControlProps>, ctx?: FormC
 
   const handlers: InputEvents = {
     onInput(evt) {
-      state?.setValue((evt.target as HTMLInputElement).value);
+      field?.setValue((evt.target as HTMLInputElement).value);
     },
     onChange(evt) {
-      state?.setValue((evt.target as HTMLInputElement).value);
+      field?.setValue((evt.target as HTMLInputElement).value);
     },
     onBlur() {
-      state?.setTouched(true);
+      field?.setTouched(true);
     },
   };
 
@@ -55,10 +51,10 @@ export function useTextControl(_props: Reactivify<TextControlProps>, ctx?: FormC
       ...field?.accessibleErrorProps.value,
       ...field?.describedByProps.value,
       ...field?.labelledByProps.value,
-      value: state?.fieldValue.value,
+      value: field?.fieldValue.value,
       maxlength: toValue(props.maxLength),
       minlength: toValue(props.minLength),
-      disabled: (state?.isDisabled.value ?? toValue(props.disabled)) ? true : undefined,
+      disabled: (field?.isDisabled.value ?? toValue(props.disabled)) ? true : undefined,
       // Maybe we need to find a better way to serialize RegExp to a pattern string
       pattern: inputEl.value?.tagName === 'TEXTAREA' ? undefined : toValue(props.pattern)?.toString(),
     };

@@ -1,16 +1,4 @@
-import {
-  computed,
-  inject,
-  InjectionKey,
-  MaybeRefOrGetter,
-  nextTick,
-  provide,
-  readonly,
-  Ref,
-  shallowRef,
-  toValue,
-  watch,
-} from 'vue';
+import { computed, inject, MaybeRefOrGetter, nextTick, readonly, Ref, shallowRef, toValue, watch } from 'vue';
 import { FormContext, FormKey } from '../useForm/useForm';
 import { Arrayable, Getter, StandardSchema, ValidationResult } from '../types';
 import { useSyncModel } from '../reactivity/useModelSync';
@@ -27,7 +15,7 @@ import { FormGroupKey } from '../useFormGroup';
 import { usePathPrefixer } from '../helpers/usePathPrefixer';
 import { createDisabledContext } from '../helpers/createDisabledContext';
 
-interface FieldStateInit<TValue = unknown> {
+export interface FieldStateInit<TValue = unknown> {
   path: MaybeRefOrGetter<string | undefined> | undefined;
   initialValue: TValue;
   initialTouched: boolean;
@@ -55,11 +43,8 @@ export type FieldState<TValue> = {
   setValue: (value: TValue | undefined) => void;
   setTouched: (touched: boolean) => void;
   setErrors: (messages: Arrayable<string>) => void;
-  registerControl: (ctx: FormControlContext) => void;
   form?: FormContext | null;
 };
-
-export const FieldStateKey: InjectionKey<FieldState<unknown>> = Symbol('FieldStateKey');
 
 export function useFieldState<TValue = unknown>(opts?: Partial<FieldStateInit<TValue>>): FieldState<TValue> {
   const form = inject(FormKey, null);
@@ -150,12 +135,9 @@ export function useFieldState<TValue = unknown>(opts?: Partial<FieldStateInit<TV
     setValue,
     setTouched,
     setErrors,
-    registerControl,
     submitErrors,
     submitErrorMessage,
   };
-
-  provide(FieldStateKey, field as FieldState<unknown>);
 
   if (!form) {
     return field;

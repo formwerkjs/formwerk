@@ -11,7 +11,7 @@ import {
 } from '../types';
 import { useLabel, useErrorMessage } from '../a11y';
 import { CheckboxGroupContext, CheckboxGroupKey } from './useCheckboxGroup';
-import { useFieldState, exposeField, FieldState } from '../useFieldState';
+import { useFormField, exposeField, FormField } from '../useFormField';
 import { FieldTypePrefixes } from '../constants';
 import { useInputValidity } from '../validation';
 
@@ -308,7 +308,7 @@ export function useCheckbox<TValue = string>(_props: Reactivify<CheckboxProps<TV
        */
       toggle: toggleValue,
     },
-    field as FieldState<TValue>,
+    field as FormField<TValue>,
   );
 }
 
@@ -323,7 +323,7 @@ function useCheckboxField<TValue = string>(
     return createGroupField(group, getTrueValue);
   }
 
-  return useFieldState<TValue>({
+  return useFormField<TValue>({
     path: props.name,
     initialValue: toValue(props.modelValue) as TValue,
     disabled: props.disabled,
