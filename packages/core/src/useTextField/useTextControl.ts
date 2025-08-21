@@ -5,6 +5,7 @@ import { TextControlProps } from './types';
 import { useInputValidity } from '../validation';
 import { FormField, useFormFieldContext } from '../useFormField';
 import { FieldTypePrefixes } from '../constants';
+import { useVModelProxy } from '../reactivity/useVModelProxy';
 
 interface FormControlContext {
   // oxlint-disable-next-line no-explicit-any
@@ -16,6 +17,7 @@ export function useTextControl(_props: Reactivify<TextControlProps>, ctx?: FormC
   const inputId = useUniqId(FieldTypePrefixes.TextField);
   const props = normalizeProps(_props);
   const field = ctx?.field ?? useFormFieldContext();
+  const data = useVModelProxy(field);
 
   if (field) {
     useInputValidity({
@@ -61,7 +63,17 @@ export function useTextControl(_props: Reactivify<TextControlProps>, ctx?: FormC
   }, inputEl);
 
   return {
+    /**
+     * Props for the input element.
+     */
     inputProps,
+    /**
+     * Ref to the input element.
+     */
     inputEl,
+    /**
+     * A ref containing the model value.
+     */
+    data,
   };
 }
