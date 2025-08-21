@@ -22,7 +22,7 @@ import { useLabel, useErrorMessage, useDescription } from '../a11y';
 import { useNumberParser } from '../i18n/useNumberParser';
 import { useSpinButton } from '../useSpinButton';
 import { useLocale } from '../i18n';
-import { exposeField, useFieldState } from '../useFieldState';
+import { exposeField, useFormField } from '../useFormField';
 import { FieldTypePrefixes } from '../constants';
 import { useEventListener } from '../helpers/useEventListener';
 import { registerField } from '@formwerk/devtools';
@@ -145,7 +145,7 @@ export function useNumberField(_props: Reactivify<NumberFieldProps, 'schema'>) {
   const { locale } = useLocale(props.locale);
   const parser = useNumberParser(locale, props.formatOptions);
 
-  const field = useFieldState<number>({
+  const field = useFormField<number>({
     path: props.name,
     initialValue: toValue(props.modelValue) ?? fromNumberish(props.value),
     disabled: props.disabled,

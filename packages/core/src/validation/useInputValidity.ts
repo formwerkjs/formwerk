@@ -2,7 +2,7 @@ import { Ref, inject, nextTick, onMounted, shallowRef, watch, MaybeRefOrGetter, 
 import { EventExpression, useEventListener } from '../helpers/useEventListener';
 import { type FormContext, FormKey } from '../useForm';
 import { Arrayable, Maybe, ValidationResult } from '../types';
-import { FieldState } from '../useFieldState';
+import { FormField } from '../useFormField';
 import { isInputElement, normalizeArrayable, toPrimitiveBooleanValue, warn } from '../utils/common';
 import { FormGroupContext, FormGroupKey } from '../useFormGroup';
 import { getConfig } from '../config';
@@ -15,7 +15,7 @@ interface InputValidityOptions {
   // eslint-disable-next-line @typescript-eslint/no-wrapper-object-types
   disableHtmlValidation?: MaybeRefOrGetter<Boolean | undefined>;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  field: FieldState<any>;
+  field: FormField<any>;
   events?: MaybeRefOrGetter<Arrayable<EventExpression>>;
   groupValidityBehavior?: 'some' | 'every';
 }

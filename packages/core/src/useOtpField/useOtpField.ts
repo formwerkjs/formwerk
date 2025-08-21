@@ -4,7 +4,7 @@ import { OtpContextKey, OtpSlotAcceptType } from './types';
 import { normalizeProps, useUniqId, useCaptureProps } from '../utils/common';
 import { FieldTypePrefixes } from '../constants';
 import { useErrorMessage, useLabel, useDescription } from '../a11y';
-import { exposeField, useFieldState } from '../useFieldState';
+import { exposeField, useFormField } from '../useFormField';
 import { useInputValidity, useConstraintsValidator } from '../validation';
 import { OtpSlotProps } from './useOtpSlot';
 import { registerField } from '@formwerk/devtools';
@@ -115,7 +115,7 @@ export function useOtpField(_props: Reactivify<OtpFieldProps, 'schema' | 'onComp
     return prefix.length + length;
   }
 
-  const field = useFieldState<string>({
+  const field = useFormField<string>({
     path: props.name,
     initialValue: withPrefix(toValue(props.modelValue) ?? toValue(props.value)),
     disabled: props.disabled,
