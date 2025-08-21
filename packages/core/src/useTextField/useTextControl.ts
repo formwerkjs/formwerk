@@ -1,6 +1,6 @@
 import { shallowRef, toValue } from 'vue';
 import { InputEvents, Reactivify } from '../types';
-import { propsToValues, useCaptureProps } from '../utils/common';
+import { normalizeProps, propsToValues, useCaptureProps } from '../utils/common';
 import { TextControlProps } from './types';
 import { useInputValidity } from '../validation';
 import { FieldState, useFieldStateInjection } from '../useFieldState';
@@ -12,13 +12,19 @@ interface FormControlContext {
   state?: FieldState<string | undefined>;
 }
 
-export function useTextControl(props: Reactivify<TextControlProps>, ctx?: FormControlContext) {
+export function useTextControl(_props: Reactivify<TextControlProps>, ctx?: FormControlContext) {
   const inputEl = shallowRef<HTMLInputElement>();
+  const props = normalizeProps(_props);
   const field = ctx?.field ?? useFormFieldInjection();
   const state = ctx?.state ?? useFieldStateInjection<string | undefined>();
 
   if (state) {
-    useInputValidity({ inputEl, field: state, disableHtmlValidation: props.disableHtmlValidation });
+    useInputValidity({
+      inputEl,
+      field: state,
+      disableHtmlValidation: props.disableHtmlValidation,
+      events: () => toValue(props.validateOn) ?? ['change', 'blur'],
+    });
   }
 
   if (field) {
