@@ -20,7 +20,9 @@ export interface FieldStateInit<TValue = unknown> {
   initialValue: TValue;
   initialTouched: boolean;
   initialDirty: boolean;
+  // TODO: Remove once all fields have controls
   syncModel: boolean;
+  // TODO: Remove once all fields have controls
   modelName: string;
   disabled: MaybeRefOrGetter<boolean | undefined>;
   schema: StandardSchema<TValue>;
@@ -75,6 +77,7 @@ export function useFieldState<TValue = unknown>(opts?: Partial<FieldStateInit<TV
     return !isEqual(fieldValue.value, form.getFieldOriginalValue(path));
   });
 
+  // TODO: Remove once all fields have controls
   if (opts?.syncModel ?? true) {
     useSyncModel({
       model: fieldValue,
