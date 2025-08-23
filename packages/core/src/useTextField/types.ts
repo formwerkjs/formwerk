@@ -1,5 +1,4 @@
 import { EventExpression } from '../helpers/useEventListener';
-import { StandardSchema } from '../types';
 import {
   AriaDescribableProps,
   AriaLabelableProps,
@@ -86,11 +85,6 @@ export interface TextControlProps {
    * Whether the field is disabled.
    */
   disabled?: boolean;
-
-  /**
-   * Schema for field validation.
-   */
-  schema?: StandardSchema<string>;
 
   /**
    * Whether to disable HTML5 validation.
