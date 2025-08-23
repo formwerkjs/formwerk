@@ -18,7 +18,7 @@ export function useTextControl(_props: Reactivify<TextControlProps>, ctx?: TextC
   const inputId = useUniqId(FieldTypePrefixes.TextField);
   const props = normalizeProps(_props);
   const field = ctx?.field ?? useFormFieldContext();
-  const data = useVModelProxy(field);
+  const { model } = useVModelProxy(field);
 
   if (field) {
     useInputValidity({
@@ -74,8 +74,8 @@ export function useTextControl(_props: Reactivify<TextControlProps>, ctx?: TextC
      */
     inputEl,
     /**
-     * A ref containing the model value.
+     * The current text value of the field.
      */
-    data,
+    model,
   };
 }
