@@ -2,17 +2,18 @@
 import { ref } from 'vue';
 import FormField from './components/FormField.vue';
 import TextControl from './components/TextControl.vue';
+import InputSelect from './components/InputSelect.vue';
+import OptionItem from './components/OptionItem.vue';
 
 const validationOn = ref(['test']);
 </script>
 
 <template>
-  <FormField label="Name">
-    <TextControl required :validate-on="validationOn" />
-
-    <button @click="validationOn.push('blur')">Add blur</button>
-    {{ validationOn }}
-  </FormField>
+  <InputSelect label="Select">
+    <OptionItem label="Option 1" value="option1" />
+    <OptionItem label="Option 2" value="option2" />
+    <OptionItem label="Option 3" value="option3" />
+  </InputSelect>
 </template>
 
 <style>
