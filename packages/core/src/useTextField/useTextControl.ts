@@ -7,12 +7,13 @@ import { FormField, useFormFieldContext } from '../useFormField';
 import { FieldTypePrefixes } from '../constants';
 import { useVModelProxy } from '../reactivity/useVModelProxy';
 
-interface FormControlContext {
+interface TextControlExtras {
   // oxlint-disable-next-line no-explicit-any
   field?: FormField<any>;
+  on?: Partial<Record<`on${string}`, (evt: Event) => void>>;
 }
 
-export function useTextControl(_props: Reactivify<TextControlProps>, ctx?: FormControlContext) {
+export function useTextControl(_props: Reactivify<TextControlProps>, ctx?: TextControlExtras) {
   const inputEl = shallowRef<HTMLInputElement>();
   const inputId = useUniqId(FieldTypePrefixes.TextField);
   const props = normalizeProps(_props);
@@ -53,6 +54,7 @@ export function useTextControl(_props: Reactivify<TextControlProps>, ctx?: FormC
       ...field?.accessibleErrorProps.value,
       ...field?.describedByProps.value,
       ...field?.labelledByProps.value,
+      ...ctx?.on,
       value: field?.fieldValue.value,
       maxlength: toValue(props.maxLength),
       minlength: toValue(props.minLength),
