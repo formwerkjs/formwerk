@@ -1,21 +1,13 @@
 import { toValue } from 'vue';
-import { useFormField, exposeField } from '../useFormField';
+import { useFormField, exposeField, FieldBaseProps } from '../useFormField';
 import { Arrayable, Reactivify } from '../types';
 import { normalizeProps } from '../utils/common';
 import { registerField } from '@formwerk/devtools';
 import { SelectControlProps, useSelectControl } from './useSelectControl';
 
-export interface SelectProps<TOption, TValue = TOption> extends SelectControlProps<TValue> {
-  /**
-   * The label text for the select field.
-   */
-  label: string;
-
-  /**
-   * Description text for the select field.
-   */
-  description?: string;
-}
+export interface SelectProps<TOption, TValue = TOption>
+  extends SelectControlProps<TValue>,
+    FieldBaseProps<Arrayable<TValue>> {}
 
 export function useSelect<TOption, TValue = TOption>(_props: Reactivify<SelectProps<TOption, TValue>, 'schema'>) {
   const props = normalizeProps(_props, ['schema']);
@@ -32,7 +24,7 @@ export function useSelect<TOption, TValue = TOption>(_props: Reactivify<SelectPr
   const { isPopupOpen, triggerProps, listBoxProps, listBoxEl, selectedOption, selectedOptions } = useSelectControl<
     TOption,
     TValue
-  >(props as Reactivify<SelectControlProps<TValue>, 'schema'>, { field });
+  >(props as Reactivify<SelectControlProps<TValue>>, { field });
 
   if (__DEV__) {
     registerField(field, 'Select');

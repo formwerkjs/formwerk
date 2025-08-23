@@ -8,7 +8,7 @@ import {
   TextInputBaseAttributes,
 } from '../types';
 import { hasKeyCode, normalizeProps } from '../utils/common';
-import { useFormField, exposeField } from '../useFormField';
+import { useFormField, exposeField, FieldBaseProps } from '../useFormField';
 import { registerField } from '@formwerk/devtools';
 import { useTextControl } from '../useTextField/useTextControl';
 import { TextControlProps } from '../useTextField/types';
@@ -26,21 +26,11 @@ export interface SearchInputDOMProps
   id: string;
 }
 
-export interface SearchFieldProps extends Omit<TextControlProps, 'type'> {
-  /**
-   * The label text for the search field.
-   */
-  label: string;
-
+export interface SearchFieldProps extends Omit<TextControlProps, 'type'>, FieldBaseProps<string> {
   /**
    * The label text for the clear button.
    */
   clearButtonLabel?: string;
-
-  /**
-   * The description text for the search field.
-   */
-  description?: string;
 
   /**
    * Handler called when the search field is submitted via the Enter key.
