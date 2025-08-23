@@ -1,5 +1,5 @@
 import { type CSSProperties, type Ref, computed, inject, ref, toValue, shallowRef } from 'vue';
-import { SliderContext, SliderInjectionKey, ThumbRegistration } from './useSlider';
+import { SliderContext, SliderInjectionKey, ThumbRegistration } from './useSliderControl';
 import { normalizeProps, useUniqId, warn, useCaptureProps } from '../utils/common';
 import { Reactivify } from '../types';
 import { useSpinButton } from '../useSpinButton';
