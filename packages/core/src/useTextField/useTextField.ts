@@ -1,88 +1,12 @@
 import { toValue } from 'vue';
 import { registerField } from '@formwerk/devtools';
 import { normalizeProps } from '../utils/common';
-import { Numberish, Reactivify } from '../types/common';
-import { useFormField, exposeField } from '../useFormField';
-import { TextControlProps, TextInputDOMType } from './types';
+import { Reactivify } from '../types/common';
+import { useFormField, exposeField, FieldBaseProps } from '../useFormField';
+import { TextControlProps } from './types';
 import { useTextControl } from './useTextControl';
-import { StandardSchema } from '../types';
 
-export interface TextFieldProps extends TextControlProps {
-  /**
-   * The label of the text field.
-   */
-  label: string;
-  /**
-   * Description text that provides additional context about the field.
-   */
-  description?: string;
-
-  /**
-   * The name attribute of the input element.
-   */
-  name?: string;
-
-  /**
-   * The value attribute of the input element.
-   */
-  value?: string;
-
-  /**
-   * The type of input field (text, password, email, etc).
-   */
-  type?: TextInputDOMType;
-
-  /**
-   * Maximum length of text input allowed.
-   */
-  maxLength?: Numberish;
-
-  /**
-   * Minimum length of text input required.
-   */
-  minLength?: Numberish;
-
-  /**
-   * Pattern for input validation using regex.
-   */
-  pattern?: string | RegExp | undefined;
-
-  /**
-   * Placeholder text shown when input is empty.
-   */
-  placeholder?: string | undefined;
-
-  /**
-   * Autocomplete hint for the input field.
-   */
-  autocomplete?: string | undefined;
-
-  /**
-   * Whether the field is required.
-   */
-  required?: boolean;
-
-  /**
-   * Whether the field is readonly.
-   */
-  readonly?: boolean;
-
-  /**
-   * Whether the field is disabled.
-   */
-  disabled?: boolean;
-
-  /**
-   * Schema for field validation.
-   */
-  schema?: StandardSchema<string>;
-
-  /**
-   * Whether to disable HTML5 validation.
-   */
-  // eslint-disable-next-line @typescript-eslint/no-wrapper-object-types
-  disableHtmlValidation?: Boolean;
-}
+export interface TextFieldProps extends TextControlProps, FieldBaseProps<string> {}
 
 export function useTextField(_props: Reactivify<TextFieldProps, 'schema'>) {
   const props = normalizeProps(_props, ['schema']);

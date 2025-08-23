@@ -1,7 +1,7 @@
 import { inject, InjectionKey, provide, Ref } from 'vue';
 import { useFieldController, FieldController, FieldControllerProps } from './useFieldController';
 import { useFieldState, FieldState, FieldStateInit } from './useFieldState';
-import { Arrayable, Reactivify, ValidationResult } from '../types';
+import { Arrayable, Reactivify, StandardSchema, ValidationResult } from '../types';
 import { normalizeProps, warn } from '../utils/common';
 
 export type FormFieldInit<V = unknown> = Reactivify<FieldControllerProps> & Partial<FieldStateInit<V>>;
@@ -11,6 +11,23 @@ export type FormFieldProps = FieldControllerProps;
 export type FormField<TValue = unknown> = FieldController & FieldState<TValue>;
 
 export const FormFieldKey: InjectionKey<FieldState<unknown>> = Symbol('FormFieldKey');
+
+export interface FieldBaseProps<TValue = unknown> {
+  /**
+   * The label of the field.
+   */
+  label: string;
+
+  /**
+   * The description text for the field.
+   */
+  description?: string;
+
+  /**
+   * Schema for field validation.
+   */
+  schema?: StandardSchema<TValue>;
+}
 
 export function useFormField<TValue = unknown>(init?: FormFieldInit<TValue>): FormField<TValue> {
   const controllerProps = normalizeProps(init ?? { label: '' });

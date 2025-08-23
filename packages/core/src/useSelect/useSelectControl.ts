@@ -1,6 +1,6 @@
 import { toValue, shallowRef, computed } from 'vue';
 import { FormField, useFormFieldContext } from '../useFormField';
-import { AriaLabelableProps, Arrayable, Orientation, Reactivify, StandardSchema } from '../types';
+import { AriaLabelableProps, Arrayable, Orientation, Reactivify } from '../types';
 import {
   isEqual,
   normalizeArrayable,
@@ -60,11 +60,6 @@ export interface SelectControlProps<TValue> {
    * The orientation of the listbox popup (vertical or horizontal).
    */
   orientation?: Orientation;
-
-  /**
-   * Schema for validating the select field value.
-   */
-  schema?: StandardSchema<Arrayable<TValue>>;
 }
 
 export interface SelectTriggerDomProps extends AriaLabelableProps {
@@ -83,11 +78,11 @@ interface SelectControlExtras<TOption, TValue = TOption> {
 }
 
 export function useSelectControl<TOption, TValue = TOption>(
-  _props: Reactivify<SelectControlProps<TValue>, 'schema'>,
+  _props: Reactivify<SelectControlProps<TValue>>,
   ctx?: SelectControlExtras<TOption, TValue>,
 ) {
   const inputId = useUniqId(FieldTypePrefixes.Select);
-  const props = normalizeProps(_props, ['schema']);
+  const props = normalizeProps(_props);
   const field = ctx?.field ?? useFormFieldContext<Arrayable<TValue>>();
   const triggerEl = shallowRef<HTMLElement>();
   const { model, setModelValue } = useVModelProxy(field);
