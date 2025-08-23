@@ -1,5 +1,12 @@
 # @formwerk/core
 
+## 0.11.6
+
+### Patch Changes
+
+- 3493479: Fixes resetting not setting the inputValue for ComboBox
+  - @formwerk/devtools@0.11.6
+
 ## 0.11.5
 
 ### Patch Changes

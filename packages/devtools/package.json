@@ -1,6 +1,6 @@
 {
   "name": "@formwerk/devtools",
-  "version": "0.11.5",
+  "version": "0.11.6",
   "description": "Formwerk's Vue devtools plugin",
   "author": "Abdelrahman Awad <logaretm1@gmail.com>",
   "license": "MIT",
