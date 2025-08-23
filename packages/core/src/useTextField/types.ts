@@ -11,7 +11,7 @@ import {
   TransparentWrapper,
 } from '../types/common';
 
-export type TextInputDOMType = 'text' | 'password' | 'email' | 'number' | 'tel' | 'url';
+export type TextInputDOMType = 'text' | 'password' | 'email' | 'number' | 'tel' | 'url' | 'search';
 
 export interface TextInputDOMAttributes extends TextInputBaseAttributes {
   type?: TextInputDOMType;
