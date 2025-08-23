@@ -1,4 +1,4 @@
-import { Ref, shallowRef } from 'vue';
+import { computed, Ref, shallowRef, toValue } from 'vue';
 import { ErrorableAttributes, useDescription, useErrorMessage, useLabel } from '../a11y';
 import {
   AriaDescribableProps,
@@ -9,6 +9,7 @@ import {
   Reactivify,
 } from '../types';
 import { ControlApi } from '../types/controls';
+import { normalizeProps } from '../utils/common';
 
 export interface FieldControllerProps {
   /**
@@ -28,6 +29,11 @@ export interface FieldControllerProps {
 }
 
 export interface FieldController {
+  /**
+   * The label of the field.
+   */
+  label: Ref<string>;
+
   /**
    * Props for the label element.
    */
@@ -64,9 +70,11 @@ export interface FieldController {
   registerControl: (control: ControlApi) => void;
 }
 
-export function useFieldController(props: Reactivify<FieldControllerProps>): FieldController {
+export function useFieldController(_props: Reactivify<FieldControllerProps>): FieldController {
   const control = shallowRef<ControlApi>();
+  const props = normalizeProps(_props);
   const getControlId = () => control.value?.getControlId() ?? '';
+  const getControlElement = () => control.value?.getControlElement();
 
   const { descriptionProps, describedByProps } = useDescription({
     inputId: getControlId,
@@ -81,7 +89,7 @@ export function useFieldController(props: Reactivify<FieldControllerProps>): Fie
   const { labelProps, labelledByProps } = useLabel({
     label: props.label,
     for: getControlId,
-    targetRef: () => control.value?.getControlElement(),
+    targetRef: getControlElement,
   });
 
   function registerControl(api: ControlApi) {
@@ -89,6 +97,7 @@ export function useFieldController(props: Reactivify<FieldControllerProps>): Fie
   }
 
   const controller = {
+    label: computed(() => toValue(props.label) ?? ''),
     labelProps,
     labelledByProps,
     descriptionProps,
