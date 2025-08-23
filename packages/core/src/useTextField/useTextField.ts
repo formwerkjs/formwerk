@@ -2,20 +2,11 @@ import { toValue } from 'vue';
 import { registerField } from '@formwerk/devtools';
 import { normalizeProps } from '../utils/common';
 import { Reactivify } from '../types/common';
-import { useFormField, exposeField } from '../useFormField';
+import { useFormField, exposeField, FieldBaseProps } from '../useFormField';
 import { TextControlProps } from './types';
 import { useTextControl } from './useTextControl';
 
-export interface TextFieldProps extends TextControlProps {
-  /**
-   * The label of the text field.
-   */
-  label: string;
-  /**
-   * Description text that provides additional context about the field.
-   */
-  description?: string;
-}
+export interface TextFieldProps extends TextControlProps, FieldBaseProps<string> {}
 
 export function useTextField(_props: Reactivify<TextFieldProps, 'schema'>) {
   const props = normalizeProps(_props, ['schema']);
