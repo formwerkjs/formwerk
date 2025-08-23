@@ -6,10 +6,10 @@ import { useSyncModel } from './useModelSync';
 /**
  * A proxy for the model value of a field, if the field is not provided, a local ref is created.
  */
-export function useVModelProxy(field: Maybe<FormField>) {
-  const model = field?.fieldValue ?? ref('');
+export function useVModelProxy<T = unknown>(field: Maybe<FormField<T>>) {
+  const model = field?.fieldValue ?? ref<T>();
 
-  function setValue(value: unknown) {
+  function setModelValue(value: T | undefined) {
     if (field) {
       field.setValue(value);
       return;
@@ -21,8 +21,11 @@ export function useVModelProxy(field: Maybe<FormField>) {
   useSyncModel({
     model,
     modelName: 'modelValue',
-    onModelPropUpdated: setValue,
+    onModelPropUpdated: setModelValue,
   });
 
-  return model;
+  return {
+    model,
+    setModelValue,
+  };
 }
