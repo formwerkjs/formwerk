@@ -16,7 +16,7 @@ interface InputValidityOptions {
   disableHtmlValidation?: MaybeRefOrGetter<TransparentWrapper<boolean> | undefined>;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   field: FormField<any>;
-  events?: EventExpression[];
+  events?: MaybeRefOrGetter<Arrayable<EventExpression>>;
   groupValidityBehavior?: 'some' | 'every';
 }
 
