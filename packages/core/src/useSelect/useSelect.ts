@@ -21,54 +21,11 @@ export function useSelect<TOption, TValue = TOption>(_props: Reactivify<SelectPr
     syncModel: false,
   });
 
-  const { isPopupOpen, triggerProps, listBoxProps, listBoxEl, selectedOption, selectedOptions } = useSelectControl<
-    TOption,
-    TValue
-  >(props as Reactivify<SelectControlProps<TValue>>, { field });
+  const control = useSelectControl<TOption, TValue>(props as Reactivify<SelectControlProps<TValue>>, { field });
 
   if (__DEV__) {
     registerField(field, 'Select');
   }
 
-  return exposeField(
-    {
-      /**
-       * Whether the popup is open.
-       */
-      isPopupOpen,
-      /**
-       * Props for the trigger element.
-       */
-      triggerProps,
-      /**
-       * Props for the label element.
-       */
-      labelProps: field.labelProps,
-      /**
-       * Props for the listbox/popup element.
-       */
-      listBoxProps,
-      /**
-       * Props for the error message element.
-       */
-      errorMessageProps: field.errorMessageProps,
-      /**
-       * Props for the description element.
-       */
-      descriptionProps: field.descriptionProps,
-      /**
-       * Reference to the popup element.
-       */
-      listBoxEl,
-      /**
-       * The currently selected option.
-       */
-      selectedOption,
-      /**
-       * The currently selected options.
-       */
-      selectedOptions,
-    },
-    field,
-  );
+  return exposeField(control, field);
 }
