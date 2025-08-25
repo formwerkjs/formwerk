@@ -21,38 +21,11 @@ export function useTextField(_props: Reactivify<TextFieldProps, 'schema'>) {
     syncModel: false,
   });
 
-  const { inputEl, inputProps } = useTextControl(props, { field });
+  const control = useTextControl(props, { field });
 
   if (__DEV__) {
     registerField(field, 'Text');
   }
 
-  return exposeField(
-    {
-      /**
-       * Reference to the input element.
-       */
-      inputEl,
-      /**
-       * Props for the input element.
-       */
-      inputProps,
-
-      /**
-       * Props for the label element.
-       */
-      labelProps: field.labelProps,
-
-      /**
-       * Props for the description element.
-       */
-      descriptionProps: field.descriptionProps,
-
-      /**
-       * Props for the error message element.
-       */
-      errorMessageProps: field.errorMessageProps,
-    },
-    field,
-  );
+  return exposeField(control, field);
 }

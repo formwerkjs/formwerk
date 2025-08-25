@@ -1,7 +1,15 @@
 import { inject, InjectionKey, provide, Ref } from 'vue';
 import { useFieldController, FieldController, FieldControllerProps } from './useFieldController';
 import { useFieldState, FieldState, FieldStateInit } from './useFieldState';
-import { Arrayable, Reactivify, StandardSchema, ValidationResult } from '../types';
+import {
+  AriaDescriptionProps,
+  AriaErrorMessageProps,
+  AriaLabelProps,
+  Arrayable,
+  Reactivify,
+  StandardSchema,
+  ValidationResult,
+} from '../types';
 import { normalizeProps, warn } from '../utils/common';
 
 export type FormFieldInit<V = unknown> = Reactivify<FieldControllerProps> & Partial<FieldStateInit<V>>;
@@ -115,6 +123,21 @@ export type ExposedField<TValue> = {
    * @param mutate - Whether to set errors on the field as a result of the validation call, defaults to `true`.
    */
   validate: (mutate?: boolean) => Promise<ValidationResult>;
+
+  /**
+   * Props for the label element.
+   */
+  labelProps: Ref<AriaLabelProps>;
+
+  /**
+   * Props for the description element.
+   */
+  descriptionProps: Ref<AriaDescriptionProps>;
+
+  /**
+   * Props for the error message element.
+   */
+  errorMessageProps: Ref<AriaErrorMessageProps>;
 };
 
 export function useFormFieldContext<TValue = unknown>() {
@@ -125,7 +148,7 @@ export function exposeField<TReturns extends object, TValue>(
   obj: TReturns,
   field: FormField<TValue>,
 ): ExposedField<TValue> & TReturns {
-  const exposedField = {
+  return {
     displayError: field.displayError,
     errorMessage: field.errorMessage,
     errors: field.errors,
@@ -136,6 +159,9 @@ export function exposeField<TReturns extends object, TValue>(
     isTouched: field.isTouched,
     isValid: field.isValid,
     isDisabled: field.isDisabled,
+    labelProps: field.labelProps,
+    descriptionProps: field.descriptionProps,
+    errorMessageProps: field.errorMessageProps,
     setErrors: __DEV__
       ? (messages: Arrayable<string>) => {
           if (field.isDisabled.value) {
@@ -148,10 +174,6 @@ export function exposeField<TReturns extends object, TValue>(
     setTouched: field.setTouched,
     setValue: field.setValue,
     validate: (mutate = true) => field.validate(mutate),
-  } satisfies ExposedField<TValue>;
-
-  return {
     ...obj,
-    ...exposedField,
   } satisfies ExposedField<TValue> & TReturns;
 }

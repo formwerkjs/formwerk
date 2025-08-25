@@ -18,39 +18,11 @@ export function useSwitch<TValue = boolean>(_props: Reactivify<SwitchProps<TValu
     schema: props.schema,
   });
 
-  const { inputEl, inputProps, isPressed, togglePressed } = useSwitchControl(props, { field });
+  const control = useSwitchControl(props, { field });
 
   if (__DEV__) {
     registerField(field, 'Switch');
   }
 
-  return exposeField(
-    {
-      /**
-       * Props for the error message element.
-       */
-      errorMessageProps: field.errorMessageProps,
-      /**
-       * Reference to the input element.
-       */
-      inputEl,
-      /**
-       * Props for the input element.
-       */
-      inputProps,
-      /**
-       * Whether the switch is pressed.
-       */
-      isPressed,
-      /**
-       * Props for the label element.
-       */
-      labelProps: field.labelProps,
-      /**
-       * Toggles the pressed state of the switch.
-       */
-      togglePressed,
-    },
-    field,
-  );
+  return exposeField(control, field);
 }
