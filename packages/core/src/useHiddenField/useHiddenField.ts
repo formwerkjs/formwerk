@@ -26,6 +26,7 @@ export function useHiddenField<TValue = unknown>(_props: Reactivify<HiddenFieldP
   const props = normalizeProps(_props);
 
   const field = useFormField({
+    label: '',
     disabled: props.disabled,
     path: props.name,
     initialValue: toValue(props.value),

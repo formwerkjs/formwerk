@@ -324,6 +324,7 @@ function useCheckboxField<TValue = string>(
   }
 
   return useFormField<TValue>({
+    label: props.label,
     path: props.name,
     initialValue: toValue(props.modelValue) as TValue,
     disabled: props.disabled,

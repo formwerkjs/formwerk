@@ -116,6 +116,8 @@ export function useOtpField(_props: Reactivify<OtpFieldProps, 'schema' | 'onComp
   }
 
   const field = useFormField<string>({
+    label: props.label,
+    description: props.description,
     path: props.name,
     initialValue: withPrefix(toValue(props.modelValue) ?? toValue(props.value)),
     disabled: props.disabled,
