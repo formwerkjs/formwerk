@@ -131,6 +131,8 @@ export function useRadioGroup<TValue = string>(_props: Reactivify<RadioGroupProp
   });
 
   const field = useFormField<TValue>({
+    label: props.label,
+    description: props.description,
     path: props.name,
     initialValue: toValue(props.modelValue) as TValue,
     disabled: props.disabled,
