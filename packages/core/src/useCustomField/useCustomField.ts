@@ -54,6 +54,8 @@ export function useCustomField<TValue = unknown>(_props: Reactivify<CustomFieldP
   const controlId = useUniqId(FieldTypePrefixes.CustomField);
   const controlEl = shallowRef<HTMLInputElement>();
   const field = useFormField<TValue | undefined>({
+    label: props.label,
+    description: props.description,
     path: props.name,
     initialValue: (toValue(props.modelValue) ?? toValue(props.value)) as TValue | undefined,
     disabled: props.disabled,

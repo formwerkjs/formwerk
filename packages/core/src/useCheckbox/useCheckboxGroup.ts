@@ -1,6 +1,5 @@
 import { InjectionKey, toValue, computed, onBeforeUnmount, reactive, provide, markRaw, ref } from 'vue';
 import { useInputValidity } from '../validation/useInputValidity';
-import { useLabel, useErrorMessage, useDescription } from '../a11y';
 import {
   AriaLabelableProps,
   AriaDescribableProps,
@@ -120,12 +119,10 @@ export function useCheckboxGroup<TCheckbox>(_props: Reactivify<CheckboxGroupProp
   const groupId = useUniqId(FieldTypePrefixes.CheckboxGroup);
   const { direction } = useLocale();
   const checkboxes = ref<CheckboxRegistration[]>([]);
-  const { labelProps, labelledByProps } = useLabel({
-    for: groupId,
-    label: props.label,
-  });
 
   const field = useFormField({
+    label: props.label,
+    description: props.description,
     path: props.name,
     initialValue: toValue(props.modelValue),
     schema: props.schema,
@@ -140,23 +137,13 @@ export function useCheckboxGroup<TCheckbox>(_props: Reactivify<CheckboxGroupProp
     disableHtmlValidation: props.disableHtmlValidation,
   });
 
-  const { fieldValue, setValue, isTouched, setTouched, errorMessage, isDisabled } = field;
-
-  const { describedByProps, descriptionProps } = useDescription({
-    inputId: groupId,
-    description: props.description,
-  });
-
-  const { accessibleErrorProps, errorMessageProps } = useErrorMessage({
-    inputId: groupId,
-    errorMessage,
-  });
+  const { fieldValue, setValue, isTouched, setTouched, isDisabled } = field;
 
   const groupProps = computed<CheckboxGroupDomProps>(() => {
     return {
-      ...labelledByProps.value,
-      ...describedByProps.value,
-      ...accessibleErrorProps.value,
+      ...field.labelledByProps.value,
+      ...field.describedByProps.value,
+      ...field.accessibleErrorProps.value,
       dir: toValue(props.dir) ?? direction.value,
       role: 'group',
     };
@@ -232,14 +219,6 @@ export function useCheckboxGroup<TCheckbox>(_props: Reactivify<CheckboxGroupProp
   return exposeField(
     {
       /**
-       * Props for the description element.
-       */
-      descriptionProps,
-      /**
-       * Props for the error message element.
-       */
-      errorMessageProps,
-      /**
        * Props for the group element.
        */
       groupProps,
@@ -247,10 +226,7 @@ export function useCheckboxGroup<TCheckbox>(_props: Reactivify<CheckboxGroupProp
        * The state of the checkbox group.
        */
       groupState,
-      /**
-       * Props for the label element.
-       */
-      labelProps,
+
       /**
        * Validity details for the checkbox group.
        */
