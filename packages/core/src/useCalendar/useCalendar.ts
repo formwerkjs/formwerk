@@ -136,6 +136,7 @@ export function useCalendar(_props: Reactivify<CalendarProps, 'field' | 'schema'
   const field =
     props.field ??
     useFormField<Maybe<Date>>({
+      label: props.label,
       path: props.name,
       disabled: props.disabled,
       initialValue: toValue(props.modelValue) ?? toValue(props.value),

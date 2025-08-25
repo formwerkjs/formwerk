@@ -12,9 +12,7 @@ import {
 } from '../utils/common';
 import { exposeField, useFormField } from '../useFormField';
 import { FieldTypePrefixes } from '../constants';
-import { useLabel } from '../a11y/useLabel';
 import { useListBox } from '../useListBox';
-import { useErrorMessage, useDescription } from '../a11y';
 import { useInputValidity } from '../validation';
 import { FilterFn } from '../collections';
 import { useControlButtonProps } from '../helpers/useControlButtonProps';
@@ -111,29 +109,21 @@ export function useComboBox<TOption, TValue = TOption>(
   const inputId = useUniqId(FieldTypePrefixes.ComboBox);
   const isReadOnly = () => toValue(props.readonly);
   const field = useFormField<TValue>({
+    label: props.label,
+    description: props.description,
     path: props.name,
     initialValue: (toValue(props.modelValue) ?? toValue(props.value)) as TValue,
     disabled: props.disabled,
     schema: props.schema,
   });
 
-  const { fieldValue, setValue, errorMessage, isDisabled, setTouched } = field;
-  const { labelProps, labelledByProps } = useLabel({
-    label: props.label,
-    for: inputId,
-    targetRef: inputEl,
+  field.registerControl({
+    getControlElement: () => inputEl.value,
+    getControlId: () => inputId,
   });
 
+  const { fieldValue, setValue, isDisabled, setTouched } = field;
   const { validityDetails } = useInputValidity({ field, inputEl, disableHtmlValidation: props.disableHtmlValidation });
-  const { descriptionProps, describedByProps } = useDescription({
-    inputId,
-    description: props.description,
-  });
-
-  const { accessibleErrorProps, errorMessageProps } = useErrorMessage({
-    inputId,
-    errorMessage,
-  });
 
   const {
     listBoxId,
@@ -149,7 +139,7 @@ export function useComboBox<TOption, TValue = TOption>(
     focusFirst: focusFirstOption,
     focusLast: focusLastOption,
   } = useListBox<TOption, TValue>({
-    labeledBy: () => labelledByProps.value['aria-labelledby'],
+    labeledBy: () => field.labelledByProps.value['aria-labelledby'],
     focusStrategy: 'FOCUS_ATTR_SELECTED',
     disabled: isDisabled,
     label: props.label,
@@ -346,8 +336,8 @@ export function useComboBox<TOption, TValue = TOption>(
       disabled: isDisabled.value ? true : undefined,
       value: inputValue.value,
       ...propsToValues(props, ['name', 'placeholder', 'required', 'readonly']),
-      ...accessibleErrorProps.value,
-      ...describedByProps.value,
+      ...field.accessibleErrorProps.value,
+      ...field.describedByProps.value,
       ...handlers,
     };
   }, inputEl);
@@ -379,10 +369,6 @@ export function useComboBox<TOption, TValue = TOption>(
   return exposeField(
     {
       /**
-       * Props for the label element.
-       */
-      labelProps,
-      /**
        * Props for the input element.
        */
       inputProps,
@@ -390,10 +376,7 @@ export function useComboBox<TOption, TValue = TOption>(
        * Reference to the input element.
        */
       inputEl,
-      /**
-       * Props for the error message element.
-       */
-      errorMessageProps,
+
       /**
        * Props for the listbox/popup element.
        */
@@ -406,10 +389,7 @@ export function useComboBox<TOption, TValue = TOption>(
        * Reference to the listbox element.
        */
       listBoxEl,
-      /**
-       * Props for the description element.
-       */
-      descriptionProps,
+
       /**
        * Validity details for the input element.
        */
