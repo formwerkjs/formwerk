@@ -1,22 +1,9 @@
 import { toValue } from 'vue';
 import { fromNumberish, normalizeProps } from '../utils/common';
-import { AriaDescribableProps, AriaLabelableProps, InputEvents, AriaValidatableProps, Reactivify } from '../types';
+import { Reactivify } from '../types';
 import { exposeField, FieldBaseProps, useFormField } from '../useFormField';
 import { registerField } from '@formwerk/devtools';
 import { NumberControlProps, useNumberControl } from './useNumberControl';
-
-export interface NumberInputDOMAttributes {
-  name?: string;
-}
-
-export interface NumberInputDOMProps
-  extends NumberInputDOMAttributes,
-    AriaLabelableProps,
-    AriaDescribableProps,
-    AriaValidatableProps,
-    InputEvents {
-  id: string;
-}
 
 export type NumberFieldProps = NumberControlProps & FieldBaseProps<number>;
 
