@@ -26,23 +26,5 @@ export function useNumberField(_props: Reactivify<NumberFieldProps, 'schema'>) {
     registerField(field, 'Number');
   }
 
-  return exposeField(
-    {
-      ...control,
-      /**
-       * Props for the label element.
-       */
-      labelProps: field.labelProps,
-      /**
-       * Props for the description element.
-       */
-      descriptionProps: field.descriptionProps,
-
-      /**
-       * Props for the error message element.
-       */
-      errorMessageProps: field.errorMessageProps,
-    },
-    field,
-  );
+  return exposeField(control, field);
 }

@@ -25,19 +25,5 @@ export function useSlider<TValue>(_props: Reactivify<SliderProps<TValue>, 'schem
     registerField(field, 'Slider');
   }
 
-  return exposeField(
-    {
-      ...control,
-      /**
-       * Props for the label element.
-       */
-      labelProps: field.labelProps,
-
-      /**
-       * Props for the error message element.
-       */
-      errorMessageProps: field.errorMessageProps,
-    },
-    field,
-  );
+  return exposeField(control, field);
 }

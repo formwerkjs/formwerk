@@ -22,23 +22,5 @@ export function useFileField(_props: Reactivify<FileFieldProps, 'schema' | 'onUp
     registerField(field, 'File');
   }
 
-  return exposeField(
-    {
-      ...control,
-      /**
-       * Props for the label element.
-       */
-      labelProps: field.labelProps,
-      /**
-       * Props for the description element.
-       */
-      descriptionProps: field.descriptionProps,
-
-      /**
-       * Props for the error message element.
-       */
-      errorMessageProps: field.errorMessageProps,
-    },
-    field,
-  );
+  return exposeField(control, field);
 }

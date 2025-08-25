@@ -122,18 +122,7 @@ export function useSearchField(_props: Reactivify<SearchFieldProps, 'onSubmit' |
        * Props for the input element.
        */
       inputProps,
-      /**
-       * Props for the label element.
-       */
-      labelProps: field.labelProps,
-      /**
-       * Props for the error message element.
-       */
-      errorMessageProps: field.errorMessageProps,
-      /**
-       * Props for the description element.
-       */
-      descriptionProps: field.descriptionProps,
+
       /**
        * Props for the clear button.
        */
