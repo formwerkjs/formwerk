@@ -1,7 +1,6 @@
 import { InjectionKey, toValue, computed, onBeforeUnmount, reactive, provide, ref } from 'vue';
 import { registerField } from '@formwerk/devtools';
 import { useInputValidity } from '../validation/useInputValidity';
-import { useLabel, useErrorMessage, useDescription } from '../a11y';
 import {
   Orientation,
   AriaLabelableProps,
@@ -125,10 +124,6 @@ export function useRadioGroup<TValue = string>(_props: Reactivify<RadioGroupProp
   const groupId = useUniqId(FieldTypePrefixes.RadioButtonGroup);
   const { direction } = useLocale();
   const radios = ref<RadioRegistration[]>([]);
-  const { labelProps, labelledByProps } = useLabel({
-    for: groupId,
-    label: props.label,
-  });
 
   const field = useFormField<TValue>({
     label: props.label,
@@ -139,7 +134,12 @@ export function useRadioGroup<TValue = string>(_props: Reactivify<RadioGroupProp
     schema: props.schema,
   });
 
-  const { validityDetails } = useInputValidity({
+  field.registerControl({
+    getControlId: () => groupId,
+    getControlElement: () => undefined,
+  });
+
+  useInputValidity({
     field,
     events: ['blur', 'click', ['keydown', e => hasKeyCode(e, 'Space')]],
     groupValidityBehavior: 'some',
@@ -147,17 +147,7 @@ export function useRadioGroup<TValue = string>(_props: Reactivify<RadioGroupProp
     disableHtmlValidation: props.disableHtmlValidation,
   });
 
-  const { fieldValue, setValue, setTouched, errorMessage, isDisabled } = field;
-
-  const { descriptionProps, describedByProps } = useDescription({
-    inputId: groupId,
-    description: props.description,
-  });
-
-  const { accessibleErrorProps, errorMessageProps } = useErrorMessage({
-    inputId: groupId,
-    errorMessage,
-  });
+  const { fieldValue, setValue, setTouched, isDisabled } = field;
 
   function handleArrowNext() {
     let currentIdx = radios.value.findIndex(radio => radio.isChecked());
@@ -197,9 +187,9 @@ export function useRadioGroup<TValue = string>(_props: Reactivify<RadioGroupProp
 
   const groupProps = computed<RadioGroupDomProps>(() => {
     return {
-      ...labelledByProps.value,
-      ...describedByProps.value,
-      ...accessibleErrorProps.value,
+      ...field.labelledByProps.value,
+      ...field.describedByProps.value,
+      ...field.accessibleErrorProps.value,
       dir: toValue(props.dir) ?? direction.value,
       role: 'radiogroup',
       'aria-orientation': toValue(props.orientation) ?? undefined,
@@ -271,25 +261,9 @@ export function useRadioGroup<TValue = string>(_props: Reactivify<RadioGroupProp
   return exposeField(
     {
       /**
-       * Props for the description element.
-       */
-      descriptionProps,
-      /**
-       * Props for the error message element.
-       */
-      errorMessageProps,
-      /**
        * Props for the group element.
        */
       groupProps,
-      /**
-       * Props for the label element.
-       */
-      labelProps,
-      /**
-       * Validity details for the radio group.
-       */
-      validityDetails,
     },
     field,
   );
