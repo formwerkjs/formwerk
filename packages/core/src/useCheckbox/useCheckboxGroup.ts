@@ -22,6 +22,7 @@ import {
 import { useLocale } from '../i18n';
 import { FormField, useFormField, exposeField } from '../useFormField';
 import { FieldTypePrefixes } from '../constants';
+import { useSyncModel } from '../reactivity/useModelSync';
 
 export type CheckboxGroupValue<TCheckbox> = TCheckbox[];
 
@@ -127,6 +128,12 @@ export function useCheckboxGroup<TCheckbox>(_props: Reactivify<CheckboxGroupProp
     initialValue: toValue(props.modelValue),
     schema: props.schema,
     disabled: props.disabled,
+  });
+
+  useSyncModel({
+    model: field.fieldValue,
+    modelName: 'modelValue',
+    onModelPropUpdated: value => field.setValue(value as CheckboxGroupValue<TCheckbox>),
   });
 
   const { updateValidity } = useInputValidity({

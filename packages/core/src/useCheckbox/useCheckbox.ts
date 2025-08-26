@@ -14,6 +14,7 @@ import { CheckboxGroupContext, CheckboxGroupKey } from './useCheckboxGroup';
 import { useFormField, exposeField, FormField } from '../useFormField';
 import { FieldTypePrefixes } from '../constants';
 import { useInputValidity } from '../validation';
+import { useSyncModel } from '../reactivity/useModelSync';
 
 export interface CheckboxProps<TValue = boolean> {
   /**
@@ -323,13 +324,21 @@ function useCheckboxField<TValue = string>(
     return createGroupField(group, getTrueValue);
   }
 
-  return useFormField<TValue>({
+  const field = useFormField<TValue>({
     label: props.label,
     path: props.name,
     initialValue: toValue(props.modelValue) as TValue,
     disabled: props.disabled,
     schema: props.schema,
   });
+
+  useSyncModel({
+    model: field.fieldValue,
+    modelName: 'modelValue',
+    onModelPropUpdated: value => field.setValue(value as TValue),
+  });
+
+  return field;
 }
 
 function createGroupField<TValue = unknown>(group: CheckboxGroupContext<TValue>, getTrueValue: () => TValue) {
