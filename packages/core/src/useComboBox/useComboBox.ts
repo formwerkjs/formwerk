@@ -3,7 +3,7 @@ import { Reactivify } from '../types';
 import { normalizeProps } from '../utils/common';
 import { exposeField, useFormField, WithFieldProps } from '../useFormField';
 import { registerField } from '@formwerk/devtools';
-import { ComboBoxCollectionOptions, ComboBoxControlProps, useComboBoxControl } from './useComboxBoxControl';
+import { ComboBoxCollectionOptions, ComboBoxControlProps, useComboBoxControl } from './useComboBoxControl';
 
 export type ComboBoxProps<TOption, TValue = TOption> = WithFieldProps<ComboBoxControlProps<TOption, TValue>, TValue>;
 
