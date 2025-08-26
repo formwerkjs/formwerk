@@ -1,7 +1,6 @@
 import { computed, inject, MaybeRefOrGetter, nextTick, readonly, Ref, shallowRef, toValue, watch } from 'vue';
 import { FormContext, FormKey } from '../useForm/useForm';
 import { Arrayable, Getter, StandardSchema, ValidationResult } from '../types';
-import { useSyncModel } from '../reactivity/useModelSync';
 import {
   cloneDeep,
   isEqual,
@@ -20,10 +19,6 @@ export interface FieldStateInit<TValue = unknown> {
   initialValue: TValue;
   initialTouched: boolean;
   initialDirty: boolean;
-  // TODO: Remove once all fields have controls
-  syncModel: boolean;
-  // TODO: Remove once all fields have controls
-  modelName: string;
   disabled: MaybeRefOrGetter<boolean | undefined>;
   schema: StandardSchema<TValue>;
 }
@@ -76,15 +71,6 @@ export function useFieldState<TValue = unknown>(opts?: Partial<FieldStateInit<TV
 
     return !isEqual(fieldValue.value, form.getFieldOriginalValue(path));
   });
-
-  // TODO: Remove once all fields have controls
-  if (opts?.syncModel ?? true) {
-    useSyncModel({
-      model: fieldValue,
-      modelName: opts?.modelName ?? 'modelValue',
-      onModelPropUpdated: setValue,
-    });
-  }
 
   function createValidationResult(result: Omit<ValidationResult, 'type' | 'path'>): ValidationResult {
     return {

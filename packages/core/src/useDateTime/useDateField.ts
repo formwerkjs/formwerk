@@ -17,8 +17,6 @@ export function useDateField(_props: Reactivify<DateFieldProps, 'schema'>) {
     disabled: props.disabled,
     initialValue: toValue(props.modelValue) ?? toValue(props.value),
     schema: props.schema,
-    // TODO: Remove once all fields have controls
-    syncModel: false,
   });
 
   const control = useDateControl(props, { field });

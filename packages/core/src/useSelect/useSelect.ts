@@ -18,7 +18,6 @@ export function useSelect<TOption, TValue = TOption>(_props: Reactivify<SelectPr
     initialValue: (toValue(props.modelValue) ?? toValue(props.value)) as Arrayable<TValue>,
     disabled: props.disabled,
     schema: props.schema,
-    syncModel: false,
   });
 
   const control = useSelectControl<TOption, TValue>(props as Reactivify<SelectControlProps<TValue>>, { field });
