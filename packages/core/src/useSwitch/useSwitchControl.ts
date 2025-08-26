@@ -74,19 +74,17 @@ export type SwitchControlProps<TValue = boolean> = {
    * Whether to disable HTML5 validation.
    */
   disableHtmlValidation?: TransparentWrapper<boolean>;
+
+  /**
+   * The field to use for the switch control. Internal usage only.
+   */
+  _field?: FormField<TValue>;
 };
 
-interface SwitchControlExtras<TValue = boolean> {
-  field?: FormField<TValue>;
-}
-
-export function useSwitchControl<TValue = boolean>(
-  _props: Reactivify<SwitchControlProps<TValue>>,
-  ctx?: SwitchControlExtras<TValue>,
-) {
-  const props = normalizeProps(_props);
+export function useSwitchControl<TValue = boolean>(_props: Reactivify<SwitchControlProps<TValue>, '_field'>) {
+  const props = normalizeProps(_props, ['_field']);
   const inputId = useUniqId(FieldTypePrefixes.Switch);
-  const field = ctx?.field ?? useFormFieldContext<TValue>();
+  const field = props?._field ?? useFormFieldContext<TValue>();
   const inputEl = shallowRef<HTMLInputElement>();
   const { model, setModelValue } = useVModelProxy(field);
 

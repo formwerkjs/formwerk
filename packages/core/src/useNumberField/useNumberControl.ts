@@ -119,17 +119,18 @@ export interface NumberControlProps {
    * Whether to disable HTML5 form validation.
    */
   disableHtmlValidation?: TransparentWrapper<boolean>;
+
+  /**
+   * The field to use for the number control. Internal usage only.
+   */
+  _field?: FormField<number>;
 }
 
-export interface NumberControlExtras {
-  field?: FormField<number>;
-}
-
-export function useNumberControl(_props: Reactivify<NumberControlProps>, ctx?: NumberControlExtras) {
-  const props = normalizeProps(_props);
+export function useNumberControl(_props: Reactivify<NumberControlProps, '_field'>) {
+  const props = normalizeProps(_props, ['_field']);
   const inputId = useUniqId(FieldTypePrefixes.NumberField);
   const inputEl = shallowRef<HTMLInputElement>();
-  const field = ctx?.field ?? useFormFieldContext();
+  const field = props?._field ?? useFormFieldContext();
   const { locale } = useLocale(props.locale);
   const parser = useNumberParser(locale, props.formatOptions);
   const { model, setModelValue } = useVModelProxy(field);

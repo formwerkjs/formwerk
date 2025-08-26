@@ -1,14 +1,14 @@
 import { Arrayable, Reactivify } from '../types';
 import { normalizeProps } from '../utils/common';
-import { exposeField, FieldBaseProps, useFormField } from '../useFormField';
+import { exposeField, useFormField, WithFieldProps } from '../useFormField';
 import { registerField } from '@formwerk/devtools';
 import { FileControlProps, useFileControl } from './useFileControl';
 
-export type FileFieldProps = FileControlProps & FieldBaseProps<Arrayable<File | string>>;
+export type FileFieldProps = WithFieldProps<FileControlProps, Arrayable<File | string>>;
 
 export function useFileField(_props: Reactivify<FileFieldProps, 'schema' | 'onUpload'>) {
   const props = normalizeProps(_props, ['schema', 'onUpload']);
-  const field = useFormField<Arrayable<File | string>>({
+  const _field = useFormField<Arrayable<File | string>>({
     label: props.label,
     description: props.description,
     path: props.name,
@@ -16,11 +16,11 @@ export function useFileField(_props: Reactivify<FileFieldProps, 'schema' | 'onUp
     schema: props.schema,
   });
 
-  const control = useFileControl(props, { field });
+  const control = useFileControl({ ...props, _field });
 
   if (__DEV__) {
-    registerField(field, 'File');
+    registerField(_field, 'File');
   }
 
-  return exposeField(control, field);
+  return exposeField(control, _field);
 }
