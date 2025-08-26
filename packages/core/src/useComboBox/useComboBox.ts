@@ -19,8 +19,6 @@ export function useComboBox<TOption, TValue = TOption>(
     initialValue: (toValue(props.modelValue) ?? toValue(props.value)) as TValue,
     disabled: props.disabled,
     schema: props.schema,
-    // TODO: Remove once all fields have controls
-    syncModel: false,
   });
 
   const control = useComboBoxControl<TOption, TValue>(props as ComboBoxControlProps<TOption, TValue>, {
