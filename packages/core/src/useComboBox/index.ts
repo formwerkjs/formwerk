@@ -1,2 +1,2 @@
 export * from './useComboBox';
-export * from './useComboxBoxControl';
+export * from './useComboBoxControl';
