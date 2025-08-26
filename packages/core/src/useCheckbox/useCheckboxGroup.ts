@@ -127,14 +127,20 @@ export function useCheckboxGroup<TCheckbox>(_props: Reactivify<CheckboxGroupProp
     initialValue: toValue(props.modelValue),
     schema: props.schema,
     disabled: props.disabled,
+    syncModel: false,
   });
 
-  const { validityDetails, updateValidity } = useInputValidity({
+  const { updateValidity } = useInputValidity({
     field,
     inputEl: computed(() => checkboxes.value.map(v => v.getElem())),
     events: ['blur', 'click', ['keydown', e => hasKeyCode(e, 'Space')]],
     groupValidityBehavior: 'some',
     disableHtmlValidation: props.disableHtmlValidation,
+  });
+
+  field.registerControl({
+    getControlId: () => groupId,
+    getControlElement: () => undefined,
   });
 
   const { fieldValue, setValue, isTouched, setTouched, isDisabled } = field;
@@ -226,11 +232,6 @@ export function useCheckboxGroup<TCheckbox>(_props: Reactivify<CheckboxGroupProp
        * The state of the checkbox group.
        */
       groupState,
-
-      /**
-       * Validity details for the checkbox group.
-       */
-      validityDetails,
     },
     field,
   );
