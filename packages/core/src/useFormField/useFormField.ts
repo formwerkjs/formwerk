@@ -11,6 +11,7 @@ import {
   ValidationResult,
 } from '../types';
 import { normalizeProps, warn } from '../utils/common';
+import { Simplify } from 'type-fest';
 
 export type FormFieldInit<V = unknown> = Reactivify<FieldControllerProps> & Partial<FieldStateInit<V>>;
 
@@ -36,6 +37,10 @@ export interface FieldBaseProps<TValue = unknown> {
    */
   schema?: StandardSchema<TValue>;
 }
+
+export type WithFieldProps<TControlProps extends object, TValue = unknown> = Simplify<
+  FieldBaseProps<TValue> & Omit<TControlProps, '_field'>
+>;
 
 export function useFormField<TValue = unknown>(init?: FormFieldInit<TValue>): FormField<TValue> {
   const controllerProps = normalizeProps(init ?? { label: '' });

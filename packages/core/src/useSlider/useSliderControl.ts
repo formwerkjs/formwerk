@@ -84,6 +84,11 @@ export interface SliderControlProps<TValue = number> {
    * Whether the slider is readonly.
    */
   readonly?: boolean;
+
+  /**
+   * The field to use for the slider control. Internal usage only.
+   */
+  _field?: FormField<TValue>;
 }
 
 export type Coordinate = { x: number; y: number };
@@ -193,20 +198,13 @@ export interface SliderContext {
 
 export const SliderInjectionKey: InjectionKey<SliderContext> = Symbol('Slider');
 
-interface SliderControlExtras<TValue = number> {
-  field?: FormField<TValue>;
-}
-
-export function useSliderControl<TValue>(
-  _props: Reactivify<SliderControlProps<TValue>>,
-  ctx?: SliderControlExtras<TValue>,
-) {
-  const props = normalizeProps(_props);
+export function useSliderControl<TValue>(_props: Reactivify<SliderControlProps<TValue>, '_field'>) {
+  const props = normalizeProps(_props, ['_field']);
   const inputId = useUniqId(FieldTypePrefixes.Slider);
   const { direction } = useLocale();
   const trackEl = shallowRef<HTMLElement>();
   const thumbs = ref<ThumbRegistration[]>([]);
-  const field = ctx?.field ?? useFormFieldContext<TValue>();
+  const field = props?._field ?? useFormFieldContext<TValue>();
   const { model, setModelValue } = useVModelProxy(field);
 
   if (__DEV__) {
@@ -494,7 +492,8 @@ export function useSliderControl<TValue>(
   };
 }
 
-function checkValidProps(props: Reactivify<SliderControlProps<unknown>>) {
+// oxlint-disable-next-line no-explicit-any
+function checkValidProps(props: Reactivify<SliderControlProps<any>, '_field'>) {
   const isDiscreteStepsPresent = !!props.options;
   const isMinMaxPresent = !!props.min || !!props.max;
   const isStepPresent = props.step ?? false;

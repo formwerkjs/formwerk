@@ -79,6 +79,11 @@ export interface ComboBoxControlProps<TOption, TValue = TOption> {
    * Function to create a new option from the user input.
    */
   onNewValue?(value: string): Maybe<{ label: string; value: TValue }>;
+
+  /**
+   * The field to use for the combobox control. Internal usage only.
+   */
+  _field?: FormField<TValue>;
 }
 
 export interface ComboBoxCollectionOptions {
@@ -88,18 +93,14 @@ export interface ComboBoxCollectionOptions {
   filter: FilterFn;
 }
 
-export interface ComboBoxControlExtras<TValue> {
-  field?: FormField<TValue>;
-}
-
 export function useComboBoxControl<TOption, TValue = TOption>(
-  _props: Reactivify<ComboBoxControlProps<TOption, TValue>, 'onNewValue'>,
-  collectionOptions?: Partial<ComboBoxCollectionOptions & ComboBoxControlExtras<TValue>>,
+  _props: Reactivify<ComboBoxControlProps<TOption, TValue>, 'onNewValue' | '_field'>,
+  collectionOptions?: Partial<ComboBoxCollectionOptions>,
 ) {
-  const props = normalizeProps(_props, ['onNewValue']);
+  const props = normalizeProps(_props, ['onNewValue', '_field']);
   const inputEl = shallowRef<HTMLElement>();
   const buttonEl = shallowRef<HTMLElement>();
-  const field = collectionOptions?.field ?? useFormFieldContext();
+  const field = props?._field ?? useFormFieldContext();
   const inputValue = ref('');
   const inputId = useUniqId(FieldTypePrefixes.ComboBox);
   const isReadOnly = () => toValue(props.readonly);
