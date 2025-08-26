@@ -85,15 +85,16 @@ export interface FileControlProps {
    * Whether the field allows directory selection.
    */
   allowDirectory?: boolean;
+
+  /**
+   * The field to use for the file control. Internal usage only.
+   */
+  _field?: FormField<Arrayable<File | string>>;
 }
 
-interface FileControlExtras {
-  field?: FormField<Arrayable<File | string>>;
-}
-
-export function useFileControl(_props: Reactivify<FileControlProps, 'onUpload'>, ctx?: FileControlExtras) {
+export function useFileControl(_props: Reactivify<FileControlProps, 'onUpload' | '_field'>) {
   let idCounter = 0;
-  const props = normalizeProps(_props, ['onUpload']);
+  const props = normalizeProps(_props, ['onUpload', '_field']);
   const inputEl = ref<HTMLInputElement>();
   const entries = ref<FileEntryProps[]>([]);
   const inputId = useUniqId(FieldTypePrefixes.FileField);
@@ -101,7 +102,7 @@ export function useFileControl(_props: Reactivify<FileControlProps, 'onUpload'>,
   const abortControllers = new Map<string, AbortController>();
   const overridePickOptions = ref<FilePickerOptions>();
   const isUploading = computed(() => entries.value.some(e => e.isUploading));
-  const field = ctx?.field ?? useFormFieldContext();
+  const field = props?._field ?? useFormFieldContext();
   const { model, setModelValue } = useVModelProxy(field);
   const isDisabled = computed(() => toValue(props.disabled) || field?.isDisabled.value);
 

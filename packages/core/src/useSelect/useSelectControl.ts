@@ -60,6 +60,11 @@ export interface SelectControlProps<TValue> {
    * The orientation of the listbox popup (vertical or horizontal).
    */
   orientation?: Orientation;
+
+  /**
+   * The field to use for the select control. Internal usage only.
+   */
+  _field?: FormField<Arrayable<TValue>>;
 }
 
 export interface SelectTriggerDomProps extends AriaLabelableProps {
@@ -73,17 +78,10 @@ export interface SelectTriggerDomProps extends AriaLabelableProps {
 
 const MENU_OPEN_KEYS = ['Enter', 'Space', 'ArrowDown', 'ArrowUp'];
 
-interface SelectControlExtras<TOption, TValue = TOption> {
-  field?: FormField<Arrayable<TValue>>;
-}
-
-export function useSelectControl<TOption, TValue = TOption>(
-  _props: Reactivify<SelectControlProps<TValue>>,
-  ctx?: SelectControlExtras<TOption, TValue>,
-) {
+export function useSelectControl<TOption, TValue = TOption>(_props: Reactivify<SelectControlProps<TValue>, '_field'>) {
   const inputId = useUniqId(FieldTypePrefixes.Select);
-  const props = normalizeProps(_props);
-  const field = ctx?.field ?? useFormFieldContext<Arrayable<TValue>>();
+  const props = normalizeProps(_props, ['_field']);
+  const field = props?._field ?? useFormFieldContext<Arrayable<TValue>>();
   const triggerEl = shallowRef<HTMLElement>();
   const { model, setModelValue } = useVModelProxy(field);
 

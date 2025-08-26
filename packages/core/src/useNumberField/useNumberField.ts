@@ -1,15 +1,15 @@
 import { toValue } from 'vue';
 import { fromNumberish, normalizeProps } from '../utils/common';
 import { Reactivify } from '../types';
-import { exposeField, FieldBaseProps, useFormField } from '../useFormField';
+import { exposeField, useFormField, WithFieldProps } from '../useFormField';
 import { registerField } from '@formwerk/devtools';
 import { NumberControlProps, useNumberControl } from './useNumberControl';
 
-export type NumberFieldProps = NumberControlProps & FieldBaseProps<number>;
+export type NumberFieldProps = WithFieldProps<NumberControlProps, number>;
 
 export function useNumberField(_props: Reactivify<NumberFieldProps, 'schema'>) {
   const props = normalizeProps(_props, ['schema']);
-  const field = useFormField<number>({
+  const _field = useFormField<number>({
     label: props.label,
     description: props.description,
     path: props.name,
@@ -18,11 +18,11 @@ export function useNumberField(_props: Reactivify<NumberFieldProps, 'schema'>) {
     schema: props.schema,
   });
 
-  const control = useNumberControl(props, { field });
+  const control = useNumberControl({ ...props, _field });
 
   if (__DEV__) {
-    registerField(field, 'Number');
+    registerField(_field, 'Number');
   }
 
-  return exposeField(control, field);
+  return exposeField(control, _field);
 }
