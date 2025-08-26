@@ -14,6 +14,7 @@ import { useUniqId, getNextCycleArrIdx, normalizeProps, isEmpty, removeFirst, ha
 import { useLocale } from '../i18n';
 import { useFormField, exposeField } from '../useFormField';
 import { FieldTypePrefixes } from '../constants';
+import { useSyncModel } from '../reactivity/useModelSync';
 
 export interface RadioGroupContext<TValue> {
   name: string;
@@ -132,6 +133,12 @@ export function useRadioGroup<TValue = string>(_props: Reactivify<RadioGroupProp
     initialValue: toValue(props.modelValue) as TValue,
     disabled: props.disabled,
     schema: props.schema,
+  });
+
+  useSyncModel({
+    model: field.fieldValue,
+    modelName: 'modelValue',
+    onModelPropUpdated: value => field.setValue(value as TValue),
   });
 
   field.registerControl({
