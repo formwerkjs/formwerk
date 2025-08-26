@@ -53,8 +53,6 @@ export function useSearchField(_props: Reactivify<SearchFieldProps, 'onSubmit' |
     initialValue: toValue(props.modelValue) ?? toValue(props.value),
     disabled: props.disabled,
     schema: props.schema,
-    // TODO: Remove once all fields have controls
-    syncModel: false,
   });
 
   function clear() {

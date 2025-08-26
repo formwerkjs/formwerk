@@ -17,8 +17,6 @@ export function useTextField(_props: Reactivify<TextFieldProps, 'schema'>) {
     initialValue: toValue(props.modelValue) ?? toValue(props.value),
     disabled: props.disabled,
     schema: props.schema,
-    // TODO: Remove once all fields have controls
-    syncModel: false,
   });
 
   const control = useTextControl(props, { field });

@@ -16,8 +16,6 @@ export function useNumberField(_props: Reactivify<NumberFieldProps, 'schema'>) {
     initialValue: toValue(props.modelValue) ?? fromNumberish(props.value),
     disabled: props.disabled,
     schema: props.schema,
-    // TODO: Remove once all fields have controls
-    syncModel: false,
   });
 
   const control = useNumberControl(props, { field });

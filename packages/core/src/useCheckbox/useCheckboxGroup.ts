@@ -127,7 +127,6 @@ export function useCheckboxGroup<TCheckbox>(_props: Reactivify<CheckboxGroupProp
     initialValue: toValue(props.modelValue),
     schema: props.schema,
     disabled: props.disabled,
-    syncModel: false,
   });
 
   const { updateValidity } = useInputValidity({

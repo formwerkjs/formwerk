@@ -16,8 +16,6 @@ export function useTimeField(_props: Reactivify<TimeFieldProps, 'schema'>) {
     disabled: props.disabled,
     initialValue: toValue(props.modelValue) ?? toValue(props.value),
     schema: props.schema,
-    // TODO: Remove once all fields have controls
-    syncModel: false,
   });
 
   const control = useTimeControl(props, { field });
