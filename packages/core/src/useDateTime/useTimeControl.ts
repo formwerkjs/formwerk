@@ -73,6 +73,11 @@ export interface TimeControlProps {
    * The maximum value to use for the field. String format: HH:MM:SS
    */
   max?: string;
+
+  /**
+   * The field to use for the time control. Internal usage only.
+   */
+  _field?: FormField<Maybe<string>>;
 }
 
 function getDefaultFormatOptions(): TimeFormatOptions {
@@ -83,14 +88,10 @@ function getDefaultFormatOptions(): TimeFormatOptions {
   };
 }
 
-export interface TimeControlExtras {
-  field?: FormField<Maybe<string>>;
-}
-
-export function useTimeControl(_props: Reactivify<TimeControlProps>, extras?: TimeControlExtras) {
-  const props = normalizeProps(_props);
+export function useTimeControl(_props: Reactivify<TimeControlProps, '_field'>) {
+  const props = normalizeProps(_props, ['_field']);
   const controlEl = shallowRef<HTMLInputElement>();
-  const field = extras?.field ?? useFormFieldContext<Maybe<string>>();
+  const field = props?._field ?? useFormFieldContext<Maybe<string>>();
   const { locale, direction, calendar, timeZone } = useLocale(props.locale);
   const { model, setModelValue } = useVModelProxy(field);
   const isDisabled = createDisabledContext(props.disabled);

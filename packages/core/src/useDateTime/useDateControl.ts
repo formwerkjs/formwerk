@@ -77,16 +77,17 @@ export interface DateControlProps {
    * The maximum date to use for the field.
    */
   max?: Date;
+
+  /**
+   * The field to use for the date control. Internal usage only.
+   */
+  _field?: FormField<Maybe<Date>>;
 }
 
-export interface DateControlExtras {
-  field?: FormField<Maybe<Date>>;
-}
-
-export function useDateControl(_props: Reactivify<DateControlProps>, extras?: DateControlExtras) {
-  const props = normalizeProps(_props);
+export function useDateControl(_props: Reactivify<DateControlProps, '_field'>) {
+  const props = normalizeProps(_props, ['_field']);
   const controlEl = shallowRef<HTMLInputElement>();
-  const field = extras?.field ?? useFormFieldContext<Maybe<Date>>();
+  const field = props?._field ?? useFormFieldContext<Maybe<Date>>();
   const { model, setModelValue } = useVModelProxy(field);
   const { locale, direction, timeZone, calendar } = useLocale(props.locale, {
     calendar: () => toValue(props.calendar),
