@@ -70,11 +70,6 @@ export interface CheckboxGroupProps<TCheckbox = unknown> extends ControlProps<Ch
   readonly?: boolean;
 
   /**
-   * Whether the checkbox group is required.
-   */
-  required?: boolean;
-
-  /**
    * The validation schema for the checkbox group.
    */
   schema?: StandardSchema<CheckboxGroupValue<TCheckbox>>;

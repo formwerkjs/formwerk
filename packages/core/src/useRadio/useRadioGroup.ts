@@ -56,11 +56,6 @@ export interface RadioGroupProps<TValue = string> extends ControlProps<TValue> {
   readonly?: boolean;
 
   /**
-   * Whether the radio group is required.
-   */
-  required?: boolean;
-
-  /**
    * Whether to disable HTML5 form validation.
    */
   // eslint-disable-next-line @typescript-eslint/no-wrapper-object-types

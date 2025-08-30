@@ -47,11 +47,6 @@ export interface FileControlProps extends ControlProps<Arrayable<File | string> 
   multiple?: boolean;
 
   /**
-   * Whether the field is required.
-   */
-  required?: boolean;
-
-  /**
    * Handles the file upload, this function is called when the user selects a file, and is called for new picked files.
    */
   onUpload?: (context: FileUploadContext) => Promise<string | undefined>;

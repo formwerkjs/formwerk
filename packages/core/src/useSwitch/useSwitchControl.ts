@@ -38,11 +38,6 @@ export interface SwitchDOMProps extends AriaInputProps, AriaLabelableProps, Aria
 
 export interface SwitchControlProps<TValue = boolean> extends ControlProps<TValue> {
   /**
-   * Whether the switch is required.
-   */
-  required?: boolean;
-
-  /**
    * Whether the switch is readonly.
    */
   readonly?: boolean;

@@ -46,4 +46,9 @@ export interface ControlProps<TValue = unknown, TInitialValue = TValue> {
    * Whether the field is disabled.
    */
   disabled?: boolean;
+
+  /**
+   * Whether the field is required.
+   */
+  required?: boolean;
 }
