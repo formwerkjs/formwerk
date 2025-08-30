@@ -129,6 +129,10 @@ export function useRadio<TValue = string>(_props: Reactivify<RadioProps<TValue>>
 
   return {
     /**
+     * The id of the input element.
+     */
+    inputId,
+    /**
      * Reference to the input element.
      */
     inputEl,

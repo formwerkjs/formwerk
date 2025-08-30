@@ -202,6 +202,11 @@ export function useSwitchControl<TValue = boolean>(
   return exposeField(
     {
       /**
+       * The id of the input element.
+       */
+      inputId,
+
+      /**
        * Reference to the input element.
        */
       inputEl,

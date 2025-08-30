@@ -441,6 +441,11 @@ export function useSliderControl<TValue>(_props: Reactivify<SliderControlProps<T
   return exposeField(
     {
       /**
+       * The id of the input element.
+       */
+      inputId,
+
+      /**
        * Reference to the track element.
        */
       trackEl,
