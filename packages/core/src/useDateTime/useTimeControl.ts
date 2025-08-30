@@ -20,11 +20,6 @@ export type TimeFormatOptions = Simplify<
 
 export interface TimeControlProps extends ControlProps<Maybe<string>> {
   /**
-   * Whether the field is required.
-   */
-  required?: boolean;
-
-  /**
    * The locale to use for the field.
    */
   locale?: string;
