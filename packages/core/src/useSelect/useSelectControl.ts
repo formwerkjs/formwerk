@@ -1,6 +1,6 @@
 import { toValue, shallowRef, computed } from 'vue';
-import { exposeField, FormFieldInit, resolveFormField } from '../useFormField';
-import { AriaLabelableProps, Arrayable, ControlProps, MaybeNormalized, Orientation } from '../types';
+import { exposeField, resolveControlField } from '../useFormField';
+import { AriaLabelableProps, Arrayable, ControlProps, Reactivify, Orientation } from '../types';
 import {
   isEqual,
   normalizeArrayable,
@@ -25,11 +25,6 @@ export interface SelectControlProps<TValue> extends ControlProps<Arrayable<TValu
    * Placeholder text when no option is selected.
    */
   placeholder?: string;
-
-  /**
-   * The controlled value of the select field.
-   */
-  value?: Arrayable<TValue>;
 
   /**
    * Whether the select field is disabled.
@@ -64,11 +59,11 @@ export interface SelectTriggerDomProps extends AriaLabelableProps {
 const MENU_OPEN_KEYS = ['Enter', 'Space', 'ArrowDown', 'ArrowUp'];
 
 export function useSelectControl<TOption, TValue = TOption>(
-  _props: MaybeNormalized<SelectControlProps<TValue>, '_field' | 'schema'>,
+  _props: Reactivify<SelectControlProps<TValue>, '_field' | 'schema'>,
 ) {
   const inputId = useUniqId(FieldTypePrefixes.Select);
   const props = normalizeProps(_props, ['_field', 'schema']);
-  const field = props?._field ?? resolveFormField(getSelectFieldProps<TValue>(props as any));
+  const field = resolveControlField<Arrayable<TValue>>(props);
   const triggerEl = shallowRef<HTMLElement>();
   const { model, setModelValue } = useVModelProxy(field);
   const isDisabled = computed(() => toValue(props.disabled) || field.isDisabled.value);
@@ -283,15 +278,4 @@ export function useSelectControl<TOption, TValue = TOption>(
     },
     field,
   );
-}
-
-export function getSelectFieldProps<TValue>(props: MaybeNormalized<SelectControlProps<TValue>, 'schema'>) {
-  return {
-    label: props.label,
-    description: props.description,
-    path: props.name,
-    initialValue: (toValue(props.modelValue) ?? toValue(props.value)) as Arrayable<TValue>,
-    disabled: props.disabled,
-    schema: props.schema,
-  } satisfies FormFieldInit<Arrayable<TValue>>;
 }

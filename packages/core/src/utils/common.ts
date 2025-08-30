@@ -1,6 +1,15 @@
 import { computed, getCurrentScope, MaybeRefOrGetter, onScopeDispose, Ref, toValue, useId } from 'vue';
 import { klona } from 'klona/full';
-import { Arrayable, DangerousAny, IssueCollection, Maybe, NormalizedProps, Numberish, StandardIssue } from '../types';
+import {
+  Arrayable,
+  DangerousAny,
+  IssueCollection,
+  Maybe,
+  NormalizedProps,
+  Numberish,
+  Reactivify,
+  StandardIssue,
+} from '../types';
 import { AsyncReturnType } from 'type-fest';
 import { getDotPath } from '@standard-schema/utils';
 import { isObject } from '../../../shared/src/utils';
@@ -43,8 +52,8 @@ export function propsToValues<TProps extends Record<string, MaybeRefOrGetter<unk
   );
 }
 
-export function normalizeProps<TProps extends Record<string, unknown>, Exclude extends keyof TProps = never>(
-  props: TProps,
+export function normalizeProps<TProps extends object, Exclude extends keyof TProps = never>(
+  props: Reactivify<TProps, Exclude>,
   exclude?: Exclude[],
 ): NormalizedProps<TProps, Exclude> {
   if ('__isFwNormalized__' in props) {
@@ -55,17 +64,18 @@ export function normalizeProps<TProps extends Record<string, unknown>, Exclude e
 
   const normalized = Object.fromEntries(
     Object.keys(props).map(key => {
+      const k = key as keyof TProps;
       // Existing getters are kept as is
       if (!excludeDict[key]) {
-        return [key, () => toValue(props[key])];
+        return [key, () => toValue(props[k])];
       }
 
-      if (isCallable(props[key])) {
+      if (isCallable(props[k])) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        return [key, (...args: any[]) => (props[key] as any)(...args)];
+        return [key, (...args: any[]) => (props[k] as any)(...args)];
       }
 
-      return [key, props[key]];
+      return [key, props[k]];
     }),
   ) as NormalizedProps<TProps, Exclude>;
 
