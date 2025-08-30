@@ -17,11 +17,6 @@ import { useVModelProxy } from '../reactivity/useVModelProxy';
 
 export interface SelectControlProps<TValue> extends ControlProps<Arrayable<TValue>> {
   /**
-   * Whether the select field is required.
-   */
-  required?: boolean;
-
-  /**
    * Placeholder text when no option is selected.
    */
   placeholder?: string;

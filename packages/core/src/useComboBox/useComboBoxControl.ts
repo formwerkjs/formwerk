@@ -26,11 +26,6 @@ export interface ComboBoxControlProps<TOption, TValue = TOption> extends Control
   placeholder?: string;
 
   /**
-   * Whether the select field is required.
-   */
-  required?: boolean;
-
-  /**
    * Whether the select field is readonly.
    */
   readonly?: boolean;

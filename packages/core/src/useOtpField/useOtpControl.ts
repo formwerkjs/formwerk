@@ -23,11 +23,6 @@ export interface OtpControlProps extends ControlProps<string | undefined> {
   readonly?: boolean;
 
   /**
-   * Whether the OTP field is required.
-   */
-  required?: boolean;
-
-  /**
    * The length of the OTP field characters.
    */
   length?: number;

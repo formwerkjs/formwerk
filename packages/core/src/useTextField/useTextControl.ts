@@ -65,11 +65,6 @@ export interface TextControlProps extends ControlProps<string | undefined> {
   autocomplete?: string | undefined;
 
   /**
-   * Whether the field is required.
-   */
-  required?: boolean;
-
-  /**
    * Whether the field is readonly.
    */
   readonly?: boolean;

@@ -14,11 +14,6 @@ import { useVModelProxy } from '../reactivity/useVModelProxy';
 
 export interface DateControlProps extends ControlProps<Date | undefined> {
   /**
-   * Whether the field is required.
-   */
-  required?: boolean;
-
-  /**
    * The locale to use for the field.
    */
   locale?: string;
