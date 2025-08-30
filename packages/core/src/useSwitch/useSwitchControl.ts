@@ -7,23 +7,15 @@ import {
   EventHandler,
   InputBaseAttributes,
   InputEvents,
-  MaybeNormalized,
   Reactivify,
 } from '../types';
-import {
-  hasKeyCode,
-  isEqual,
-  isInputElement,
-  normalizeProps,
-  useUniqId,
-  useCaptureProps,
-  lowPriority,
-} from '../utils/common';
-import { exposeField, FormFieldInit, resolveFormField } from '../useFormField';
+import { hasKeyCode, isEqual, isInputElement, normalizeProps, useUniqId, useCaptureProps } from '../utils/common';
+import { exposeField, resolveControlField } from '../useFormField';
 import { FieldTypePrefixes } from '../constants';
 import { useInputValidity } from '../validation';
 import { TransparentWrapper } from '../types';
 import { useVModelProxy } from '../reactivity/useVModelProxy';
+import { getSwitchValue } from './utils';
 
 export interface SwitchDomInputProps
   extends InputBaseAttributes,
@@ -77,12 +69,11 @@ export interface SwitchControlProps<TValue = boolean> extends ControlProps<TValu
 }
 
 export function useSwitchControl<TValue = boolean>(
-  _props: MaybeNormalized<SwitchControlProps<TValue>, '_field' | 'schema'>,
+  _props: Reactivify<SwitchControlProps<TValue>, '_field' | 'schema'>,
 ) {
   const props = normalizeProps(_props, ['_field', 'schema']);
   const inputId = useUniqId(FieldTypePrefixes.Switch);
-  const field =
-    props?._field ?? resolveFormField<TValue>(getSwitchFieldProps<TValue>(props as SwitchControlProps<TValue>));
+  const field = resolveControlField<TValue>(props, getSwitchValue(props));
   const inputEl = shallowRef<HTMLInputElement>();
   const { model, setModelValue } = useVModelProxy(field);
 
@@ -242,17 +233,4 @@ export function useSwitchControl<TValue = boolean>(
     },
     field,
   );
-}
-
-export function getSwitchFieldProps<TValue = boolean>(
-  props: Reactivify<SwitchControlProps<TValue>, '_field' | 'schema'>,
-) {
-  return {
-    label: () => toValue(props.label) ?? '',
-    description: props.description,
-    path: props.name,
-    initialValue: toValue(props.modelValue) ?? toValue(props.falseValue) ?? (lowPriority(false) as TValue),
-    disabled: props.disabled,
-    schema: props.schema,
-  } satisfies FormFieldInit<TValue>;
 }

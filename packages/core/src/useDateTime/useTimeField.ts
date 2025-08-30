@@ -1,14 +1,14 @@
-import { Reactivify } from '../types';
+import { Maybe, Reactivify } from '../types';
 import { normalizeProps } from '../utils/common';
-import { useFormField, WithFieldProps } from '../useFormField';
+import { resolveFieldInit, useFormField, WithFieldProps } from '../useFormField';
 import { registerField } from '@formwerk/devtools';
-import { getTimeFieldProps, TimeControlProps, useTimeControl } from './useTimeControl';
+import { TimeControlProps, useTimeControl } from './useTimeControl';
 
 export type TimeFieldProps = WithFieldProps<TimeControlProps>;
 
 export function useTimeField(_props: Reactivify<TimeFieldProps, 'schema'>) {
   const props = normalizeProps(_props, ['schema']);
-  const _field = useFormField(getTimeFieldProps(props));
+  const _field = useFormField(resolveFieldInit<Maybe<string>>(props));
   const control = useTimeControl({ ...props, _field });
 
   if (__DEV__) {

@@ -1,7 +1,7 @@
 import { computed, inject, nextTick, provide, Ref, shallowRef, toValue, watch } from 'vue';
 import { CalendarContext, CalendarViewType } from './types';
 import { hasKeyCode, normalizeProps, useCaptureProps, useUniqId } from '../utils/common';
-import { ControlProps, Maybe, NormalizedProps, Reactivify } from '../types';
+import { ControlProps, Maybe, Reactivify } from '../types';
 import { useLocale } from '../i18n';
 import { FieldTypePrefixes } from '../constants';
 import { blockEvent } from '../utils/events';
@@ -10,14 +10,14 @@ import { useControlButtonProps } from '../helpers/useControlButtonProps';
 import { CalendarContextKey, YEAR_CELLS_COUNT } from './constants';
 import { CalendarView, useCalendarView } from './useCalendarView';
 import { Calendar, ZonedDateTime, now, toCalendar } from '@internationalized/date';
-import { exposeField, FormField, FormFieldInit, resolveFormField } from '../useFormField';
+import { exposeField, FormField, resolveControlField } from '../useFormField';
 import { fromDateToCalendarZonedDateTime, useTemporalStore } from '../useDateTime/useTemporalStore';
 import { PickerContextKey } from '../usePicker';
 import { createDisabledContext } from '../helpers/createDisabledContext';
 import { useVModelProxy } from '../reactivity/useVModelProxy';
 import { useConstraintsValidator, useInputValidity } from '../validation';
 
-export interface CalendarControlProps extends ControlProps<Maybe<Date>> {
+export interface CalendarControlProps extends ControlProps<Date | undefined> {
   /**
    * Whether the calendar is required.
    */
@@ -29,11 +29,6 @@ export interface CalendarControlProps extends ControlProps<Maybe<Date>> {
   locale?: string;
 
   /**
-   * The initial value to use for the calendar.
-   */
-  value?: Date;
-
-  /**
    * The calendar type to use for the calendar, e.g. `gregory`, `islamic-umalqura`, etc.
    */
   calendar?: Calendar;
@@ -42,11 +37,6 @@ export interface CalendarControlProps extends ControlProps<Maybe<Date>> {
    * The time zone to use for the calendar.
    */
   timeZone?: string;
-
-  /**
-   * Whether the calendar is disabled.
-   */
-  disabled?: boolean;
 
   /**
    * Whether the calendar is readonly.
@@ -96,11 +86,11 @@ export interface CalendarControlProps extends ControlProps<Maybe<Date>> {
   /**
    * The form field to use for the calendar.
    */
-  field?: FormField<Maybe<Date>>;
+  field?: FormField<Date | undefined>;
 }
 
-export function useCalendarControl(_props: Reactivify<CalendarControlProps, 'field' | 'schema'>) {
-  const props = normalizeProps(_props, ['field', 'schema']);
+export function useCalendarControl(_props: Reactivify<CalendarControlProps, 'field' | 'schema' | '_field'>) {
+  const props = normalizeProps(_props, ['field', 'schema', '_field']);
   const { weekInfo, locale, calendar, timeZone, direction } = useLocale(props.locale, {
     calendar: () => toValue(props.calendar),
     timeZone: () => toValue(props.timeZone),
@@ -112,7 +102,7 @@ export function useCalendarControl(_props: Reactivify<CalendarControlProps, 'fie
   const calendarEl = shallowRef<HTMLElement>();
   const gridEl = shallowRef<HTMLElement>();
   const calendarLabelEl = shallowRef<HTMLElement>();
-  const field = props.field ?? resolveFormField(getCalendarFieldProps(props));
+  const field = props.field ?? resolveControlField<Date | undefined>(props);
   const { model, setModelValue } = useVModelProxy(field);
 
   const temporalValue = useTemporalStore({
@@ -121,7 +111,7 @@ export function useCalendarControl(_props: Reactivify<CalendarControlProps, 'fie
     locale: locale,
     model: {
       get: () => model.value,
-      set: value => setModelValue(value),
+      set: value => setModelValue(value ?? undefined),
     },
   });
 
@@ -580,14 +570,4 @@ export function useCalendarKeyboard(context: CalendarContext, currentPanel: Ref<
   }
 
   return handleKeyDown;
-}
-
-export function getCalendarFieldProps(props: NormalizedProps<CalendarControlProps, 'field' | 'schema'>) {
-  return {
-    label: props.label,
-    path: props.name,
-    disabled: props.disabled,
-    initialValue: toValue(props.modelValue) ?? toValue(props.value),
-    schema: props.schema,
-  } satisfies FormFieldInit<Maybe<Date>>;
 }

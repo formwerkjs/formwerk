@@ -15,14 +15,13 @@ import {
   AriaValidatableProps,
   Numberish,
   ControlProps,
-  MaybeNormalized,
-  NormalizedProps,
+  Reactivify,
 } from '../types';
 import { useInputValidity } from '../validation/useInputValidity';
 import { useNumberParser } from '../i18n/useNumberParser';
 import { useSpinButton } from '../useSpinButton';
 import { useLocale } from '../i18n';
-import { exposeField, FormFieldInit, resolveFormField } from '../useFormField';
+import { exposeField, resolveControlField } from '../useFormField';
 import { FieldTypePrefixes } from '../constants';
 import { useEventListener } from '../helpers/useEventListener';
 import { TransparentWrapper } from '../types';
@@ -41,7 +40,7 @@ export interface NumberInputDOMProps
   id: string;
 }
 
-export interface NumberControlProps extends ControlProps<number> {
+export interface NumberControlProps extends ControlProps<number | undefined, Numberish | undefined> {
   /**
    * The locale to use for number formatting.
    */
@@ -56,11 +55,6 @@ export interface NumberControlProps extends ControlProps<number> {
    * The label text for the decrement button.
    */
   decrementLabel?: string;
-
-  /**
-   * The value attribute of the number field input.
-   */
-  value?: Numberish;
 
   /**
    * The minimum allowed value.
@@ -93,11 +87,6 @@ export interface NumberControlProps extends ControlProps<number> {
   readonly?: boolean;
 
   /**
-   * Whether the number field is disabled.
-   */
-  disabled?: boolean;
-
-  /**
    * Options for number formatting.
    */
   formatOptions?: Intl.NumberFormatOptions;
@@ -113,11 +102,14 @@ export interface NumberControlProps extends ControlProps<number> {
   disableHtmlValidation?: TransparentWrapper<boolean>;
 }
 
-export function useNumberControl(_props: MaybeNormalized<NumberControlProps, '_field' | 'schema'>) {
+export function useNumberControl(_props: Reactivify<NumberControlProps, '_field' | 'schema'>) {
   const props = normalizeProps(_props, ['_field', 'schema']);
   const inputId = useUniqId(FieldTypePrefixes.NumberField);
   const inputEl = shallowRef<HTMLInputElement>();
-  const field = props?._field ?? resolveFormField(getNumberFieldProps(props));
+  const field = resolveControlField<number | undefined, Numberish | undefined>(
+    props,
+    () => toValue(props.modelValue) ?? fromNumberish(props.value),
+  );
   const { locale } = useLocale(props.locale);
   const parser = useNumberParser(locale, props.formatOptions);
   const { model, setModelValue } = useVModelProxy(field);
@@ -286,15 +278,4 @@ export function useNumberControl(_props: MaybeNormalized<NumberControlProps, '_f
     },
     field,
   );
-}
-
-export function getNumberFieldProps(props: NormalizedProps<NumberControlProps, '_field' | 'schema'>) {
-  return {
-    label: props.label,
-    description: props.description,
-    path: props.name,
-    initialValue: toValue(props.modelValue) ?? fromNumberish(props.value),
-    disabled: props.disabled,
-    schema: props.schema,
-  } satisfies FormFieldInit<number>;
 }

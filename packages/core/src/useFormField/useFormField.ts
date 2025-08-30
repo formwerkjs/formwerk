@@ -1,4 +1,4 @@
-import { inject, InjectionKey, markRaw, provide, Ref } from 'vue';
+import { inject, InjectionKey, markRaw, provide, Ref, toValue } from 'vue';
 import { useFieldController, FieldController, FieldControllerProps } from './useFieldController';
 import { useFieldState, FieldState, FieldStateInit } from './useFieldState';
 import {
@@ -6,6 +6,9 @@ import {
   AriaErrorMessageProps,
   AriaLabelProps,
   Arrayable,
+  ControlProps,
+  Getter,
+  NormalizedProps,
   Reactivify,
   ValidationResult,
 } from '../types';
@@ -174,8 +177,32 @@ export function exposeField<TReturns extends object, TValue>(
 }
 
 /**
+ * Extracts the field init from control props.
+ */
+export function resolveFieldInit<TValue = unknown, TInitialValue = TValue>(
+  props: NoInfer<NormalizedProps<ControlProps<TValue, TInitialValue>, 'schema' | '_field'>>,
+  resolveValue?: () => TValue,
+): FormFieldInit<TValue> {
+  return {
+    label: props.label,
+    description: props.description,
+    path: props.name,
+    initialValue: resolveValue?.() ?? ((toValue(props.modelValue) ?? toValue(props.value)) as TValue),
+    disabled: props.disabled,
+    schema: props.schema,
+  } satisfies FormFieldInit<TValue>;
+}
+
+/**
  * Resolves the field props from the context or creates a new field if none exists.
  */
-export function resolveFormField<TValue = unknown>(init: FormFieldInit<TValue>): FormField<TValue> {
-  return useFormFieldContext<TValue>() ?? useFormField<TValue>(init);
+export function resolveControlField<TValue = unknown, TInitialValue = TValue>(
+  props: NoInfer<NormalizedProps<ControlProps<TValue, TInitialValue>, 'schema' | '_field'>>,
+  resolveValue?: Getter<TValue>,
+): FormField<TValue> {
+  return (
+    props._field ??
+    useFormFieldContext<TValue>() ??
+    useFormField<TValue>(resolveFieldInit<TValue, TInitialValue>(props, resolveValue))
+  );
 }

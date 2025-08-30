@@ -1,7 +1,7 @@
-import { ControlProps, Maybe, NormalizedProps, Reactivify } from '../types';
+import { ControlProps, Maybe, Reactivify } from '../types';
 import { isNullOrUndefined, normalizeProps, useUniqId, useCaptureProps } from '../utils/common';
 import { computed, shallowRef, toValue } from 'vue';
-import { exposeField, FormFieldInit, resolveFormField } from '../useFormField';
+import { exposeField, resolveControlField } from '../useFormField';
 import { useDateTimeSegmentGroup } from './useDateTimeSegmentGroup';
 import { FieldTypePrefixes } from '../constants';
 import { useDateFormatter, useLocale } from '../i18n';
@@ -45,16 +45,6 @@ export interface TimeControlProps extends ControlProps<Maybe<string>> {
   readonly?: boolean;
 
   /**
-   * Whether the field is disabled.
-   */
-  disabled?: boolean;
-
-  /**
-   * The value to use for the field.
-   */
-  value?: string;
-
-  /**
    * The minimum value to use for the field. String format: HH:MM:SS
    */
   min?: string;
@@ -76,7 +66,7 @@ function getDefaultFormatOptions(): TimeFormatOptions {
 export function useTimeControl(_props: Reactivify<TimeControlProps, '_field' | 'schema'>) {
   const props = normalizeProps(_props, ['_field', 'schema']);
   const controlEl = shallowRef<HTMLInputElement>();
-  const field = props?._field ?? resolveFormField(getTimeFieldProps(props));
+  const field = resolveControlField<Maybe<string>>(props);
   const { locale, direction, calendar, timeZone } = useLocale(props.locale);
   const { model, setModelValue } = useVModelProxy(field);
   const isDisabled = createDisabledContext(props.disabled);
@@ -193,15 +183,4 @@ function dateToTimeString(date: Maybe<Date>, formatOptions?: TimeFormatOptions) 
   }
 
   return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
-}
-
-export function getTimeFieldProps(props: NormalizedProps<TimeControlProps, '_field' | 'schema'>) {
-  return {
-    label: props.label,
-    description: props.description,
-    path: props.name,
-    disabled: props.disabled,
-    initialValue: toValue(props.modelValue) ?? toValue(props.value),
-    schema: props.schema,
-  } satisfies FormFieldInit<Maybe<string>>;
 }
