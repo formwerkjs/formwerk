@@ -1,28 +1,24 @@
-import { toValue } from 'vue';
 import { Reactivify } from '../types';
 import { normalizeProps } from '../utils/common';
 import { exposeField, useFormField, WithFieldProps } from '../useFormField';
 import { registerField } from '@formwerk/devtools';
-import { ComboBoxCollectionOptions, ComboBoxControlProps, useComboBoxControl } from './useComboBoxControl';
+import {
+  ComboBoxCollectionOptions,
+  ComboBoxControlProps,
+  getComboBoxFieldProps,
+  useComboBoxControl,
+} from './useComboBoxControl';
 
-export type ComboBoxProps<TOption, TValue = TOption> = WithFieldProps<ComboBoxControlProps<TOption, TValue>, TValue>;
+export type ComboBoxProps<TOption, TValue = TOption> = WithFieldProps<ComboBoxControlProps<TOption, TValue>>;
 
 export function useComboBox<TOption, TValue = TOption>(
   _props: Reactivify<ComboBoxProps<TOption, TValue>, 'schema' | 'onNewValue'>,
   collectionOptions?: Partial<ComboBoxCollectionOptions>,
 ) {
   const props = normalizeProps(_props, ['schema', 'onNewValue']);
-  const _field = useFormField<TValue>({
-    label: props.label,
-    description: props.description,
-    path: props.name,
-    initialValue: (toValue(props.modelValue) ?? toValue(props.value)) as TValue,
-    disabled: props.disabled,
-    schema: props.schema,
-  });
-
+  const _field = useFormField<TValue>(getComboBoxFieldProps<TOption, TValue>(props));
   const control = useComboBoxControl<TOption, TValue>(
-    { ...(props as ComboBoxControlProps<TOption, TValue>), _field },
+    { ...(props as unknown as ComboBoxControlProps<TOption, TValue>), _field },
     collectionOptions,
   );
 

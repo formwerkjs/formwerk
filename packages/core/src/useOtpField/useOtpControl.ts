@@ -1,9 +1,9 @@
 import { computed, nextTick, provide, ref, toValue, watch, shallowRef, MaybeRefOrGetter } from 'vue';
-import { MaybeAsync, Reactivify } from '../types';
+import { ControlProps, MaybeAsync, MaybeNormalized, NormalizedProps } from '../types';
 import { OtpContextKey, OtpSlotAcceptType } from './types';
 import { normalizeProps, useUniqId, useCaptureProps } from '../utils/common';
 import { FieldTypePrefixes } from '../constants';
-import { FormField, useFormFieldContext } from '../useFormField';
+import { exposeField, FormFieldInit, resolveFormField } from '../useFormField';
 import { useInputValidity, useConstraintsValidator } from '../validation';
 import { OtpSlotProps } from './useOtpSlot';
 import { DEFAULT_MASK, isValueAccepted } from './utils';
@@ -11,17 +11,7 @@ import { blockEvent } from '../utils/events';
 import { TransparentWrapper } from '../types';
 import { useVModelProxy } from '../reactivity/useVModelProxy';
 
-export interface OtpControlProps {
-  /**
-   * The name of the OTP field.
-   */
-  name?: string;
-
-  /**
-   * The model value of the OTP field.
-   */
-  modelValue?: string;
-
+export interface OtpControlProps extends ControlProps<string> {
   /**
    * The initial value of the OTP field.
    */
@@ -71,42 +61,37 @@ export interface OtpControlProps {
    * The callback function that is called when the OTP field is completed.
    */
   onCompleted?: (value: string) => MaybeAsync<void>;
-
-  /**
-   * The field to use for the OTP control. Internal usage only.
-   */
-  _field?: FormField<string>;
 }
 
-export function useOtpControl(_props: Reactivify<OtpControlProps, 'onCompleted' | '_field'>) {
-  const props = normalizeProps(_props, ['onCompleted', '_field']);
+type ExcludedProps = 'onCompleted' | '_field' | 'schema';
+
+export function useOtpControl(_props: MaybeNormalized<OtpControlProps, ExcludedProps>) {
+  const props = normalizeProps(_props, ['onCompleted', '_field', 'schema']);
   const controlEl = shallowRef<HTMLElement>();
   const id = useUniqId(FieldTypePrefixes.OTPField);
-  const field = props._field ?? useFormFieldContext();
+  const field = props._field ?? resolveFormField(getOtpFieldProps(props));
   const { model, setModelValue } = useVModelProxy(field);
-  const isDisabled = computed(() => toValue(props.disabled) || field?.isDisabled.value);
+  const isDisabled = computed(() => toValue(props.disabled) || field.isDisabled.value);
 
-  if (field) {
-    const { element: inputEl } = useConstraintsValidator({
-      type: 'text',
-      maxLength: getRequiredLength(),
-      minLength: getRequiredLength(),
-      required: props.required,
-      value: () => (model.value?.length === getRequiredLength() ? model.value : ''),
-      source: controlEl,
-    });
+  const { element: inputEl } = useConstraintsValidator({
+    type: 'text',
+    maxLength: getRequiredLength(),
+    minLength: getRequiredLength(),
+    required: props.required,
+    value: () => (model.value?.length === getRequiredLength() ? model.value : ''),
+    source: controlEl,
+  });
 
-    useInputValidity({
-      field,
-      inputEl: inputEl,
-      disableHtmlValidation: props.disableHtmlValidation,
-    });
+  useInputValidity({
+    field,
+    inputEl: inputEl,
+    disableHtmlValidation: props.disableHtmlValidation,
+  });
 
-    field.registerControl({
-      getControlElement: () => controlEl.value,
-      getControlId: () => id,
-    });
-  }
+  field.registerControl({
+    getControlElement: () => controlEl.value,
+    getControlId: () => id,
+  });
 
   function getRequiredLength() {
     const prefix = toValue(props.prefix) || '';
@@ -134,9 +119,9 @@ export function useOtpControl(_props: Reactivify<OtpControlProps, 'onCompleted' 
     return {
       id,
       role: 'group',
-      ...field?.labelledByProps.value,
-      ...field?.describedByProps.value,
-      ...field?.accessibleErrorProps.value,
+      ...field.labelledByProps.value,
+      ...field.describedByProps.value,
+      ...field.accessibleErrorProps.value,
     };
   }, controlEl);
 
@@ -312,21 +297,24 @@ export function useOtpControl(_props: Reactivify<OtpControlProps, 'onCompleted' 
       };
     },
     onBlur() {
-      field?.setTouched(true);
+      field.setTouched(true);
     },
   });
 
-  return {
-    /**
-     * The props of the control element.
-     */
-    controlProps,
+  return exposeField(
+    {
+      /**
+       * The props of the control element.
+       */
+      controlProps,
 
-    /**
-     * The slots of the OTP field. Use this as an iterable to render with `v-for`.
-     */
-    fieldSlots,
-  };
+      /**
+       * The slots of the OTP field. Use this as an iterable to render with `v-for`.
+       */
+      fieldSlots,
+    },
+    field,
+  );
 }
 
 /**
@@ -335,7 +323,7 @@ export function useOtpControl(_props: Reactivify<OtpControlProps, 'onCompleted' 
  * @param getPrefix - The prefix to add to the value.
  * @returns The value with the prefix added if it is not already present.
  */
-export function withPrefix(value: string | undefined, getPrefix: MaybeRefOrGetter<string | undefined> | undefined) {
+function withPrefix(value: string | undefined, getPrefix: MaybeRefOrGetter<string | undefined> | undefined) {
   const prefix = toValue(getPrefix);
   if (!prefix) {
     return value ?? '';
@@ -347,4 +335,15 @@ export function withPrefix(value: string | undefined, getPrefix: MaybeRefOrGette
   }
 
   return `${prefix}${value}`;
+}
+
+export function getOtpFieldProps(props: NormalizedProps<OtpControlProps, ExcludedProps>) {
+  return {
+    label: props.label,
+    description: props.description,
+    path: props.name,
+    initialValue: withPrefix(toValue(props.modelValue) ?? toValue(props.value), props.prefix),
+    disabled: props.disabled,
+    schema: props.schema,
+  } satisfies FormFieldInit<string>;
 }

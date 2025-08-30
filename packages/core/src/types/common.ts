@@ -97,6 +97,10 @@ export type NormalizedProps<TProps extends object, Exclude extends keyof TProps 
   __isFwNormalized__: boolean;
 };
 
+export type MaybeNormalized<TProps extends object, TExclude extends keyof TProps = never> =
+  | Reactivify<TProps, TExclude>
+  | NormalizedProps<TProps, TExclude>;
+
 export type Arrayable<T> = T | T[];
 
 export type FormObject = Record<string, unknown>;

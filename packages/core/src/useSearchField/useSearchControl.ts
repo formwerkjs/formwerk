@@ -1,6 +1,6 @@
 import { computed, toValue } from 'vue';
-import { Reactivify } from '../types';
-import { useFormFieldContext } from '../useFormField/useFormField';
+import { NormalizedProps, Reactivify } from '../types';
+import { FormFieldInit } from '../useFormField/useFormField';
 import { TextControlProps, useTextControl } from '../useTextField/useTextControl';
 import { hasKeyCode } from '../utils/common';
 
@@ -16,17 +16,18 @@ export interface SearchControlProps extends Omit<TextControlProps, 'type'> {
   onSubmit?: (value: string) => void;
 }
 
-export function useSearchControl(props: Reactivify<SearchControlProps, 'onSubmit' | '_field'>) {
-  const field = props?._field ?? useFormFieldContext();
+export function useSearchControl(props: Reactivify<SearchControlProps, 'onSubmit' | '_field' | 'schema'>) {
   const control = useTextControl({
     ...props,
     type: 'search',
   });
 
+  const field = control._field;
+
   function clear() {
-    field?.setValue('');
-    field?.setTouched(true);
-    field?.validate();
+    field.setValue('');
+    field.setTouched(true);
+    field.validate();
   }
 
   function onKeydown(e: Event) {
@@ -41,14 +42,14 @@ export function useSearchControl(props: Reactivify<SearchControlProps, 'onSubmit
 
     if (hasKeyCode(e, 'Enter') && !control.inputEl.value?.form && props.onSubmit) {
       e.preventDefault();
-      field?.setTouched(true);
-      if (field?.isValid.value) {
-        props.onSubmit(field?.fieldValue.value || '');
+      field.setTouched(true);
+      if (field.isValid.value) {
+        props.onSubmit(field.fieldValue.value || '');
       }
     }
   }
 
-  const isMutable = () => !toValue(props.readonly) && !field?.isDisabled.value;
+  const isMutable = () => !toValue(props.readonly) && !field.isDisabled.value;
 
   const clearBtnProps = computed(() => {
     return {
@@ -83,4 +84,15 @@ export function useSearchControl(props: Reactivify<SearchControlProps, 'onSubmit
      */
     inputProps,
   };
+}
+
+export function getSearchFieldProps(props: NormalizedProps<SearchControlProps, 'onSubmit' | 'schema'>) {
+  return {
+    label: props.label,
+    description: props.description,
+    path: props.name,
+    initialValue: toValue(props.modelValue) ?? toValue(props.value),
+    disabled: props.disabled,
+    schema: props.schema,
+  } satisfies FormFieldInit<string | undefined>;
 }

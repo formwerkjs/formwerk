@@ -1,4 +1,3 @@
-import { toValue } from 'vue';
 import {
   AriaDescribableProps,
   AriaLabelableProps,
@@ -8,9 +7,9 @@ import {
   TextInputBaseAttributes,
 } from '../types';
 import { normalizeProps } from '../utils/common';
-import { useFormField, exposeField, WithFieldProps } from '../useFormField';
+import { useFormField, WithFieldProps } from '../useFormField';
 import { registerField } from '@formwerk/devtools';
-import { SearchControlProps, useSearchControl } from './useSearchControl';
+import { getSearchFieldProps, SearchControlProps, useSearchControl } from './useSearchControl';
 
 export interface SearchInputDOMAttributes extends TextInputBaseAttributes {
   type?: 'search';
@@ -25,18 +24,11 @@ export interface SearchInputDOMProps
   id: string;
 }
 
-export type SearchFieldProps = WithFieldProps<SearchControlProps, string>;
+export type SearchFieldProps = WithFieldProps<SearchControlProps>;
 
 export function useSearchField(_props: Reactivify<SearchFieldProps, 'onSubmit' | 'schema'>) {
   const props = normalizeProps(_props, ['onSubmit', 'schema']);
-  const _field = useFormField<string | undefined>({
-    label: props.label,
-    description: props.description,
-    path: props.name,
-    initialValue: toValue(props.modelValue) ?? toValue(props.value),
-    disabled: props.disabled,
-    schema: props.schema,
-  });
+  const _field = useFormField<string | undefined>(getSearchFieldProps(props));
 
   const control = useSearchControl({
     ...props,
@@ -47,5 +39,5 @@ export function useSearchField(_props: Reactivify<SearchFieldProps, 'onSubmit' |
     registerField(_field, 'Search');
   }
 
-  return exposeField(control, _field);
+  return control;
 }
