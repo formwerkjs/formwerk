@@ -4,6 +4,7 @@ import {
   AriaLabelableProps,
   AriaValidatableProps,
   Arrayable,
+  ControlProps,
   InputEvents,
   Numberish,
   Reactivify,
@@ -12,7 +13,7 @@ import {
 } from '../types';
 import { normalizeProps, propsToValues, useCaptureProps, useUniqId } from '../utils/common';
 import { useInputValidity } from '../validation';
-import { FormField, useFormFieldContext } from '../useFormField';
+import { exposeField, resolveFormField } from '../useFormField';
 import { FieldTypePrefixes } from '../constants';
 import { useVModelProxy } from '../reactivity/useVModelProxy';
 import { EventExpression } from '../helpers/useEventListener';
@@ -32,17 +33,7 @@ export interface TextInputDOMProps
   id: string;
 }
 
-export interface TextControlProps {
-  /**
-   * The v-model value of the text field.
-   */
-  modelValue?: string;
-
-  /**
-   * The name attribute of the input element.
-   */
-  name?: string;
-
+export interface TextControlProps extends ControlProps<string | undefined> {
   /**
    * The value attribute of the input element.
    */
@@ -102,43 +93,36 @@ export interface TextControlProps {
    * Events to validate on.
    */
   validateOn?: Arrayable<EventExpression>;
-
-  /**
-   * The field to use for the text control. Internal usage only.
-   */
-  _field?: FormField<any>;
 }
 
-export function useTextControl(_props: Reactivify<TextControlProps, '_field'>) {
+export function useTextControl(_props: Reactivify<TextControlProps, '_field' | 'schema'>) {
   const inputEl = shallowRef<HTMLInputElement>();
   const inputId = useUniqId(FieldTypePrefixes.TextField);
-  const props = normalizeProps(_props, ['_field']);
-  const field = props?._field ?? useFormFieldContext();
+  const props = normalizeProps(_props, ['_field', 'schema']);
+  const field = props?._field ?? resolveFormField(getTextFieldProps(props));
   const { model } = useVModelProxy(field);
 
-  if (field) {
-    useInputValidity({
-      inputEl,
-      field,
-      disableHtmlValidation: props.disableHtmlValidation,
-      events: () => toValue(props.validateOn) ?? ['change', 'blur'],
-    });
+  useInputValidity({
+    inputEl,
+    field,
+    disableHtmlValidation: props.disableHtmlValidation,
+    events: () => toValue(props.validateOn) ?? ['change', 'blur'],
+  });
 
-    field.registerControl({
-      getControlElement: () => inputEl.value,
-      getControlId: () => inputId,
-    });
-  }
+  field.registerControl({
+    getControlElement: () => inputEl.value,
+    getControlId: () => inputId,
+  });
 
   const handlers: InputEvents = {
     onInput(evt) {
-      field?.setValue((evt.target as HTMLInputElement).value);
+      field.setValue((evt.target as HTMLInputElement).value);
     },
     onChange(evt) {
-      field?.setValue((evt.target as HTMLInputElement).value);
+      field.setValue((evt.target as HTMLInputElement).value);
     },
     onBlur() {
-      field?.setTouched(true);
+      field.setTouched(true);
     },
   };
 
@@ -147,30 +131,44 @@ export function useTextControl(_props: Reactivify<TextControlProps, '_field'>) {
       ...propsToValues(props, ['name', 'type', 'placeholder', 'autocomplete', 'required', 'readonly']),
       ...handlers,
       id: inputId,
-      ...field?.accessibleErrorProps.value,
-      ...field?.describedByProps.value,
-      ...field?.labelledByProps.value,
-      value: field?.fieldValue.value,
+      ...field.accessibleErrorProps.value,
+      ...field.describedByProps.value,
+      ...field.labelledByProps.value,
+      value: field.fieldValue.value,
       maxlength: toValue(props.maxLength),
       minlength: toValue(props.minLength),
-      disabled: (field?.isDisabled.value ?? toValue(props.disabled)) ? true : undefined,
+      disabled: (field.isDisabled.value ?? toValue(props.disabled)) ? true : undefined,
       // Maybe we need to find a better way to serialize RegExp to a pattern string
       pattern: inputEl.value?.tagName === 'TEXTAREA' ? undefined : toValue(props.pattern)?.toString(),
     };
   }, inputEl);
 
+  return exposeField(
+    {
+      /**
+       * Props for the input element.
+       */
+      inputProps,
+      /**
+       * Ref to the input element.
+       */
+      inputEl,
+      /**
+       * The current text value of the field.
+       */
+      model,
+    },
+    field,
+  );
+}
+
+export function getTextFieldProps(props: Reactivify<TextControlProps, '_field' | 'schema'>) {
   return {
-    /**
-     * Props for the input element.
-     */
-    inputProps,
-    /**
-     * Ref to the input element.
-     */
-    inputEl,
-    /**
-     * The current text value of the field.
-     */
-    model,
+    label: () => toValue(props.label) ?? '',
+    description: props.description,
+    path: props.name,
+    initialValue: toValue(props.modelValue) ?? toValue(props.value),
+    disabled: props.disabled,
+    schema: props.schema,
   };
 }

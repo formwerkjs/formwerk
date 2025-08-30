@@ -8,7 +8,7 @@ import {
   AriaValidatableProps,
   Direction,
   Reactivify,
-  StandardSchema,
+  ControlProps,
 } from '../types';
 import { useUniqId, getNextCycleArrIdx, normalizeProps, isEmpty, removeFirst, hasKeyCode } from '../utils/common';
 import { useLocale } from '../i18n';
@@ -40,7 +40,7 @@ export interface RadioRegistration {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const RadioGroupKey: InjectionKey<RadioGroupContext<any>> = Symbol('RadioGroupKey');
 
-export interface RadioGroupProps<TValue = string> {
+export interface RadioGroupProps<TValue = string> extends ControlProps<TValue> {
   /**
    * The orientation of the radio group (horizontal or vertical).
    */
@@ -50,26 +50,6 @@ export interface RadioGroupProps<TValue = string> {
    * The text direction of the radio group (ltr or rtl).
    */
   dir?: Direction;
-
-  /**
-   * The label text for the radio group.
-   */
-  label: string;
-
-  /**
-   * The description text for the radio group.
-   */
-  description?: string;
-
-  /**
-   * The name attribute for the radio group.
-   */
-  name?: string;
-
-  /**
-   * The v-model value of the radio group.
-   */
-  modelValue?: TValue;
 
   /**
    * Whether the radio group is disabled.
@@ -85,11 +65,6 @@ export interface RadioGroupProps<TValue = string> {
    * Whether the radio group is required.
    */
   required?: boolean;
-
-  /**
-   * Schema for radio group validation.
-   */
-  schema?: StandardSchema<TValue>;
 
   /**
    * Whether to disable HTML5 form validation.

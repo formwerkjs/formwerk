@@ -1,24 +1,14 @@
-import { toValue } from 'vue';
 import { normalizeProps } from '../utils/common';
-import { Maybe, Reactivify } from '../types';
-import { exposeField, FieldBaseProps, useFormField } from '../useFormField';
+import { Reactivify } from '../types';
+import { useFormField, WithFieldProps } from '../useFormField';
 import { registerField } from '@formwerk/devtools';
-import { CalendarControlProps, useCalendarControl } from './useCalendarControl';
+import { CalendarControlProps, getCalendarFieldProps, useCalendarControl } from './useCalendarControl';
 
-export type CalendarProps = CalendarControlProps & FieldBaseProps<Maybe<Date>>;
+export type CalendarProps = WithFieldProps<CalendarControlProps>;
 
 export function useCalendar(_props: Reactivify<CalendarProps, 'field' | 'schema'>) {
   const props = normalizeProps(_props, ['field', 'schema']);
-  const field =
-    props.field ??
-    useFormField<Maybe<Date>>({
-      label: props.label,
-      path: props.name,
-      disabled: props.disabled,
-      initialValue: toValue(props.modelValue) ?? toValue(props.value),
-      schema: props.schema,
-    });
-
+  const field = props.field ?? useFormField(getCalendarFieldProps(props));
   const control = useCalendarControl({
     ...props,
     field,
@@ -31,5 +21,5 @@ export function useCalendar(_props: Reactivify<CalendarProps, 'field' | 'schema'
     }
   }
 
-  return exposeField(control, field);
+  return control;
 }

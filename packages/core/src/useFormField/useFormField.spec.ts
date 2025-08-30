@@ -181,7 +181,9 @@ test('setErrors warns when trying to set errors on a disabled field', async () =
   setErrors('error');
 
   // Check that a warning was logged
-  expect(consoleWarnSpy).toHaveBeenCalledOnce();
+  expect(consoleWarnSpy).toHaveBeenLastCalledWith(
+    '[Formwerk]: This field is disabled, setting errors will not take effect until the field is enabled.',
+  );
 
   // Check the state, errors should not be set
   expect(isValid.value).toBe(true);

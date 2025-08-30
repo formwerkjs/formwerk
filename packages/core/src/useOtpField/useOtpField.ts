@@ -1,22 +1,14 @@
-import { toValue } from 'vue';
 import { Reactivify } from '../types';
 import { normalizeProps } from '../utils/common';
-import { exposeField, useFormField, WithFieldProps } from '../useFormField';
+import { useFormField, WithFieldProps } from '../useFormField';
 import { registerField } from '@formwerk/devtools';
-import { OtpControlProps, useOtpControl, withPrefix } from './useOtpControl';
+import { getOtpFieldProps, OtpControlProps, useOtpControl } from './useOtpControl';
 
-export type OtpFieldProps = WithFieldProps<OtpControlProps, string>;
+export type OtpFieldProps = WithFieldProps<OtpControlProps>;
 
 export function useOtpField(_props: Reactivify<OtpFieldProps, 'schema' | 'onCompleted'>) {
   const props = normalizeProps(_props, ['schema', 'onCompleted']);
-  const field = useFormField<string>({
-    label: props.label,
-    description: props.description,
-    path: props.name,
-    initialValue: withPrefix(toValue(props.modelValue) ?? toValue(props.value), props.prefix),
-    disabled: props.disabled,
-    schema: props.schema,
-  });
+  const field = useFormField<string>(getOtpFieldProps(props));
 
   const control = useOtpControl({
     ...props,
@@ -27,5 +19,5 @@ export function useOtpField(_props: Reactivify<OtpFieldProps, 'schema' | 'onComp
     registerField(field, 'OTP');
   }
 
-  return exposeField(control, field);
+  return control;
 }

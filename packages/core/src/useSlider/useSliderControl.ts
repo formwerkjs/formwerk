@@ -10,7 +10,17 @@ import {
   shallowRef,
 } from 'vue';
 import { type ErrorableAttributes } from '../a11y';
-import { AriaLabelableProps, Arrayable, Direction, Numberish, Orientation, Reactivify } from '../types';
+import {
+  AriaLabelableProps,
+  Arrayable,
+  ControlProps,
+  Direction,
+  MaybeNormalized,
+  Numberish,
+  Orientation,
+  Reactivify,
+  StandardSchema,
+} from '../types';
 import {
   fromNumberish,
   isEqual,
@@ -24,17 +34,12 @@ import {
 } from '../utils/common';
 import { toNearestMultipleOf } from '../utils/math';
 import { useLocale } from '../i18n';
-import { FormField, useFormFieldContext } from '../useFormField';
+import { exposeField, FormFieldInit, resolveFormField } from '../useFormField';
 import { FieldTypePrefixes } from '../constants';
 import { useInputValidity } from '../validation';
 import { useVModelProxy } from '../reactivity/useVModelProxy';
 
-export interface SliderControlProps<TValue = number> {
-  /**
-   * The name attribute for the slider input.
-   */
-  name?: string;
-
+export interface SliderControlProps<TValue = number> extends ControlProps<Arrayable<TValue> | undefined> {
   /**
    * The orientation of the slider (horizontal or vertical).
    */
@@ -46,14 +51,9 @@ export interface SliderControlProps<TValue = number> {
   dir?: Direction;
 
   /**
-   * The v-model value of the slider.
-   */
-  modelValue?: Arrayable<TValue>;
-
-  /**
    * The value attribute of the slider input.
    */
-  value?: Arrayable<TValue>;
+  value?: Arrayable<TValue> | undefined;
 
   /**
    * The minimum value allowed for the slider. Ignored if `options` is provided.
@@ -84,11 +84,6 @@ export interface SliderControlProps<TValue = number> {
    * Whether the slider is readonly.
    */
   readonly?: boolean;
-
-  /**
-   * The field to use for the slider control. Internal usage only.
-   */
-  _field?: FormField<TValue>;
 }
 
 export type Coordinate = { x: number; y: number };
@@ -198,34 +193,31 @@ export interface SliderContext {
 
 export const SliderInjectionKey: InjectionKey<SliderContext> = Symbol('Slider');
 
-export function useSliderControl<TValue>(_props: Reactivify<SliderControlProps<TValue>, '_field'>) {
-  const props = normalizeProps(_props, ['_field']);
+export function useSliderControl<TValue>(_props: MaybeNormalized<SliderControlProps<TValue>, '_field' | 'schema'>) {
+  const props = normalizeProps(_props, ['_field', 'schema']);
   const inputId = useUniqId(FieldTypePrefixes.Slider);
   const { direction } = useLocale();
   const trackEl = shallowRef<HTMLElement>();
   const thumbs = ref<ThumbRegistration[]>([]);
-  const field = props?._field ?? useFormFieldContext<TValue>();
+  const field = props?._field ?? resolveFormField(getSliderFieldProps<TValue>(props as any));
   const { model, setModelValue } = useVModelProxy(field);
 
   if (__DEV__) {
     checkValidProps(_props);
   }
 
-  const isDisabled = computed(() => toValue(props.disabled) || field?.isDisabled.value);
+  const isDisabled = computed(() => toValue(props.disabled) || field.isDisabled.value);
   const isReadonly = () => toValue(props.readonly) ?? false;
   const isMutable = () => !isDisabled.value && !isReadonly();
-  let updateValidity: () => void;
 
-  if (field) {
-    updateValidity = useInputValidity({ field }).updateValidity;
-    field.registerControl({
-      getControlElement: () => trackEl.value,
-      getControlId: () => inputId,
-    });
-  }
+  const { updateValidity } = useInputValidity({ field });
+  field.registerControl({
+    getControlElement: () => trackEl.value,
+    getControlId: () => inputId,
+  });
 
   const groupProps = computed(() => ({
-    ...field?.labelledByProps.value,
+    ...field.labelledByProps.value,
     id: inputId,
     role: 'group',
     dir: toValue(props.dir),
@@ -328,7 +320,7 @@ export function useSliderControl<TValue>(_props: Reactivify<SliderControlProps<T
         );
 
         setThumbValue(closest.idx, targetValue);
-        field?.setTouched(true);
+        field.setTouched(true);
       },
     };
   }, trackEl);
@@ -401,7 +393,7 @@ export function useSliderControl<TValue>(_props: Reactivify<SliderControlProps<T
       getThumbRange: () => getThumbRange(ctx),
       getSliderRange,
       getSliderLabelProps() {
-        return field?.labelledByProps.value ?? {};
+        return field.labelledByProps.value ?? {};
       },
       getSliderStep,
       getValueForPagePosition,
@@ -419,8 +411,8 @@ export function useSliderControl<TValue>(_props: Reactivify<SliderControlProps<T
       setThumbValue(value) {
         setThumbValue(getThumbIndex(), value);
       },
-      setTouched: field?.setTouched ?? (() => {}),
-      getAccessibleErrorProps: () => field?.accessibleErrorProps.value ?? ({} as ErrorableAttributes),
+      setTouched: field.setTouched ?? (() => {}),
+      getAccessibleErrorProps: () => field.accessibleErrorProps.value ?? ({} as ErrorableAttributes),
     };
 
     return reg;
@@ -466,30 +458,33 @@ export function useSliderControl<TValue>(_props: Reactivify<SliderControlProps<T
     });
   }
 
-  return {
-    /**
-     * Reference to the track element.
-     */
-    trackEl,
+  return exposeField(
+    {
+      /**
+       * Reference to the track element.
+       */
+      trackEl,
 
-    /**
-     * Props for the root element for the slider component.
-     */
-    groupProps,
-    /**
-     * Props for the output element.
-     */
-    outputProps,
-    /**
-     * Props for the track element.
-     */
-    trackProps,
+      /**
+       * Props for the root element for the slider component.
+       */
+      groupProps,
+      /**
+       * Props for the output element.
+       */
+      outputProps,
+      /**
+       * Props for the track element.
+       */
+      trackProps,
 
-    /**
-     * Gets the metadata for a given thumb.
-     */
-    useThumbMetadata,
-  };
+      /**
+       * Gets the metadata for a given thumb.
+       */
+      useThumbMetadata,
+    },
+    field,
+  );
 }
 
 // oxlint-disable-next-line no-explicit-any
@@ -505,4 +500,14 @@ function checkValidProps(props: Reactivify<SliderControlProps<any>, '_field'>) {
   if (isDiscreteStepsPresent && isStepPresent) {
     warn('Cannot use discrete steps with explicit step value, the step value will be ignored.');
   }
+}
+
+export function getSliderFieldProps<TValue>(props: MaybeNormalized<SliderControlProps<TValue>, '_field' | 'schema'>) {
+  return {
+    label: props.label,
+    path: props.name,
+    initialValue: (toValue(props.modelValue) ?? toValue(props.value)) as Arrayable<TValue>,
+    disabled: props.disabled,
+    schema: props.schema as StandardSchema<Arrayable<TValue>>,
+  } satisfies FormFieldInit<Arrayable<TValue>>;
 }

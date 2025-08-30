@@ -1,8 +1,8 @@
-import { Maybe, Reactivify } from '../types';
+import { ControlProps, Maybe, NormalizedProps, Reactivify } from '../types';
 import type { CalendarProps } from '../useCalendar';
 import { normalizeProps, useUniqId, useCaptureProps } from '../utils/common';
 import { computed, shallowRef, toValue } from 'vue';
-import { FormField, useFormFieldContext } from '../useFormField';
+import { exposeField, resolveFormField } from '../useFormField';
 import { useDateTimeSegmentGroup } from './useDateTimeSegmentGroup';
 import { FieldTypePrefixes } from '../constants';
 import { useDateFormatter, useLocale } from '../i18n';
@@ -12,12 +12,7 @@ import { useInputValidity } from '../validation';
 import { useConstraintsValidator } from '../validation/useConstraintsValidator';
 import { useVModelProxy } from '../reactivity/useVModelProxy';
 
-export interface DateControlProps {
-  /**
-   * The name to use for the field.
-   */
-  name?: string;
-
+export interface DateControlProps extends ControlProps<Maybe<Date>> {
   /**
    * Whether the field is required.
    */
@@ -64,11 +59,6 @@ export interface DateControlProps {
   value?: Date;
 
   /**
-   * The model value to use for the field.
-   */
-  modelValue?: Date;
-
-  /**
    * The minimum date to use for the field.
    */
   min?: Date;
@@ -77,17 +67,12 @@ export interface DateControlProps {
    * The maximum date to use for the field.
    */
   max?: Date;
-
-  /**
-   * The field to use for the date control. Internal usage only.
-   */
-  _field?: FormField<Maybe<Date>>;
 }
 
-export function useDateControl(_props: Reactivify<DateControlProps, '_field'>) {
-  const props = normalizeProps(_props, ['_field']);
+export function useDateControl(_props: Reactivify<DateControlProps, '_field' | 'schema'>) {
+  const props = normalizeProps(_props, ['_field', 'schema']);
   const controlEl = shallowRef<HTMLInputElement>();
-  const field = props?._field ?? useFormFieldContext<Maybe<Date>>();
+  const field = props?._field ?? resolveFormField(getDateFieldProps(props));
   const { model, setModelValue } = useVModelProxy(field);
   const { locale, direction, timeZone, calendar } = useLocale(props.locale, {
     calendar: () => toValue(props.calendar),
@@ -106,13 +91,11 @@ export function useDateControl(_props: Reactivify<DateControlProps, '_field'>) {
     max: props.max,
   });
 
-  if (field) {
-    useInputValidity({ field, inputEl });
-    field.registerControl({
-      getControlElement: () => controlEl.value,
-      getControlId: () => controlId,
-    });
-  }
+  useInputValidity({ field, inputEl });
+  field.registerControl({
+    getControlElement: () => controlEl.value,
+    getControlId: () => controlId,
+  });
 
   const min = computed(() => fromDateToCalendarZonedDateTime(toValue(props.min), calendar.value, timeZone.value));
   const max = computed(() => fromDateToCalendarZonedDateTime(toValue(props.max), calendar.value, timeZone.value));
@@ -142,7 +125,7 @@ export function useDateControl(_props: Reactivify<DateControlProps, '_field'>) {
     temporalValue,
     readonly: props.readonly,
     onValueChange,
-    onTouched: () => field?.setTouched(true),
+    onTouched: () => field.setTouched(true),
     min,
     max,
     dispatchEvent: (type: string) => inputEl.value?.dispatchEvent(new Event(type)),
@@ -150,7 +133,7 @@ export function useDateControl(_props: Reactivify<DateControlProps, '_field'>) {
 
   const calendarProps = computed(() => {
     const propsObj: CalendarProps = {
-      label: toValue(field?.label) ?? '',
+      label: toValue(field.label) ?? '',
       locale: locale.value,
       name: undefined,
       calendar: calendar.value,
@@ -167,32 +150,46 @@ export function useDateControl(_props: Reactivify<DateControlProps, '_field'>) {
     return {
       id: controlId,
       role: 'group',
-      ...field?.labelledByProps.value,
-      ...field?.describedByProps.value,
-      ...field?.accessibleErrorProps.value,
-      'aria-disabled': field?.isDisabled.value || undefined,
+      ...field.labelledByProps.value,
+      ...field.describedByProps.value,
+      ...field.accessibleErrorProps.value,
+      'aria-disabled': field.isDisabled.value || undefined,
     };
   }, controlEl);
 
+  return exposeField(
+    {
+      /**
+       * The props to use for the control element.
+       */
+      controlProps,
+
+      /**
+       * The datetime segments, you need to render these with the `DateTimeSegment` component.
+       */
+      segments,
+
+      /**
+       * The props to use for the calendar composable/component.
+       */
+      calendarProps,
+
+      /**
+       * The direction of the field.
+       */
+      direction,
+    },
+    field,
+  );
+}
+
+export function getDateFieldProps(props: NormalizedProps<DateControlProps, '_field' | 'schema'>) {
   return {
-    /**
-     * The props to use for the control element.
-     */
-    controlProps,
-
-    /**
-     * The datetime segments, you need to render these with the `DateTimeSegment` component.
-     */
-    segments,
-
-    /**
-     * The props to use for the calendar composable/component.
-     */
-    calendarProps,
-
-    /**
-     * The direction of the field.
-     */
-    direction,
+    label: props.label,
+    description: props.description,
+    path: props.name,
+    disabled: props.disabled,
+    initialValue: toValue(props.modelValue) ?? toValue(props.value),
+    schema: props.schema,
   };
 }

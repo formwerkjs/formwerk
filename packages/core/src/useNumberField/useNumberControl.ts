@@ -14,13 +14,15 @@ import {
   InputEvents,
   AriaValidatableProps,
   Numberish,
-  Reactivify,
+  ControlProps,
+  MaybeNormalized,
+  NormalizedProps,
 } from '../types';
 import { useInputValidity } from '../validation/useInputValidity';
 import { useNumberParser } from '../i18n/useNumberParser';
 import { useSpinButton } from '../useSpinButton';
 import { useLocale } from '../i18n';
-import { FormField, useFormFieldContext } from '../useFormField';
+import { exposeField, FormFieldInit, resolveFormField } from '../useFormField';
 import { FieldTypePrefixes } from '../constants';
 import { useEventListener } from '../helpers/useEventListener';
 import { TransparentWrapper } from '../types';
@@ -39,16 +41,11 @@ export interface NumberInputDOMProps
   id: string;
 }
 
-export interface NumberControlProps {
+export interface NumberControlProps extends ControlProps<number> {
   /**
    * The locale to use for number formatting.
    */
   locale?: string;
-
-  /**
-   * The v-model value of the number field.
-   */
-  modelValue?: number;
 
   /**
    * The label text for the increment button.
@@ -59,11 +56,6 @@ export interface NumberControlProps {
    * The label text for the decrement button.
    */
   decrementLabel?: string;
-
-  /**
-   * The name attribute for the number field input.
-   */
-  name?: string;
 
   /**
    * The value attribute of the number field input.
@@ -119,38 +111,30 @@ export interface NumberControlProps {
    * Whether to disable HTML5 form validation.
    */
   disableHtmlValidation?: TransparentWrapper<boolean>;
-
-  /**
-   * The field to use for the number control. Internal usage only.
-   */
-  _field?: FormField<number>;
 }
 
-export function useNumberControl(_props: Reactivify<NumberControlProps, '_field'>) {
-  const props = normalizeProps(_props, ['_field']);
+export function useNumberControl(_props: MaybeNormalized<NumberControlProps, '_field' | 'schema'>) {
+  const props = normalizeProps(_props, ['_field', 'schema']);
   const inputId = useUniqId(FieldTypePrefixes.NumberField);
   const inputEl = shallowRef<HTMLInputElement>();
-  const field = props?._field ?? useFormFieldContext();
+  const field = props?._field ?? resolveFormField(getNumberFieldProps(props));
   const { locale } = useLocale(props.locale);
   const parser = useNumberParser(locale, props.formatOptions);
   const { model, setModelValue } = useVModelProxy(field);
 
-  const isDisabled = computed(() => toValue(props.disabled) || field?.isDisabled.value);
+  const isDisabled = computed(() => toValue(props.disabled) || field.isDisabled.value);
   const formattedText = shallowRef<string>('');
-  let updateValidity: () => void;
 
-  if (field) {
-    updateValidity = useInputValidity({
-      inputEl,
-      field,
-      disableHtmlValidation: props.disableHtmlValidation,
-    }).updateValidity;
+  const { updateValidity } = useInputValidity({
+    inputEl,
+    field,
+    disableHtmlValidation: props.disableHtmlValidation,
+  });
 
-    field.registerControl({
-      getControlElement: () => inputEl.value,
-      getControlId: () => inputId,
-    });
-  }
+  field.registerControl({
+    getControlElement: () => inputEl.value,
+    getControlId: () => inputId,
+  });
 
   watch(
     [locale, () => toValue(props.formatOptions), model],
@@ -182,7 +166,7 @@ export function useNumberControl(_props: Reactivify<NumberControlProps, '_field'
 
       onChange: value => {
         setModelValue(value);
-        field?.setTouched(true);
+        field.setTouched(true);
         updateValidity();
       },
     });
@@ -218,7 +202,7 @@ export function useNumberControl(_props: Reactivify<NumberControlProps, '_field'
       });
     },
     onBlur: () => {
-      field?.setTouched(true);
+      field.setTouched(true);
     },
   };
 
@@ -237,9 +221,9 @@ export function useNumberControl(_props: Reactivify<NumberControlProps, '_field'
   const inputProps = useCaptureProps<NumberInputDOMProps>(() => {
     return {
       ...propsToValues(props, ['name', 'placeholder', 'required', 'readonly']),
-      ...field?.labelledByProps.value,
-      ...field?.describedByProps.value,
-      ...field?.accessibleErrorProps.value,
+      ...field.labelledByProps.value,
+      ...field.describedByProps.value,
+      ...field.accessibleErrorProps.value,
       ...handlers,
       onKeydown: spinButtonProps.value.onKeydown,
       id: inputId,
@@ -267,36 +251,50 @@ export function useNumberControl(_props: Reactivify<NumberControlProps, '_field'
     { disabled: () => isDisabled.value || toValue(props.disableWheel), passive: true },
   );
 
+  return exposeField(
+    {
+      /**
+       * Decrements the number field value.
+       */
+      decrement,
+      /**
+       * Props for the decrement button.
+       */
+      decrementButtonProps,
+
+      /**
+       * Increments the number field value.
+       */
+      increment,
+      /**
+       * Props for the increment button.
+       */
+      incrementButtonProps,
+      /**
+       * Reference to the input element.
+       */
+      inputEl,
+      /**
+       * Props for the input element.
+       */
+      inputProps,
+
+      /**
+       * The formatted text of the number field.
+       */
+      formattedText,
+    },
+    field,
+  );
+}
+
+export function getNumberFieldProps(props: NormalizedProps<NumberControlProps, '_field' | 'schema'>) {
   return {
-    /**
-     * Decrements the number field value.
-     */
-    decrement,
-    /**
-     * Props for the decrement button.
-     */
-    decrementButtonProps,
-
-    /**
-     * Increments the number field value.
-     */
-    increment,
-    /**
-     * Props for the increment button.
-     */
-    incrementButtonProps,
-    /**
-     * Reference to the input element.
-     */
-    inputEl,
-    /**
-     * Props for the input element.
-     */
-    inputProps,
-
-    /**
-     * The formatted text of the number field.
-     */
-    formattedText,
-  };
+    label: props.label,
+    description: props.description,
+    path: props.name,
+    initialValue: toValue(props.modelValue) ?? fromNumberish(props.value),
+    disabled: props.disabled,
+    schema: props.schema,
+  } satisfies FormFieldInit<number>;
 }
