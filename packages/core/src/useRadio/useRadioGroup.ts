@@ -51,11 +51,6 @@ export interface RadioGroupProps<TValue = string> extends ControlProps<TValue> {
   dir?: Direction;
 
   /**
-   * Whether the radio group is disabled.
-   */
-  disabled?: boolean;
-
-  /**
    * Whether the radio group is readonly.
    */
   readonly?: boolean;
