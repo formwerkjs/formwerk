@@ -1,7 +1,7 @@
-import { Maybe, Reactivify } from '../types';
+import { ControlProps, Maybe, NormalizedProps, Reactivify } from '../types';
 import { isNullOrUndefined, normalizeProps, useUniqId, useCaptureProps } from '../utils/common';
 import { computed, shallowRef, toValue } from 'vue';
-import { FormField, useFormFieldContext } from '../useFormField';
+import { exposeField, FormFieldInit, resolveFormField } from '../useFormField';
 import { useDateTimeSegmentGroup } from './useDateTimeSegmentGroup';
 import { FieldTypePrefixes } from '../constants';
 import { useDateFormatter, useLocale } from '../i18n';
@@ -18,12 +18,7 @@ export type TimeFormatOptions = Simplify<
   Pick<Intl.DateTimeFormatOptions, 'hour' | 'minute' | 'second' | 'dayPeriod' | 'timeZone' | 'hour12'>
 >;
 
-export interface TimeControlProps {
-  /**
-   * The name to use for the field.
-   */
-  name?: string;
-
+export interface TimeControlProps extends ControlProps<Maybe<string>> {
   /**
    * Whether the field is required.
    */
@@ -60,11 +55,6 @@ export interface TimeControlProps {
   value?: string;
 
   /**
-   * The model value to use for the field.
-   */
-  modelValue?: string;
-
-  /**
    * The minimum value to use for the field. String format: HH:MM:SS
    */
   min?: string;
@@ -73,11 +63,6 @@ export interface TimeControlProps {
    * The maximum value to use for the field. String format: HH:MM:SS
    */
   max?: string;
-
-  /**
-   * The field to use for the time control. Internal usage only.
-   */
-  _field?: FormField<Maybe<string>>;
 }
 
 function getDefaultFormatOptions(): TimeFormatOptions {
@@ -88,10 +73,10 @@ function getDefaultFormatOptions(): TimeFormatOptions {
   };
 }
 
-export function useTimeControl(_props: Reactivify<TimeControlProps, '_field'>) {
-  const props = normalizeProps(_props, ['_field']);
+export function useTimeControl(_props: Reactivify<TimeControlProps, '_field' | 'schema'>) {
+  const props = normalizeProps(_props, ['_field', 'schema']);
   const controlEl = shallowRef<HTMLInputElement>();
-  const field = props?._field ?? useFormFieldContext<Maybe<string>>();
+  const field = props?._field ?? resolveFormField(getTimeFieldProps(props));
   const { locale, direction, calendar, timeZone } = useLocale(props.locale);
   const { model, setModelValue } = useVModelProxy(field);
   const isDisabled = createDisabledContext(props.disabled);
@@ -110,13 +95,12 @@ export function useTimeControl(_props: Reactivify<TimeControlProps, '_field'>) {
     max: props.max,
   });
 
-  if (field) {
-    useInputValidity({ field, inputEl });
-    field.registerControl({
-      getControlElement: () => controlEl.value,
-      getControlId: () => controlId,
-    });
-  }
+  useInputValidity({ field, inputEl });
+
+  field.registerControl({
+    getControlElement: () => controlEl.value,
+    getControlId: () => controlId,
+  });
 
   const temporalValue = useTemporalStore({
     calendar: calendar,
@@ -156,22 +140,25 @@ export function useTimeControl(_props: Reactivify<TimeControlProps, '_field'>) {
     };
   }, controlEl);
 
-  return {
-    /**
-     * The props to use for the control element.
-     */
-    controlProps,
+  return exposeField(
+    {
+      /**
+       * The props to use for the control element.
+       */
+      controlProps,
 
-    /**
-     * The time segments, you need to render these with the `DateTimeSegment` component.
-     */
-    segments,
+      /**
+       * The time segments, you need to render these with the `DateTimeSegment` component.
+       */
+      segments,
 
-    /**
-     * The direction of the field.
-     */
-    direction,
-  };
+      /**
+       * The direction of the field.
+       */
+      direction,
+    },
+    field,
+  );
 }
 
 function timeStringToDate(time: Maybe<string>) {
@@ -206,4 +193,15 @@ function dateToTimeString(date: Maybe<Date>, formatOptions?: TimeFormatOptions) 
   }
 
   return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
+}
+
+export function getTimeFieldProps(props: NormalizedProps<TimeControlProps, '_field' | 'schema'>) {
+  return {
+    label: props.label,
+    description: props.description,
+    path: props.name,
+    disabled: props.disabled,
+    initialValue: toValue(props.modelValue) ?? toValue(props.value),
+    schema: props.schema,
+  } satisfies FormFieldInit<Maybe<string>>;
 }

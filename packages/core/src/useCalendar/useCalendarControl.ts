@@ -1,7 +1,7 @@
 import { computed, inject, nextTick, provide, Ref, shallowRef, toValue, watch } from 'vue';
 import { CalendarContext, CalendarViewType } from './types';
 import { hasKeyCode, normalizeProps, useCaptureProps, useUniqId } from '../utils/common';
-import { Maybe, Reactivify } from '../types';
+import { ControlProps, Maybe, NormalizedProps, Reactivify } from '../types';
 import { useLocale } from '../i18n';
 import { FieldTypePrefixes } from '../constants';
 import { blockEvent } from '../utils/events';
@@ -10,24 +10,14 @@ import { useControlButtonProps } from '../helpers/useControlButtonProps';
 import { CalendarContextKey, YEAR_CELLS_COUNT } from './constants';
 import { CalendarView, useCalendarView } from './useCalendarView';
 import { Calendar, ZonedDateTime, now, toCalendar } from '@internationalized/date';
-import { FormField, useFormFieldContext } from '../useFormField';
+import { exposeField, FormField, FormFieldInit, resolveFormField } from '../useFormField';
 import { fromDateToCalendarZonedDateTime, useTemporalStore } from '../useDateTime/useTemporalStore';
 import { PickerContextKey } from '../usePicker';
 import { createDisabledContext } from '../helpers/createDisabledContext';
 import { useVModelProxy } from '../reactivity/useVModelProxy';
 import { useConstraintsValidator, useInputValidity } from '../validation';
 
-export interface CalendarControlProps {
-  /**
-   * The field name of the calendar.
-   */
-  name?: string;
-
-  /**
-   * The label for the calendar.
-   */
-  label: string;
-
+export interface CalendarControlProps extends ControlProps<Maybe<Date>> {
   /**
    * Whether the calendar is required.
    */
@@ -37,11 +27,6 @@ export interface CalendarControlProps {
    * The locale to use for the calendar.
    */
   locale?: string;
-
-  /**
-   * The current date to use for the calendar.
-   */
-  modelValue?: Date;
 
   /**
    * The initial value to use for the calendar.
@@ -114,8 +99,8 @@ export interface CalendarControlProps {
   field?: FormField<Maybe<Date>>;
 }
 
-export function useCalendarControl(_props: Reactivify<CalendarControlProps, 'field'>) {
-  const props = normalizeProps(_props, ['field']);
+export function useCalendarControl(_props: Reactivify<CalendarControlProps, 'field' | 'schema'>) {
+  const props = normalizeProps(_props, ['field', 'schema']);
   const { weekInfo, locale, calendar, timeZone, direction } = useLocale(props.locale, {
     calendar: () => toValue(props.calendar),
     timeZone: () => toValue(props.timeZone),
@@ -127,7 +112,7 @@ export function useCalendarControl(_props: Reactivify<CalendarControlProps, 'fie
   const calendarEl = shallowRef<HTMLElement>();
   const gridEl = shallowRef<HTMLElement>();
   const calendarLabelEl = shallowRef<HTMLElement>();
-  const field = props.field ?? useFormFieldContext();
+  const field = props.field ?? resolveFormField(getCalendarFieldProps(props));
   const { model, setModelValue } = useVModelProxy(field);
 
   const temporalValue = useTemporalStore({
@@ -140,9 +125,9 @@ export function useCalendarControl(_props: Reactivify<CalendarControlProps, 'fie
     },
   });
 
-  // If no overarching field is provided, and there is a field context then the calendar will be promoted to a full form field.
+  // If no overarching field is provided, then the calendar will be promoted to a full form field.
   // Happens if no date field is controlling the calendar, but the calendar is used as a child of a form field.
-  if (!props.field && field) {
+  if (!props.field) {
     const { element } = useConstraintsValidator({
       type: 'date',
       value: model,
@@ -158,7 +143,7 @@ export function useCalendarControl(_props: Reactivify<CalendarControlProps, 'fie
     });
   }
 
-  const isDisabled = field?.isDisabled ?? createDisabledContext(props.disabled);
+  const isDisabled = field.isDisabled ?? createDisabledContext(props.disabled);
   const selectedDate = computed(() => temporalValue.value ?? toCalendar(now(toValue(timeZone)), calendar.value));
   const focusedDay = shallowRef<ZonedDateTime>();
 
@@ -365,49 +350,52 @@ export function useCalendarControl(_props: Reactivify<CalendarControlProps, 'fie
     };
   }, gridEl);
 
-  return {
-    /**
-     * The props for the calendar element.
-     */
-    calendarProps,
-    /**
-     * The props for the grid element that displays the panel values.
-     */
-    gridProps,
+  return exposeField(
+    {
+      /**
+       * The props for the calendar element.
+       */
+      calendarProps,
+      /**
+       * The props for the grid element that displays the panel values.
+       */
+      gridProps,
 
-    /**
-     * The current date.
-     */
-    selectedDate,
-    /**
-     * The focused date.
-     */
-    focusedDate: focusedDay,
-    /**
-     * The current view.
-     */
-    currentView,
-    /**
-     * Switches the current view (e.g: weeks, months, years)
-     */
-    setView,
-    /**
-     * The props for the panel label element.
-     */
-    gridLabelProps,
-    /**
-     * The props for the next panel values button. if it is a day panel, the button will move the panel to the next month. If it is a month panel, the button will move the panel to the next year. If it is a year panel, the button will move the panel to the next set of years.
-     */
-    nextButtonProps,
-    /**
-     * The props for the previous panel values button. If it is a day panel, the button will move the panel to the previous month. If it is a month panel, the button will move the panel to the previous year. If it is a year panel, the button will move the panel to the previous set of years.
-     */
-    previousButtonProps,
-    /**
-     * The label for the current panel. If it is a day panel, the label will be the month and year. If it is a month panel, the label will be the year. If it is a year panel, the label will be the range of years currently being displayed.
-     */
-    gridLabel,
-  };
+      /**
+       * The current date.
+       */
+      selectedDate,
+      /**
+       * The focused date.
+       */
+      focusedDate: focusedDay,
+      /**
+       * The current view.
+       */
+      currentView,
+      /**
+       * Switches the current view (e.g: weeks, months, years)
+       */
+      setView,
+      /**
+       * The props for the panel label element.
+       */
+      gridLabelProps,
+      /**
+       * The props for the next panel values button. if it is a day panel, the button will move the panel to the next month. If it is a month panel, the button will move the panel to the next year. If it is a year panel, the button will move the panel to the next set of years.
+       */
+      nextButtonProps,
+      /**
+       * The props for the previous panel values button. If it is a day panel, the button will move the panel to the previous month. If it is a month panel, the button will move the panel to the previous year. If it is a year panel, the button will move the panel to the previous set of years.
+       */
+      previousButtonProps,
+      /**
+       * The label for the current panel. If it is a day panel, the label will be the month and year. If it is a month panel, the label will be the year. If it is a year panel, the label will be the range of years currently being displayed.
+       */
+      gridLabel,
+    },
+    field,
+  );
 }
 
 interface ShortcutDefinition {
@@ -592,4 +580,14 @@ export function useCalendarKeyboard(context: CalendarContext, currentPanel: Ref<
   }
 
   return handleKeyDown;
+}
+
+export function getCalendarFieldProps(props: NormalizedProps<CalendarControlProps, 'field' | 'schema'>) {
+  return {
+    label: props.label,
+    path: props.name,
+    disabled: props.disabled,
+    initialValue: toValue(props.modelValue) ?? toValue(props.value),
+    schema: props.schema,
+  } satisfies FormFieldInit<Maybe<Date>>;
 }

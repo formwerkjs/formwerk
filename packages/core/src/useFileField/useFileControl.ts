@@ -1,5 +1,5 @@
 import { computed, markRaw, nextTick, provide, readonly, ref, toValue, shallowRef } from 'vue';
-import { Arrayable, Reactivify } from '../types';
+import { Arrayable, ControlProps, MaybeNormalized, NormalizedProps } from '../types';
 import {
   isNullOrUndefined,
   normalizeArrayable,
@@ -10,7 +10,7 @@ import {
   useCaptureProps,
 } from '../utils/common';
 import { FieldTypePrefixes } from '../constants';
-import { FormField, useFormFieldContext } from '../useFormField';
+import { exposeField, FormFieldInit, resolveFormField } from '../useFormField';
 import { useConstraintsValidator, useInputValidity } from '../validation';
 import { blockEvent } from '../utils/events';
 import { FileEntryProps } from './useFileEntry';
@@ -35,12 +35,7 @@ export interface FileUploadContext {
   signal: AbortSignal;
 }
 
-export interface FileControlProps {
-  /**
-   * The name of the field.
-   */
-  name?: string;
-
+export interface FileControlProps extends ControlProps<Arrayable<File | string>> {
   /**
    * The file types that are accepted (e.g. "image/*", "application/pdf").
    */
@@ -62,11 +57,6 @@ export interface FileControlProps {
   disabled?: boolean;
 
   /**
-   * The model value for the field.
-   */
-  modelValue?: string;
-
-  /**
    * The value of the field.
    */
   value?: string;
@@ -85,16 +75,11 @@ export interface FileControlProps {
    * Whether the field allows directory selection.
    */
   allowDirectory?: boolean;
-
-  /**
-   * The field to use for the file control. Internal usage only.
-   */
-  _field?: FormField<Arrayable<File | string>>;
 }
 
-export function useFileControl(_props: Reactivify<FileControlProps, 'onUpload' | '_field'>) {
+export function useFileControl(_props: MaybeNormalized<FileControlProps, 'onUpload' | '_field' | 'schema'>) {
   let idCounter = 0;
-  const props = normalizeProps(_props, ['onUpload', '_field']);
+  const props = normalizeProps(_props, ['onUpload', '_field', 'schema']);
   const inputEl = ref<HTMLInputElement>();
   const entries = ref<FileEntryProps[]>([]);
   const inputId = useUniqId(FieldTypePrefixes.FileField);
@@ -102,9 +87,9 @@ export function useFileControl(_props: Reactivify<FileControlProps, 'onUpload' |
   const abortControllers = new Map<string, AbortController>();
   const overridePickOptions = ref<FilePickerOptions>();
   const isUploading = computed(() => entries.value.some(e => e.isUploading));
-  const field = props?._field ?? useFormFieldContext();
+  const field = props?._field ?? resolveFormField(getFileFieldProps(props));
   const { model, setModelValue } = useVModelProxy(field);
-  const isDisabled = computed(() => toValue(props.disabled) || field?.isDisabled.value);
+  const isDisabled = computed(() => toValue(props.disabled) || field.isDisabled.value);
 
   const { element: fakeInputEl } = useConstraintsValidator({
     type: 'text',
@@ -114,13 +99,11 @@ export function useFileControl(_props: Reactivify<FileControlProps, 'onUpload' |
     value: () => (normalizeArrayable(model.value ?? []).length > 0 ? '_' : ''),
   });
 
-  if (field) {
-    useInputValidity({ inputEl: fakeInputEl, field });
-    field.registerControl({
-      getControlElement: () => inputEl.value,
-      getControlId: () => inputId,
-    });
-  }
+  useInputValidity({ inputEl: fakeInputEl, field });
+  field.registerControl({
+    getControlElement: () => inputEl.value,
+    getControlId: () => inputId,
+  });
 
   function isMultiple() {
     return toValue(props.multiple) ?? false;
@@ -206,7 +189,7 @@ export function useFileControl(_props: Reactivify<FileControlProps, 'onUpload' |
   }
 
   function onBlur() {
-    field?.setTouched(true);
+    field.setTouched(true);
   }
 
   function onChange(evt: Event) {
@@ -215,7 +198,7 @@ export function useFileControl(_props: Reactivify<FileControlProps, 'onUpload' |
       return;
     }
 
-    field?.setTouched(true);
+    field.setTouched(true);
     processFiles(Array.from((evt.target as HTMLInputElement).files ?? []));
     // Makes sure the input is empty to allow for re-picking the same files
     if (inputEl.value) {
@@ -257,7 +240,7 @@ export function useFileControl(_props: Reactivify<FileControlProps, 'onUpload' |
   const triggerProps = useControlButtonProps(() => ({
     id: `${inputId}-trigger`,
     disabled: isDisabled.value,
-    ...field?.accessibleErrorProps.value,
+    ...field.accessibleErrorProps.value,
     onClick,
     onBlur,
   }));
@@ -308,7 +291,7 @@ export function useFileControl(_props: Reactivify<FileControlProps, 'onUpload' |
     return {
       role: 'group',
       'data-dragover': isDragging.value,
-      'aria-label': toValue(field?.label),
+      'aria-label': toValue(field.label),
       ...dropzoneHandlers,
     };
   }, dropzoneEl);
@@ -368,65 +351,78 @@ export function useFileControl(_props: Reactivify<FileControlProps, 'onUpload' |
     getRemoveButtonLabel: () => toValue(props.removeButtonLabel) ?? 'Remove file',
   });
 
+  return exposeField(
+    {
+      /**
+       * The props for the input element.
+       */
+      inputProps,
+
+      /**
+       * The captured input element.
+       */
+      inputEl,
+
+      /**
+       * The props for the trigger element.
+       */
+      triggerProps,
+
+      /**
+       * The props for the dropzone element, usually the root element.
+       */
+      dropzoneProps,
+
+      /**
+       * The file entries that are currently picked.
+       */
+      entries: readonly(entries),
+
+      /**
+       * The file entry that is currently picked.
+       */
+      entry: computed(() => entries.value[entries.value.length - 1]),
+
+      /**
+       * Clear the files, aborts any pending uploads.
+       */
+      clear,
+
+      /**
+       * Remove a an entry from the list, if no key is provided, the last entry will be removed.
+       */
+      remove,
+
+      /**
+       * Whether the dropzone element has items being dragged over it.
+       */
+      isDragging,
+
+      /**
+       * The props for the remove file button.
+       */
+      removeButtonProps,
+
+      /**
+       * Whether the field is uploading, if multiple files are picked, this will be true if any of the files are uploading.
+       */
+      isUploading,
+
+      /**
+       * Shows the file picker with the given options. Useful for a picker-type implementations.
+       */
+      showPicker,
+    },
+    field,
+  );
+}
+
+export function getFileFieldProps(props: NormalizedProps<FileControlProps, 'onUpload' | '_field' | 'schema'>) {
   return {
-    /**
-     * The props for the input element.
-     */
-    inputProps,
-
-    /**
-     * The captured input element.
-     */
-    inputEl,
-
-    /**
-     * The props for the trigger element.
-     */
-    triggerProps,
-
-    /**
-     * The props for the dropzone element, usually the root element.
-     */
-    dropzoneProps,
-
-    /**
-     * The file entries that are currently picked.
-     */
-    entries: readonly(entries),
-
-    /**
-     * The file entry that is currently picked.
-     */
-    entry: computed(() => entries.value[entries.value.length - 1]),
-
-    /**
-     * Clear the files, aborts any pending uploads.
-     */
-    clear,
-
-    /**
-     * Remove a an entry from the list, if no key is provided, the last entry will be removed.
-     */
-    remove,
-
-    /**
-     * Whether the dropzone element has items being dragged over it.
-     */
-    isDragging,
-
-    /**
-     * The props for the remove file button.
-     */
-    removeButtonProps,
-
-    /**
-     * Whether the field is uploading, if multiple files are picked, this will be true if any of the files are uploading.
-     */
-    isUploading,
-
-    /**
-     * Shows the file picker with the given options. Useful for a picker-type implementations.
-     */
-    showPicker,
-  };
+    label: props.label,
+    description: props.description,
+    path: props.name,
+    disabled: props.disabled,
+    schema: props.schema,
+  } satisfies FormFieldInit<Arrayable<File | string>>;
 }

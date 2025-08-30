@@ -1,6 +1,6 @@
 import { toValue, shallowRef, computed } from 'vue';
-import { FormField, useFormFieldContext } from '../useFormField';
-import { AriaLabelableProps, Arrayable, Orientation, Reactivify } from '../types';
+import { exposeField, FormFieldInit, resolveFormField } from '../useFormField';
+import { AriaLabelableProps, Arrayable, ControlProps, MaybeNormalized, Orientation } from '../types';
 import {
   isEqual,
   normalizeArrayable,
@@ -15,12 +15,7 @@ import { FieldTypePrefixes } from '../constants';
 import { useConstraintsValidator } from '../validation/useConstraintsValidator';
 import { useVModelProxy } from '../reactivity/useVModelProxy';
 
-export interface SelectControlProps<TValue> {
-  /**
-   * The name of the select field.
-   */
-  name?: string;
-
+export interface SelectControlProps<TValue> extends ControlProps<Arrayable<TValue>> {
   /**
    * Whether the select field is required.
    */
@@ -35,11 +30,6 @@ export interface SelectControlProps<TValue> {
    * The controlled value of the select field.
    */
   value?: Arrayable<TValue>;
-
-  /**
-   * The v-model value of the select field.
-   */
-  modelValue?: Arrayable<TValue>;
 
   /**
    * Whether the select field is disabled.
@@ -60,11 +50,6 @@ export interface SelectControlProps<TValue> {
    * The orientation of the listbox popup (vertical or horizontal).
    */
   orientation?: Orientation;
-
-  /**
-   * The field to use for the select control. Internal usage only.
-   */
-  _field?: FormField<Arrayable<TValue>>;
 }
 
 export interface SelectTriggerDomProps extends AriaLabelableProps {
@@ -78,14 +63,15 @@ export interface SelectTriggerDomProps extends AriaLabelableProps {
 
 const MENU_OPEN_KEYS = ['Enter', 'Space', 'ArrowDown', 'ArrowUp'];
 
-export function useSelectControl<TOption, TValue = TOption>(_props: Reactivify<SelectControlProps<TValue>, '_field'>) {
+export function useSelectControl<TOption, TValue = TOption>(
+  _props: MaybeNormalized<SelectControlProps<TValue>, '_field' | 'schema'>,
+) {
   const inputId = useUniqId(FieldTypePrefixes.Select);
-  const props = normalizeProps(_props, ['_field']);
-  const field = props?._field ?? useFormFieldContext<Arrayable<TValue>>();
+  const props = normalizeProps(_props, ['_field', 'schema']);
+  const field = props?._field ?? resolveFormField(getSelectFieldProps<TValue>(props as any));
   const triggerEl = shallowRef<HTMLElement>();
   const { model, setModelValue } = useVModelProxy(field);
-
-  const isDisabled = computed(() => toValue(props.disabled) || field?.isDisabled.value);
+  const isDisabled = computed(() => toValue(props.disabled) || field.isDisabled.value);
   const isMutable = () => !isDisabled.value && !toValue(props.readonly);
 
   let lastRecentlySelectedOption: TValue | undefined;
@@ -100,9 +86,9 @@ export function useSelectControl<TOption, TValue = TOption>(_props: Reactivify<S
     listBoxId,
     findFocusedOption,
   } = useListBox<TOption, TValue>({
-    labeledBy: () => field?.labelledByProps.value['aria-labelledby'],
+    labeledBy: () => field.labelledByProps.value['aria-labelledby'],
     autofocusOnOpen: true,
-    label: field?.label ?? '',
+    label: field.label,
     disabled: isDisabled,
     isValueSelected,
     handleToggleValue: toggleValue,
@@ -148,7 +134,7 @@ export function useSelectControl<TOption, TValue = TOption>(_props: Reactivify<S
     if (isSingle()) {
       lastRecentlySelectedOption = optionValue;
       setModelValue(optionValue);
-      field?.validate();
+      field.validate();
       isPopupOpen.value = false;
       return;
     }
@@ -157,7 +143,7 @@ export function useSelectControl<TOption, TValue = TOption>(_props: Reactivify<S
       lastRecentlySelectedOption = optionValue;
       const nextValue = toggleValueSelection<TValue>(model.value ?? [], optionValue, force);
       setModelValue(nextValue);
-      field?.validate();
+      field.validate();
       return;
     }
 
@@ -177,7 +163,7 @@ export function useSelectControl<TOption, TValue = TOption>(_props: Reactivify<S
   function selectRange(start: number, end: number) {
     const nextValue = renderedOptions.value.slice(start, end + 1).map(opt => opt.getValue());
     setModelValue(nextValue);
-    field?.validate();
+    field.validate();
   }
 
   function toggleBefore() {
@@ -214,12 +200,12 @@ export function useSelectControl<TOption, TValue = TOption>(_props: Reactivify<S
     const isAllSelected = renderedOptions.value.every(opt => opt.isSelected());
     if (isAllSelected) {
       setModelValue([]);
-      field?.validate();
+      field.validate();
       return;
     }
 
     setModelValue(renderedOptions.value.map(opt => opt.getValue()));
-    field?.validate();
+    field.validate();
   }
 
   const handlers = {
@@ -245,9 +231,9 @@ export function useSelectControl<TOption, TValue = TOption>(_props: Reactivify<S
 
   const triggerProps = useCaptureProps<SelectTriggerDomProps>(() => {
     return {
-      ...field?.labelledByProps.value,
-      ...field?.describedByProps.value,
-      ...field?.accessibleErrorProps.value,
+      ...field.labelledByProps.value,
+      ...field.describedByProps.value,
+      ...field.accessibleErrorProps.value,
       id: inputId,
       tabindex: isDisabled.value ? '-1' : '0',
       type: triggerEl.value?.tagName === 'BUTTON' ? 'button' : undefined,
@@ -261,37 +247,51 @@ export function useSelectControl<TOption, TValue = TOption>(_props: Reactivify<S
     };
   }, triggerEl);
 
+  return exposeField(
+    {
+      /**
+       * The model value of the select field.
+       */
+      model,
+
+      /**
+       * Whether the popup is open.
+       */
+      isPopupOpen,
+      /**
+       * Props for the trigger element.
+       */
+      triggerProps,
+
+      /**
+       * Props for the listbox/popup element.
+       */
+      listBoxProps,
+
+      /**
+       * Reference to the popup element.
+       */
+      listBoxEl,
+      /**
+       * The currently selected option.
+       */
+      selectedOption,
+      /**
+       * The currently selected options.
+       */
+      selectedOptions,
+    },
+    field,
+  );
+}
+
+export function getSelectFieldProps<TValue>(props: MaybeNormalized<SelectControlProps<TValue>, 'schema'>) {
   return {
-    /**
-     * The model value of the select field.
-     */
-    model,
-
-    /**
-     * Whether the popup is open.
-     */
-    isPopupOpen,
-    /**
-     * Props for the trigger element.
-     */
-    triggerProps,
-
-    /**
-     * Props for the listbox/popup element.
-     */
-    listBoxProps,
-
-    /**
-     * Reference to the popup element.
-     */
-    listBoxEl,
-    /**
-     * The currently selected option.
-     */
-    selectedOption,
-    /**
-     * The currently selected options.
-     */
-    selectedOptions,
-  };
+    label: props.label,
+    description: props.description,
+    path: props.name,
+    initialValue: (toValue(props.modelValue) ?? toValue(props.value)) as Arrayable<TValue>,
+    disabled: props.disabled,
+    schema: props.schema,
+  } satisfies FormFieldInit<Arrayable<TValue>>;
 }

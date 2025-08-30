@@ -1,4 +1,39 @@
+import { FormField } from '../useFormField';
+import { StandardSchema } from './forms';
+
 export interface ControlApi {
   getControlElement(): HTMLElement | undefined;
   getControlId(): string | undefined;
+}
+
+export interface ControlProps<TValue = unknown> {
+  /**
+   * The label of the field.
+   */
+  label?: string | undefined;
+
+  /**
+   * The description of the field.
+   */
+  description?: string | undefined;
+
+  /**
+   * The name of the field.
+   */
+  name?: string;
+
+  /**
+   * The field to use for the control. Internal usage only.
+   */
+  _field?: FormField<TValue>;
+
+  /**
+   * Schema for field validation.
+   */
+  schema?: StandardSchema<TValue>;
+
+  /**
+   * The v-model value of the field.
+   */
+  modelValue?: TValue;
 }
