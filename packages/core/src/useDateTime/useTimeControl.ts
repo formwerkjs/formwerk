@@ -110,7 +110,7 @@ export function useTimeControl(_props: Reactivify<TimeControlProps, '_field' | '
     temporalValue,
     readonly: props.readonly,
     onValueChange,
-    onTouched: () => field?.setTouched(true),
+    onTouched: () => field.setTouched(true),
     dispatchEvent: (type: string) => inputEl.value?.dispatchEvent(new Event(type)),
   });
 
@@ -118,9 +118,9 @@ export function useTimeControl(_props: Reactivify<TimeControlProps, '_field' | '
     return {
       id: controlId,
       role: 'group',
-      ...field?.labelledByProps.value,
-      ...field?.describedByProps.value,
-      ...field?.accessibleErrorProps.value,
+      ...field.labelledByProps.value,
+      ...field.describedByProps.value,
+      ...field.accessibleErrorProps.value,
       'aria-disabled': isDisabled.value || undefined,
     };
   }, controlEl);
