@@ -6,7 +6,7 @@ export interface ControlApi {
   getControlId(): string | undefined;
 }
 
-export interface ControlProps<TValue = unknown> {
+export interface ControlProps<TValue = unknown, TInitialValue = TValue> {
   /**
    * The label of the field.
    */
@@ -36,4 +36,14 @@ export interface ControlProps<TValue = unknown> {
    * The v-model value of the field.
    */
   modelValue?: TValue;
+
+  /**
+   * The initial value of the field.
+   */
+  value?: TInitialValue;
+
+  /**
+   * Whether the field is disabled.
+   */
+  disabled?: boolean;
 }

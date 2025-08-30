@@ -1,8 +1,8 @@
-import { ControlProps, Maybe, NormalizedProps, Reactivify } from '../types';
+import { ControlProps, Reactivify } from '../types';
 import type { CalendarProps } from '../useCalendar';
 import { normalizeProps, useUniqId, useCaptureProps } from '../utils/common';
 import { computed, shallowRef, toValue } from 'vue';
-import { exposeField, resolveFormField } from '../useFormField';
+import { exposeField, resolveControlField } from '../useFormField';
 import { useDateTimeSegmentGroup } from './useDateTimeSegmentGroup';
 import { FieldTypePrefixes } from '../constants';
 import { useDateFormatter, useLocale } from '../i18n';
@@ -12,7 +12,7 @@ import { useInputValidity } from '../validation';
 import { useConstraintsValidator } from '../validation/useConstraintsValidator';
 import { useVModelProxy } from '../reactivity/useVModelProxy';
 
-export interface DateControlProps extends ControlProps<Maybe<Date>> {
+export interface DateControlProps extends ControlProps<Date | undefined> {
   /**
    * Whether the field is required.
    */
@@ -49,16 +49,6 @@ export interface DateControlProps extends ControlProps<Maybe<Date>> {
   readonly?: boolean;
 
   /**
-   * Whether the field is disabled.
-   */
-  disabled?: boolean;
-
-  /**
-   * The value to use for the field.
-   */
-  value?: Date;
-
-  /**
    * The minimum date to use for the field.
    */
   min?: Date;
@@ -72,7 +62,7 @@ export interface DateControlProps extends ControlProps<Maybe<Date>> {
 export function useDateControl(_props: Reactivify<DateControlProps, '_field' | 'schema'>) {
   const props = normalizeProps(_props, ['_field', 'schema']);
   const controlEl = shallowRef<HTMLInputElement>();
-  const field = props?._field ?? resolveFormField(getDateFieldProps(props));
+  const field = resolveControlField<Date | undefined>(props);
   const { model, setModelValue } = useVModelProxy(field);
   const { locale, direction, timeZone, calendar } = useLocale(props.locale, {
     calendar: () => toValue(props.calendar),
@@ -106,7 +96,7 @@ export function useDateControl(_props: Reactivify<DateControlProps, '_field' | '
     locale: locale,
     model: {
       get: () => model.value,
-      set: value => setModelValue(value),
+      set: value => setModelValue(value ?? undefined),
     },
     min,
     max,
@@ -140,7 +130,7 @@ export function useDateControl(_props: Reactivify<DateControlProps, '_field' | '
       timeZone: timeZone.value,
       min: toValue(props.min),
       max: toValue(props.max),
-      field: field ?? undefined,
+      field: field,
     };
 
     return propsObj;
@@ -181,15 +171,4 @@ export function useDateControl(_props: Reactivify<DateControlProps, '_field' | '
     },
     field,
   );
-}
-
-export function getDateFieldProps(props: NormalizedProps<DateControlProps, '_field' | 'schema'>) {
-  return {
-    label: props.label,
-    description: props.description,
-    path: props.name,
-    disabled: props.disabled,
-    initialValue: toValue(props.modelValue) ?? toValue(props.value),
-    schema: props.schema,
-  };
 }

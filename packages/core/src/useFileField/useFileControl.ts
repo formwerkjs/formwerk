@@ -1,5 +1,5 @@
 import { computed, markRaw, nextTick, provide, readonly, ref, toValue, shallowRef } from 'vue';
-import { Arrayable, ControlProps, MaybeNormalized, NormalizedProps } from '../types';
+import { Arrayable, ControlProps, Reactivify } from '../types';
 import {
   isNullOrUndefined,
   normalizeArrayable,
@@ -10,7 +10,7 @@ import {
   useCaptureProps,
 } from '../utils/common';
 import { FieldTypePrefixes } from '../constants';
-import { exposeField, FormFieldInit, resolveFormField } from '../useFormField';
+import { exposeField, resolveControlField } from '../useFormField';
 import { useConstraintsValidator, useInputValidity } from '../validation';
 import { blockEvent } from '../utils/events';
 import { FileEntryProps } from './useFileEntry';
@@ -35,7 +35,7 @@ export interface FileUploadContext {
   signal: AbortSignal;
 }
 
-export interface FileControlProps extends ControlProps<Arrayable<File | string>> {
+export interface FileControlProps extends ControlProps<Arrayable<File | string> | undefined> {
   /**
    * The file types that are accepted (e.g. "image/*", "application/pdf").
    */
@@ -57,11 +57,6 @@ export interface FileControlProps extends ControlProps<Arrayable<File | string>>
   disabled?: boolean;
 
   /**
-   * The value of the field.
-   */
-  value?: string;
-
-  /**
    * Handles the file upload, this function is called when the user selects a file, and is called for new picked files.
    */
   onUpload?: (context: FileUploadContext) => Promise<string | undefined>;
@@ -77,7 +72,7 @@ export interface FileControlProps extends ControlProps<Arrayable<File | string>>
   allowDirectory?: boolean;
 }
 
-export function useFileControl(_props: MaybeNormalized<FileControlProps, 'onUpload' | '_field' | 'schema'>) {
+export function useFileControl(_props: Reactivify<FileControlProps, 'onUpload' | '_field' | 'schema'>) {
   let idCounter = 0;
   const props = normalizeProps(_props, ['onUpload', '_field', 'schema']);
   const inputEl = ref<HTMLInputElement>();
@@ -87,7 +82,7 @@ export function useFileControl(_props: MaybeNormalized<FileControlProps, 'onUplo
   const abortControllers = new Map<string, AbortController>();
   const overridePickOptions = ref<FilePickerOptions>();
   const isUploading = computed(() => entries.value.some(e => e.isUploading));
-  const field = props?._field ?? resolveFormField(getFileFieldProps(props));
+  const field = resolveControlField<Arrayable<string | File> | undefined>(props);
   const { model, setModelValue } = useVModelProxy(field);
   const isDisabled = computed(() => toValue(props.disabled) || field.isDisabled.value);
 
@@ -415,14 +410,4 @@ export function useFileControl(_props: MaybeNormalized<FileControlProps, 'onUplo
     },
     field,
   );
-}
-
-export function getFileFieldProps(props: NormalizedProps<FileControlProps, 'onUpload' | '_field' | 'schema'>) {
-  return {
-    label: props.label,
-    description: props.description,
-    path: props.name,
-    disabled: props.disabled,
-    schema: props.schema,
-  } satisfies FormFieldInit<Arrayable<File | string>>;
 }

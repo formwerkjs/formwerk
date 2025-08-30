@@ -1,14 +1,14 @@
 import { normalizeProps } from '../utils/common';
 import { Reactivify } from '../types';
-import { useFormField, WithFieldProps } from '../useFormField';
+import { resolveFieldInit, useFormField, WithFieldProps } from '../useFormField';
 import { registerField } from '@formwerk/devtools';
-import { CalendarControlProps, getCalendarFieldProps, useCalendarControl } from './useCalendarControl';
+import { CalendarControlProps, useCalendarControl } from './useCalendarControl';
 
 export type CalendarProps = WithFieldProps<CalendarControlProps>;
 
 export function useCalendar(_props: Reactivify<CalendarProps, 'field' | 'schema'>) {
   const props = normalizeProps(_props, ['field', 'schema']);
-  const field = props.field ?? useFormField(getCalendarFieldProps(props));
+  const field = props.field ?? useFormField(resolveFieldInit<Date | undefined>(props));
   const control = useCalendarControl({
     ...props,
     field,
