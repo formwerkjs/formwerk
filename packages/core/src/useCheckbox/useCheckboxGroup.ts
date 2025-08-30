@@ -8,6 +8,7 @@ import {
   Reactivify,
   Arrayable,
   StandardSchema,
+  ControlProps,
 } from '../types';
 import {
   useUniqId,
@@ -57,36 +58,11 @@ export interface CheckboxGroupContext<TCheckbox> {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const CheckboxGroupKey: InjectionKey<CheckboxGroupContext<any>> = Symbol('CheckboxGroupKey');
 
-export interface CheckboxGroupProps<TCheckbox = unknown> {
+export interface CheckboxGroupProps<TCheckbox = unknown> extends ControlProps<CheckboxGroupValue<TCheckbox>> {
   /**
    * The text direction for the checkbox group.
    */
   dir?: Direction;
-
-  /**
-   * The label for the checkbox group.
-   */
-  label: string;
-
-  /**
-   * Optional description text for the checkbox group.
-   */
-  description?: string;
-
-  /**
-   * The name/path of the checkbox group.
-   */
-  name?: string;
-
-  /**
-   * The current value of the checkbox group.
-   */
-  modelValue?: CheckboxGroupValue<TCheckbox>;
-
-  /**
-   * Whether the checkbox group is disabled.
-   */
-  disabled?: boolean;
 
   /**
    * Whether the checkbox group is readonly.
