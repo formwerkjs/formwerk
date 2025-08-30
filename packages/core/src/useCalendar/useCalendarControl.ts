@@ -19,11 +19,6 @@ import { useConstraintsValidator, useInputValidity } from '../validation';
 
 export interface CalendarControlProps extends ControlProps<Date | undefined> {
   /**
-   * Whether the calendar is required.
-   */
-  required?: boolean;
-
-  /**
    * The locale to use for the calendar.
    */
   locale?: string;

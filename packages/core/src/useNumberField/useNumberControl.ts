@@ -77,11 +77,6 @@ export interface NumberControlProps extends ControlProps<number | undefined, Num
   placeholder?: string | undefined;
 
   /**
-   * Whether the number field is required.
-   */
-  required?: boolean;
-
-  /**
    * Whether the number field is readonly.
    */
   readonly?: boolean;
