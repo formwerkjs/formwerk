@@ -15,7 +15,7 @@ export interface FieldControllerProps {
   /**
    * The label of the field.
    */
-  label: string;
+  label?: string | undefined;
 
   /**
    * The description of the field.

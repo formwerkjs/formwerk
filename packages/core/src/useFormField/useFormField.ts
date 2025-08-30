@@ -1,4 +1,4 @@
-import { inject, InjectionKey, provide, Ref } from 'vue';
+import { inject, InjectionKey, markRaw, provide, Ref } from 'vue';
 import { useFieldController, FieldController, FieldControllerProps } from './useFieldController';
 import { useFieldState, FieldState, FieldStateInit } from './useFieldState';
 import {
@@ -7,7 +7,6 @@ import {
   AriaLabelProps,
   Arrayable,
   Reactivify,
-  StandardSchema,
   ValidationResult,
 } from '../types';
 import { normalizeProps, warn } from '../utils/common';
@@ -21,25 +20,10 @@ export type FormField<TValue = unknown> = FieldController & FieldState<TValue>;
 
 export const FormFieldKey: InjectionKey<FieldState<unknown>> = Symbol('FormFieldKey');
 
-export interface FieldBaseProps<TValue = unknown> {
-  /**
-   * The label of the field.
-   */
-  label: string;
-
-  /**
-   * The description text for the field.
-   */
-  description?: string;
-
-  /**
-   * Schema for field validation.
-   */
-  schema?: StandardSchema<TValue>;
-}
-
-export type WithFieldProps<TControlProps extends object, TValue = unknown> = Simplify<
-  FieldBaseProps<TValue> & Omit<TControlProps, '_field'>
+export type WithFieldProps<TControlProps extends object> = Simplify<
+  Omit<TControlProps, '_field' | 'label'> & {
+    label: string;
+  }
 >;
 
 export function useFormField<TValue = unknown>(init?: FormFieldInit<TValue>): FormField<TValue> {
@@ -143,6 +127,11 @@ export type ExposedField<TValue> = {
    * Props for the error message element.
    */
   errorMessageProps: Ref<AriaErrorMessageProps>;
+
+  /**
+   * The field instance.
+   */
+  _field: FormField<TValue>;
 };
 
 export function useFormFieldContext<TValue = unknown>() {
@@ -154,6 +143,7 @@ export function exposeField<TReturns extends object, TValue>(
   field: FormField<TValue>,
 ): ExposedField<TValue> & TReturns {
   return {
+    _field: markRaw(field),
     displayError: field.displayError,
     errorMessage: field.errorMessage,
     errors: field.errors,
@@ -181,4 +171,11 @@ export function exposeField<TReturns extends object, TValue>(
     validate: (mutate = true) => field.validate(mutate),
     ...obj,
   } satisfies ExposedField<TValue> & TReturns;
+}
+
+/**
+ * Resolves the field props from the context or creates a new field if none exists.
+ */
+export function resolveFormField<TValue = unknown>(init: FormFieldInit<TValue>): FormField<TValue> {
+  return useFormFieldContext<TValue>() ?? useFormField<TValue>(init);
 }

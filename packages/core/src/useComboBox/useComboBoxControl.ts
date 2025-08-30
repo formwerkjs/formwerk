@@ -1,5 +1,5 @@
 import { ref, toValue, watch, shallowRef, computed } from 'vue';
-import { InputEvents, Maybe, Reactivify } from '../types';
+import { ControlProps, InputEvents, Maybe, NormalizedProps, Reactivify } from '../types';
 import { Orientation } from '../types';
 import {
   debounce,
@@ -10,7 +10,7 @@ import {
   useUniqId,
   useCaptureProps,
 } from '../utils/common';
-import { FormField, useFormFieldContext } from '../useFormField';
+import { exposeField, FormFieldInit, resolveFormField } from '../useFormField';
 import { FieldTypePrefixes } from '../constants';
 import { useListBox } from '../useListBox';
 import { useInputValidity } from '../validation';
@@ -19,17 +19,7 @@ import { useControlButtonProps } from '../helpers/useControlButtonProps';
 import { TransparentWrapper } from '../types';
 import { useVModelProxy } from '../reactivity/useVModelProxy';
 
-export interface ComboBoxControlProps<TOption, TValue = TOption> {
-  /**
-   * The name of the select field.
-   */
-  name?: string;
-
-  /**
-   * Description text for the select field.
-   */
-  description?: string;
-
+export interface ComboBoxControlProps<TOption, TValue = TOption> extends ControlProps<TValue> {
   /**
    * Placeholder text when no option is selected.
    */
@@ -44,11 +34,6 @@ export interface ComboBoxControlProps<TOption, TValue = TOption> {
    * Whether the select field is required.
    */
   required?: boolean;
-
-  /**
-   * The v-model value of the select field.
-   */
-  modelValue?: TValue;
 
   /**
    * Whether the select field is disabled.
@@ -79,11 +64,6 @@ export interface ComboBoxControlProps<TOption, TValue = TOption> {
    * Function to create a new option from the user input.
    */
   onNewValue?(value: string): Maybe<{ label: string; value: TValue }>;
-
-  /**
-   * The field to use for the combobox control. Internal usage only.
-   */
-  _field?: FormField<TValue>;
 }
 
 export interface ComboBoxCollectionOptions {
@@ -94,17 +74,17 @@ export interface ComboBoxCollectionOptions {
 }
 
 export function useComboBoxControl<TOption, TValue = TOption>(
-  _props: Reactivify<ComboBoxControlProps<TOption, TValue>, 'onNewValue' | '_field'>,
+  _props: Reactivify<ComboBoxControlProps<TOption, TValue>, 'onNewValue' | '_field' | 'schema'>,
   collectionOptions?: Partial<ComboBoxCollectionOptions>,
 ) {
-  const props = normalizeProps(_props, ['onNewValue', '_field']);
+  const props = normalizeProps(_props, ['onNewValue', '_field', 'schema']);
   const inputEl = shallowRef<HTMLElement>();
   const buttonEl = shallowRef<HTMLElement>();
-  const field = props?._field ?? useFormFieldContext();
+  const field = props?._field ?? resolveFormField(getComboBoxFieldProps<TOption, TValue>(props));
   const inputValue = ref('');
   const inputId = useUniqId(FieldTypePrefixes.ComboBox);
   const isReadOnly = () => toValue(props.readonly);
-  const isDisabled = computed(() => toValue(props.disabled) || field?.isDisabled.value);
+  const isDisabled = computed(() => toValue(props.disabled) || field.isDisabled.value);
   const { model, setModelValue } = useVModelProxy(field);
 
   if (field) {
@@ -129,10 +109,10 @@ export function useComboBoxControl<TOption, TValue = TOption>(
     focusFirst: focusFirstOption,
     focusLast: focusLastOption,
   } = useListBox<TOption, TValue>({
-    labeledBy: () => field?.labelledByProps.value['aria-labelledby'],
+    labeledBy: () => field.labelledByProps.value['aria-labelledby'],
     focusStrategy: 'FOCUS_ATTR_SELECTED',
     disabled: isDisabled,
-    label: field?.label ?? '',
+    label: field.label ?? '',
     multiple: false,
     orientation: props.orientation,
     isValueSelected: value => {
@@ -158,7 +138,7 @@ export function useComboBoxControl<TOption, TValue = TOption>(
       inputValue.value = (evt.target as HTMLInputElement).value;
     },
     async onBlur(evt) {
-      field?.setTouched(true);
+      field.setTouched(true);
       if (isReadOnly()) {
         return;
       }
@@ -326,8 +306,8 @@ export function useComboBoxControl<TOption, TValue = TOption>(
       disabled: isDisabled.value ? true : undefined,
       value: inputValue.value,
       ...propsToValues(props, ['name', 'placeholder', 'required', 'readonly']),
-      ...field?.accessibleErrorProps.value,
-      ...field?.describedByProps.value,
+      ...field.accessibleErrorProps.value,
+      ...field.describedByProps.value,
       ...handlers,
     };
   }, inputEl);
@@ -352,48 +332,64 @@ export function useComboBoxControl<TOption, TValue = TOption>(
     watch(inputValue, debounce(filter.debounceMs, updateHiddenState));
   }
 
+  return exposeField(
+    {
+      /**
+       * Props for the input element.
+       */
+      inputProps,
+      /**
+       * Reference to the input element.
+       */
+      inputEl,
+
+      /**
+       * Props for the listbox/popup element.
+       */
+      listBoxProps,
+      /**
+       * Whether the popup is open.
+       */
+      isPopupOpen,
+      /**
+       * Reference to the listbox element.
+       */
+      listBoxEl,
+
+      /**
+       * Reference to the button element that opens the popup.
+       */
+      buttonEl,
+      /**
+       * Props for the button element that toggles the popup.
+       */
+      buttonProps,
+      /**
+       * The value of the text field, will contain the label of the selected option or the user input if they are currently typing.
+       */
+      inputValue,
+      /**
+       * The selected option.
+       */
+      selectedOption,
+      /**
+       * Whether the listbox is empty, i.e. no options are visible.
+       */
+      isListEmpty: isEmpty,
+    },
+    field,
+  );
+}
+
+export function getComboBoxFieldProps<TOption, TValue = TOption>(
+  props: NormalizedProps<ComboBoxControlProps<TOption, TValue>, '_field' | 'schema' | 'onNewValue'>,
+) {
   return {
-    /**
-     * Props for the input element.
-     */
-    inputProps,
-    /**
-     * Reference to the input element.
-     */
-    inputEl,
-
-    /**
-     * Props for the listbox/popup element.
-     */
-    listBoxProps,
-    /**
-     * Whether the popup is open.
-     */
-    isPopupOpen,
-    /**
-     * Reference to the listbox element.
-     */
-    listBoxEl,
-
-    /**
-     * Reference to the button element that opens the popup.
-     */
-    buttonEl,
-    /**
-     * Props for the button element that toggles the popup.
-     */
-    buttonProps,
-    /**
-     * The value of the text field, will contain the label of the selected option or the user input if they are currently typing.
-     */
-    inputValue,
-    /**
-     * The selected option.
-     */
-    selectedOption,
-    /**
-     * Whether the listbox is empty, i.e. no options are visible.
-     */
-    isListEmpty: isEmpty,
-  };
+    label: props.label,
+    description: props.description,
+    path: props.name,
+    initialValue: (toValue(props.modelValue) ?? toValue(props.value)) as TValue,
+    disabled: props.disabled,
+    schema: props.schema,
+  } satisfies FormFieldInit<TValue>;
 }

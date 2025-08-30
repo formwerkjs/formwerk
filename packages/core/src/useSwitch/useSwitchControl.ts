@@ -3,13 +3,23 @@ import {
   AriaDescribableProps,
   AriaInputProps,
   AriaLabelableProps,
+  ControlProps,
   EventHandler,
   InputBaseAttributes,
   InputEvents,
+  MaybeNormalized,
   Reactivify,
 } from '../types';
-import { hasKeyCode, isEqual, isInputElement, normalizeProps, useUniqId, useCaptureProps } from '../utils/common';
-import { FormField, useFormFieldContext } from '../useFormField';
+import {
+  hasKeyCode,
+  isEqual,
+  isInputElement,
+  normalizeProps,
+  useUniqId,
+  useCaptureProps,
+  lowPriority,
+} from '../utils/common';
+import { exposeField, FormFieldInit, resolveFormField } from '../useFormField';
 import { FieldTypePrefixes } from '../constants';
 import { useInputValidity } from '../validation';
 import { TransparentWrapper } from '../types';
@@ -34,17 +44,7 @@ export interface SwitchDOMProps extends AriaInputProps, AriaLabelableProps, Aria
   onClick: EventHandler;
 }
 
-export type SwitchControlProps<TValue = boolean> = {
-  /**
-   * The name attribute for the switch input.
-   */
-  name?: string;
-
-  /**
-   * The v-model value of the switch.
-   */
-  modelValue?: TValue;
-
+export interface SwitchControlProps<TValue = boolean> extends ControlProps<TValue> {
   /**
    * Whether the switch is required.
    */
@@ -74,34 +74,30 @@ export type SwitchControlProps<TValue = boolean> = {
    * Whether to disable HTML5 validation.
    */
   disableHtmlValidation?: TransparentWrapper<boolean>;
+}
 
-  /**
-   * The field to use for the switch control. Internal usage only.
-   */
-  _field?: FormField<TValue>;
-};
-
-export function useSwitchControl<TValue = boolean>(_props: Reactivify<SwitchControlProps<TValue>, '_field'>) {
-  const props = normalizeProps(_props, ['_field']);
+export function useSwitchControl<TValue = boolean>(
+  _props: MaybeNormalized<SwitchControlProps<TValue>, '_field' | 'schema'>,
+) {
+  const props = normalizeProps(_props, ['_field', 'schema']);
   const inputId = useUniqId(FieldTypePrefixes.Switch);
-  const field = props?._field ?? useFormFieldContext<TValue>();
+  const field =
+    props?._field ?? resolveFormField<TValue>(getSwitchFieldProps<TValue>(props as SwitchControlProps<TValue>));
   const inputEl = shallowRef<HTMLInputElement>();
   const { model, setModelValue } = useVModelProxy(field);
 
-  if (field) {
-    useInputValidity({
-      field,
-      inputEl,
-      disableHtmlValidation: props.disableHtmlValidation,
-    });
+  useInputValidity({
+    field,
+    inputEl,
+    disableHtmlValidation: props.disableHtmlValidation,
+  });
 
-    field.registerControl({
-      getControlElement: () => inputEl.value,
-      getControlId: () => inputId,
-    });
-  }
+  field.registerControl({
+    getControlElement: () => inputEl.value,
+    getControlId: () => inputId,
+  });
 
-  const isDisabled = computed(() => toValue(props.disabled) || field?.isDisabled.value);
+  const isDisabled = computed(() => toValue(props.disabled) || field.isDisabled.value);
   const isMutable = () => !toValue(props.readonly) && !isDisabled.value;
 
   /**
@@ -134,7 +130,7 @@ export function useSwitchControl<TValue = boolean>(_props: Reactivify<SwitchCont
     }
 
     setModelValue(normalizeValue((e.target as HTMLInputElement).checked));
-    field?.setTouched(true);
+    field.setTouched(true);
   }
 
   const handlers: InputEvents & { onClick: EventHandler } = {
@@ -147,10 +143,10 @@ export function useSwitchControl<TValue = boolean>(_props: Reactivify<SwitchCont
         }
 
         togglePressed();
-        field?.setTouched(true);
+        field.setTouched(true);
 
         if (!isInputElement(inputEl.value)) {
-          field?.validate();
+          field.validate();
         }
       }
     },
@@ -171,8 +167,8 @@ export function useSwitchControl<TValue = boolean>(_props: Reactivify<SwitchCont
     }
 
     togglePressed();
-    field?.setTouched(true);
-    field?.validate();
+    field.setTouched(true);
+    field.validate();
   }
 
   const isPressed = computed({
@@ -187,8 +183,8 @@ export function useSwitchControl<TValue = boolean>(_props: Reactivify<SwitchCont
   function createBindings(isInput: boolean): SwitchDOMProps | SwitchDomInputProps {
     const base = {
       id: inputId,
-      ...field?.labelledByProps.value,
-      ...field?.accessibleErrorProps.value,
+      ...field.labelledByProps.value,
+      ...field.accessibleErrorProps.value,
       [isInput ? 'checked' : 'aria-checked']: isPressed.value || false,
       [isInput ? 'required' : 'aria-required']: toValue(props.required) || undefined,
       [isInput ? 'readonly' : 'aria-readonly']: toValue(props.readonly) || undefined,
@@ -222,25 +218,41 @@ export function useSwitchControl<TValue = boolean>(_props: Reactivify<SwitchCont
     isPressed.value = force ?? !isPressed.value;
   }
 
+  return exposeField(
+    {
+      /**
+       * Reference to the input element.
+       */
+      inputEl,
+
+      /**
+       * Props for the input element.
+       */
+      inputProps,
+
+      /**
+       * Whether the switch is pressed.
+       */
+      isPressed,
+
+      /**
+       * Toggles the pressed state of the switch.
+       */
+      togglePressed,
+    },
+    field,
+  );
+}
+
+export function getSwitchFieldProps<TValue = boolean>(
+  props: Reactivify<SwitchControlProps<TValue>, '_field' | 'schema'>,
+) {
   return {
-    /**
-     * Reference to the input element.
-     */
-    inputEl,
-
-    /**
-     * Props for the input element.
-     */
-    inputProps,
-
-    /**
-     * Whether the switch is pressed.
-     */
-    isPressed,
-
-    /**
-     * Toggles the pressed state of the switch.
-     */
-    togglePressed,
-  };
+    label: () => toValue(props.label) ?? '',
+    description: props.description,
+    path: props.name,
+    initialValue: toValue(props.modelValue) ?? toValue(props.falseValue) ?? (lowPriority(false) as TValue),
+    disabled: props.disabled,
+    schema: props.schema,
+  } satisfies FormFieldInit<TValue>;
 }
