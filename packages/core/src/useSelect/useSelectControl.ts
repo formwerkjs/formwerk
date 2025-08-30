@@ -27,11 +27,6 @@ export interface SelectControlProps<TValue> extends ControlProps<Arrayable<TValu
   placeholder?: string;
 
   /**
-   * Whether the select field is disabled.
-   */
-  disabled?: boolean;
-
-  /**
    * Whether the select field is readonly.
    */
   readonly?: boolean;
