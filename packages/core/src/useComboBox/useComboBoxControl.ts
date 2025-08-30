@@ -1,5 +1,5 @@
 import { ref, toValue, watch, shallowRef, computed } from 'vue';
-import { ControlProps, InputEvents, Maybe, NormalizedProps, Reactivify } from '../types';
+import { ControlProps, InputEvents, Maybe, Reactivify } from '../types';
 import { Orientation } from '../types';
 import {
   debounce,
@@ -10,7 +10,7 @@ import {
   useUniqId,
   useCaptureProps,
 } from '../utils/common';
-import { exposeField, FormFieldInit, resolveFormField } from '../useFormField';
+import { exposeField, resolveControlField } from '../useFormField';
 import { FieldTypePrefixes } from '../constants';
 import { useListBox } from '../useListBox';
 import { useInputValidity } from '../validation';
@@ -26,19 +26,9 @@ export interface ComboBoxControlProps<TOption, TValue = TOption> extends Control
   placeholder?: string;
 
   /**
-   * The controlled value of the select field.
-   */
-  value?: TValue;
-
-  /**
    * Whether the select field is required.
    */
   required?: boolean;
-
-  /**
-   * Whether the select field is disabled.
-   */
-  disabled?: boolean;
 
   /**
    * Whether the select field is readonly.
@@ -80,7 +70,7 @@ export function useComboBoxControl<TOption, TValue = TOption>(
   const props = normalizeProps(_props, ['onNewValue', '_field', 'schema']);
   const inputEl = shallowRef<HTMLElement>();
   const buttonEl = shallowRef<HTMLElement>();
-  const field = props?._field ?? resolveFormField(getComboBoxFieldProps<TOption, TValue>(props));
+  const field = resolveControlField<TValue>(props);
   const inputValue = ref('');
   const inputId = useUniqId(FieldTypePrefixes.ComboBox);
   const isReadOnly = () => toValue(props.readonly);
@@ -379,17 +369,4 @@ export function useComboBoxControl<TOption, TValue = TOption>(
     },
     field,
   );
-}
-
-export function getComboBoxFieldProps<TOption, TValue = TOption>(
-  props: NormalizedProps<ComboBoxControlProps<TOption, TValue>, '_field' | 'schema' | 'onNewValue'>,
-) {
-  return {
-    label: props.label,
-    description: props.description,
-    path: props.name,
-    initialValue: (toValue(props.modelValue) ?? toValue(props.value)) as TValue,
-    disabled: props.disabled,
-    schema: props.schema,
-  } satisfies FormFieldInit<TValue>;
 }

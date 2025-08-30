@@ -1,22 +1,17 @@
-import { computed, nextTick, provide, ref, toValue, watch, shallowRef, MaybeRefOrGetter } from 'vue';
-import { ControlProps, MaybeAsync, MaybeNormalized, NormalizedProps } from '../types';
+import { computed, nextTick, provide, ref, toValue, watch, shallowRef } from 'vue';
+import { ControlProps, MaybeAsync, Reactivify } from '../types';
 import { OtpContextKey, OtpSlotAcceptType } from './types';
 import { normalizeProps, useUniqId, useCaptureProps } from '../utils/common';
 import { FieldTypePrefixes } from '../constants';
-import { exposeField, FormFieldInit, resolveFormField } from '../useFormField';
+import { exposeField, resolveControlField } from '../useFormField';
 import { useInputValidity, useConstraintsValidator } from '../validation';
 import { OtpSlotProps } from './useOtpSlot';
-import { DEFAULT_MASK, isValueAccepted } from './utils';
+import { DEFAULT_MASK, getOtpValue, isValueAccepted, withPrefix } from './utils';
 import { blockEvent } from '../utils/events';
 import { TransparentWrapper } from '../types';
 import { useVModelProxy } from '../reactivity/useVModelProxy';
 
-export interface OtpControlProps extends ControlProps<string> {
-  /**
-   * The initial value of the OTP field.
-   */
-  value?: string;
-
+export interface OtpControlProps extends ControlProps<string | undefined> {
   /**
    * Whether the OTP field is disabled.
    */
@@ -65,11 +60,11 @@ export interface OtpControlProps extends ControlProps<string> {
 
 type ExcludedProps = 'onCompleted' | '_field' | 'schema';
 
-export function useOtpControl(_props: MaybeNormalized<OtpControlProps, ExcludedProps>) {
+export function useOtpControl(_props: Reactivify<OtpControlProps, ExcludedProps>) {
   const props = normalizeProps(_props, ['onCompleted', '_field', 'schema']);
   const controlEl = shallowRef<HTMLElement>();
   const id = useUniqId(FieldTypePrefixes.OTPField);
-  const field = props._field ?? resolveFormField(getOtpFieldProps(props));
+  const field = resolveControlField<string | undefined>(props, getOtpValue(props));
   const { model, setModelValue } = useVModelProxy(field);
   const isDisabled = computed(() => toValue(props.disabled) || field.isDisabled.value);
 
@@ -315,35 +310,4 @@ export function useOtpControl(_props: MaybeNormalized<OtpControlProps, ExcludedP
     },
     field,
   );
-}
-
-/**
- * Adds a prefix to a value if it is not already present.
- * @param value - The value to add the prefix to.
- * @param getPrefix - The prefix to add to the value.
- * @returns The value with the prefix added if it is not already present.
- */
-function withPrefix(value: string | undefined, getPrefix: MaybeRefOrGetter<string | undefined> | undefined) {
-  const prefix = toValue(getPrefix);
-  if (!prefix) {
-    return value ?? '';
-  }
-
-  value = value ?? '';
-  if (value.startsWith(prefix)) {
-    return value;
-  }
-
-  return `${prefix}${value}`;
-}
-
-export function getOtpFieldProps(props: NormalizedProps<OtpControlProps, ExcludedProps>) {
-  return {
-    label: props.label,
-    description: props.description,
-    path: props.name,
-    initialValue: withPrefix(toValue(props.modelValue) ?? toValue(props.value), props.prefix),
-    disabled: props.disabled,
-    schema: props.schema,
-  } satisfies FormFieldInit<string>;
 }

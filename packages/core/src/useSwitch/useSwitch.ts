@@ -1,15 +1,16 @@
 import { Reactivify } from '../types';
 import { normalizeProps } from '../utils/common';
-import { useFormField, WithFieldProps } from '../useFormField';
+import { resolveFieldInit, useFormField, WithFieldProps } from '../useFormField';
 import { registerField } from '@formwerk/devtools';
-import { getSwitchFieldProps, SwitchControlProps, useSwitchControl } from './useSwitchControl';
+import { SwitchControlProps, useSwitchControl } from './useSwitchControl';
+import { getSwitchValue } from './utils';
 
 export type SwitchProps<TValue = boolean> = WithFieldProps<SwitchControlProps<TValue>>;
 
 export function useSwitch<TValue = boolean>(_props: Reactivify<SwitchProps<TValue>, 'schema'>) {
   const props = normalizeProps(_props, ['schema']);
-  const _field = useFormField<TValue>(getSwitchFieldProps(props) as any);
-  const control = useSwitchControl({ ...props, _field });
+  const _field = useFormField(resolveFieldInit<TValue>(props, getSwitchValue(props)));
+  const control = useSwitchControl({ ...props, _field: _field as any });
 
   if (__DEV__) {
     registerField(_field, 'Switch');
