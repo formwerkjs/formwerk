@@ -48,11 +48,6 @@ export interface SwitchControlProps<TValue = boolean> extends ControlProps<TValu
   readonly?: boolean;
 
   /**
-   * Whether the switch is disabled.
-   */
-  disabled?: boolean;
-
-  /**
    * The value to use when the switch is checked.
    */
   trueValue?: TValue;

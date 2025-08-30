@@ -13,11 +13,6 @@ import { useVModelProxy } from '../reactivity/useVModelProxy';
 
 export interface OtpControlProps extends ControlProps<string | undefined> {
   /**
-   * Whether the OTP field is disabled.
-   */
-  disabled?: boolean;
-
-  /**
    * Whether the OTP field is masked.
    */
   mask?: boolean | string;
