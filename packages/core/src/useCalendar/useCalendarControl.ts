@@ -338,6 +338,11 @@ export function useCalendarControl(_props: Reactivify<CalendarControlProps, 'fie
   return exposeField(
     {
       /**
+       * The id of the calendar element.
+       */
+      calendarId,
+
+      /**
        * The props for the calendar element.
        */
       calendarProps,

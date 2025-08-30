@@ -235,6 +235,11 @@ export function useSelectControl<TOption, TValue = TOption>(
   return exposeField(
     {
       /**
+       * The id of the input element.
+       */
+      inputId,
+
+      /**
        * The model value of the select field.
        */
       model,

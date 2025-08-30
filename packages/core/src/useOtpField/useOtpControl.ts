@@ -289,6 +289,11 @@ export function useOtpControl(_props: Reactivify<OtpControlProps, ExcludedProps>
   return exposeField(
     {
       /**
+       * The id of the control element.
+       */
+      inputId: id,
+
+      /**
        * The props of the control element.
        */
       controlProps,

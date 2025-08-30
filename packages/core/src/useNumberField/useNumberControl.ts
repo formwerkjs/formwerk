@@ -241,6 +241,11 @@ export function useNumberControl(_props: Reactivify<NumberControlProps, '_field'
   return exposeField(
     {
       /**
+       * The id of the input element.
+       */
+      inputId,
+
+      /**
        * Decrements the number field value.
        */
       decrement,
@@ -261,6 +266,7 @@ export function useNumberControl(_props: Reactivify<NumberControlProps, '_field'
        * Reference to the input element.
        */
       inputEl,
+
       /**
        * Props for the input element.
        */

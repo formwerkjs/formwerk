@@ -131,6 +131,11 @@ export function useTextControl(_props: Reactivify<TextControlProps, '_field' | '
   return exposeField(
     {
       /**
+       * The id of the input element.
+       */
+      inputId,
+
+      /**
        * Props for the input element.
        */
       inputProps,
