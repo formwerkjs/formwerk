@@ -145,6 +145,11 @@ export function useDateControl(_props: Reactivify<DateControlProps, '_field' | '
   return exposeField(
     {
       /**
+       * The id of the control element.
+       */
+      controlId,
+
+      /**
        * The props to use for the control element.
        */
       controlProps,
