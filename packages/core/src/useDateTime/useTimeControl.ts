@@ -128,6 +128,11 @@ export function useTimeControl(_props: Reactivify<TimeControlProps, '_field' | '
   return exposeField(
     {
       /**
+       * The id of the control element.
+       */
+      controlId,
+
+      /**
        * The props to use for the control element.
        */
       controlProps,
