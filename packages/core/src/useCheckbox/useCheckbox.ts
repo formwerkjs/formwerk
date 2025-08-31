@@ -283,7 +283,7 @@ export function useCheckbox<TValue = string>(_props: Reactivify<CheckboxProps<TV
       /**
        * The id of the input element.
        */
-      inputId,
+      controlId: inputId,
 
       /**
        * Props for the error message element.

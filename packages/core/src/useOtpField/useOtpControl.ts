@@ -291,7 +291,7 @@ export function useOtpControl(_props: Reactivify<OtpControlProps, ExcludedProps>
       /**
        * The id of the control element.
        */
-      inputId: id,
+      controlId: id,
 
       /**
        * The props of the control element.

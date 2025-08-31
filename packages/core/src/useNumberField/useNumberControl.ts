@@ -243,7 +243,7 @@ export function useNumberControl(_props: Reactivify<NumberControlProps, '_field'
       /**
        * The id of the input element.
        */
-      inputId,
+      controlId: inputId,
 
       /**
        * Decrements the number field value.

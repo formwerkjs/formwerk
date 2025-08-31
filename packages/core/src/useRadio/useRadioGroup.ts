@@ -236,6 +236,11 @@ export function useRadioGroup<TValue = string>(_props: Reactivify<RadioGroupProp
        * Props for the group element.
        */
       groupProps,
+
+      /**
+       * The id of the group element.
+       */
+      groupId,
     },
     field,
   );
