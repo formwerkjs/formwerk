@@ -340,7 +340,7 @@ export function useCalendarControl(_props: Reactivify<CalendarControlProps, 'fie
       /**
        * The id of the calendar element.
        */
-      calendarId,
+      controlId: calendarId,
 
       /**
        * The props for the calendar element.

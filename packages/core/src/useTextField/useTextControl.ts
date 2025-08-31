@@ -133,7 +133,7 @@ export function useTextControl(_props: Reactivify<TextControlProps, '_field' | '
       /**
        * The id of the input element.
        */
-      inputId,
+      controlId: inputId,
 
       /**
        * Props for the input element.

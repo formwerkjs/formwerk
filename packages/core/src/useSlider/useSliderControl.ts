@@ -443,7 +443,7 @@ export function useSliderControl<TValue>(_props: Reactivify<SliderControlProps<T
       /**
        * The id of the input element.
        */
-      inputId,
+      controlId: inputId,
 
       /**
        * Reference to the track element.
