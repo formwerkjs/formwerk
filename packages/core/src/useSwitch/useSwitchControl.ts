@@ -204,7 +204,7 @@ export function useSwitchControl<TValue = boolean>(
       /**
        * The id of the input element.
        */
-      inputId,
+      controlId: inputId,
 
       /**
        * Reference to the input element.
