@@ -320,6 +320,11 @@ export function useComboBoxControl<TOption, TValue = TOption>(
   return exposeField(
     {
       /**
+       * The id of the input element.
+       */
+      controlId: inputId,
+
+      /**
        * Props for the input element.
        */
       inputProps,

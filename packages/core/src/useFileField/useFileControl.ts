@@ -341,7 +341,7 @@ export function useFileControl(_props: Reactivify<FileControlProps, 'onUpload' |
       /**
        * The id of the input element.
        */
-      inputId,
+      controlId: inputId,
 
       /**
        * The props for the input element.

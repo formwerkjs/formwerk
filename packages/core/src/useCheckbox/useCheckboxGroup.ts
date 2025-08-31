@@ -202,6 +202,11 @@ export function useCheckboxGroup<TCheckbox>(_props: Reactivify<CheckboxGroupProp
   return exposeField(
     {
       /**
+       * The id of the group element.
+       */
+      groupId,
+
+      /**
        * Props for the group element.
        */
       groupProps,

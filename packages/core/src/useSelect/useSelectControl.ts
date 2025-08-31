@@ -237,7 +237,7 @@ export function useSelectControl<TOption, TValue = TOption>(
       /**
        * The id of the input element.
        */
-      inputId,
+      controlId: inputId,
 
       /**
        * The model value of the select field.
