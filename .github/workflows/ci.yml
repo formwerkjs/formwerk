@@ -8,9 +8,6 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
-      - run: |
-          corepack enable
-          npm install -g corepack@latest
       - uses: actions/setup-node@v4
         with:
           node-version: 24
