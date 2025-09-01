@@ -1,4 +1,6 @@
 packages:
-  - 'packages/**'
-  - 'docs'
+  - packages/**
+  - docs
   - '!**/tests/**'
+onlyBuiltDependencies:
+  - '@tailwindcss/oxide'
