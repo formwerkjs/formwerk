@@ -8,6 +8,7 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v5
+      - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 24
@@ -24,9 +25,10 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v5
+      - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 24
           cache: 'pnpm'
       - name: Install dependencies
         run: pnpm install
@@ -40,9 +42,10 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v5
+      - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 24
           cache: 'pnpm'
       - name: Install dependencies
         run: pnpm install
