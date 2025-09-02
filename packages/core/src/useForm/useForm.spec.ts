@@ -412,7 +412,7 @@ describe('form submit', () => {
         return { form };
       },
       () => {
-        const field = useFormField({ path: 'field' });
+        const field = useFormField({ label: 'Field', path: 'field' });
 
         return { field };
       },
@@ -449,12 +449,12 @@ describe('form submit', () => {
         return useForm({ initialValues: defaults() });
       },
       () => {
-        useFormField({ path: 'field', disabled });
-        useFormField({ path: 'multiple.0' });
-        useFormField({ path: 'multiple.1', disabled });
-        useFormField({ path: 'multiple.2' });
-        useFormField({ path: 'multiple.3.name', disabled });
-        useFormField({ path: 'multiple.4' });
+        useFormField({ label: 'Field', path: 'field', disabled });
+        useFormField({ label: 'Multiple', path: 'multiple.0' });
+        useFormField({ label: 'Multiple', path: 'multiple.1', disabled });
+        useFormField({ label: 'Multiple', path: 'multiple.2' });
+        useFormField({ label: 'Multiple', path: 'multiple.3.name', disabled });
+        useFormField({ label: 'Multiple', path: 'multiple.4' });
 
         return {};
       },
@@ -920,7 +920,7 @@ describe('form dirty state', () => {
         return { form: useForm({ initialValues: { field: 'foo' } }) };
       },
       () => {
-        return { field: useFormField({ initialValue: 'bar' }) };
+        return { field: useFormField({ label: 'Field', initialValue: 'bar' }) };
       },
     );
 
@@ -944,7 +944,7 @@ describe('form dirty state', () => {
         return { form: useForm({ initialValues: { field: 'foo' } }) };
       },
       () => {
-        return { field: useFormField({ path: 'field' }) };
+        return { field: useFormField({ label: 'Field', path: 'field' }) };
       },
     );
 
@@ -963,7 +963,7 @@ describe('form dirty state', () => {
         return { form: useForm<any>({ initialValues: { foo: 'bar' } }) };
       },
       () => {
-        return { field: useFormField({ path: 'field' }) };
+        return { field: useFormField({ label: 'Field', path: 'field' }) };
       },
     );
 
@@ -982,7 +982,7 @@ describe('form validation', () => {
     function createInputComponent(inputEl: Ref<HTMLInputElement | undefined>): Component {
       return {
         setup: () => {
-          const field = useFormField({ path: 'test' });
+          const field = useFormField({ label: 'Field', path: 'test' });
           useInputValidity({ inputEl, field });
 
           return { input: inputEl, errorMessage: field.errorMessage };
@@ -1080,7 +1080,7 @@ describe('form validation', () => {
       const createInputComponent = (input: Ref<HTMLInputElement | undefined>) => {
         return {
           setup: () => {
-            const field = useFormField({ path: 'test' });
+            const field = useFormField({ label: 'Field', path: 'test' });
             useInputValidity({ inputEl: input, field });
 
             return { input: input, errorMessage: field.errorMessage, submitErrorMessage: field.submitErrorMessage };
