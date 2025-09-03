@@ -156,6 +156,7 @@ export function useComboBox<TOption, TValue = TOption>(
     label: props.label,
     multiple: false,
     orientation: props.orientation,
+    triggerEl: inputEl,
     isValueSelected: value => {
       return isEqual(fieldValue.value, value);
     },
