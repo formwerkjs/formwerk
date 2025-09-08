@@ -5,7 +5,7 @@ import { DateTimeSegmentGroupKey } from './useDateTimeSegmentGroup';
 import { FieldTypePrefixes } from '../constants';
 import { blockEvent } from '../utils/events';
 import { DateTimeSegmentType } from './types';
-import { isEditableSegmentType } from './constants';
+import { getSegmentTypePlaceholder, isEditableSegmentType } from './constants';
 import { createDisabledContext } from '../helpers/createDisabledContext';
 import { isFirefox } from '../utils/platform';
 
@@ -205,7 +205,16 @@ export function useDateTimeSegment(_props: Reactivify<DateTimeSegmentProps>) {
       if (hasKeyCode(evt, 'Backspace') || hasKeyCode(evt, 'Delete')) {
         blockEvent(evt);
         if (!isNonMutable()) {
-          clear();
+          if (currentInput.length > 1) {
+            currentInput = currentInput.slice(0, -1);
+          } else {
+            clear();
+            currentInput = '';
+          }
+
+          if (segmentEl.value) {
+            segmentEl.value.textContent = currentInput || (getSegmentTypePlaceholder(toValue(props.type)) ?? '');
+          }
         }
       }
     },
