@@ -21,7 +21,7 @@ import {
   warn,
 } from '../utils/common';
 import { useLocale } from '../i18n';
-import { FormField, useFormField, exposeField } from '../useFormField';
+import { FormField, useFormField, exposeField, WithFieldProps } from '../useFormField';
 import { FieldTypePrefixes } from '../constants';
 import { useSyncModel } from '../reactivity/useModelSync';
 
@@ -58,7 +58,7 @@ export interface CheckboxGroupContext<TCheckbox> {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const CheckboxGroupKey: InjectionKey<CheckboxGroupContext<any>> = Symbol('CheckboxGroupKey');
 
-export interface CheckboxGroupProps<TCheckbox = unknown> extends ControlProps<CheckboxGroupValue<TCheckbox>> {
+interface _CheckboxGroupProps<TCheckbox = unknown> extends ControlProps<CheckboxGroupValue<TCheckbox>> {
   /**
    * The text direction for the checkbox group.
    */
@@ -81,6 +81,8 @@ export interface CheckboxGroupProps<TCheckbox = unknown> extends ControlProps<Ch
   disableHtmlValidation?: Boolean;
 }
 
+export type CheckboxGroupProps<TCheckbox = unknown> = WithFieldProps<_CheckboxGroupProps<TCheckbox>>;
+
 interface CheckboxGroupDomProps extends AriaLabelableProps, AriaDescribableProps, AriaValidatableProps {
   role: 'group';
   dir: Direction;
@@ -91,7 +93,6 @@ export function useCheckboxGroup<TCheckbox>(_props: Reactivify<CheckboxGroupProp
   const groupId = useUniqId(FieldTypePrefixes.CheckboxGroup);
   const { direction } = useLocale();
   const checkboxes = ref<CheckboxRegistration[]>([]);
-
   const field = useFormField({
     label: props.label,
     description: props.description,
@@ -102,13 +103,13 @@ export function useCheckboxGroup<TCheckbox>(_props: Reactivify<CheckboxGroupProp
   });
 
   useSyncModel({
-    model: field.fieldValue,
+    model: field.state.fieldValue,
     modelName: 'modelValue',
-    onModelPropUpdated: value => field.setValue(value as CheckboxGroupValue<TCheckbox>),
+    onModelPropUpdated: value => field.state.setValue(value as CheckboxGroupValue<TCheckbox>),
   });
 
   const { updateValidity } = useInputValidity({
-    field,
+    field: field.state,
     inputEl: computed(() => checkboxes.value.map(v => v.getElem())),
     events: ['blur', 'click', ['keydown', e => hasKeyCode(e, 'Space')]],
     groupValidityBehavior: 'some',
@@ -120,7 +121,7 @@ export function useCheckboxGroup<TCheckbox>(_props: Reactivify<CheckboxGroupProp
     getControlElement: () => undefined,
   });
 
-  const { fieldValue, setValue, isTouched, setTouched, isDisabled } = field;
+  const { fieldValue, setValue, isTouched, setTouched, isDisabled } = field.state;
 
   const groupProps = computed<CheckboxGroupDomProps>(() => {
     return {
@@ -190,7 +191,7 @@ export function useCheckboxGroup<TCheckbox>(_props: Reactivify<CheckboxGroupProp
     groupState,
     modelValue: fieldValue,
     isTouched,
-    setErrors: field.setErrors,
+    setErrors: field.state.setErrors,
     useCheckboxRegistration,
     toggleValue,
     hasValue,

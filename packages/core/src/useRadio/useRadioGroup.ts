@@ -12,7 +12,7 @@ import {
 } from '../types';
 import { useUniqId, getNextCycleArrIdx, normalizeProps, isEmpty, removeFirst, hasKeyCode } from '../utils/common';
 import { useLocale } from '../i18n';
-import { useFormField, exposeField } from '../useFormField';
+import { useFormField, exposeField, WithFieldProps } from '../useFormField';
 import { FieldTypePrefixes } from '../constants';
 import { useSyncModel } from '../reactivity/useModelSync';
 
@@ -39,7 +39,7 @@ export interface RadioRegistration {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const RadioGroupKey: InjectionKey<RadioGroupContext<any>> = Symbol('RadioGroupKey');
 
-export interface RadioGroupProps<TValue = string> extends ControlProps<TValue> {
+interface _RadioGroupProps<TValue = string> extends ControlProps<TValue> {
   /**
    * The orientation of the radio group (horizontal or vertical).
    */
@@ -61,6 +61,8 @@ export interface RadioGroupProps<TValue = string> extends ControlProps<TValue> {
   // eslint-disable-next-line @typescript-eslint/no-wrapper-object-types
   disableHtmlValidation?: Boolean;
 }
+
+export type RadioGroupProps<TValue = string> = WithFieldProps<_RadioGroupProps<TValue>>;
 
 interface RadioGroupDomProps extends AriaLabelableProps, AriaDescribableProps, AriaValidatableProps {
   role: 'radiogroup';
@@ -101,9 +103,9 @@ export function useRadioGroup<TValue = string>(_props: Reactivify<RadioGroupProp
   });
 
   useSyncModel({
-    model: field.fieldValue,
+    model: field.state.fieldValue,
     modelName: 'modelValue',
-    onModelPropUpdated: value => field.setValue(value as TValue),
+    onModelPropUpdated: value => field.state.setValue(value as TValue),
   });
 
   field.registerControl({
@@ -112,14 +114,14 @@ export function useRadioGroup<TValue = string>(_props: Reactivify<RadioGroupProp
   });
 
   useInputValidity({
-    field,
+    field: field.state,
     events: ['blur', 'click', ['keydown', e => hasKeyCode(e, 'Space')]],
     groupValidityBehavior: 'some',
     inputEl: computed(() => radios.value.map(r => r.getElem())),
     disableHtmlValidation: props.disableHtmlValidation,
   });
 
-  const { fieldValue, setValue, setTouched, isDisabled } = field;
+  const { fieldValue, setValue, setTouched, isDisabled } = field.state;
 
   function handleArrowNext() {
     let currentIdx = radios.value.findIndex(radio => radio.isChecked());
@@ -227,7 +229,7 @@ export function useRadioGroup<TValue = string>(_props: Reactivify<RadioGroupProp
   provide(RadioGroupKey, context);
 
   if (__DEV__) {
-    registerField(field, 'Radio');
+    registerField(field.state, 'Radio');
   }
 
   return exposeField(

@@ -8,16 +8,6 @@ export interface ControlApi {
 
 export interface ControlProps<TValue = unknown, TInitialValue = TValue> {
   /**
-   * The label of the field.
-   */
-  label?: string | undefined;
-
-  /**
-   * The description of the field.
-   */
-  description?: string | undefined;
-
-  /**
    * The name of the field.
    */
   name?: string;
@@ -25,7 +15,7 @@ export interface ControlProps<TValue = unknown, TInitialValue = TValue> {
   /**
    * The field to use for the control. Internal usage only.
    */
-  _field?: FormField<TValue>;
+  _field?: FormField<TValue | undefined>;
 
   /**
    * Schema for field validation.
@@ -35,7 +25,7 @@ export interface ControlProps<TValue = unknown, TInitialValue = TValue> {
   /**
    * The v-model value of the field.
    */
-  modelValue?: TValue;
+  modelValue?: TValue | undefined;
 
   /**
    * The initial value of the field.

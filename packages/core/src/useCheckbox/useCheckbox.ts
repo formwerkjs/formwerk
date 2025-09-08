@@ -110,12 +110,12 @@ export function useCheckbox<TValue = string>(_props: Reactivify<CheckboxProps<TV
   if (!group) {
     useInputValidity({
       inputEl,
-      field,
+      field: field.state,
       events: ['blur', 'click', ['keydown', e => hasKeyCode(e, 'Space')]],
       disableHtmlValidation: props.disableHtmlValidation,
     });
   }
-  const { fieldValue, setTouched, setValue, errorMessage, setErrors, isDisabled } = field;
+  const { fieldValue, setTouched, setValue, errorMessage, setErrors, isDisabled } = field.state;
 
   const checked = computed({
     get() {
@@ -275,7 +275,7 @@ export function useCheckbox<TValue = string>(_props: Reactivify<CheckboxProps<TV
   const isGrouped = !!group;
 
   if (__DEV__) {
-    registerField(field, 'Checkbox');
+    registerField(field.state, 'Checkbox');
   }
 
   return exposeField(
@@ -338,9 +338,9 @@ function useCheckboxField<TValue = string>(
   });
 
   useSyncModel({
-    model: field.fieldValue,
+    model: field.state.fieldValue,
     modelName: 'modelValue',
-    onModelPropUpdated: value => field.setValue(value as TValue),
+    onModelPropUpdated: value => field.state.setValue(value as TValue),
   });
 
   return field;
@@ -353,10 +353,14 @@ function createGroupField<TValue = unknown>(group: CheckboxGroupContext<TValue>,
 
   return {
     ...group.field,
-    errors: computed(() => []),
-    errorMessage: computed(() => ''),
-    setValue,
-  };
+    state: {
+      ...group.field.state,
+      errors: computed(() => []),
+      errorMessage: computed(() => ''),
+      displayError: () => undefined,
+      setValue,
+    } as any,
+  } satisfies FormField<TValue>;
 }
 
 function createTrueValueGetter<TValue>(props: NormalizedProps<Reactivify<CheckboxProps<TValue>, 'schema'>, 'schema'>) {
