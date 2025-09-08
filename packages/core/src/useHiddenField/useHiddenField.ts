@@ -33,18 +33,18 @@ export function useHiddenField<TValue = unknown>(_props: Reactivify<HiddenFieldP
   });
 
   useInputValidity({
-    field,
+    field: field.state,
   });
 
   watch(
     () => toValue(props.value),
     value => {
-      field.setValue(value);
+      field.state.setValue(value);
     },
   );
 
   if (__DEV__) {
-    registerField(field, 'Hidden');
+    registerField(field.state, 'Hidden');
   }
 
   return exposeField({}, field);

@@ -3,13 +3,15 @@ import { ControlProps, MaybeAsync, Reactivify } from '../types';
 import { OtpContextKey, OtpSlotAcceptType } from './types';
 import { normalizeProps, useUniqId, useCaptureProps } from '../utils/common';
 import { FieldTypePrefixes } from '../constants';
-import { exposeField, resolveControlField } from '../useFormField';
+import { resolveFieldState } from '../useFormField';
 import { useInputValidity, useConstraintsValidator } from '../validation';
 import { OtpSlotProps } from './useOtpSlot';
 import { DEFAULT_MASK, getOtpValue, isValueAccepted, withPrefix } from './utils';
 import { blockEvent } from '../utils/events';
 import { TransparentWrapper } from '../types';
 import { useVModelProxy } from '../reactivity/useVModelProxy';
+import { useFieldControllerContext } from '../useFormField/useFieldController';
+import { registerField } from '@formwerk/devtools';
 
 export interface OtpControlProps extends ControlProps<string | undefined> {
   /**
@@ -54,7 +56,8 @@ export function useOtpControl(_props: Reactivify<OtpControlProps, ExcludedProps>
   const props = normalizeProps(_props, ['onCompleted', '_field', 'schema']);
   const controlEl = shallowRef<HTMLElement>();
   const id = useUniqId(FieldTypePrefixes.OTPField);
-  const field = resolveControlField<string | undefined>(props, getOtpValue(props));
+  const field = resolveFieldState<string | undefined>(props, getOtpValue(props));
+  const controller = useFieldControllerContext(props);
   const { model, setModelValue } = useVModelProxy(field);
   const isDisabled = computed(() => toValue(props.disabled) || field.isDisabled.value);
 
@@ -73,7 +76,7 @@ export function useOtpControl(_props: Reactivify<OtpControlProps, ExcludedProps>
     disableHtmlValidation: props.disableHtmlValidation,
   });
 
-  field.registerControl({
+  controller?.registerControl({
     getControlElement: () => controlEl.value,
     getControlId: () => id,
   });
@@ -104,9 +107,9 @@ export function useOtpControl(_props: Reactivify<OtpControlProps, ExcludedProps>
     return {
       id,
       role: 'group',
-      ...field.labelledByProps.value,
-      ...field.describedByProps.value,
-      ...field.accessibleErrorProps.value,
+      ...controller?.labelledByProps.value,
+      ...controller?.describedByProps.value,
+      ...controller?.accessibleErrorProps.value,
     };
   }, controlEl);
 
@@ -286,23 +289,29 @@ export function useOtpControl(_props: Reactivify<OtpControlProps, ExcludedProps>
     },
   });
 
-  return exposeField(
-    {
-      /**
-       * The id of the control element.
-       */
-      controlId: id,
+  if (__DEV__) {
+    registerField(field, 'OTP');
+  }
 
-      /**
-       * The props of the control element.
-       */
-      controlProps,
+  return {
+    /**
+     * The id of the control element.
+     */
+    controlId: id,
 
-      /**
-       * The slots of the OTP field. Use this as an iterable to render with `v-for`.
-       */
-      fieldSlots,
-    },
+    /**
+     * The props of the control element.
+     */
+    controlProps,
+
+    /**
+     * The slots of the OTP field. Use this as an iterable to render with `v-for`.
+     */
+    fieldSlots,
+
+    /**
+     * The field state.
+     */
     field,
-  );
+  };
 }

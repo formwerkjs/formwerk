@@ -4,7 +4,7 @@ import { useFormField } from './useFormField';
 
 test('displays field errors only if they are touched', async () => {
   const { setErrors, isValid, errorMessage, displayError, setTouched } = await renderSetup(() => {
-    const field = useFormField({ label: 'Field', initialValue: 'bar' });
+    const field = useFormField({ label: 'Field', initialValue: 'bar' }).state;
     const { displayError } = useErrorDisplay(field.errorMessage, field.isTouched);
 
     return { ...field, displayError };
@@ -25,7 +25,7 @@ test('displays field errors only if they are touched', async () => {
 
 test('controls display of custom messages as well', async () => {
   const { isValid, displayError, setTouched } = await renderSetup(() => {
-    const field = useFormField({ label: 'Field', initialValue: 'bar' });
+    const field = useFormField({ label: 'Field', initialValue: 'bar' }).state;
     const { displayError } = useErrorDisplay(field.errorMessage, field.isTouched);
 
     return { ...field, displayError };

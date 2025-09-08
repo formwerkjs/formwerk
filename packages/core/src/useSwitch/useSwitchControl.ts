@@ -10,12 +10,14 @@ import {
   Reactivify,
 } from '../types';
 import { hasKeyCode, isEqual, isInputElement, normalizeProps, useUniqId, useCaptureProps } from '../utils/common';
-import { exposeField, resolveControlField } from '../useFormField';
+import { resolveFieldState } from '../useFormField';
 import { FieldTypePrefixes } from '../constants';
 import { useInputValidity } from '../validation';
 import { TransparentWrapper } from '../types';
 import { useVModelProxy } from '../reactivity/useVModelProxy';
 import { getSwitchValue } from './utils';
+import { useFieldControllerContext } from '../useFormField/useFieldController';
+import { registerField } from '@formwerk/devtools';
 
 export interface SwitchDomInputProps
   extends InputBaseAttributes,
@@ -63,7 +65,8 @@ export function useSwitchControl<TValue = boolean>(
 ) {
   const props = normalizeProps(_props, ['_field', 'schema']);
   const inputId = useUniqId(FieldTypePrefixes.Switch);
-  const field = resolveControlField<TValue>(props, getSwitchValue(props));
+  const field = resolveFieldState<TValue>(props, getSwitchValue(props));
+  const controller = useFieldControllerContext(props);
   const inputEl = shallowRef<HTMLInputElement>();
   const { model, setModelValue } = useVModelProxy(field);
 
@@ -73,7 +76,7 @@ export function useSwitchControl<TValue = boolean>(
     disableHtmlValidation: props.disableHtmlValidation,
   });
 
-  field.registerControl({
+  controller?.registerControl({
     getControlElement: () => inputEl.value,
     getControlId: () => inputId,
   });
@@ -164,8 +167,8 @@ export function useSwitchControl<TValue = boolean>(
   function createBindings(isInput: boolean): SwitchDOMProps | SwitchDomInputProps {
     const base = {
       id: inputId,
-      ...field.labelledByProps.value,
-      ...field.accessibleErrorProps.value,
+      ...controller?.labelledByProps.value,
+      ...controller?.accessibleErrorProps.value,
       [isInput ? 'checked' : 'aria-checked']: isPressed.value || false,
       [isInput ? 'required' : 'aria-required']: toValue(props.required) || undefined,
       [isInput ? 'readonly' : 'aria-readonly']: toValue(props.readonly) || undefined,
@@ -199,33 +202,39 @@ export function useSwitchControl<TValue = boolean>(
     isPressed.value = force ?? !isPressed.value;
   }
 
-  return exposeField(
-    {
-      /**
-       * The id of the input element.
-       */
-      controlId: inputId,
+  if (__DEV__) {
+    registerField(field, 'Switch');
+  }
 
-      /**
-       * Reference to the input element.
-       */
-      inputEl,
+  return {
+    /**
+     * The id of the input element.
+     */
+    controlId: inputId,
 
-      /**
-       * Props for the input element.
-       */
-      inputProps,
+    /**
+     * Reference to the input element.
+     */
+    inputEl,
 
-      /**
-       * Whether the switch is pressed.
-       */
-      isPressed,
+    /**
+     * Props for the input element.
+     */
+    inputProps,
 
-      /**
-       * Toggles the pressed state of the switch.
-       */
-      togglePressed,
-    },
+    /**
+     * Whether the switch is pressed.
+     */
+    isPressed,
+
+    /**
+     * Toggles the pressed state of the switch.
+     */
+    togglePressed,
+
+    /**
+     * The field state.
+     */
     field,
-  );
+  };
 }

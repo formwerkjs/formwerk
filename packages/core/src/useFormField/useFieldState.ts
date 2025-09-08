@@ -1,6 +1,18 @@
-import { computed, inject, MaybeRefOrGetter, nextTick, readonly, Ref, shallowRef, toValue, watch } from 'vue';
+import {
+  computed,
+  inject,
+  InjectionKey,
+  MaybeRefOrGetter,
+  nextTick,
+  provide,
+  readonly,
+  Ref,
+  shallowRef,
+  toValue,
+  watch,
+} from 'vue';
 import { FormContext, FormKey } from '../useForm/useForm';
-import { Arrayable, Getter, StandardSchema, ValidationResult } from '../types';
+import { Arrayable, ControlProps, Getter, NormalizedProps, StandardSchema, ValidationResult } from '../types';
 import {
   cloneDeep,
   isEqual,
@@ -14,6 +26,7 @@ import { FormGroupKey } from '../useFormGroup';
 import { useErrorDisplay } from './useErrorDisplay';
 import { usePathPrefixer } from '../helpers/usePathPrefixer';
 import { createDisabledContext } from '../helpers/createDisabledContext';
+import { FormFieldInit } from './useFormField';
 
 export interface FieldStateInit<TValue = unknown> {
   path: MaybeRefOrGetter<string | undefined> | undefined;
@@ -197,6 +210,8 @@ export function useFieldState<TValue = unknown>(opts?: Partial<FieldStateInit<TV
 
     form.setFieldDisabled(path, disabled);
   });
+
+  provide(FormFieldKey, field as FieldState<unknown>);
 
   return { ...field, form };
 }
@@ -396,4 +411,39 @@ function createLocalValidity() {
     pathlessValidity: api,
     ...api,
   };
+}
+
+export const FormFieldKey: InjectionKey<FieldState<unknown>> = Symbol('FormFieldKey');
+
+export function useFieldStateContext<TValue = unknown>() {
+  return inject(FormFieldKey, null) as FieldState<TValue> | null;
+}
+
+/**
+ * Extracts the field init from control props.
+ */
+export function getStateInit<TValue = unknown, TInitialValue = TValue>(
+  props: NoInfer<NormalizedProps<ControlProps<TValue, TInitialValue>, 'schema' | '_field'>>,
+  resolveValue?: () => TValue,
+): Partial<FieldStateInit<TValue>> {
+  return {
+    path: props.name,
+    initialValue: resolveValue?.() ?? ((toValue(props.modelValue) ?? toValue(props.value)) as TValue),
+    disabled: props.disabled,
+    schema: props.schema,
+  } satisfies FormFieldInit<TValue>;
+}
+
+/**
+ * Resolves the field props from the context or creates a new field if none exists.
+ */
+export function resolveFieldState<TValue = unknown, TInitialValue = TValue>(
+  props: NoInfer<NormalizedProps<ControlProps<TValue, TInitialValue>, 'schema' | '_field'>>,
+  resolveValue?: Getter<TValue>,
+): FieldState<TValue | undefined> {
+  return (
+    props._field?.state ??
+    useFieldStateContext<TValue | undefined>() ??
+    useFieldState<TValue | undefined>(getStateInit<TValue, TInitialValue>(props, resolveValue))
+  );
 }

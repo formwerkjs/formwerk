@@ -2,7 +2,7 @@ import { ControlProps, Reactivify } from '../types';
 import type { CalendarProps } from '../useCalendar';
 import { normalizeProps, useUniqId, useCaptureProps } from '../utils/common';
 import { computed, shallowRef, toValue } from 'vue';
-import { exposeField, resolveControlField } from '../useFormField';
+import { resolveFieldState } from '../useFormField';
 import { useDateTimeSegmentGroup } from './useDateTimeSegmentGroup';
 import { FieldTypePrefixes } from '../constants';
 import { useDateFormatter, useLocale } from '../i18n';
@@ -11,6 +11,8 @@ import { ZonedDateTime, Calendar } from '@internationalized/date';
 import { useInputValidity } from '../validation';
 import { useConstraintsValidator } from '../validation/useConstraintsValidator';
 import { useVModelProxy } from '../reactivity/useVModelProxy';
+import { useFieldControllerContext } from '../useFormField/useFieldController';
+import { registerField } from '@formwerk/devtools';
 
 export interface DateControlProps extends ControlProps<Date | undefined> {
   /**
@@ -57,7 +59,8 @@ export interface DateControlProps extends ControlProps<Date | undefined> {
 export function useDateControl(_props: Reactivify<DateControlProps, '_field' | 'schema'>) {
   const props = normalizeProps(_props, ['_field', 'schema']);
   const controlEl = shallowRef<HTMLInputElement>();
-  const field = resolveControlField<Date | undefined>(props);
+  const field = resolveFieldState<Date | undefined>(props);
+  const controller = useFieldControllerContext(props);
   const { model, setModelValue } = useVModelProxy(field);
   const { locale, direction, timeZone, calendar } = useLocale(props.locale, {
     calendar: () => toValue(props.calendar),
@@ -77,7 +80,8 @@ export function useDateControl(_props: Reactivify<DateControlProps, '_field' | '
   });
 
   useInputValidity({ field, inputEl });
-  field.registerControl({
+
+  controller?.registerControl({
     getControlElement: () => controlEl.value,
     getControlId: () => controlId,
   });
@@ -118,7 +122,7 @@ export function useDateControl(_props: Reactivify<DateControlProps, '_field' | '
 
   const calendarProps = computed(() => {
     const propsObj: CalendarProps = {
-      label: toValue(field.label) ?? '',
+      label: toValue(controller?.label.value) ?? '',
       locale: locale.value,
       name: undefined,
       calendar: calendar.value,
@@ -135,40 +139,46 @@ export function useDateControl(_props: Reactivify<DateControlProps, '_field' | '
     return {
       id: controlId,
       role: 'group',
-      ...field.labelledByProps.value,
-      ...field.describedByProps.value,
-      ...field.accessibleErrorProps.value,
+      ...controller?.labelledByProps.value,
+      ...controller?.describedByProps.value,
+      ...controller?.accessibleErrorProps.value,
       'aria-disabled': field.isDisabled.value || undefined,
     };
   }, controlEl);
 
-  return exposeField(
-    {
-      /**
-       * The id of the control element.
-       */
-      controlId,
+  if (__DEV__) {
+    registerField(field, 'Date');
+  }
 
-      /**
-       * The props to use for the control element.
-       */
-      controlProps,
+  return {
+    /**
+     * The id of the control element.
+     */
+    controlId,
 
-      /**
-       * The datetime segments, you need to render these with the `DateTimeSegment` component.
-       */
-      segments,
+    /**
+     * The props to use for the control element.
+     */
+    controlProps,
 
-      /**
-       * The props to use for the calendar composable/component.
-       */
-      calendarProps,
+    /**
+     * The datetime segments, you need to render these with the `DateTimeSegment` component.
+     */
+    segments,
 
-      /**
-       * The direction of the field.
-       */
-      direction,
-    },
+    /**
+     * The props to use for the calendar composable/component.
+     */
+    calendarProps,
+
+    /**
+     * The direction of the field.
+     */
+    direction,
+
+    /**
+     * The field state.
+     */
     field,
-  );
+  };
 }

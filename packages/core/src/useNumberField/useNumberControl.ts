@@ -21,11 +21,13 @@ import { useInputValidity } from '../validation/useInputValidity';
 import { useNumberParser } from '../i18n/useNumberParser';
 import { useSpinButton } from '../useSpinButton';
 import { useLocale } from '../i18n';
-import { exposeField, resolveControlField } from '../useFormField';
+import { resolveFieldState } from '../useFormField';
 import { FieldTypePrefixes } from '../constants';
 import { useEventListener } from '../helpers/useEventListener';
 import { TransparentWrapper } from '../types';
 import { useVModelProxy } from '../reactivity/useVModelProxy';
+import { useFieldControllerContext } from '../useFormField/useFieldController';
+import { registerField } from '@formwerk/devtools';
 
 export interface NumberInputDOMAttributes {
   name?: string;
@@ -101,7 +103,8 @@ export function useNumberControl(_props: Reactivify<NumberControlProps, '_field'
   const props = normalizeProps(_props, ['_field', 'schema']);
   const inputId = useUniqId(FieldTypePrefixes.NumberField);
   const inputEl = shallowRef<HTMLInputElement>();
-  const field = resolveControlField<number | undefined, Numberish | undefined>(
+  const controller = useFieldControllerContext(props);
+  const field = resolveFieldState<number | undefined, Numberish | undefined>(
     props,
     () => toValue(props.modelValue) ?? fromNumberish(props.value),
   );
@@ -118,7 +121,7 @@ export function useNumberControl(_props: Reactivify<NumberControlProps, '_field'
     disableHtmlValidation: props.disableHtmlValidation,
   });
 
-  field.registerControl({
+  controller?.registerControl({
     getControlElement: () => inputEl.value,
     getControlId: () => inputId,
   });
@@ -208,9 +211,9 @@ export function useNumberControl(_props: Reactivify<NumberControlProps, '_field'
   const inputProps = useCaptureProps<NumberInputDOMProps>(() => {
     return {
       ...propsToValues(props, ['name', 'placeholder', 'required', 'readonly']),
-      ...field.labelledByProps.value,
-      ...field.describedByProps.value,
-      ...field.accessibleErrorProps.value,
+      ...controller?.labelledByProps.value,
+      ...controller?.describedByProps.value,
+      ...controller?.accessibleErrorProps.value,
       ...handlers,
       onKeydown: spinButtonProps.value.onKeydown,
       id: inputId,
@@ -238,45 +241,51 @@ export function useNumberControl(_props: Reactivify<NumberControlProps, '_field'
     { disabled: () => isDisabled.value || toValue(props.disableWheel), passive: true },
   );
 
-  return exposeField(
-    {
-      /**
-       * The id of the input element.
-       */
-      controlId: inputId,
+  if (__DEV__) {
+    registerField(field, 'Number');
+  }
 
-      /**
-       * Decrements the number field value.
-       */
-      decrement,
-      /**
-       * Props for the decrement button.
-       */
-      decrementButtonProps,
+  return {
+    /**
+     * The id of the input element.
+     */
+    controlId: inputId,
 
-      /**
-       * Increments the number field value.
-       */
-      increment,
-      /**
-       * Props for the increment button.
-       */
-      incrementButtonProps,
-      /**
-       * Reference to the input element.
-       */
-      inputEl,
+    /**
+     * Decrements the number field value.
+     */
+    decrement,
+    /**
+     * Props for the decrement button.
+     */
+    decrementButtonProps,
 
-      /**
-       * Props for the input element.
-       */
-      inputProps,
+    /**
+     * Increments the number field value.
+     */
+    increment,
+    /**
+     * Props for the increment button.
+     */
+    incrementButtonProps,
+    /**
+     * Reference to the input element.
+     */
+    inputEl,
 
-      /**
-       * The formatted text of the number field.
-       */
-      formattedText,
-    },
+    /**
+     * Props for the input element.
+     */
+    inputProps,
+
+    /**
+     * The formatted text of the number field.
+     */
+    formattedText,
+
+    /**
+     * The field state.
+     */
     field,
-  );
+  };
 }

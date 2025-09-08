@@ -920,7 +920,7 @@ describe('form dirty state', () => {
         return { form: useForm({ initialValues: { field: 'foo' } }) };
       },
       () => {
-        return { field: useFormField({ label: 'Field', initialValue: 'bar' }) };
+        return { field: useFormField({ label: 'Field', initialValue: 'bar' }).state };
       },
     );
 
@@ -944,7 +944,7 @@ describe('form dirty state', () => {
         return { form: useForm({ initialValues: { field: 'foo' } }) };
       },
       () => {
-        return { field: useFormField({ label: 'Field', path: 'field' }) };
+        return { field: useFormField({ label: 'Field', path: 'field' }).state };
       },
     );
 
@@ -982,7 +982,7 @@ describe('form validation', () => {
     function createInputComponent(inputEl: Ref<HTMLInputElement | undefined>): Component {
       return {
         setup: () => {
-          const field = useFormField({ label: 'Field', path: 'test' });
+          const field = useFormField({ label: 'Field', path: 'test' }).state;
           useInputValidity({ inputEl, field });
 
           return { input: inputEl, errorMessage: field.errorMessage };
@@ -1080,7 +1080,7 @@ describe('form validation', () => {
       const createInputComponent = (input: Ref<HTMLInputElement | undefined>) => {
         return {
           setup: () => {
-            const field = useFormField({ label: 'Field', path: 'test' });
+            const field = useFormField({ label: 'Field', path: 'test' }).state;
             useInputValidity({ inputEl: input, field });
 
             return { input: input, errorMessage: field.errorMessage, submitErrorMessage: field.submitErrorMessage };

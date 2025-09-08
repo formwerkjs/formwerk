@@ -1,4 +1,4 @@
-import { inject, InjectionKey, markRaw, provide, Ref, toValue } from 'vue';
+import { Ref, toValue } from 'vue';
 import { useFieldController, FieldController, FieldControllerProps } from './useFieldController';
 import { useFieldState, FieldState, FieldStateInit } from './useFieldState';
 import {
@@ -7,7 +7,6 @@ import {
   AriaLabelProps,
   Arrayable,
   ControlProps,
-  Getter,
   NormalizedProps,
   Reactivify,
   ValidationResult,
@@ -19,32 +18,53 @@ export type FormFieldInit<V = unknown> = Reactivify<FieldControllerProps> & Part
 
 export type FormFieldProps = FieldControllerProps;
 
-export type FormField<TValue = unknown> = FieldController & FieldState<TValue>;
-
-export const FormFieldKey: InjectionKey<FieldState<unknown>> = Symbol('FormFieldKey');
+export type FormField<TValue = unknown> = FieldController & {
+  state: FieldState<TValue>;
+};
 
 export type WithFieldProps<TControlProps extends object> = Simplify<
-  Omit<TControlProps, '_field' | 'label'> & {
+  Omit<TControlProps, '_field'> & {
+    /**
+     * The label of the field.
+     */
     label: string;
+
+    /**
+     * The description of the field.
+     */
+    description?: string | undefined;
   }
 >;
 
 export function useFormField<TValue = unknown>(init?: FormFieldInit<TValue>): FormField<TValue> {
   const controllerProps = normalizeProps(init ?? { label: '' });
-  const state = useFieldState(init);
+  const state = useFieldState<TValue>(init);
   const controller = useFieldController({
     ...controllerProps,
     errorMessage: state.errorMessage,
   });
 
-  const field = {
+  return {
     ...controller,
-    ...state,
+    state,
   } satisfies FormField<TValue>;
+}
 
-  provide(FormFieldKey, field as FieldState<unknown>);
-
-  return field;
+/**
+ * Extracts the field init from control props.
+ */
+export function getFieldInit<TValue = unknown, TInitialValue = TValue>(
+  props: NormalizedProps<WithFieldProps<ControlProps<TValue, TInitialValue>>, 'schema'>,
+  resolveValue?: () => TValue,
+): Partial<FormFieldInit<TValue>> {
+  return {
+    label: props.label,
+    description: props.description,
+    path: props.name,
+    initialValue: resolveValue?.() ?? ((toValue(props.modelValue) ?? toValue(props.value)) as TValue),
+    disabled: props.disabled,
+    schema: props.schema,
+  } satisfies FormFieldInit<TValue>;
 }
 
 export type ExposedField<TValue> = {
@@ -130,79 +150,38 @@ export type ExposedField<TValue> = {
    * Props for the error message element.
    */
   errorMessageProps: Ref<AriaErrorMessageProps>;
-
-  /**
-   * The field instance.
-   */
-  _field: FormField<TValue>;
 };
-
-export function useFormFieldContext<TValue = unknown>() {
-  return inject(FormFieldKey, null) as FormField<TValue> | null;
-}
 
 export function exposeField<TReturns extends object, TValue>(
   obj: TReturns,
   field: FormField<TValue>,
 ): ExposedField<TValue> & TReturns {
   return {
-    _field: markRaw(field),
-    displayError: field.displayError,
-    errorMessage: field.errorMessage,
-    errors: field.errors,
-    submitErrors: field.submitErrors,
-    submitErrorMessage: field.submitErrorMessage,
-    fieldValue: field.fieldValue as Ref<TValue>,
-    isDirty: field.isDirty,
-    isTouched: field.isTouched,
-    isValid: field.isValid,
-    isDisabled: field.isDisabled,
+    displayError: field.state.displayError,
+    errorMessage: field.state.errorMessage,
+    errors: field.state.errors,
+    submitErrors: field.state.submitErrors,
+    submitErrorMessage: field.state.submitErrorMessage,
+    fieldValue: field.state.fieldValue as Ref<TValue>,
+    isDirty: field.state.isDirty,
+    isTouched: field.state.isTouched,
+    isValid: field.state.isValid,
+    isDisabled: field.state.isDisabled,
     labelProps: field.labelProps,
     descriptionProps: field.descriptionProps,
     errorMessageProps: field.errorMessageProps,
     setErrors: __DEV__
       ? (messages: Arrayable<string>) => {
-          if (field.isDisabled.value) {
+          if (field.state.isDisabled.value) {
             warn('This field is disabled, setting errors will not take effect until the field is enabled.');
           }
 
-          field.setErrors(messages);
+          field.state.setErrors(messages);
         }
-      : field.setErrors,
-    setTouched: field.setTouched,
-    setValue: field.setValue,
-    validate: (mutate = true) => field.validate(mutate),
+      : field.state.setErrors,
+    setTouched: field.state.setTouched,
+    setValue: field.state.setValue,
+    validate: (mutate = true) => field.state.validate(mutate),
     ...obj,
   } satisfies ExposedField<TValue> & TReturns;
-}
-
-/**
- * Extracts the field init from control props.
- */
-export function resolveFieldInit<TValue = unknown, TInitialValue = TValue>(
-  props: NoInfer<NormalizedProps<ControlProps<TValue, TInitialValue>, 'schema' | '_field'>>,
-  resolveValue?: () => TValue,
-): FormFieldInit<TValue> {
-  return {
-    label: props.label,
-    description: props.description,
-    path: props.name,
-    initialValue: resolveValue?.() ?? ((toValue(props.modelValue) ?? toValue(props.value)) as TValue),
-    disabled: props.disabled,
-    schema: props.schema,
-  } satisfies FormFieldInit<TValue>;
-}
-
-/**
- * Resolves the field props from the context or creates a new field if none exists.
- */
-export function resolveControlField<TValue = unknown, TInitialValue = TValue>(
-  props: NoInfer<NormalizedProps<ControlProps<TValue, TInitialValue>, 'schema' | '_field'>>,
-  resolveValue?: Getter<TValue>,
-): FormField<TValue> {
-  return (
-    props._field ??
-    useFormFieldContext<TValue>() ??
-    useFormField<TValue>(resolveFieldInit<TValue, TInitialValue>(props, resolveValue))
-  );
 }

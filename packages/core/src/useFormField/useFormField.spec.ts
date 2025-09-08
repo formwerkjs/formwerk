@@ -5,7 +5,7 @@ import { ref } from 'vue';
 
 test('it initializes the field value', async () => {
   const { fieldValue } = await renderSetup(() => {
-    return useFormField({ label: 'Field', path: 'field', initialValue: 'bar' });
+    return useFormField({ label: 'Field', path: 'field', initialValue: 'bar' }).state;
   });
 
   expect(fieldValue.value).toBe('bar');
@@ -19,7 +19,7 @@ test('it initializes the field value in a form', async () => {
       return { form };
     },
     () => {
-      const field = useFormField({ label: 'Field', path: 'field', initialValue: 'bar' });
+      const field = useFormField({ label: 'Field', path: 'field', initialValue: 'bar' }).state;
 
       return { field };
     },
@@ -36,7 +36,7 @@ test('overrides the initial value in the form with its own', async () => {
       return { form };
     },
     () => {
-      const field = useFormField({ label: 'Field', path: 'field', initialValue: 'bar' });
+      const field = useFormField({ label: 'Field', path: 'field', initialValue: 'bar' }).state;
 
       return { field };
     },
@@ -53,7 +53,7 @@ test('obtains the initial value from the form', async () => {
       return { form };
     },
     () => {
-      const field = useFormField({ label: 'Field', path: 'field' });
+      const field = useFormField({ label: 'Field', path: 'field' }).state;
 
       return { field };
     },
@@ -70,7 +70,7 @@ test('pathless field do not write to the form', async () => {
       return { form };
     },
     () => {
-      const field = useFormField({ label: 'Field', initialValue: 'bar' });
+      const field = useFormField({ label: 'Field', initialValue: 'bar' }).state;
 
       return { field };
     },
@@ -81,7 +81,7 @@ test('pathless field do not write to the form', async () => {
 
 test('pathless field maintains its own touched state', async () => {
   const { isTouched, setTouched } = await renderSetup(() => {
-    return useFormField({ label: 'Field', initialValue: 'bar' });
+    return useFormField({ label: 'Field', initialValue: 'bar' }).state;
   });
 
   expect(isTouched.value).toBe(false);
@@ -91,7 +91,7 @@ test('pathless field maintains its own touched state', async () => {
 
 test('formless fields maintain their own dirty state', async () => {
   const { isDirty, setValue } = await renderSetup(() => {
-    return useFormField({ label: 'Field', initialValue: 'bar' });
+    return useFormField({ label: 'Field', initialValue: 'bar' }).state;
   });
 
   expect(isDirty.value).toBe(false);
@@ -103,7 +103,7 @@ test('formless fields maintain their own dirty state', async () => {
 
 test('formless fields maintain their own error state', async () => {
   const { setErrors, isValid, errorMessage, errors } = await renderSetup(() => {
-    return useFormField({ label: 'Field', initialValue: 'bar' });
+    return useFormField({ label: 'Field', initialValue: 'bar' }).state;
   });
 
   expect(isValid.value).toBe(true);
@@ -124,7 +124,7 @@ test('can have a typed schema for validation', async () => {
       schema: defineStandardSchema(async () => {
         return { issues: [{ message: 'error', path: ['field'] }] };
       }),
-    });
+    }).state;
   });
 
   expect(errors.value).toEqual([]);
@@ -142,7 +142,7 @@ test('disabled fields report isValid as true and errors as empty after being inv
       schema: defineStandardSchema(async () => {
         return { issues: [{ message: 'error', path: ['field'] }] };
       }),
-    });
+    }).state;
   });
 
   // Initially validate to make the field invalid
@@ -214,7 +214,7 @@ test('validate warns and skips validation on a disabled field', async () => {
       initialValue: 'bar',
       disabled: true,
       schema: defineStandardSchema(schemaSpy),
-    });
+    }).state;
   });
 
   // Attempt to validate the disabled field

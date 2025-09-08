@@ -1,4 +1,4 @@
-import { computed, Ref, shallowRef, toValue } from 'vue';
+import { computed, inject, InjectionKey, provide, Ref, shallowRef, toValue } from 'vue';
 import { ErrorableAttributes, useDescription, useErrorMessage, useLabel } from '../a11y';
 import {
   AriaDescribableProps,
@@ -8,7 +8,7 @@ import {
   AriaLabelProps,
   Reactivify,
 } from '../types';
-import { ControlApi } from '../types/controls';
+import { ControlApi, ControlProps } from '../types/controls';
 import { normalizeProps } from '../utils/common';
 
 export interface FieldControllerProps {
@@ -70,6 +70,8 @@ export interface FieldController {
   registerControl: (control: ControlApi) => void;
 }
 
+export const FieldControllerKey: InjectionKey<FieldController> = Symbol('FieldControllerKey');
+
 export function useFieldController(_props: Reactivify<FieldControllerProps>): FieldController {
   const control = shallowRef<ControlApi>();
   const props = normalizeProps(_props);
@@ -107,5 +109,11 @@ export function useFieldController(_props: Reactivify<FieldControllerProps>): Fi
     registerControl,
   } satisfies FieldController;
 
+  provide(FieldControllerKey, controller);
+
   return controller;
+}
+
+export function useFieldControllerContext<TValue = unknown>(props: Pick<ControlProps<TValue>, '_field'>) {
+  return props._field ?? inject(FieldControllerKey, null);
 }

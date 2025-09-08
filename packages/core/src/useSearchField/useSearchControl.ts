@@ -1,6 +1,5 @@
 import { computed, toValue } from 'vue';
-import { NormalizedProps, Reactivify } from '../types';
-import { FormFieldInit } from '../useFormField/useFormField';
+import { Reactivify } from '../types';
 import { TextControlProps, useTextControl } from '../useTextField/useTextControl';
 import { hasKeyCode } from '../utils/common';
 
@@ -22,7 +21,7 @@ export function useSearchControl(props: Reactivify<SearchControlProps, 'onSubmit
     type: 'search',
   });
 
-  const field = control._field;
+  const field = control.field;
 
   function clear() {
     field.setValue('');
@@ -84,15 +83,4 @@ export function useSearchControl(props: Reactivify<SearchControlProps, 'onSubmit
      */
     inputProps,
   };
-}
-
-export function getSearchFieldProps(props: NormalizedProps<SearchControlProps, 'onSubmit' | 'schema'>) {
-  return {
-    label: props.label,
-    description: props.description,
-    path: props.name,
-    initialValue: toValue(props.modelValue) ?? toValue(props.value),
-    disabled: props.disabled,
-    schema: props.schema,
-  } satisfies FormFieldInit<string | undefined>;
 }

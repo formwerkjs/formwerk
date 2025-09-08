@@ -13,10 +13,11 @@ import {
 } from '../types';
 import { normalizeProps, propsToValues, useCaptureProps, useUniqId } from '../utils/common';
 import { useInputValidity } from '../validation';
-import { exposeField, resolveControlField } from '../useFormField';
+import { resolveFieldState } from '../useFormField';
 import { FieldTypePrefixes } from '../constants';
 import { useVModelProxy } from '../reactivity/useVModelProxy';
 import { EventExpression } from '../helpers/useEventListener';
+import { useFieldControllerContext } from '../useFormField/useFieldController';
 
 export type TextInputDOMType = 'text' | 'password' | 'email' | 'number' | 'tel' | 'url' | 'search';
 
@@ -84,7 +85,8 @@ export function useTextControl(_props: Reactivify<TextControlProps, '_field' | '
   const inputEl = shallowRef<HTMLInputElement>();
   const inputId = useUniqId(FieldTypePrefixes.TextField);
   const props = normalizeProps(_props, ['_field', 'schema']);
-  const field = resolveControlField<string | undefined>(props);
+  const field = resolveFieldState<string | undefined>(props);
+  const controller = useFieldControllerContext(props);
   const { model } = useVModelProxy(field);
 
   useInputValidity({
@@ -92,11 +94,6 @@ export function useTextControl(_props: Reactivify<TextControlProps, '_field' | '
     field,
     disableHtmlValidation: props.disableHtmlValidation,
     events: () => toValue(props.validateOn) ?? ['change', 'blur'],
-  });
-
-  field.registerControl({
-    getControlElement: () => inputEl.value,
-    getControlId: () => inputId,
   });
 
   const handlers: InputEvents = {
@@ -111,14 +108,19 @@ export function useTextControl(_props: Reactivify<TextControlProps, '_field' | '
     },
   };
 
+  controller?.registerControl({
+    getControlElement: () => inputEl.value,
+    getControlId: () => inputId,
+  });
+
   const inputProps = useCaptureProps(() => {
     return {
       ...propsToValues(props, ['name', 'type', 'placeholder', 'autocomplete', 'required', 'readonly']),
       ...handlers,
       id: inputId,
-      ...field.accessibleErrorProps.value,
-      ...field.describedByProps.value,
-      ...field.labelledByProps.value,
+      ...controller?.accessibleErrorProps.value,
+      ...controller?.describedByProps.value,
+      ...controller?.labelledByProps.value,
       value: field.fieldValue.value,
       maxlength: toValue(props.maxLength),
       minlength: toValue(props.minLength),
@@ -128,26 +130,30 @@ export function useTextControl(_props: Reactivify<TextControlProps, '_field' | '
     };
   }, inputEl);
 
-  return exposeField(
-    {
-      /**
-       * The id of the input element.
-       */
-      controlId: inputId,
+  return {
+    /**
+     * The id of the input element.
+     */
+    controlId: inputId,
 
-      /**
-       * Props for the input element.
-       */
-      inputProps,
-      /**
-       * Ref to the input element.
-       */
-      inputEl,
-      /**
-       * The current text value of the field.
-       */
-      model,
-    },
+    /**
+     * Props for the input element.
+     */
+    inputProps,
+
+    /**
+     * Ref to the input element.
+     */
+    inputEl,
+
+    /**
+     * The current text value of the field.
+     */
+    model,
+
+    /**
+     * The field state.
+     */
     field,
-  );
+  };
 }
