@@ -1,11 +1,11 @@
 import { ref } from 'vue';
-import { FormField } from '../useFormField';
+import { FieldState } from '../useFormField';
 import { useSyncModel } from './useModelSync';
 
 /**
  * A proxy for the model value of a field, if the field is not provided, a local ref is created.
  */
-export function useVModelProxy<T = unknown>(field: FormField<T>) {
+export function useVModelProxy<T = unknown>(field: FieldState<T>) {
   const model = field.fieldValue ?? ref<T>();
 
   useSyncModel({

@@ -1,22 +1,22 @@
-import { registerField } from '@formwerk/devtools';
 import { normalizeProps } from '../utils/common';
 import { Reactivify } from '../types/common';
-import { resolveFieldInit, useFormField, WithFieldProps } from '../useFormField';
+import { exposeField, getFieldInit, useFormField, WithFieldProps } from '../useFormField';
 import { TextControlProps, useTextControl } from './useTextControl';
+import { registerField } from '@formwerk/devtools';
 
 export type TextFieldProps = WithFieldProps<TextControlProps>;
 
 export function useTextField(_props: Reactivify<TextFieldProps, 'schema'>) {
   const props = normalizeProps(_props, ['schema']);
-  const _field = useFormField(resolveFieldInit<string | undefined>(props));
+  const field = useFormField(getFieldInit<string | undefined>(props));
   const control = useTextControl({
     ...props,
-    _field,
+    _field: field,
   });
 
   if (__DEV__) {
-    registerField(_field, 'Text');
+    registerField(field.state, 'Text');
   }
 
-  return control;
+  return exposeField(control, field);
 }

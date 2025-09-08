@@ -24,10 +24,12 @@ import {
 } from '../utils/common';
 import { toNearestMultipleOf } from '../utils/math';
 import { useLocale } from '../i18n';
-import { exposeField, resolveControlField } from '../useFormField';
+import { resolveFieldState } from '../useFormField';
 import { FieldTypePrefixes } from '../constants';
 import { useInputValidity } from '../validation';
 import { useVModelProxy } from '../reactivity/useVModelProxy';
+import { useFieldControllerContext } from '../useFormField/useFieldController';
+import { registerField } from '@formwerk/devtools';
 
 export interface SliderControlProps<TValue = number> extends ControlProps<Arrayable<TValue> | undefined> {
   /**
@@ -179,7 +181,8 @@ export function useSliderControl<TValue>(_props: Reactivify<SliderControlProps<T
   const { direction } = useLocale();
   const trackEl = shallowRef<HTMLElement>();
   const thumbs = ref<ThumbRegistration[]>([]);
-  const field = resolveControlField<Arrayable<TValue> | undefined>(props);
+  const field = resolveFieldState<Arrayable<TValue> | undefined>(props);
+  const controller = useFieldControllerContext(props);
   const { model, setModelValue } = useVModelProxy(field);
 
   if (__DEV__) {
@@ -191,13 +194,14 @@ export function useSliderControl<TValue>(_props: Reactivify<SliderControlProps<T
   const isMutable = () => !isDisabled.value && !isReadonly();
 
   const { updateValidity } = useInputValidity({ field });
-  field.registerControl({
+
+  controller?.registerControl({
     getControlElement: () => trackEl.value,
     getControlId: () => inputId,
   });
 
   const groupProps = computed(() => ({
-    ...field.labelledByProps.value,
+    ...controller?.labelledByProps.value,
     id: inputId,
     role: 'group',
     dir: toValue(props.dir),
@@ -373,7 +377,7 @@ export function useSliderControl<TValue>(_props: Reactivify<SliderControlProps<T
       getThumbRange: () => getThumbRange(ctx),
       getSliderRange,
       getSliderLabelProps() {
-        return field.labelledByProps.value ?? {};
+        return controller?.labelledByProps.value ?? {};
       },
       getSliderStep,
       getValueForPagePosition,
@@ -392,7 +396,7 @@ export function useSliderControl<TValue>(_props: Reactivify<SliderControlProps<T
         setThumbValue(getThumbIndex(), value);
       },
       setTouched: field.setTouched ?? (() => {}),
-      getAccessibleErrorProps: () => field.accessibleErrorProps.value ?? ({} as ErrorableAttributes),
+      getAccessibleErrorProps: () => controller?.accessibleErrorProps.value ?? ({} as ErrorableAttributes),
     };
 
     return reg;
@@ -438,38 +442,44 @@ export function useSliderControl<TValue>(_props: Reactivify<SliderControlProps<T
     });
   }
 
-  return exposeField(
-    {
-      /**
-       * The id of the input element.
-       */
-      controlId: inputId,
+  if (__DEV__) {
+    registerField(field, 'Slider');
+  }
 
-      /**
-       * Reference to the track element.
-       */
-      trackEl,
+  return {
+    /**
+     * The id of the input element.
+     */
+    controlId: inputId,
 
-      /**
-       * Props for the root element for the slider component.
-       */
-      groupProps,
-      /**
-       * Props for the output element.
-       */
-      outputProps,
-      /**
-       * Props for the track element.
-       */
-      trackProps,
+    /**
+     * Reference to the track element.
+     */
+    trackEl,
 
-      /**
-       * Gets the metadata for a given thumb.
-       */
-      useThumbMetadata,
-    },
+    /**
+     * Props for the root element for the slider component.
+     */
+    groupProps,
+    /**
+     * Props for the output element.
+     */
+    outputProps,
+    /**
+     * Props for the track element.
+     */
+    trackProps,
+
+    /**
+     * Gets the metadata for a given thumb.
+     */
+    useThumbMetadata,
+
+    /**
+     * The field state.
+     */
     field,
-  );
+  };
 }
 
 // oxlint-disable-next-line no-explicit-any

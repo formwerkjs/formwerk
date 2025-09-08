@@ -1,5 +1,5 @@
 import { toValue, shallowRef, computed } from 'vue';
-import { exposeField, resolveControlField } from '../useFormField';
+import { resolveFieldState } from '../useFormField';
 import { AriaLabelableProps, Arrayable, ControlProps, Reactivify, Orientation } from '../types';
 import {
   isEqual,
@@ -14,6 +14,7 @@ import { useListBox } from '../useListBox';
 import { FieldTypePrefixes } from '../constants';
 import { useConstraintsValidator } from '../validation/useConstraintsValidator';
 import { useVModelProxy } from '../reactivity/useVModelProxy';
+import { useFieldControllerContext } from '../useFormField/useFieldController';
 
 export interface SelectControlProps<TValue> extends ControlProps<Arrayable<TValue>> {
   /**
@@ -53,7 +54,8 @@ export function useSelectControl<TOption, TValue = TOption>(
 ) {
   const inputId = useUniqId(FieldTypePrefixes.Select);
   const props = normalizeProps(_props, ['_field', 'schema']);
-  const field = resolveControlField<Arrayable<TValue>>(props);
+  const field = resolveFieldState<Arrayable<TValue>>(props);
+  const controller = useFieldControllerContext(props);
   const triggerEl = shallowRef<HTMLElement>();
   const { model, setModelValue } = useVModelProxy(field);
   const isDisabled = computed(() => toValue(props.disabled) || field.isDisabled.value);
@@ -71,9 +73,9 @@ export function useSelectControl<TOption, TValue = TOption>(
     listBoxId,
     findFocusedOption,
   } = useListBox<TOption, TValue>({
-    labeledBy: () => field.labelledByProps.value['aria-labelledby'],
+    labeledBy: () => controller?.labelledByProps.value['aria-labelledby'],
     autofocusOnOpen: true,
-    label: field.label,
+    label: controller?.label.value ?? '',
     disabled: isDisabled,
     isValueSelected,
     handleToggleValue: toggleValue,
@@ -91,13 +93,12 @@ export function useSelectControl<TOption, TValue = TOption>(
     source: triggerEl,
   });
 
-  if (field) {
-    useInputValidity({ field, inputEl });
-    field.registerControl({
-      getControlElement: () => triggerEl.value,
-      getControlId: () => inputId,
-    });
-  }
+  useInputValidity({ field, inputEl });
+
+  controller?.registerControl({
+    getControlElement: () => triggerEl.value,
+    getControlId: () => inputId,
+  });
 
   function isSingle() {
     const isMultiple = toValue(props.multiple);
@@ -216,9 +217,9 @@ export function useSelectControl<TOption, TValue = TOption>(
 
   const triggerProps = useCaptureProps<SelectTriggerDomProps>(() => {
     return {
-      ...field.labelledByProps.value,
-      ...field.describedByProps.value,
-      ...field.accessibleErrorProps.value,
+      ...controller?.labelledByProps.value,
+      ...controller?.describedByProps.value,
+      ...controller?.accessibleErrorProps.value,
       id: inputId,
       tabindex: isDisabled.value ? '-1' : '0',
       type: triggerEl.value?.tagName === 'BUTTON' ? 'button' : undefined,
@@ -232,45 +233,47 @@ export function useSelectControl<TOption, TValue = TOption>(
     };
   }, triggerEl);
 
-  return exposeField(
-    {
-      /**
-       * The id of the input element.
-       */
-      controlId: inputId,
+  return {
+    /**
+     * The id of the input element.
+     */
+    controlId: inputId,
 
-      /**
-       * The model value of the select field.
-       */
-      model,
+    /**
+     * The model value of the select field.
+     */
+    model,
 
-      /**
-       * Whether the popup is open.
-       */
-      isPopupOpen,
-      /**
-       * Props for the trigger element.
-       */
-      triggerProps,
+    /**
+     * Whether the popup is open.
+     */
+    isPopupOpen,
+    /**
+     * Props for the trigger element.
+     */
+    triggerProps,
 
-      /**
-       * Props for the listbox/popup element.
-       */
-      listBoxProps,
+    /**
+     * Props for the listbox/popup element.
+     */
+    listBoxProps,
 
-      /**
-       * Reference to the popup element.
-       */
-      listBoxEl,
-      /**
-       * The currently selected option.
-       */
-      selectedOption,
-      /**
-       * The currently selected options.
-       */
-      selectedOptions,
-    },
+    /**
+     * Reference to the popup element.
+     */
+    listBoxEl,
+    /**
+     * The currently selected option.
+     */
+    selectedOption,
+    /**
+     * The currently selected options.
+     */
+    selectedOptions,
+
+    /**
+     * The field state.
+     */
     field,
-  );
+  };
 }

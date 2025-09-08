@@ -1,25 +1,21 @@
 import { normalizeProps } from '../utils/common';
 import { Reactivify } from '../types';
-import { resolveFieldInit, useFormField, WithFieldProps } from '../useFormField';
-import { registerField } from '@formwerk/devtools';
+import { getFieldInit, useFormField, WithFieldProps } from '../useFormField';
 import { CalendarControlProps, useCalendarControl } from './useCalendarControl';
 
 export type CalendarProps = WithFieldProps<CalendarControlProps>;
 
 export function useCalendar(_props: Reactivify<CalendarProps, 'field' | 'schema'>) {
   const props = normalizeProps(_props, ['field', 'schema']);
-  const field = props.field ?? useFormField(resolveFieldInit<Date | undefined>(props));
+  let field = props.field;
+  if (!field) {
+    field = useFormField(getFieldInit<Date | undefined>(props)).state;
+  }
+
   const control = useCalendarControl({
     ...props,
-    field,
+    field: props.field,
   });
-
-  if (__DEV__) {
-    // If it is its own field, we should register it with devtools.
-    if (!props.field) {
-      registerField(field, 'Calendar');
-    }
-  }
 
   return control;
 }

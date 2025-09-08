@@ -1,6 +1,18 @@
-import { computed, inject, MaybeRefOrGetter, nextTick, readonly, Ref, shallowRef, toValue, watch } from 'vue';
+import {
+  computed,
+  inject,
+  InjectionKey,
+  MaybeRefOrGetter,
+  nextTick,
+  provide,
+  readonly,
+  Ref,
+  shallowRef,
+  toValue,
+  watch,
+} from 'vue';
 import { FormContext, FormKey } from '../useForm/useForm';
-import { Arrayable, Getter, StandardSchema, ValidationResult } from '../types';
+import { Arrayable, ControlProps, Getter, NormalizedProps, StandardSchema, ValidationResult } from '../types';
 import {
   cloneDeep,
   isEqual,
@@ -13,6 +25,7 @@ import {
 import { FormGroupKey } from '../useFormGroup';
 import { usePathPrefixer } from '../helpers/usePathPrefixer';
 import { createDisabledContext } from '../helpers/createDisabledContext';
+import { FormFieldInit } from './useFormField';
 
 export interface FieldStateInit<TValue = unknown> {
   path: MaybeRefOrGetter<string | undefined> | undefined;
@@ -192,6 +205,8 @@ export function useFieldState<TValue = unknown>(opts?: Partial<FieldStateInit<TV
 
     form.setFieldDisabled(path, disabled);
   });
+
+  provide(FormFieldKey, field as FieldState<unknown>);
 
   return { ...field, form };
 }
@@ -393,105 +408,37 @@ function createLocalValidity() {
   };
 }
 
-export type ExposedField<TValue> = {
-  /**
-   * The error message for the field.
-   */
-  errorMessage: Ref<string | undefined>;
+export const FormFieldKey: InjectionKey<FieldState<unknown>> = Symbol('FormFieldKey');
 
-  /**
-   * The errors for the field.
-   */
-  errors: Ref<string[]>;
-  /**
-   * The errors for the field from the last submit attempt.
-   */
-  submitErrors: Ref<string[]>;
-  /**
-   * The error message for the field from the last submit attempt.
-   */
-  submitErrorMessage: Ref<string | undefined>;
-  /**
-   * The value of the field.
-   */
-  fieldValue: Ref<TValue>;
-
-  /**
-   * Whether the field is dirty.
-   */
-  isDirty: Ref<boolean>;
-
-  /**
-   * Whether the field is touched.
-   */
-  isTouched: Ref<boolean>;
-
-  /**
-   * Whether the field is valid.
-   */
-  isValid: Ref<boolean>;
-
-  /**
-   * Whether the field is disabled.
-   */
-  isDisabled: Ref<boolean>;
-
-  /**
-   * Sets the errors for the field.
-   */
-  setErrors: (messages: Arrayable<string>) => void;
-
-  /**
-   * Sets the touched state for the field.
-   */
-  setTouched: (touched: boolean) => void;
-
-  /**
-   * Sets the value for the field.
-   */
-  setValue: (value: TValue) => void;
-
-  /**
-   * Validates the field.
-   * @param mutate - Whether to set errors on the field as a result of the validation call, defaults to `true`.
-   */
-  validate: (mutate?: boolean) => Promise<ValidationResult>;
-};
-
-export function useFieldStateInjection<TValue = unknown>() {
-  return inject(FieldStateKey, null) as FieldState<TValue> | null;
+export function useFieldStateContext<TValue = unknown>() {
+  return inject(FormFieldKey, null) as FieldState<TValue> | null;
 }
 
-export function exposeField<TReturns extends object, TValue>(
-  obj: TReturns,
-  field: FieldState<TValue>,
-): ExposedField<TValue> & TReturns {
-  const exposedField = {
-    errorMessage: field.errorMessage,
-    errors: field.errors,
-    submitErrors: field.submitErrors,
-    submitErrorMessage: field.submitErrorMessage,
-    fieldValue: field.fieldValue as Ref<TValue>,
-    isDirty: field.isDirty,
-    isTouched: field.isTouched,
-    isValid: field.isValid,
-    isDisabled: field.isDisabled,
-    setErrors: __DEV__
-      ? (messages: Arrayable<string>) => {
-          if (field.isDisabled.value) {
-            warn('This field is disabled, setting errors will not take effect until the field is enabled.');
-          }
-
-          field.setErrors(messages);
-        }
-      : field.setErrors,
-    setTouched: field.setTouched,
-    setValue: field.setValue,
-    validate: (mutate = true) => field.validate(mutate),
-  } satisfies ExposedField<TValue>;
-
+/**
+ * Extracts the field init from control props.
+ */
+export function getStateInit<TValue = unknown, TInitialValue = TValue>(
+  props: NoInfer<NormalizedProps<ControlProps<TValue, TInitialValue>, 'schema' | '_field'>>,
+  resolveValue?: () => TValue,
+): Partial<FieldStateInit<TValue>> {
   return {
-    ...obj,
-    ...exposedField,
-  } satisfies ExposedField<TValue> & TReturns;
+    path: props.name,
+    initialValue: resolveValue?.() ?? ((toValue(props.modelValue) ?? toValue(props.value)) as TValue),
+    disabled: props.disabled,
+    schema: props.schema,
+  } satisfies FormFieldInit<TValue>;
+}
+
+/**
+ * Resolves the field props from the context or creates a new field if none exists.
+ */
+export function resolveFieldState<TValue = unknown, TInitialValue = TValue>(
+  props: NoInfer<NormalizedProps<ControlProps<TValue, TInitialValue>, 'schema' | '_field'>>,
+  resolveValue?: Getter<TValue>,
+): FieldState<TValue | undefined> {
+  return (
+    props._field?.state ??
+    useFieldStateContext<TValue | undefined>() ??
+    useFieldState<TValue | undefined>(getStateInit<TValue, TInitialValue>(props, resolveValue))
+  );
 }

@@ -1,7 +1,7 @@
 import { ControlProps, Maybe, Reactivify } from '../types';
 import { isNullOrUndefined, normalizeProps, useUniqId, useCaptureProps } from '../utils/common';
 import { computed, shallowRef, toValue } from 'vue';
-import { exposeField, resolveControlField } from '../useFormField';
+import { resolveFieldState } from '../useFormField';
 import { useDateTimeSegmentGroup } from './useDateTimeSegmentGroup';
 import { FieldTypePrefixes } from '../constants';
 import { useDateFormatter, useLocale } from '../i18n';
@@ -13,6 +13,8 @@ import { useConstraintsValidator } from '../validation/useConstraintsValidator';
 import { merge } from '../../../shared/src';
 import { Simplify } from 'type-fest';
 import { useVModelProxy } from '../reactivity/useVModelProxy';
+import { useFieldControllerContext } from '../useFormField/useFieldController';
+import { registerField } from '@formwerk/devtools';
 
 export type TimeFormatOptions = Simplify<
   Pick<Intl.DateTimeFormatOptions, 'hour' | 'minute' | 'second' | 'dayPeriod' | 'timeZone' | 'hour12'>
@@ -61,7 +63,8 @@ function getDefaultFormatOptions(): TimeFormatOptions {
 export function useTimeControl(_props: Reactivify<TimeControlProps, '_field' | 'schema'>) {
   const props = normalizeProps(_props, ['_field', 'schema']);
   const controlEl = shallowRef<HTMLInputElement>();
-  const field = resolveControlField<Maybe<string>>(props);
+  const field = resolveFieldState<Maybe<string>>(props);
+  const controller = useFieldControllerContext(props);
   const { locale, direction, calendar, timeZone } = useLocale(props.locale);
   const { model, setModelValue } = useVModelProxy(field);
   const isDisabled = createDisabledContext(props.disabled);
@@ -82,7 +85,7 @@ export function useTimeControl(_props: Reactivify<TimeControlProps, '_field' | '
 
   useInputValidity({ field, inputEl });
 
-  field.registerControl({
+  controller?.registerControl({
     getControlElement: () => controlEl.value,
     getControlId: () => controlId,
   });
@@ -118,37 +121,43 @@ export function useTimeControl(_props: Reactivify<TimeControlProps, '_field' | '
     return {
       id: controlId,
       role: 'group',
-      ...field.labelledByProps.value,
-      ...field.describedByProps.value,
-      ...field.accessibleErrorProps.value,
+      ...controller?.labelledByProps.value,
+      ...controller?.describedByProps.value,
+      ...controller?.accessibleErrorProps.value,
       'aria-disabled': isDisabled.value || undefined,
     };
   }, controlEl);
 
-  return exposeField(
-    {
-      /**
-       * The id of the control element.
-       */
-      controlId,
+  if (__DEV__) {
+    registerField(field, 'Time');
+  }
 
-      /**
-       * The props to use for the control element.
-       */
-      controlProps,
+  return {
+    /**
+     * The id of the control element.
+     */
+    controlId,
 
-      /**
-       * The time segments, you need to render these with the `DateTimeSegment` component.
-       */
-      segments,
+    /**
+     * The props to use for the control element.
+     */
+    controlProps,
 
-      /**
-       * The direction of the field.
-       */
-      direction,
-    },
+    /**
+     * The time segments, you need to render these with the `DateTimeSegment` component.
+     */
+    segments,
+
+    /**
+     * The direction of the field.
+     */
+    direction,
+
+    /**
+     * The field state.
+     */
     field,
-  );
+  };
 }
 
 function timeStringToDate(time: Maybe<string>) {
