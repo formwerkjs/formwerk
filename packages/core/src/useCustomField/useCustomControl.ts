@@ -5,7 +5,6 @@ import { resolveFieldState } from '../useFormField';
 import { normalizeProps, propsToValues, useUniqId, useCaptureProps } from '../utils/common';
 import { useInputValidity } from '../validation';
 import { useFieldControllerContext } from '../useFormField/useFieldController';
-import { registerField } from '@formwerk/devtools';
 
 export interface CustomControlProps<TValue = unknown> extends ControlProps<TValue> {
   /**
@@ -46,10 +45,6 @@ export function useCustomControl<TValue = unknown>(
       id: controlId,
     };
   }, controlEl);
-
-  if (__DEV__) {
-    registerField(field, props.controlType ?? 'Custom');
-  }
 
   return {
     /**

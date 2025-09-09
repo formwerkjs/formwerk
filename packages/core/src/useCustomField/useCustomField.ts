@@ -1,3 +1,4 @@
+import { toValue } from 'vue';
 import { Reactivify } from '../types';
 import { exposeField, getFieldInit, useFormField, WithFieldProps } from '../useFormField';
 import { normalizeProps } from '../utils/common';
@@ -7,7 +8,7 @@ export type CustomFieldProps<TValue = unknown> = WithFieldProps<CustomControlPro
 
 export function useCustomField<TValue = unknown>(_props: Reactivify<CustomFieldProps<TValue>, 'schema'>) {
   const props = normalizeProps(_props, ['schema']);
-  const field = useFormField(getFieldInit<TValue>(props));
+  const field = useFormField(getFieldInit<TValue>(props), toValue(props.controlType) ?? 'Custom Field');
   const control = useCustomControl<TValue>({
     ...(props as CustomControlProps<TValue>),
     _field: field,

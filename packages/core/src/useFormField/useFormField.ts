@@ -13,6 +13,7 @@ import {
 } from '../types';
 import { normalizeProps, warn } from '../utils/common';
 import { Simplify } from 'type-fest';
+import { registerField } from '@formwerk/devtools';
 
 export type FormFieldInit<V = unknown> = Reactivify<FieldControllerProps> & Partial<FieldStateInit<V>>;
 
@@ -36,13 +37,17 @@ export type WithFieldProps<TControlProps extends object> = Simplify<
   }
 >;
 
-export function useFormField<TValue = unknown>(init?: FormFieldInit<TValue>): FormField<TValue> {
+export function useFormField<TValue = unknown>(init?: FormFieldInit<TValue>, controlType = 'Field'): FormField<TValue> {
   const controllerProps = normalizeProps(init ?? { label: '' });
   const state = useFieldState<TValue>(init);
   const controller = useFieldController({
     ...controllerProps,
     errorMessage: state.errorMessage,
   });
+
+  if (__DEV__) {
+    registerField(state, controlType);
+  }
 
   return {
     ...controller,
