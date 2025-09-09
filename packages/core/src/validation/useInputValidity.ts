@@ -87,7 +87,7 @@ export function useInputValidity(opts: InputValidityOptions) {
     };
   }
 
-  async function _updateValidity() {
+  async function _updateValidity(initialValidation?: boolean) {
     let result = validateNative(true);
     if (schema && result.isValid) {
       result = await validateField(true);
@@ -98,6 +98,12 @@ export function useInputValidity(opts: InputValidityOptions) {
     }
 
     (formGroup || form)?.requestValidation();
+
+    if (!initialValidation) {
+      (formGroup || form)?.onValidationDone(() => {
+        opts.field.setTouched(true);
+      });
+    }
   }
 
   async function updateValidity() {
@@ -138,7 +144,7 @@ export function useInputValidity(opts: InputValidityOptions) {
    * Validity is always updated on mount.
    */
   onMounted(() => {
-    nextTick(() => _updateValidity());
+    nextTick(() => _updateValidity(true));
   });
 
   return {

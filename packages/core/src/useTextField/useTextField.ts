@@ -126,7 +126,7 @@ export function useTextField(_props: Reactivify<TextFieldProps, 'schema'>) {
   });
 
   const { validityDetails } = useInputValidity({ inputEl, field, disableHtmlValidation: props.disableHtmlValidation });
-  const { fieldValue, setValue, setTouched, errorMessage, isDisabled } = field;
+  const { fieldValue, setValue, errorMessage, isDisabled } = field;
   const { labelProps, labelledByProps } = useLabel({
     for: inputId,
     label: props.label,
@@ -150,9 +150,7 @@ export function useTextField(_props: Reactivify<TextFieldProps, 'schema'>) {
     onChange(evt) {
       setValue((evt.target as HTMLInputElement).value);
     },
-    onBlur() {
-      setTouched(true);
-    },
+    onBlur() {},
   };
 
   const inputProps = useCaptureProps(() => {
