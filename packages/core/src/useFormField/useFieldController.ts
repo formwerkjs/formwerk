@@ -35,6 +35,11 @@ export interface FieldController {
   label: Ref<string>;
 
   /**
+   * The id of the control element.
+   */
+  controlId: Ref<string>;
+
+  /**
    * Props for the label element.
    */
   labelProps: Ref<AriaLabelProps>;
@@ -98,9 +103,12 @@ export function useFieldController(_props: Reactivify<FieldControllerProps>): Fi
     control.value = api;
   }
 
+  const controlId = computed(() => getControlId());
+
   const controller = {
     label: computed(() => toValue(props.label) ?? ''),
     labelProps,
+    controlId,
     labelledByProps,
     descriptionProps,
     describedByProps,
