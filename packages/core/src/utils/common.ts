@@ -1,4 +1,13 @@
-import { computed, getCurrentScope, MaybeRefOrGetter, onScopeDispose, Ref, toValue, useId } from 'vue';
+import {
+  ComponentPublicInstance,
+  computed,
+  getCurrentScope,
+  MaybeRefOrGetter,
+  onScopeDispose,
+  Ref,
+  toValue,
+  useId,
+} from 'vue';
 import { klona } from 'klona/full';
 import {
   Arrayable,
@@ -292,15 +301,27 @@ export function isInputElement(el: Maybe<HTMLElement>): el is HTMLInputElement {
     return false;
   }
 
-  return ['INPUT', 'TEXTAREA', 'SELECT'].includes(el.tagName);
+  return isComponent(el) || ['INPUT', 'TEXTAREA', 'SELECT'].includes(el.tagName);
 }
 
-export function isLabelElement(el: Maybe<HTMLElement>): el is HTMLLabelElement {
-  return el?.tagName === 'LABEL';
+export function isLabelElement(el: Maybe<HTMLElement | ComponentPublicInstance>): el is HTMLLabelElement {
+  if (!el) {
+    return false;
+  }
+
+  return isComponent(el) || el?.tagName === 'LABEL';
+}
+
+export function isComponent(ref: Maybe<HTMLElement | ComponentPublicInstance>): ref is ComponentPublicInstance {
+  if (!ref || 'tagName' in ref) {
+    return false;
+  }
+
+  return '$' in ref;
 }
 
 export function isButtonElement(el: Maybe<HTMLElement>): el is HTMLButtonElement {
-  return el?.tagName === 'BUTTON';
+  return isComponent(el) || el?.tagName === 'BUTTON';
 }
 
 export function isFormElement(el: Maybe<HTMLElement>): el is HTMLFormElement {
