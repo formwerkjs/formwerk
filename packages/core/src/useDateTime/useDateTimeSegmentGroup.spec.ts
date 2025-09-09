@@ -6,6 +6,7 @@ import { flush } from '@test-utils/flush';
 import { DateTimeSegment } from './useDateTimeSegment';
 import { createTemporalPartial, isTemporalPartial } from './temporalPartial';
 import { TemporalPartial } from './types';
+import { getSegmentTypePlaceholder } from './constants';
 
 function dispatchEvent() {
   // NOOP
@@ -424,6 +425,81 @@ describe('useDateTimeSegmentGroup', () => {
       const invalidInputEvent = new InputEvent('beforeinput', { data: '13', cancelable: true });
       fireEvent(monthSegment, invalidInputEvent);
       expect(monthSegment.textContent).not.toBe('13');
+    });
+
+    test('handles backspace correctly', async () => {
+      const formatter = ref(createFormatter());
+      const controlEl = shallowRef<HTMLElement>();
+      const onValueChange = vi.fn();
+
+      await render({
+        components: {
+          DateTimeSegment,
+        },
+        setup() {
+          const { segments } = useDateTimeSegmentGroup({
+            formatter,
+            temporalValue: currentDate,
+            formatOptions: {},
+            locale,
+            controlEl,
+            onValueChange,
+            onTouched: () => {},
+            dispatchEvent,
+          });
+
+          return {
+            segments,
+            controlEl,
+          };
+        },
+        template: `
+          <div ref="controlEl">
+            <DateTimeSegment
+              v-for="segment in segments"
+              :key="segment.type"
+              :data-segment-type="segment.type"
+              data-testid="segment"
+              v-bind="segment"
+            />
+          </div>
+        `,
+      });
+
+      await flush();
+      const segments = screen.getAllByTestId('segment');
+      const yearSegment = segments.find(el => el.dataset.segmentType === 'year')!;
+      fireEvent.focus(yearSegment);
+
+      // Test backspace single digit removal when inputting
+      const inputEvent = new InputEvent('beforeinput', { data: '2', cancelable: true });
+      fireEvent(yearSegment, inputEvent);
+      const secondInputEvent = new InputEvent('beforeinput', { data: '0', cancelable: true });
+      fireEvent(yearSegment, secondInputEvent);
+      expect(yearSegment.textContent).toBe('20');
+
+      await fireEvent.keyDown(yearSegment, { code: 'Backspace' });
+      expect(yearSegment.textContent).toBe('2');
+      expect(onValueChange).not.toHaveBeenCalled();
+
+      await fireEvent.keyDown(yearSegment, { code: 'Backspace' });
+      expect(yearSegment.textContent).toBe(getSegmentTypePlaceholder('year'));
+      expect(onValueChange).toBeCalled();
+      let lastCall = onValueChange.mock.lastCall?.[0];
+      expect(lastCall['~fw_temporal_partial'].year).toBe(false);
+
+      // Test backspace clear removal after focussing
+      await fireEvent(yearSegment, new InputEvent('beforeinput', { data: '2024', cancelable: true }));
+      fireEvent.blur(yearSegment);
+      await flush();
+      expect(onValueChange).toBeCalled();
+
+      fireEvent.focus(yearSegment);
+      await fireEvent.keyDown(yearSegment, { code: 'Backspace' });
+      expect(yearSegment.textContent).toBe(getSegmentTypePlaceholder('year'));
+      expect(onValueChange).toBeCalled();
+      lastCall = onValueChange.mock.lastCall?.[0];
+      expect(lastCall['~fw_temporal_partial'].year).toBe(false);
     });
 
     test('handles keyboard navigation and actions', async () => {
