@@ -1,5 +1,5 @@
 import { FieldState, FormReturns, Maybe } from '@core/index';
-import { ComponentInternalInstance, onUnmounted } from 'vue';
+import { ComponentInternalInstance, onUnmounted, Ref, toValue } from 'vue';
 import { DevtoolsForm, DevtoolsRootForm } from './types';
 import { getRootFormId } from './constants';
 
@@ -47,7 +47,7 @@ export function getAllForms() {
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function registerField(field: FieldState<any>, type: string, vm: Maybe<ComponentInternalInstance>) {
+export function registerField(field: FieldState<any>, type: Ref<any> | string, vm: Maybe<ComponentInternalInstance>) {
   const id = field.getPath() ?? field.getName() ?? '';
   const formId = field.form?.id ?? getRootFormId();
 
@@ -72,7 +72,7 @@ export function registerField(field: FieldState<any>, type: string, vm: Maybe<Co
   form.fields.set(id, {
     ...field,
     _vm: vm,
-    type,
+    type: toValue(type),
   });
 
   onUnmounted(() => {
