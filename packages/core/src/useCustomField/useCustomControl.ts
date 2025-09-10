@@ -32,6 +32,7 @@ export function useCustomControl<TValue = unknown>(
   controller?.registerControl({
     getControlElement: () => controlEl.value,
     getControlId: () => controlId,
+    getControlType: () => props.controlType ?? 'Custom',
   });
 
   const controlProps = useCaptureProps(() => {
