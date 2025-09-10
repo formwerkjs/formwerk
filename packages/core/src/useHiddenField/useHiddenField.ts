@@ -1,9 +1,8 @@
 import { toValue, watch } from 'vue';
-import { Reactivify } from '../types';
+import { BuiltInControlTypes, Reactivify } from '../types';
 import { exposeField, useFormField } from '../useFormField';
 import { normalizeProps } from '../utils/common';
 import { useInputValidity } from '../validation';
-import { registerField } from '@formwerk/devtools';
 
 export interface HiddenFieldProps<TValue = unknown> {
   /**
@@ -25,12 +24,15 @@ export interface HiddenFieldProps<TValue = unknown> {
 export function useHiddenField<TValue = unknown>(_props: Reactivify<HiddenFieldProps<TValue>>) {
   const props = normalizeProps(_props);
 
-  const field = useFormField({
-    label: '',
-    disabled: props.disabled,
-    path: props.name,
-    initialValue: toValue(props.value),
-  });
+  const field = useFormField(
+    {
+      label: '',
+      disabled: props.disabled,
+      path: props.name,
+      initialValue: toValue(props.value),
+    },
+    BuiltInControlTypes.Hidden,
+  );
 
   useInputValidity({
     field: field.state,
@@ -42,10 +44,6 @@ export function useHiddenField<TValue = unknown>(_props: Reactivify<HiddenFieldP
       field.state.setValue(value);
     },
   );
-
-  if (__DEV__) {
-    registerField(field.state, 'Hidden');
-  }
 
   return exposeField({}, field);
 }

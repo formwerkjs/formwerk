@@ -1,5 +1,4 @@
 import { InjectionKey, toValue, computed, onBeforeUnmount, reactive, provide, ref } from 'vue';
-import { registerField } from '@formwerk/devtools';
 import { useInputValidity } from '../validation/useInputValidity';
 import {
   Orientation,
@@ -9,6 +8,7 @@ import {
   Direction,
   Reactivify,
   ControlProps,
+  BuiltInControlTypes,
 } from '../types';
 import { useUniqId, getNextCycleArrIdx, normalizeProps, isEmpty, removeFirst, hasKeyCode } from '../utils/common';
 import { useLocale } from '../i18n';
@@ -111,6 +111,7 @@ export function useRadioGroup<TValue = string>(_props: Reactivify<RadioGroupProp
   field.registerControl({
     getControlId: () => groupId,
     getControlElement: () => undefined,
+    getControlType: () => BuiltInControlTypes.RadioGroup,
   });
 
   useInputValidity({
@@ -227,10 +228,6 @@ export function useRadioGroup<TValue = string>(_props: Reactivify<RadioGroupProp
   });
 
   provide(RadioGroupKey, context);
-
-  if (__DEV__) {
-    registerField(field.state, 'Radio');
-  }
 
   return exposeField(
     {

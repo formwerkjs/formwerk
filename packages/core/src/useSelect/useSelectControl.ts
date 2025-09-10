@@ -1,6 +1,6 @@
 import { toValue, shallowRef, computed } from 'vue';
 import { resolveFieldState } from '../useFormField';
-import { AriaLabelableProps, Arrayable, ControlProps, Reactivify, Orientation } from '../types';
+import { AriaLabelableProps, Arrayable, ControlProps, Reactivify, Orientation, BuiltInControlTypes } from '../types';
 import {
   isEqual,
   normalizeArrayable,
@@ -98,6 +98,7 @@ export function useSelectControl<TOption, TValue = TOption>(
   controller?.registerControl({
     getControlElement: () => triggerEl.value,
     getControlId: () => inputId,
+    getControlType: () => BuiltInControlTypes.Select,
   });
 
   function isSingle() {

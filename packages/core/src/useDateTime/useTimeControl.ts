@@ -1,4 +1,4 @@
-import { ControlProps, Maybe, Reactivify } from '../types';
+import { BuiltInControlTypes, ControlProps, Maybe, Reactivify } from '../types';
 import { isNullOrUndefined, normalizeProps, useUniqId, useCaptureProps } from '../utils/common';
 import { computed, shallowRef, toValue } from 'vue';
 import { resolveFieldState } from '../useFormField';
@@ -14,7 +14,6 @@ import { merge } from '../../../shared/src';
 import { Simplify } from 'type-fest';
 import { useVModelProxy } from '../reactivity/useVModelProxy';
 import { useFieldControllerContext } from '../useFormField/useFieldController';
-import { registerField } from '@formwerk/devtools';
 
 export type TimeFormatOptions = Simplify<
   Pick<Intl.DateTimeFormatOptions, 'hour' | 'minute' | 'second' | 'dayPeriod' | 'timeZone' | 'hour12'>
@@ -88,6 +87,7 @@ export function useTimeControl(_props: Reactivify<TimeControlProps, '_field' | '
   controller?.registerControl({
     getControlElement: () => controlEl.value,
     getControlId: () => controlId,
+    getControlType: () => BuiltInControlTypes.Time,
   });
 
   const temporalValue = useTemporalStore({
@@ -127,10 +127,6 @@ export function useTimeControl(_props: Reactivify<TimeControlProps, '_field' | '
       'aria-disabled': isDisabled.value || undefined,
     };
   }, controlEl);
-
-  if (__DEV__) {
-    registerField(field, 'Time');
-  }
 
   return {
     /**

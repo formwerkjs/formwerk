@@ -10,7 +10,16 @@ import {
   shallowRef,
 } from 'vue';
 import { type ErrorableAttributes } from '../a11y';
-import { AriaLabelableProps, Arrayable, ControlProps, Direction, Numberish, Orientation, Reactivify } from '../types';
+import {
+  AriaLabelableProps,
+  Arrayable,
+  BuiltInControlTypes,
+  ControlProps,
+  Direction,
+  Numberish,
+  Orientation,
+  Reactivify,
+} from '../types';
 import {
   fromNumberish,
   isEqual,
@@ -29,7 +38,6 @@ import { FieldTypePrefixes } from '../constants';
 import { useInputValidity } from '../validation';
 import { useVModelProxy } from '../reactivity/useVModelProxy';
 import { useFieldControllerContext } from '../useFormField/useFieldController';
-import { registerField } from '@formwerk/devtools';
 
 export interface SliderControlProps<TValue = number> extends ControlProps<Arrayable<TValue> | undefined> {
   /**
@@ -198,6 +206,7 @@ export function useSliderControl<TValue>(_props: Reactivify<SliderControlProps<T
   controller?.registerControl({
     getControlElement: () => trackEl.value,
     getControlId: () => inputId,
+    getControlType: () => BuiltInControlTypes.Slider,
   });
 
   const groupProps = computed(() => ({
@@ -440,10 +449,6 @@ export function useSliderControl<TValue>(_props: Reactivify<SliderControlProps<T
         sliderMax: absoluteMax,
       } satisfies ThumbMetadata;
     });
-  }
-
-  if (__DEV__) {
-    registerField(field, 'Slider');
   }
 
   return {

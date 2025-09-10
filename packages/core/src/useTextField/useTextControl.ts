@@ -4,6 +4,7 @@ import {
   AriaLabelableProps,
   AriaValidatableProps,
   Arrayable,
+  BuiltInControlTypes,
   ControlProps,
   InputEvents,
   Numberish,
@@ -111,6 +112,7 @@ export function useTextControl(_props: Reactivify<TextControlProps, '_field' | '
   controller?.registerControl({
     getControlElement: () => inputEl.value,
     getControlId: () => inputId,
+    getControlType: () => BuiltInControlTypes.Text,
   });
 
   const inputProps = useCaptureProps(() => {

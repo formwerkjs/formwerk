@@ -1,5 +1,5 @@
 import { ref, toValue, watch, shallowRef, computed } from 'vue';
-import { ControlProps, InputEvents, Maybe, Reactivify } from '../types';
+import { BuiltInControlTypes, ControlProps, InputEvents, Maybe, Reactivify } from '../types';
 import { Orientation } from '../types';
 import {
   debounce,
@@ -19,7 +19,6 @@ import { useControlButtonProps } from '../helpers/useControlButtonProps';
 import { TransparentWrapper } from '../types';
 import { useVModelProxy } from '../reactivity/useVModelProxy';
 import { useFieldControllerContext } from '../useFormField/useFieldController';
-import { registerField } from '@formwerk/devtools';
 
 export interface ComboBoxControlProps<TOption, TValue = TOption> extends ControlProps<TValue> {
   /**
@@ -80,6 +79,7 @@ export function useComboBoxControl<TOption, TValue = TOption>(
   controller?.registerControl({
     getControlElement: () => inputEl.value,
     getControlId: () => inputId,
+    getControlType: () => BuiltInControlTypes.ComboBox,
   });
 
   const {
@@ -317,10 +317,6 @@ export function useComboBoxControl<TOption, TValue = TOption>(
     }
 
     watch(inputValue, debounce(filter.debounceMs, updateHiddenState));
-  }
-
-  if (__DEV__) {
-    registerField(field, 'ComboBox');
   }
 
   return {

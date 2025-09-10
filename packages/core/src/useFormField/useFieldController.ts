@@ -8,7 +8,7 @@ import {
   AriaLabelProps,
   Reactivify,
 } from '../types';
-import { ControlApi, ControlProps } from '../types/controls';
+import { BuiltInControlTypes, ControlApi, ControlProps } from '../types/controls';
 import { normalizeProps } from '../utils/common';
 
 export interface FieldControllerProps {
@@ -73,6 +73,11 @@ export interface FieldController {
    * Registers a control interface, used to get the control element and id.
    */
   registerControl: (control: ControlApi) => void;
+
+  /**
+   * The type of the control, used for devtools.
+   */
+  controlType: Ref<typeof BuiltInControlTypes | string>;
 }
 
 export const FieldControllerKey: InjectionKey<FieldController> = Symbol('FieldControllerKey');
@@ -82,6 +87,7 @@ export function useFieldController(_props: Reactivify<FieldControllerProps>): Fi
   const props = normalizeProps(_props);
   const getControlId = () => control.value?.getControlId() ?? '';
   const getControlElement = () => control.value?.getControlElement();
+  const getControlType = () => control.value?.getControlType() ?? 'Field';
 
   const { descriptionProps, describedByProps } = useDescription({
     inputId: getControlId,
@@ -104,11 +110,13 @@ export function useFieldController(_props: Reactivify<FieldControllerProps>): Fi
   }
 
   const controlId = computed(() => getControlId());
+  const controlType = computed(() => getControlType());
 
   const controller = {
     label: computed(() => toValue(props.label) ?? ''),
     labelProps,
     controlId,
+    controlType,
     labelledByProps,
     descriptionProps,
     describedByProps,
