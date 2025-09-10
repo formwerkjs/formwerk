@@ -1,4 +1,4 @@
-import { ControlProps, Reactivify } from '../types';
+import { BuiltInControlTypes, ControlProps, Reactivify } from '../types';
 import type { CalendarProps } from '../useCalendar';
 import { normalizeProps, useUniqId, useCaptureProps } from '../utils/common';
 import { computed, shallowRef, toValue } from 'vue';
@@ -12,7 +12,6 @@ import { useInputValidity } from '../validation';
 import { useConstraintsValidator } from '../validation/useConstraintsValidator';
 import { useVModelProxy } from '../reactivity/useVModelProxy';
 import { useFieldControllerContext } from '../useFormField/useFieldController';
-import { registerField } from '@formwerk/devtools';
 
 export interface DateControlProps extends ControlProps<Date | undefined> {
   /**
@@ -84,6 +83,7 @@ export function useDateControl(_props: Reactivify<DateControlProps, '_field' | '
   controller?.registerControl({
     getControlElement: () => controlEl.value,
     getControlId: () => controlId,
+    getControlType: () => BuiltInControlTypes.Date,
   });
 
   const min = computed(() => fromDateToCalendarZonedDateTime(toValue(props.min), calendar.value, timeZone.value));
@@ -145,10 +145,6 @@ export function useDateControl(_props: Reactivify<DateControlProps, '_field' | '
       'aria-disabled': field.isDisabled.value || undefined,
     };
   }, controlEl);
-
-  if (__DEV__) {
-    registerField(field, 'Date');
-  }
 
   return {
     /**

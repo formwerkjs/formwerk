@@ -3,6 +3,7 @@ import {
   AriaDescribableProps,
   AriaInputProps,
   AriaLabelableProps,
+  BuiltInControlTypes,
   ControlProps,
   EventHandler,
   InputBaseAttributes,
@@ -17,7 +18,6 @@ import { TransparentWrapper } from '../types';
 import { useVModelProxy } from '../reactivity/useVModelProxy';
 import { getSwitchValue } from './utils';
 import { useFieldControllerContext } from '../useFormField/useFieldController';
-import { registerField } from '@formwerk/devtools';
 
 export interface SwitchDomInputProps
   extends InputBaseAttributes,
@@ -79,6 +79,7 @@ export function useSwitchControl<TValue = boolean>(
   controller?.registerControl({
     getControlElement: () => inputEl.value,
     getControlId: () => inputId,
+    getControlType: () => BuiltInControlTypes.Switch,
   });
 
   const isDisabled = computed(() => toValue(props.disabled) || field.isDisabled.value);
@@ -200,10 +201,6 @@ export function useSwitchControl<TValue = boolean>(
 
   function togglePressed(force?: boolean) {
     isPressed.value = force ?? !isPressed.value;
-  }
-
-  if (__DEV__) {
-    registerField(field, 'Switch');
   }
 
   return {

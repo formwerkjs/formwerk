@@ -7,7 +7,7 @@ export type TextFieldProps = WithFieldProps<TextControlProps>;
 
 export function useTextField(_props: Reactivify<TextFieldProps, 'schema'>) {
   const props = normalizeProps(_props, ['schema']);
-  const field = useFormField(getFieldInit<string | undefined>(props), 'Text');
+  const field = useFormField(getFieldInit<string | undefined>(props));
   const control = useTextControl({
     ...props,
     _field: field,

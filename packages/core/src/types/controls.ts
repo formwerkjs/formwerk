@@ -4,6 +4,7 @@ import { StandardSchema } from './forms';
 export interface ControlApi {
   getControlElement(): HTMLElement | undefined;
   getControlId(): string | undefined;
+  getControlType(): typeof BuiltInControlTypes | string | undefined;
 }
 
 export interface ControlProps<TValue = unknown, TInitialValue = TValue> {
@@ -42,3 +43,23 @@ export interface ControlProps<TValue = unknown, TInitialValue = TValue> {
    */
   required?: boolean;
 }
+
+export const BuiltInControlTypes = {
+  Text: 'Text',
+  Calendar: 'Calendar',
+  Date: 'Date',
+  Time: 'Time',
+  File: 'File',
+  Select: 'Select',
+  Number: 'Number',
+  OTP: 'OTP',
+  Slider: 'Slider',
+  Switch: 'Switch',
+  Checkbox: 'Checkbox',
+  CheckboxGroup: 'CheckboxGroup',
+  RadioGroup: 'RadioGroup',
+  ComboBox: 'ComboBox',
+  Hidden: 'Hidden',
+  Search: 'Search',
+  Custom: 'Custom',
+} as const;

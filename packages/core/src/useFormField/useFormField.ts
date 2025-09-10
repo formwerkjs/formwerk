@@ -37,7 +37,10 @@ export type WithFieldProps<TControlProps extends object> = Simplify<
   }
 >;
 
-export function useFormField<TValue = unknown>(init?: FormFieldInit<TValue>, controlType = 'Field'): FormField<TValue> {
+export function useFormField<TValue = unknown>(
+  init?: FormFieldInit<TValue>,
+  constrolType: string = 'Field',
+): FormField<TValue> {
   const controllerProps = normalizeProps(init ?? { label: '' });
   const state = useFieldState<TValue>(init);
   const controller = useFieldController({
@@ -46,7 +49,7 @@ export function useFormField<TValue = unknown>(init?: FormFieldInit<TValue>, con
   });
 
   if (__DEV__) {
-    registerField(state, controlType);
+    registerField(state, controller.controlType ?? constrolType);
   }
 
   return {

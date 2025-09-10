@@ -1,5 +1,4 @@
 import { computed, inject, nextTick, toValue, shallowRef } from 'vue';
-import { registerField } from '@formwerk/devtools';
 import { hasKeyCode, isEqual, isInputElement, normalizeProps, useUniqId, useCaptureProps } from '../utils/common';
 import {
   AriaLabelableProps,
@@ -273,10 +272,6 @@ export function useCheckbox<TValue = string>(_props: Reactivify<CheckboxProps<TV
   }
 
   const isGrouped = !!group;
-
-  if (__DEV__) {
-    registerField(field.state, 'Checkbox');
-  }
 
   return exposeField(
     {
