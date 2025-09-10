@@ -20,7 +20,6 @@ import { useInputValidity } from '../validation';
 import { FilterFn } from '../collections';
 import { useControlButtonProps } from '../helpers/useControlButtonProps';
 import { registerField } from '@formwerk/devtools';
-import { TransparentWrapper } from '../types';
 
 export interface ComboBoxProps<TOption, TValue = TOption> {
   /**
@@ -81,7 +80,8 @@ export interface ComboBoxProps<TOption, TValue = TOption> {
   /**
    * Whether to disable HTML5 validation.
    */
-  disableHtmlValidation?: TransparentWrapper<boolean>;
+  // eslint-disable-next-line @typescript-eslint/no-wrapper-object-types
+  disableHtmlValidation?: Boolean;
 
   /**
    * Whether to open the popup when the input is focused.

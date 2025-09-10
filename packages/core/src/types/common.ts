@@ -107,5 +107,3 @@ export type MaybeGetter<T> = T | Getter<T>;
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type DangerousAny = any;
-
-export type TransparentWrapper<T> = T;

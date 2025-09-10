@@ -1,7 +1,7 @@
 import { inject, InjectionKey, MaybeRefOrGetter, onMounted, provide, reactive, readonly, Ref, ref } from 'vue';
 import type { StandardSchemaV1 } from '@standard-schema/spec';
 import { registerForm } from '@formwerk/devtools';
-import { cloneDeep, useUniqId, warn } from '../utils/common';
+import { cloneDeep, toPrimitiveBooleanValue, useUniqId, warn } from '../utils/common';
 import {
   FormObject,
   MaybeAsync,
@@ -28,7 +28,6 @@ import { FieldTypePrefixes } from '../constants';
 import { appendToFormData, clearFormData } from '../utils/formData';
 import { Arrayable, PartialDeep } from 'type-fest';
 import { createDisabledContext } from '../helpers/createDisabledContext';
-import { TransparentWrapper } from '../types';
 
 interface _FormProps<TInput extends FormObject> {
   /**
@@ -49,7 +48,8 @@ interface _FormProps<TInput extends FormObject> {
   /**
    * Whether HTML5 validation should be disabled for this form.
    */
-  disableHtmlValidation?: TransparentWrapper<boolean>;
+  // eslint-disable-next-line @typescript-eslint/no-wrapper-object-types
+  disableHtmlValidation?: Boolean;
 
   /**
    * Whether the form is disabled.
@@ -268,7 +268,8 @@ export function useForm<
 
   const id = props?.id || useUniqId(FieldTypePrefixes.Form);
   const isDisabled = createDisabledContext(props?.disabled);
-  const isHtmlValidationDisabled = () => props?.disableHtmlValidation ?? getConfig().disableHtmlValidation;
+  const isHtmlValidationDisabled = () =>
+    toPrimitiveBooleanValue(props?.disableHtmlValidation) ?? getConfig().disableHtmlValidation;
   const values = reactive(cloneDeep(valuesSnapshot.originals.value)) as PartialDeep<TResolvedInput>;
   const touched = reactive(cloneDeep(touchedSnapshot.originals.value)) as TouchedSchema<TResolvedInput>;
   const dirty = reactive(cloneDeep(dirtySnapshot.originals.value)) as DirtySchema<TResolvedInput>;

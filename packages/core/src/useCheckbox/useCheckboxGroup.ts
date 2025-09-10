@@ -24,7 +24,6 @@ import {
 import { useLocale } from '../i18n';
 import { FormField, useFormField, exposeField } from '../useFormField';
 import { FieldTypePrefixes } from '../constants';
-import { TransparentWrapper } from '../types';
 
 export type CheckboxGroupValue<TCheckbox> = TCheckbox[];
 
@@ -108,7 +107,8 @@ export interface CheckboxGroupProps<TCheckbox = unknown> {
   /**
    * Whether HTML5 validation should be disabled for this checkbox group.
    */
-  disableHtmlValidation?: TransparentWrapper<boolean>;
+  // eslint-disable-next-line @typescript-eslint/no-wrapper-object-types
+  disableHtmlValidation?: Boolean;
 }
 
 interface CheckboxGroupDomProps extends AriaLabelableProps, AriaDescribableProps, AriaValidatableProps {
