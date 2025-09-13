@@ -1,5 +1,17 @@
 # @formwerk/core
 
+## 0.12.0
+
+### Minor Changes
+
+- 42fb658: feat: allow configuring validation events
+
+### Patch Changes
+
+- 2b3e127: Sets the field to touched when selecting a date in the Calendar
+- 4be7a10: Make backspace/delete more untuitive for date/time segments in DateField
+  - @formwerk/devtools@0.12.0
+
 ## 0.11.6
 
 ### Patch Changes
