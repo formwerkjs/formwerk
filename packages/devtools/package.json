@@ -41,7 +41,7 @@
     "dist/*.d.ts"
   ],
   "dependencies": {
-    "@vue/devtools-api": "^8.0.1",
-    "@vue/devtools-kit": "^8.0.1"
+    "@vue/devtools-api": "^8.0.2",
+    "@vue/devtools-kit": "^8.0.2"
   }
 }

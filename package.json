@@ -29,7 +29,7 @@
     "ci:changelog": "pnpx changelogithub"
   },
   "devDependencies": {
-    "@changesets/cli": "^2.29.6",
+    "@changesets/cli": "^2.29.7",
     "@commitlint/cli": "^19.8.1",
     "@commitlint/config-conventional": "^19.8.1",
     "@testing-library/vue": "^8.1.0",
@@ -42,15 +42,15 @@
     "filesize": "^11.0.2",
     "flush-promises": "^1.0.2",
     "fs-extra": "^11.3.1",
-    "globals": "^16.3.0",
+    "globals": "^16.4.0",
     "gzip-size": "^7.0.0",
     "husky": "^9.1.7",
     "jsdom": "^26.1.0",
-    "lint-staged": "^16.1.5",
-    "oxlint": "^1.14.0",
-    "pkg-pr-new": "^0.0.58",
+    "lint-staged": "^16.1.6",
+    "oxlint": "^1.15.0",
+    "pkg-pr-new": "^0.0.60",
     "prettier": "^3.6.2",
-    "rolldown": "1.0.0-beta.34",
+    "rolldown": "1.0.0-beta.37",
     "rolldown-plugin-dts": "0.13.13",
     "tslint-config-prettier": "^1.18.0",
     "tsx": "^4.20.5",
@@ -60,7 +60,7 @@
     "vitest-axe": "1.0.0-pre.3",
     "vitest-dom": "^0.1.1",
     "vue": "^3.5.13",
-    "zod": "4.1.5"
+    "zod": "4.1.8"
   },
   "lint-staged": {
     "*.ts": [
