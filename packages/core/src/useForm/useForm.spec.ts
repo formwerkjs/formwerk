@@ -1422,17 +1422,6 @@ describe('form validation', () => {
     expect(getError('test')).toBeUndefined();
   });
 
-  test('displays errors if the field is touched', async () => {
-    const { setTouched, displayError, setErrors } = await renderSetup(() => {
-      return useForm();
-    });
-
-    setErrors('test', 'error');
-    expect(displayError('test')).toBeUndefined();
-    setTouched('test', true);
-    expect(displayError('test')).toBe('error');
-  });
-
   test('when looking up errors for a path, search for prefix matches when direct path is not found', async () => {
     const { ...form } = useForm({
       initialValues: {

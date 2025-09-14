@@ -3,7 +3,7 @@ import { SearchFieldProps, useSearchField } from '@formwerk/core';
 
 const props = defineProps<SearchFieldProps>();
 
-const { inputProps, labelProps, fieldValue, displayError, errorMessageProps, clearBtnProps } = useSearchField(props);
+const { inputProps, labelProps, fieldValue, errorMessageProps, clearBtnProps, errorMessage } = useSearchField(props);
 </script>
 
 <template>
@@ -23,7 +23,7 @@ const { inputProps, labelProps, fieldValue, displayError, errorMessageProps, cle
     <input v-bind="inputProps" placeholder="Search for..." />
 
     <span v-bind="errorMessageProps" class="error-message">
-      {{ displayError() }}
+      {{ errorMessage }}
     </span>
 
     <button v-show="fieldValue" v-bind="clearBtnProps" class="absolute right-4 bottom-[15px] text-gray-300">

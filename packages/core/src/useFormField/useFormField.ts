@@ -12,7 +12,6 @@ import {
   isLowPriority,
 } from '../utils/common';
 import { FormGroupKey } from '../useFormGroup';
-import { useErrorDisplay } from './useErrorDisplay';
 import { usePathPrefixer } from '../helpers/usePathPrefixer';
 import { createDisabledContext } from '../helpers/createDisabledContext';
 
@@ -44,7 +43,6 @@ export type FormField<TValue> = {
   setValue: (value: TValue | undefined) => void;
   setTouched: (touched: boolean) => void;
   setErrors: (messages: Arrayable<string>) => void;
-  displayError: () => string | undefined;
   form?: FormContext | null;
 };
 
@@ -63,8 +61,6 @@ export function useFormField<TValue = unknown>(opts?: Partial<FormFieldOptions<T
   const { isTouched, pathlessTouched, setTouched } = useFieldTouched(getPath, form);
   const { errors, setErrors, isValid, errorMessage, pathlessValidity, submitErrors, submitErrorMessage } =
     useFieldValidity(getPath, isDisabled, form);
-
-  const { displayError } = useErrorDisplay(errorMessage, isTouched);
 
   const isDirty = computed(() => {
     if (!form) {
@@ -139,7 +135,6 @@ export function useFormField<TValue = unknown>(opts?: Partial<FormFieldOptions<T
     setValue,
     setTouched,
     setErrors,
-    displayError,
     submitErrors,
     submitErrorMessage,
   };
@@ -411,11 +406,6 @@ function createLocalValidity() {
 
 export type ExposedField<TValue> = {
   /**
-   * Display the error message for the field.
-   */
-  displayError: () => string | undefined;
-
-  /**
    * The error message for the field.
    */
   errorMessage: Ref<string | undefined>;
@@ -484,7 +474,6 @@ export function exposeField<TReturns extends object, TValue>(
   field: FormField<TValue>,
 ): ExposedField<TValue> & TReturns {
   const exposedField = {
-    displayError: field.displayError,
     errorMessage: field.errorMessage,
     errors: field.errors,
     submitErrors: field.submitErrors,

@@ -55,10 +55,10 @@ function createSelect() {
         listBoxProps,
         errorMessageProps,
         descriptionProps,
-        displayError,
         fieldValue,
         selectedOptions,
         selectedOption,
+        errorMessage,
       } = useSelect(all);
 
       exposedSelectedOptions = selectedOptions;
@@ -77,12 +77,12 @@ function createSelect() {
         listBoxProps,
         errorMessageProps,
         descriptionProps,
-        displayError,
         getValue,
         groups,
         options,
         selectedOptions,
         selectedOption,
+        errorMessage,
       };
     },
     template: `
@@ -128,7 +128,7 @@ function createSelect() {
           </div>
 
           <span v-bind="errorMessageProps">
-            {{ displayError() }}
+            {{ errorMessage }}
           </span>
         </div>
     `,

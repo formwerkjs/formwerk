@@ -148,13 +148,6 @@ export function useFormGroup<TInput extends FormObject = FormObject, TOutput ext
     return form?.getErrors(prefixPath(path) ?? '')?.[0];
   }
 
-  function displayError(name: string) {
-    const msg = getError(name);
-    const path = prefixPath(name) ?? '';
-
-    return form?.isTouched(path) ? msg : undefined;
-  }
-
   function prefixPath(path: string | undefined) {
     return _prefixPath(getPath(), path);
   }
@@ -216,10 +209,7 @@ export function useFormGroup<TInput extends FormObject = FormObject, TOutput ext
      * Whether the form group is disabled.
      */
     isDisabled,
-    /**
-     * Displays an error for a given field.
-     */
-    displayError,
+
     /**
      * Validates the form group.
      */

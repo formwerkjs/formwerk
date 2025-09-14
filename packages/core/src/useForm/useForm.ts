@@ -155,12 +155,6 @@ export interface FormReturns<TInput extends FormObject = FormObject, TOutput ext
   getErrors: (path?: Path<TInput>) => string[];
 
   /**
-   * Displays the errors for a form field.
-   * @param path - The path to display the errors for.
-   */
-  displayError(path: Path<TInput>): string | undefined;
-
-  /**
    * Get the issues for a form field.
    */
   getIssues: (path?: Path<TInput>) => IssueCollection[];
@@ -318,10 +312,6 @@ export function useForm<
     return ctx.isPathDisabled(path) ? undefined : ctx.getFieldSubmitErrors(path)[0];
   }
 
-  function displayError(path: Path<TResolvedInput>) {
-    return ctx.isTouched(path) && !ctx.isPathDisabled(path) ? getError(path) : undefined;
-  }
-
   provide(FormKey, {
     ...ctx,
     ...transactionsManager,
@@ -370,7 +360,6 @@ export function useForm<
     setErrors: ctx.setErrors,
     setValues: ctx.setValues,
     getError,
-    displayError,
     getErrors: ctx.getErrors,
     getIssues: ctx.getIssues,
     getSubmitError,
