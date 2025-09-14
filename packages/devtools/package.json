@@ -42,8 +42,6 @@
   ],
   "dependencies": {
     "@vue/devtools-api": "^8.0.1",
-    "@vue/devtools-kit": "^8.0.1",
-    "klona": "^2.0.6",
-    "type-fest": "^4.41.0"
+    "@vue/devtools-kit": "^8.0.1"
   }
 }
