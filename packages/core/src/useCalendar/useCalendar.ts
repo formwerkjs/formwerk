@@ -228,6 +228,8 @@ export function useCalendar(_props: Reactivify<CalendarProps, 'field' | 'schema'
       // Automatically close the calendar when a day is selected
       pickerContext?.close();
     }
+
+    field.setTouched(true);
   }
 
   const handleKeyDown = useCalendarKeyboard(context, currentView);

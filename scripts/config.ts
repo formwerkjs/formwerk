@@ -49,15 +49,18 @@ async function createConfig(pkg: keyof typeof pkgNameMap, format: ModuleFormat) 
       input: slashes(path.resolve(__dirname, `../packages/${pkg}/src/index.ts`)),
       external: [
         'vue',
-        'klona',
-        'klona/full',
-        'type-fest',
-        pkg === 'core' ? '@formwerk/devtools' : undefined,
-        pkg === 'core' ? '@standard-schema/utils' : undefined,
-        pkg === 'core' ? '@standard-schema/spec' : undefined,
-        pkg === 'core' ? '@internationalized/date' : undefined,
-        pkg === 'devtools' ? '@vue/devtools-api' : undefined,
-        pkg === 'devtools' ? '@vue/devtools-kit' : undefined,
+        ...(pkg === 'core'
+          ? [
+              '@standard-schema/utils',
+              '@standard-schema/spec',
+              '@internationalized/date',
+              '@formwerk/devtools',
+              'klona',
+              'klona/full',
+              'type-fest',
+            ]
+          : []),
+        ...(pkg === 'devtools' ? ['@vue/devtools-api', '@vue/devtools-kit'] : []),
       ].filter(Boolean) as string[],
     },
     output: {

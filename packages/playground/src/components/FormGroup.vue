@@ -7,7 +7,7 @@
     {{ { isDirty, isTouched } }}
 
     <div class="flex flex-col gap-2 p-8">
-      <slot :display-error="displayError" :get-error="getError" :isTouched="isTouched" />
+      <slot :get-error="getError" :isTouched="isTouched" />
     </div>
   </div>
 </template>
@@ -17,5 +17,5 @@ import { FormGroupProps, useFormGroup } from '@formwerk/core';
 
 const props = defineProps<FormGroupProps>();
 
-const { labelProps, groupProps, getError, displayError, isDirty, isTouched } = useFormGroup(props);
+const { labelProps, groupProps, getError, isDirty, isTouched } = useFormGroup(props);
 </script>

@@ -340,7 +340,6 @@ function createGroupField<TValue = unknown>(group: CheckboxGroupContext<TValue>,
     ...group.field,
     errors: computed(() => []),
     errorMessage: computed(() => ''),
-    displayError: () => undefined,
     setValue,
   };
 }

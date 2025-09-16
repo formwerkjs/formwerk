@@ -3,7 +3,7 @@ import { TextFieldProps, useTextField } from '@formwerk/core';
 
 const props = defineProps<TextFieldProps>();
 
-const { inputProps, labelProps, errorMessageProps, isTouched, displayError } = useTextField(props);
+const { inputProps, labelProps, errorMessageProps, isTouched, errorMessage } = useTextField(props);
 </script>
 
 <template>
@@ -13,7 +13,7 @@ const { inputProps, labelProps, errorMessageProps, isTouched, displayError } = u
     <input v-bind="inputProps" />
 
     <span v-bind="errorMessageProps" class="w-full truncate error-message">
-      {{ displayError() }}
+      {{ errorMessage }}
     </span>
   </div>
 </template>
