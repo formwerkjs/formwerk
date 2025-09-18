@@ -195,6 +195,8 @@ export function useCalendarControl(_props: Reactivify<CalendarControlProps, 'fie
       // Automatically close the calendar when a day is selected
       pickerContext?.close();
     }
+
+    field.setTouched(true);
   }
 
   const handleKeyDown = useCalendarKeyboard(context, currentView);
