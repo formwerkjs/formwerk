@@ -9,6 +9,7 @@ import {
   Arrayable,
   StandardSchema,
   ControlProps,
+  BuiltInControlTypes,
 } from '../types';
 import {
   useUniqId,
@@ -119,6 +120,7 @@ export function useCheckboxGroup<TCheckbox>(_props: Reactivify<CheckboxGroupProp
   field.registerControl({
     getControlId: () => groupId,
     getControlElement: () => undefined,
+    getControlType: () => BuiltInControlTypes.CheckboxGroup,
   });
 
   const { fieldValue, setValue, isTouched, setTouched, isDisabled } = field.state;

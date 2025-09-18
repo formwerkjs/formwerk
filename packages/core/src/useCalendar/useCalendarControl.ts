@@ -1,7 +1,7 @@
 import { computed, inject, nextTick, provide, Ref, shallowRef, toValue, watch } from 'vue';
 import { CalendarContext, CalendarViewType } from './types';
 import { hasKeyCode, normalizeProps, useCaptureProps, useUniqId } from '../utils/common';
-import { ControlProps, Maybe, Reactivify } from '../types';
+import { BuiltInControlTypes, ControlProps, Maybe, Reactivify } from '../types';
 import { useLocale } from '../i18n';
 import { FieldTypePrefixes } from '../constants';
 import { blockEvent } from '../utils/events';
@@ -17,7 +17,6 @@ import { createDisabledContext } from '../helpers/createDisabledContext';
 import { useVModelProxy } from '../reactivity/useVModelProxy';
 import { useConstraintsValidator, useInputValidity } from '../validation';
 import { useFieldControllerContext } from '../useFormField/useFieldController';
-import { registerField } from '@formwerk/devtools';
 
 export interface CalendarControlProps extends ControlProps<Date | undefined> {
   /**
@@ -128,6 +127,7 @@ export function useCalendarControl(_props: Reactivify<CalendarControlProps, 'fie
     controller?.registerControl({
       getControlId: () => calendarId,
       getControlElement: () => calendarEl.value,
+      getControlType: () => BuiltInControlTypes.Calendar,
     });
   }
 
@@ -339,13 +339,6 @@ export function useCalendarControl(_props: Reactivify<CalendarControlProps, 'fie
       ...labelledByProps.value,
     };
   }, gridEl);
-
-  if (__DEV__) {
-    // If it is its own field, we should register it with devtools.
-    if (!props.field) {
-      registerField(field, 'Calendar');
-    }
-  }
 
   return {
     /**

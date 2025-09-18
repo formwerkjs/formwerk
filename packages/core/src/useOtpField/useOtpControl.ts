@@ -1,5 +1,5 @@
 import { computed, nextTick, provide, ref, toValue, watch, shallowRef } from 'vue';
-import { ControlProps, MaybeAsync, Reactivify } from '../types';
+import { BuiltInControlTypes, ControlProps, MaybeAsync, Reactivify } from '../types';
 import { OtpContextKey, OtpSlotAcceptType } from './types';
 import { normalizeProps, useUniqId, useCaptureProps } from '../utils/common';
 import { FieldTypePrefixes } from '../constants';
@@ -10,7 +10,6 @@ import { DEFAULT_MASK, getOtpValue, isValueAccepted, withPrefix } from './utils'
 import { blockEvent } from '../utils/events';
 import { useVModelProxy } from '../reactivity/useVModelProxy';
 import { useFieldControllerContext } from '../useFormField/useFieldController';
-import { registerField } from '@formwerk/devtools';
 
 export interface OtpControlProps extends ControlProps<string | undefined> {
   /**
@@ -78,6 +77,7 @@ export function useOtpControl(_props: Reactivify<OtpControlProps, ExcludedProps>
   controller?.registerControl({
     getControlElement: () => controlEl.value,
     getControlId: () => id,
+    getControlType: () => BuiltInControlTypes.OTP,
   });
 
   function getRequiredLength() {
@@ -287,10 +287,6 @@ export function useOtpControl(_props: Reactivify<OtpControlProps, ExcludedProps>
       field.setTouched(true);
     },
   });
-
-  if (__DEV__) {
-    registerField(field, 'OTP');
-  }
 
   return {
     /**

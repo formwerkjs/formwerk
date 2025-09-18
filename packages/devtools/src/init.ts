@@ -1,4 +1,13 @@
-import { App, type ComponentInternalInstance, getCurrentInstance, nextTick, onMounted, onUnmounted, watch } from 'vue';
+import {
+  App,
+  type ComponentInternalInstance,
+  getCurrentInstance,
+  MaybeRefOrGetter,
+  nextTick,
+  onMounted,
+  onUnmounted,
+  watch,
+} from 'vue';
 import { throttle } from '../../../packages/shared/src';
 import { isSSR } from '../../../packages/core/src/utils/common';
 import type { FieldState, FormReturns } from '@core/index';
@@ -219,8 +228,7 @@ export function initDevTools() {
   return vm;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function registerField(field: FieldState<any>, type: string) {
+export function registerField(field: FieldState<any>, type: MaybeRefOrGetter<string>) {
   onMounted(async () => {
     const vm = initDevTools();
     // Makes sure forms are registered before fields in same component contexts

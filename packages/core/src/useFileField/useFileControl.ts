@@ -1,5 +1,5 @@
 import { computed, markRaw, nextTick, provide, readonly, ref, toValue, shallowRef } from 'vue';
-import { Arrayable, ControlProps, Reactivify } from '../types';
+import { Arrayable, BuiltInControlTypes, ControlProps, Reactivify } from '../types';
 import {
   isNullOrUndefined,
   normalizeArrayable,
@@ -18,7 +18,6 @@ import { FileEntryCollectionKey, FilePickerOptions } from './types';
 import { useControlButtonProps } from '../helpers/useControlButtonProps';
 import { useVModelProxy } from '../reactivity/useVModelProxy';
 import { useFieldControllerContext } from '../useFormField/useFieldController';
-import { registerField } from '@formwerk/devtools';
 
 export interface FileUploadContext {
   /**
@@ -91,6 +90,7 @@ export function useFileControl(_props: Reactivify<FileControlProps, 'onUpload' |
   controller?.registerControl({
     getControlElement: () => inputEl.value,
     getControlId: () => inputId,
+    getControlType: () => BuiltInControlTypes.File,
   });
 
   function isMultiple() {
@@ -338,10 +338,6 @@ export function useFileControl(_props: Reactivify<FileControlProps, 'onUpload' |
     isDisabled: () => isDisabled.value ?? false,
     getRemoveButtonLabel: () => toValue(props.removeButtonLabel) ?? 'Remove file',
   });
-
-  if (__DEV__) {
-    registerField(field, 'File');
-  }
 
   return {
     /**

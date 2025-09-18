@@ -16,6 +16,7 @@ import {
   Numberish,
   ControlProps,
   Reactivify,
+  BuiltInControlTypes,
 } from '../types';
 import { useInputValidity } from '../validation/useInputValidity';
 import { useNumberParser } from '../i18n/useNumberParser';
@@ -26,7 +27,6 @@ import { FieldTypePrefixes } from '../constants';
 import { useEventListener } from '../helpers/useEventListener';
 import { useVModelProxy } from '../reactivity/useVModelProxy';
 import { useFieldControllerContext } from '../useFormField/useFieldController';
-import { registerField } from '@formwerk/devtools';
 
 export interface NumberInputDOMAttributes {
   name?: string;
@@ -123,6 +123,7 @@ export function useNumberControl(_props: Reactivify<NumberControlProps, '_field'
   controller?.registerControl({
     getControlElement: () => inputEl.value,
     getControlId: () => inputId,
+    getControlType: () => BuiltInControlTypes.Number,
   });
 
   watch(
@@ -239,10 +240,6 @@ export function useNumberControl(_props: Reactivify<NumberControlProps, '_field'
     },
     { disabled: () => isDisabled.value || toValue(props.disableWheel), passive: true },
   );
-
-  if (__DEV__) {
-    registerField(field, 'Number');
-  }
 
   return {
     /**
