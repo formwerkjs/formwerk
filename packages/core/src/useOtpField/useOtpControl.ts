@@ -8,7 +8,6 @@ import { useInputValidity, useConstraintsValidator } from '../validation';
 import { OtpSlotProps } from './useOtpSlot';
 import { DEFAULT_MASK, getOtpValue, isValueAccepted, withPrefix } from './utils';
 import { blockEvent } from '../utils/events';
-import { TransparentWrapper } from '../types';
 import { useVModelProxy } from '../reactivity/useVModelProxy';
 import { useFieldControllerContext } from '../useFormField/useFieldController';
 import { registerField } from '@formwerk/devtools';
@@ -37,7 +36,7 @@ export interface OtpControlProps extends ControlProps<string | undefined> {
   /**
    * Whether to disable HTML validation.
    */
-  disableHtmlValidation?: TransparentWrapper<boolean>;
+  disableHtmlValidation?: Boolean;
 
   /**
    * The prefix of the OTP field. If you prefix your codes with a character, you can set it here (e.g "G-").

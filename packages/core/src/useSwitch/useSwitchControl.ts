@@ -13,7 +13,6 @@ import { hasKeyCode, isEqual, isInputElement, normalizeProps, useUniqId, useCapt
 import { resolveFieldState } from '../useFormField';
 import { FieldTypePrefixes } from '../constants';
 import { useInputValidity } from '../validation';
-import { TransparentWrapper } from '../types';
 import { useVModelProxy } from '../reactivity/useVModelProxy';
 import { getSwitchValue } from './utils';
 import { useFieldControllerContext } from '../useFormField/useFieldController';
@@ -57,7 +56,7 @@ export interface SwitchControlProps<TValue = boolean> extends ControlProps<TValu
   /**
    * Whether to disable HTML5 validation.
    */
-  disableHtmlValidation?: TransparentWrapper<boolean>;
+  disableHtmlValidation?: Boolean;
 }
 
 export function useSwitchControl<TValue = boolean>(
