@@ -40,6 +40,11 @@ export interface FieldController {
   controlId: Ref<string>;
 
   /**
+   * The type of the control, used for devtools.
+   */
+  controlType: Ref<string>;
+
+  /**
    * Props for the label element.
    */
   labelProps: Ref<AriaLabelProps>;
@@ -82,6 +87,7 @@ export function useFieldController(_props: Reactivify<FieldControllerProps>): Fi
   const props = normalizeProps(_props);
   const getControlId = () => control.value?.getControlId() ?? '';
   const getControlElement = () => control.value?.getControlElement();
+  const getControlType = () => control.value?.getControlType() ?? 'Field';
 
   const { descriptionProps, describedByProps } = useDescription({
     inputId: getControlId,
@@ -104,11 +110,13 @@ export function useFieldController(_props: Reactivify<FieldControllerProps>): Fi
   }
 
   const controlId = computed(() => getControlId());
+  const controlType = computed(() => getControlType());
 
   const controller = {
     label: computed(() => toValue(props.label) ?? ''),
     labelProps,
     controlId,
+    controlType,
     labelledByProps,
     descriptionProps,
     describedByProps,

@@ -12,7 +12,7 @@ import {
   ValidationResult,
 } from '../types';
 import { normalizeProps, warn } from '../utils/common';
-import { Simplify } from 'type-fest';
+import { registerField } from '@formwerk/devtools';
 
 export type FormFieldInit<V = unknown> = Reactivify<FieldControllerProps> & Partial<FieldStateInit<V>>;
 
@@ -22,27 +22,32 @@ export type FormField<TValue = unknown> = FieldController & {
   state: FieldState<TValue>;
 };
 
-export type WithFieldProps<TControlProps extends object> = Simplify<
-  Omit<TControlProps, '_field'> & {
-    /**
-     * The label of the field.
-     */
-    label: string;
+export type WithFieldProps<TControlProps extends object> = Omit<TControlProps, '_field'> & {
+  /**
+   * The label of the field.
+   */
+  label: string;
 
-    /**
-     * The description of the field.
-     */
-    description?: string | undefined;
-  }
->;
+  /**
+   * The description of the field.
+   */
+  description?: string | undefined;
+};
 
-export function useFormField<TValue = unknown>(init?: FormFieldInit<TValue>): FormField<TValue> {
+export function useFormField<TValue = unknown>(
+  init?: FormFieldInit<TValue>,
+  controlType: string = 'Field',
+): FormField<TValue> {
   const controllerProps = normalizeProps(init ?? { label: '' });
   const state = useFieldState<TValue>(init);
   const controller = useFieldController({
     ...controllerProps,
     errorMessage: state.errorMessage,
   });
+
+  if (__DEV__) {
+    registerField(state, controller.controlType ?? controlType);
+  }
 
   return {
     ...controller,
