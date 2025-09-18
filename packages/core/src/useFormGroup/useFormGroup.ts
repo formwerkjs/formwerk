@@ -9,7 +9,7 @@ import {
   StandardSchema,
   ValidationResult,
 } from '../types';
-import { normalizeProps, useUniqId, warn, useCaptureProps } from '../utils/common';
+import { normalizeProps, useUniqId, warn, useCaptureProps, toPrimitiveBooleanValue } from '../utils/common';
 import { FormKey } from '../useForm';
 import { useValidationProvider } from '../validation/useValidationProvider';
 import { FormValidationMode } from '../useForm/formContext';
@@ -17,7 +17,6 @@ import { prefixPath as _prefixPath } from '../utils/path';
 import { getConfig } from '../config';
 import { createPathPrefixer, usePathPrefixer } from '../helpers/usePathPrefixer';
 import { createDisabledContext } from '../helpers/createDisabledContext';
-import { TransparentWrapper } from '../types';
 
 export interface FormGroupProps<TInput extends FormObject = FormObject, TOutput extends FormObject = TInput> {
   /**
@@ -43,7 +42,8 @@ export interface FormGroupProps<TInput extends FormObject = FormObject, TOutput 
   /**
    * Whether HTML5 validation should be disabled for this form group.
    */
-  disableHtmlValidation?: TransparentWrapper<boolean>;
+  // eslint-disable-next-line @typescript-eslint/no-wrapper-object-types
+  disableHtmlValidation?: Boolean;
 }
 
 interface GroupProps extends AriaLabelableProps {
@@ -84,7 +84,9 @@ export function useFormGroup<TInput extends FormObject = FormObject, TOutput ext
   const parentGroup = inject(FormGroupKey, null);
   const isDisabled = createDisabledContext(props.disabled);
   const isHtmlValidationDisabled = () =>
-    toValue(props.disableHtmlValidation) ?? form?.isHtmlValidationDisabled() ?? getConfig().disableHtmlValidation;
+    toPrimitiveBooleanValue(props.disableHtmlValidation) ??
+    form?.isHtmlValidationDisabled() ??
+    getConfig().disableHtmlValidation;
   const { validate, onValidationDispatch, defineValidationRequest, onValidationDone, dispatchValidateDone } =
     useValidationProvider({
       getValues: () => getValue(),

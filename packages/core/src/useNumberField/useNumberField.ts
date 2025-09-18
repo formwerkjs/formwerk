@@ -27,7 +27,6 @@ import { exposeField, useFormField } from '../useFormField';
 import { FieldTypePrefixes } from '../constants';
 import { useEventListener } from '../helpers/useEventListener';
 import { registerField } from '@formwerk/devtools';
-import { TransparentWrapper } from '../types';
 
 export interface NumberInputDOMAttributes {
   name?: string;
@@ -136,7 +135,8 @@ export interface NumberFieldProps {
   /**
    * Whether to disable HTML5 form validation.
    */
-  disableHtmlValidation?: TransparentWrapper<boolean>;
+  // eslint-disable-next-line @typescript-eslint/no-wrapper-object-types
+  disableHtmlValidation?: Boolean;
 }
 
 export function useNumberField(_props: Reactivify<NumberFieldProps, 'schema'>) {

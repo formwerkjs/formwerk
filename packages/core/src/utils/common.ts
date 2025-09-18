@@ -472,3 +472,13 @@ export function lowPriority<TValue>(value: TValue) {
 export function isLowPriority<TValue = unknown>(value: unknown): value is LowPriority<TValue> {
   return isObject(value) && '__isFwLowPriority__' in value;
 }
+
+// eslint-disable-next-line @typescript-eslint/no-wrapper-object-types
+export function toPrimitiveBooleanValue(val: MaybeRefOrGetter<Boolean | undefined>): boolean | undefined {
+  const unwrapped = toValue(val);
+
+  if (typeof unwrapped === 'string' && unwrapped === '') {
+    return true;
+  }
+  return unwrapped?.valueOf();
+}

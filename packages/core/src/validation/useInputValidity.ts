@@ -3,17 +3,17 @@ import { EventExpression, useEventListener } from '../helpers/useEventListener';
 import { type FormContext, FormKey } from '../useForm';
 import { Arrayable, Maybe, ValidationResult } from '../types';
 import { FormField } from '../useFormField';
-import { isInputElement, normalizeArrayable, warn } from '../utils/common';
+import { isInputElement, normalizeArrayable, toPrimitiveBooleanValue, warn } from '../utils/common';
 import { FormGroupContext, FormGroupKey } from '../useFormGroup';
 import { getConfig } from '../config';
 import { checkLocaleMismatch } from '../i18n';
-import { TransparentWrapper } from '../types';
 
 type ElementReference = Ref<Arrayable<Maybe<HTMLElement>>>;
 
 interface InputValidityOptions {
   inputEl?: ElementReference;
-  disableHtmlValidation?: MaybeRefOrGetter<TransparentWrapper<boolean> | undefined>;
+  // eslint-disable-next-line @typescript-eslint/no-wrapper-object-types
+  disableHtmlValidation?: MaybeRefOrGetter<Boolean | undefined>;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   field: FormField<any>;
   events?: MaybeRefOrGetter<Arrayable<EventExpression>>;
@@ -27,7 +27,7 @@ export function useInputValidity(opts: InputValidityOptions) {
   const validityDetails = shallowRef<ValidityState>();
   useMessageCustomValiditySync(errorMessage, opts.inputEl, form, formGroup);
   const isHtmlValidationDisabled = () =>
-    toBooleanValue(opts.disableHtmlValidation) ??
+    toPrimitiveBooleanValue(opts.disableHtmlValidation) ??
     (formGroup || form)?.isHtmlValidationDisabled() ??
     getConfig().disableHtmlValidation;
 
@@ -145,15 +145,6 @@ export function useInputValidity(opts: InputValidityOptions) {
     validityDetails,
     updateValidity,
   };
-}
-
-function toBooleanValue(val: MaybeRefOrGetter<TransparentWrapper<boolean> | undefined>): boolean | undefined {
-  const unwrapped = toValue(val);
-
-  if (typeof unwrapped === 'string' && unwrapped === '') {
-    return true;
-  }
-  return unwrapped;
 }
 
 /**
