@@ -1,5 +1,16 @@
 # @formwerk/core
 
+## 0.13.0
+
+### Minor Changes
+
+- 657b595: feat: deprecate displayError
+
+### Patch Changes
+
+- 3dda655: Change type for disableHtmlValidation to Boolean to prevent Vue compiling undefined to false
+  - @formwerk/devtools@0.13.0
+
 ## 0.12.0
 
 ### Minor Changes
