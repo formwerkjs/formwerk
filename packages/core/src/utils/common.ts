@@ -1,13 +1,22 @@
-import { computed, getCurrentScope, MaybeRefOrGetter, onScopeDispose, Ref, shallowRef, toValue, useId } from 'vue';
+import {
+  ComponentPublicInstance,
+  computed,
+  getCurrentScope,
+  MaybeRefOrGetter,
+  onScopeDispose,
+  Ref,
+  toValue,
+  useId,
+} from 'vue';
 import { klona } from 'klona/full';
 import {
-  AriaDescriptionProps,
   Arrayable,
   DangerousAny,
   IssueCollection,
   Maybe,
   NormalizedProps,
   Numberish,
+  Reactivify,
   StandardIssue,
 } from '../types';
 import { AsyncReturnType } from 'type-fest';
@@ -18,33 +27,6 @@ export const isSSR = typeof window === 'undefined';
 
 export function useUniqId(prefix?: string) {
   return prefix ? `${prefix}-${useId()}` : useId() || '';
-}
-
-export function createDescriptionProps(inputId: string): AriaDescriptionProps {
-  return {
-    id: `${inputId}-d`,
-  };
-}
-
-interface CreateDescribedByInit {
-  inputId: string;
-  description: MaybeRefOrGetter<string | undefined>;
-}
-
-export function createDescribedByProps({ inputId, description }: CreateDescribedByInit) {
-  const descriptionRef = shallowRef<HTMLElement>();
-  const descriptionProps = useCaptureProps(() => createDescriptionProps(inputId), descriptionRef);
-
-  const describedByProps = computed(() => {
-    return {
-      'aria-describedby': descriptionRef.value && toValue(description) ? descriptionProps.value.id : undefined,
-    };
-  });
-
-  return {
-    describedByProps,
-    descriptionProps,
-  };
 }
 
 export function createRefCapture<TEl extends HTMLElement>(elRef: Ref<Maybe<TEl>>) {
@@ -79,8 +61,8 @@ export function propsToValues<TProps extends Record<string, MaybeRefOrGetter<unk
   );
 }
 
-export function normalizeProps<TProps extends Record<string, unknown>, Exclude extends keyof TProps = never>(
-  props: TProps,
+export function normalizeProps<TProps extends object, Exclude extends keyof TProps = never>(
+  props: Reactivify<TProps, Exclude>,
   exclude?: Exclude[],
 ): NormalizedProps<TProps, Exclude> {
   if ('__isFwNormalized__' in props) {
@@ -91,17 +73,18 @@ export function normalizeProps<TProps extends Record<string, unknown>, Exclude e
 
   const normalized = Object.fromEntries(
     Object.keys(props).map(key => {
+      const k = key as keyof TProps;
       // Existing getters are kept as is
       if (!excludeDict[key]) {
-        return [key, () => toValue(props[key])];
+        return [key, () => toValue(props[k])];
       }
 
-      if (isCallable(props[key])) {
+      if (isCallable(props[k])) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        return [key, (...args: any[]) => (props[key] as any)(...args)];
+        return [key, (...args: any[]) => (props[k] as any)(...args)];
       }
 
-      return [key, props[key]];
+      return [key, props[k]];
     }),
   ) as NormalizedProps<TProps, Exclude>;
 
@@ -318,15 +301,27 @@ export function isInputElement(el: Maybe<HTMLElement>): el is HTMLInputElement {
     return false;
   }
 
-  return ['INPUT', 'TEXTAREA', 'SELECT'].includes(el.tagName);
+  return isComponent(el) || ['INPUT', 'TEXTAREA', 'SELECT'].includes(el.tagName);
 }
 
-export function isLabelElement(el: Maybe<HTMLElement>): el is HTMLLabelElement {
-  return el?.tagName === 'LABEL';
+export function isLabelElement(el: Maybe<HTMLElement | ComponentPublicInstance>): el is HTMLLabelElement {
+  if (!el) {
+    return false;
+  }
+
+  return isComponent(el) || el?.tagName === 'LABEL';
+}
+
+export function isComponent(ref: Maybe<HTMLElement | ComponentPublicInstance>): ref is ComponentPublicInstance {
+  if (!ref || 'tagName' in ref) {
+    return false;
+  }
+
+  return '$' in ref;
 }
 
 export function isButtonElement(el: Maybe<HTMLElement>): el is HTMLButtonElement {
-  return el?.tagName === 'BUTTON';
+  return isComponent(el) || el?.tagName === 'BUTTON';
 }
 
 export function isFormElement(el: Maybe<HTMLElement>): el is HTMLFormElement {

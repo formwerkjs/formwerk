@@ -85,6 +85,7 @@
     "@typescript-eslint/triple-slash-reference": "error",
     "@typescript-eslint/explicit-function-return-type": "off",
     "@typescript-eslint/explicit-module-boundary-types": "off",
+    "no-wrapper-object-types": "off",
     "no-console": [
       "error",
       {
