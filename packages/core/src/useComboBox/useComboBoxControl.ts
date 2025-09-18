@@ -16,7 +16,6 @@ import { useListBox } from '../useListBox';
 import { useInputValidity } from '../validation';
 import { FilterFn } from '../collections';
 import { useControlButtonProps } from '../helpers/useControlButtonProps';
-import { TransparentWrapper } from '../types';
 import { useVModelProxy } from '../reactivity/useVModelProxy';
 import { useFieldControllerContext } from '../useFormField/useFieldController';
 import { registerField } from '@formwerk/devtools';
@@ -40,7 +39,7 @@ export interface ComboBoxControlProps<TOption, TValue = TOption> extends Control
   /**
    * Whether to disable HTML5 validation.
    */
-  disableHtmlValidation?: TransparentWrapper<boolean>;
+  disableHtmlValidation?: Boolean;
 
   /**
    * Whether to open the popup when the input is focused.

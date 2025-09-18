@@ -24,7 +24,6 @@ import { useLocale } from '../i18n';
 import { resolveFieldState } from '../useFormField';
 import { FieldTypePrefixes } from '../constants';
 import { useEventListener } from '../helpers/useEventListener';
-import { TransparentWrapper } from '../types';
 import { useVModelProxy } from '../reactivity/useVModelProxy';
 import { useFieldControllerContext } from '../useFormField/useFieldController';
 import { registerField } from '@formwerk/devtools';
@@ -96,7 +95,7 @@ export interface NumberControlProps extends ControlProps<number | undefined, Num
   /**
    * Whether to disable HTML5 form validation.
    */
-  disableHtmlValidation?: TransparentWrapper<boolean>;
+  disableHtmlValidation?: Boolean;
 }
 
 export function useNumberControl(_props: Reactivify<NumberControlProps, '_field' | 'schema'>) {

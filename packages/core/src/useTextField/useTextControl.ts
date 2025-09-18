@@ -9,7 +9,6 @@ import {
   Numberish,
   Reactivify,
   TextInputBaseAttributes,
-  TransparentWrapper,
 } from '../types';
 import { normalizeProps, propsToValues, useCaptureProps, useUniqId } from '../utils/common';
 import { useInputValidity } from '../validation';
@@ -73,7 +72,7 @@ export interface TextControlProps extends ControlProps<string | undefined> {
   /**
    * Whether to disable HTML5 validation.
    */
-  disableHtmlValidation?: TransparentWrapper<boolean>;
+  disableHtmlValidation?: Boolean;
 
   /**
    * Events to validate on.
