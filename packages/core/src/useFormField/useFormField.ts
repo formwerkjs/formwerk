@@ -69,11 +69,6 @@ export function getFieldInit<TValue = unknown, TInitialValue = TValue>(
 
 export type ExposedField<TValue> = {
   /**
-   * Display the error message for the field.
-   */
-  displayError: () => string | undefined;
-
-  /**
    * The error message for the field.
    */
   errorMessage: Ref<string | undefined>;
@@ -157,7 +152,6 @@ export function exposeField<TReturns extends object, TValue>(
   field: FormField<TValue>,
 ): ExposedField<TValue> & TReturns {
   return {
-    displayError: field.state.displayError,
     errorMessage: field.state.errorMessage,
     errors: field.state.errors,
     submitErrors: field.state.submitErrors,
