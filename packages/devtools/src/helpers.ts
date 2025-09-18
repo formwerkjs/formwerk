@@ -198,7 +198,7 @@ export function getFieldNodeTags(field: DevtoolsField, valid: boolean) {
       backgroundColor: bgColor,
     },
     {
-      label: field.type,
+      label: toValue(field.type),
       textColor: COLORS.black,
       backgroundColor: COLORS.gray,
     },

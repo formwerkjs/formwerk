@@ -12,7 +12,6 @@ import {
   ValidationResult,
 } from '../types';
 import { normalizeProps, warn } from '../utils/common';
-import { Simplify } from 'type-fest';
 import { registerField } from '@formwerk/devtools';
 
 export type FormFieldInit<V = unknown> = Reactivify<FieldControllerProps> & Partial<FieldStateInit<V>>;
@@ -23,19 +22,17 @@ export type FormField<TValue = unknown> = FieldController & {
   state: FieldState<TValue>;
 };
 
-export type WithFieldProps<TControlProps extends object> = Simplify<
-  Omit<TControlProps, '_field'> & {
-    /**
-     * The label of the field.
-     */
-    label: string;
+export type WithFieldProps<TControlProps extends object> = Omit<TControlProps, '_field'> & {
+  /**
+   * The label of the field.
+   */
+  label: string;
 
-    /**
-     * The description of the field.
-     */
-    description?: string | undefined;
-  }
->;
+  /**
+   * The description of the field.
+   */
+  description?: string | undefined;
+};
 
 export function useFormField<TValue = unknown>(
   init?: FormFieldInit<TValue>,

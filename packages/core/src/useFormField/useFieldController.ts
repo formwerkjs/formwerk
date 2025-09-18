@@ -8,7 +8,7 @@ import {
   AriaLabelProps,
   Reactivify,
 } from '../types';
-import { BuiltInControlTypes, ControlApi, ControlProps } from '../types/controls';
+import { ControlApi, ControlProps } from '../types/controls';
 import { normalizeProps } from '../utils/common';
 
 export interface FieldControllerProps {
@@ -38,6 +38,11 @@ export interface FieldController {
    * The id of the control element.
    */
   controlId: Ref<string>;
+
+  /**
+   * The type of the control, used for devtools.
+   */
+  controlType: Ref<string>;
 
   /**
    * Props for the label element.
@@ -73,11 +78,6 @@ export interface FieldController {
    * Registers a control interface, used to get the control element and id.
    */
   registerControl: (control: ControlApi) => void;
-
-  /**
-   * The type of the control, used for devtools.
-   */
-  controlType: Ref<typeof BuiltInControlTypes | string>;
 }
 
 export const FieldControllerKey: InjectionKey<FieldController> = Symbol('FieldControllerKey');

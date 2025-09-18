@@ -2,10 +2,10 @@ import {
   App,
   type ComponentInternalInstance,
   getCurrentInstance,
+  MaybeRefOrGetter,
   nextTick,
   onMounted,
   onUnmounted,
-  Ref,
   watch,
 } from 'vue';
 import { throttle } from '../../../packages/shared/src';
@@ -228,8 +228,7 @@ export function initDevTools() {
   return vm;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function registerField(field: FieldState<any>, type: Ref<any> | string) {
+export function registerField(field: FieldState<any>, type: MaybeRefOrGetter<string>) {
   onMounted(async () => {
     const vm = initDevTools();
     // Makes sure forms are registered before fields in same component contexts

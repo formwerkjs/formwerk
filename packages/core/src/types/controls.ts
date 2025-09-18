@@ -4,7 +4,7 @@ import { StandardSchema } from './forms';
 export interface ControlApi {
   getControlElement(): HTMLElement | undefined;
   getControlId(): string | undefined;
-  getControlType(): typeof BuiltInControlTypes | string | undefined;
+  getControlType(): string | undefined;
 }
 
 export interface ControlProps<TValue = unknown, TInitialValue = TValue> {
