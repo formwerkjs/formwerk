@@ -10,6 +10,7 @@ import {
   ErrorsSchema,
   IssueCollection,
   DirtySchema,
+  BlurredSchema,
 } from '../types';
 import { cloneDeep, isEqual, normalizeArrayable } from '../utils/common';
 import {
@@ -38,6 +39,8 @@ export interface BaseFormContext<TForm extends FormObject = FormObject> {
   isDirty<TPath extends Path<TForm>>(path?: TPath): boolean;
   setDirty(value: boolean): void;
   setDirty<TPath extends Path<TForm>>(path: TPath, value: boolean): void;
+  setBlurred<TPath extends Path<TForm>>(path: TPath, value: boolean): void;
+  isBlurred<TPath extends Path<TForm>>(path?: TPath): boolean;
   isFieldSet<TPath extends Path<TForm>>(path: TPath): boolean;
   getFieldInitialValue<TPath extends Path<TForm>>(path: TPath): PathValue<TForm, TPath>;
   getFieldOriginalValue<TPath extends Path<TForm>>(path: TPath): PathValue<TForm, TPath>;
@@ -87,6 +90,7 @@ export interface FormContextCreateOptions<TForm extends FormObject = FormObject,
   values: TForm;
   touched: TouchedSchema<TForm>;
   dirty: DirtySchema<TForm>;
+  blurred: BlurredSchema<TForm>;
   disabled: DisabledSchema<TForm>;
   errors: Ref<ErrorsSchema<TForm>>;
   submitErrors: Ref<ErrorsSchema<TForm>>;
@@ -104,6 +108,7 @@ export function createFormContext<TForm extends FormObject = FormObject, TOutput
   disabled,
   errors,
   dirty,
+  blurred,
   submitErrors,
   schema,
   touched,
@@ -172,6 +177,23 @@ export function createFormContext<TForm extends FormObject = FormObject, TOutput
     }
 
     setInPath(dirty, pathOrValue, valueOrUndefined, true);
+  }
+
+  function setBlurred<TPath extends Path<TForm>>(path: TPath, value: boolean) {
+    setInPath(blurred, path, value, true);
+  }
+
+  function isBlurred<TPath extends Path<TForm>>(path?: TPath) {
+    if (!path) {
+      return !!findLeaf(blurred, l => l === true);
+    }
+
+    const value = getFromPath(blurred, path);
+    if (isObject(value)) {
+      return !!findLeaf(value, v => !!v);
+    }
+
+    return !!value;
   }
 
   function isFieldSet<TPath extends Path<TForm>>(path: TPath) {
@@ -487,6 +509,8 @@ export function createFormContext<TForm extends FormObject = FormObject, TOutput
     isTouched,
     isDirty,
     setDirty,
+    setBlurred,
+    isBlurred,
     isFieldSet,
     destroyPath,
     unsetPath,
