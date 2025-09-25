@@ -1,9 +1,10 @@
-import { MaybeRefOrGetter, Ref, shallowRef, toValue, watch } from 'vue';
+import { MaybeRefOrGetter, onMounted, Ref, shallowRef, toValue, watch } from 'vue';
 import { useEventListener } from '../useEventListener';
 import { Maybe } from '../../types';
 
 interface ControllerInit {
   disabled?: MaybeRefOrGetter<boolean | undefined>;
+  triggerEl?: MaybeRefOrGetter<Maybe<HTMLElement>>;
 }
 
 export function usePopoverController(popoverEl: Ref<Maybe<HTMLElement>>, opts?: ControllerInit) {
@@ -42,6 +43,37 @@ export function usePopoverController(popoverEl: Ref<Maybe<HTMLElement>>, opts?: 
       disabled: opts?.disabled,
     },
   );
+
+  // Click outside listener
+  useEventListener(
+    window,
+    'click',
+    (e: MouseEvent) => {
+      if (e.target instanceof HTMLElement) {
+        if (popoverEl.value?.contains(e.target)) {
+          return;
+        }
+
+        const triggerEl = toValue(opts?.triggerEl);
+        if (triggerEl?.contains(e.target)) {
+          return;
+        }
+      }
+
+      isOpen.value = false;
+    },
+    { disabled: () => toValue(opts?.disabled) || !isOpen.value },
+  );
+
+  useEventListener(opts?.triggerEl, ['focus'], () => {
+    isOpen.value = true;
+  });
+
+  onMounted(() => {
+    if (popoverEl.value) {
+      popoverEl.value.popover = 'manual';
+    }
+  });
 
   return {
     isOpen,
