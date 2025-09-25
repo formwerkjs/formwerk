@@ -77,6 +77,7 @@ export interface BaseFormContext<TForm extends FormObject = FormObject> {
   setValues: (newValues: Partial<TForm>, opts?: SetValueOptions) => void;
   revertValues<TPath extends Path<TForm>>(path?: TPath): void;
   revertTouched<TPath extends Path<TForm>>(path?: TPath): void;
+  clearBlurred(): void;
   revertDirty<TPath extends Path<TForm>>(path?: TPath): void;
   isPathDisabled: (path: Path<TForm>) => boolean;
 }
@@ -458,6 +459,12 @@ export function createFormContext<TForm extends FormObject = FormObject, TOutput
     updateTouchedPath(path, getFromPath(snapshots.touched.originals.value, path) as any, { behavior: 'replace' });
   }
 
+  function clearBlurred() {
+    Object.keys(blurred).forEach(key => {
+      delete blurred[key as keyof typeof blurred];
+    });
+  }
+
   function revertDirty<TPath extends Path<TForm>>(path?: TPath) {
     if (!path) {
       updateDirty(cloneDeep(snapshots.dirty.originals.value), { behavior: 'replace' });
@@ -524,6 +531,7 @@ export function createFormContext<TForm extends FormObject = FormObject, TOutput
     setInitialTouched,
     setInitialTouchedPath,
     updateTouchedPath,
+    clearBlurred,
     getFieldOriginalValue,
     setFieldDisabled,
     setErrors,
