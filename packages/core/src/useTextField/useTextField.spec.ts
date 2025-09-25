@@ -104,13 +104,13 @@ describe('should not have a11y errors', () => {
   });
 });
 
-test('blur sets touched to true', async () => {
+test('blur sets touched and blurred to true', async () => {
   const label = 'Field';
 
   await render({
     setup() {
       const description = 'A friendly field';
-      const { inputProps, descriptionProps, labelProps, isTouched } = useTextField({
+      const { inputProps, descriptionProps, labelProps, isTouched, isBlurred } = useTextField({
         label,
         description,
       });
@@ -122,10 +122,11 @@ test('blur sets touched to true', async () => {
         label,
         description,
         isTouched,
+        isBlurred,
       };
     },
     template: `
-      <div data-testid="fixture" :class="{ 'touched': isTouched }">
+      <div data-testid="fixture" :class="{ 'touched': isTouched, 'blurred': isBlurred }">
         <label v-bind="labelProps">{{ label }}</label>
         <input v-bind="inputProps" />
         <span v-bind="descriptionProps" class="error-message">description</span>
@@ -135,8 +136,10 @@ test('blur sets touched to true', async () => {
 
   await flush();
   expect(screen.getByTestId('fixture').className).not.includes('touched');
+  expect(screen.getByTestId('fixture').className).not.includes('blurred');
   await fireEvent.blur(screen.getByLabelText(label));
   expect(screen.getByTestId('fixture').className).includes('touched');
+  expect(screen.getByTestId('fixture').className).includes('blurred');
 });
 
 test('change event updates the value', async () => {
