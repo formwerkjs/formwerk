@@ -195,6 +195,7 @@ export function useOtpControl(_props: Reactivify<OtpControlProps, ExcludedProps>
   }
 
   function fillSlots(text: string, event: Event) {
+    field.setTouched(true);
     text = text.trim();
     if (!text.length) {
       const currentIndex = getActiveSlotIndex(event);
@@ -276,6 +277,7 @@ export function useOtpControl(_props: Reactivify<OtpControlProps, ExcludedProps>
         id: slotId,
         focusNext,
         focusPrevious,
+        setTouched: field.setTouched,
         isLast() {
           return index === getRequiredLength() - 1;
         },
@@ -284,7 +286,7 @@ export function useOtpControl(_props: Reactivify<OtpControlProps, ExcludedProps>
       };
     },
     onBlur() {
-      field.setTouched(true);
+      field.setBlurred(true);
     },
   });
 
