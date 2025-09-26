@@ -118,6 +118,8 @@ export function useSelectControl<TOption, TValue = TOption>(
       return;
     }
 
+    field.setTouched(true);
+
     if (isSingle()) {
       lastRecentlySelectedOption = optionValue;
       setModelValue(optionValue);
@@ -151,6 +153,7 @@ export function useSelectControl<TOption, TValue = TOption>(
     const nextValue = renderedOptions.value.slice(start, end + 1).map(opt => opt.getValue());
     setModelValue(nextValue);
     field.validate();
+    field.setTouched(true);
   }
 
   function toggleBefore() {
@@ -184,6 +187,7 @@ export function useSelectControl<TOption, TValue = TOption>(
       return;
     }
 
+    field.setTouched(true);
     const isAllSelected = renderedOptions.value.every(opt => opt.isSelected());
     if (isAllSelected) {
       setModelValue([]);
@@ -213,6 +217,9 @@ export function useSelectControl<TOption, TValue = TOption>(
         isPopupOpen.value = true;
         return;
       }
+    },
+    onBlur() {
+      field.setBlurred(true);
     },
   };
 
