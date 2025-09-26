@@ -197,6 +197,7 @@ export function useCalendarControl(_props: Reactivify<CalendarControlProps, 'fie
     }
 
     field.setTouched(true);
+    field.setBlurred(true);
   }
 
   const handleKeyDown = useCalendarKeyboard(context, currentView);

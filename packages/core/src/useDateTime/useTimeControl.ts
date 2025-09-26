@@ -114,6 +114,7 @@ export function useTimeControl(_props: Reactivify<TimeControlProps, '_field' | '
     readonly: props.readonly,
     onValueChange,
     onTouched: () => field.setTouched(true),
+    onBlurred: () => field.setBlurred(true),
     dispatchEvent: (type: string) => inputEl.value?.dispatchEvent(new Event(type)),
   });
 

@@ -322,7 +322,52 @@ describe('useDateField', () => {
       expect(control).not.toHaveErrorMessage();
     });
 
-    test('sets touched state when any segment is blurred', async () => {
+    test('sets blurred state when any segment is blurred', async () => {
+      await render({
+        components: { DateTimeSegment },
+        setup() {
+          const { segments, controlProps, labelProps, isBlurred } = useDateField({
+            label: 'Date',
+            name: 'date',
+          });
+
+          return {
+            segments,
+            controlProps,
+            labelProps,
+            isBlurred,
+          };
+        },
+        template: `
+          <div>
+            <span v-bind="labelProps">Date</span>
+            <div v-bind="controlProps" :data-blurred="isBlurred">
+              <DateTimeSegment
+                v-for="segment in segments"
+                :key="segment.type"
+                v-bind="segment"
+                data-testid="segment"
+              />
+            </div>
+          </div>
+        `,
+      });
+
+      await flush();
+      const segments = screen.getAllByTestId('segment');
+      const control = screen.getByRole('group');
+
+      // Initially not touched
+      expect(control.dataset.blurred).toBe('false');
+
+      // Blur month segment
+      const monthSegment = segments.find(el => el.dataset.segmentType === 'month')!;
+      await fireEvent.blur(monthSegment);
+      await flush();
+      expect(control.dataset.blurred).toBe('true');
+    });
+
+    test('sets touched state when any segment is manipulated', async () => {
       await render({
         components: { DateTimeSegment },
         setup() {
@@ -360,9 +405,9 @@ describe('useDateField', () => {
       // Initially not touched
       expect(control.dataset.touched).toBe('false');
 
-      // Blur month segment
+      // Manipulate month segment
       const monthSegment = segments.find(el => el.dataset.segmentType === 'month')!;
-      await fireEvent.blur(monthSegment);
+      await fireEvent(monthSegment, new InputEvent('beforeinput', { data: '1', cancelable: true }));
       await flush();
       expect(control.dataset.touched).toBe('true');
     });

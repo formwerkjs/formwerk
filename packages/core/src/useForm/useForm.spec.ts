@@ -254,34 +254,99 @@ describe('form touched', () => {
   });
 });
 
+describe('form blurred', () => {
+  test('can set field blurred state', async () => {
+    const { setBlurred, isBlurred } = await renderSetup(() => {
+      return useForm({ initialValues: { foo: 'bar' } });
+    });
+
+    expect(isBlurred('foo')).toBe(false);
+    setBlurred('foo', true);
+    expect(isBlurred('foo')).toBe(true);
+  });
+
+  test('can set nested field blurred state', async () => {
+    const { setBlurred, isBlurred } = await renderSetup(() => {
+      return useForm<any>();
+    });
+
+    expect(isBlurred('foo.bar')).toBe(false);
+    setBlurred('foo.bar', true);
+    expect(isBlurred('foo.bar')).toBe(true);
+  });
+
+  test('has a form-level computed isBlurred state', async () => {
+    const { isBlurred, setBlurred } = await renderSetup(() => {
+      return useForm({ initialValues: { foo: 'bar' } });
+    });
+
+    expect(isBlurred()).toBe(false);
+    setBlurred('foo', true);
+    expect(isBlurred()).toBe(true);
+    setBlurred('foo', false);
+    expect(isBlurred()).toBe(false);
+  });
+
+  test('handles nested blurred states independently', async () => {
+    const { setBlurred, isBlurred } = await renderSetup(() => {
+      return useForm<any>({
+        initialValues: {
+          parent: {
+            child1: 'value1',
+            child2: 'value2',
+          },
+        },
+      });
+    });
+
+    // Blur just one nested field
+    setBlurred('parent.child1', true);
+    expect(isBlurred('parent.child1')).toBe(true);
+    expect(isBlurred('parent.child2')).toBe(false);
+    expect(isBlurred('parent')).toBe(true); // parent should be considered blurred
+
+    // Unblurring parent should unblur children
+    setBlurred('parent', false);
+    expect(isBlurred('parent')).toBe(false);
+    expect(isBlurred('parent.child1')).toBe(false);
+    expect(isBlurred('parent.child2')).toBe(false);
+  });
+});
+
 describe('form reset', () => {
-  test('can reset form values and touched to their original state', async () => {
-    const { values, reset, setValue, isTouched, setTouched } = await renderSetup(() => {
+  test('can reset form values and touched to their original state and blurred to false', async () => {
+    const { values, reset, setValue, isTouched, setTouched, isBlurred, setBlurred } = await renderSetup(() => {
       return useForm({ initialValues: { foo: 'bar' }, initialTouched: { foo: true } });
     });
 
     setValue('foo', '');
     setTouched('foo', false);
+    setBlurred('foo', true);
     expect(values).toEqual({ foo: '' });
     expect(isTouched('foo')).toBe(false);
+    expect(isBlurred('foo')).toBe(true);
     reset();
     expect(values).toEqual({ foo: 'bar' });
     expect(isTouched('foo')).toBe(true);
+    expect(isBlurred('foo')).toBe(false);
   });
 
-  test('can reset form values and touched to a new state', async () => {
-    const { values, reset, setValue, isTouched, setTouched } = await renderSetup(() => {
+  test('can reset form values, touched and blurred to a new state', async () => {
+    const { values, reset, setValue, isTouched, setTouched, isBlurred, setBlurred } = await renderSetup(() => {
       return useForm({ initialValues: { foo: 'bar' } });
     });
 
     reset({ value: { foo: 'baz' }, touched: { foo: true } });
     expect(values).toEqual({ foo: 'baz' });
     expect(isTouched('foo')).toBe(true);
+    expect(isBlurred('foo')).toBe(false); // Always false after reset since no initialBlurred support
     setTouched('foo', false);
+    setBlurred('foo', true); // User sets it to true
     setValue('foo', '');
     reset();
     expect(values).toEqual({ foo: 'baz' });
     expect(isTouched('foo')).toBe(true);
+    expect(isBlurred('foo')).toBe(false); // Reset always goes back to false
   });
 
   test('can reset form path values and touched to their original state', async () => {

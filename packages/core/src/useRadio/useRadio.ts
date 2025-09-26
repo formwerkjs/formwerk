@@ -95,7 +95,7 @@ export function useRadio<TValue = string>(_props: Reactivify<RadioProps<TValue>>
       }
     },
     onBlur() {
-      group?.setTouched(true);
+      group?.setBlurred(true);
     },
   };
 

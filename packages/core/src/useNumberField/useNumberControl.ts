@@ -189,10 +189,12 @@ export function useNumberControl(_props: Reactivify<NumberControlProps, '_field'
         if (inputEl.value && inputEl.value?.value !== formattedText.value) {
           inputEl.value.value = formattedText.value;
         }
+
+        field.setTouched(true);
       });
     },
     onBlur: () => {
-      field.setTouched(true);
+      field.setBlurred(true);
     },
   };
 

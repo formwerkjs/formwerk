@@ -40,6 +40,7 @@ export type FieldState<TValue> = {
   fieldValue: Ref<TValue | undefined>;
   isTouched: Ref<boolean>;
   isDirty: Ref<boolean>;
+  isBlurred: Ref<boolean>;
   isValid: Ref<boolean>;
   isDisabled: Ref<boolean>;
   errors: Ref<string[]>;
@@ -52,6 +53,7 @@ export type FieldState<TValue> = {
   getName: Getter<string | undefined>;
   setValue: (value: TValue | undefined) => void;
   setTouched: (touched: boolean) => void;
+  setBlurred: (blurred: boolean) => void;
   setErrors: (messages: Arrayable<string>) => void;
   form?: FormContext | null;
 };
@@ -69,6 +71,8 @@ export function useFieldState<TValue = unknown>(opts?: Partial<FieldStateInit<TV
   const initialValue = opts?.initialValue;
   const { fieldValue, pathlessValue, setValue } = useFieldValue(getPath, form, initialValue);
   const { isTouched, pathlessTouched, setTouched } = useFieldTouched(getPath, form);
+  const { isBlurred, pathlessBlurred, setBlurred } = useFieldBlurred(getPath, form);
+
   const { errors, setErrors, isValid, errorMessage, pathlessValidity, submitErrors, submitErrorMessage } =
     useFieldValidity(getPath, isDisabled, form);
 
@@ -125,6 +129,7 @@ export function useFieldState<TValue = unknown>(opts?: Partial<FieldStateInit<TV
   const field: FieldState<TValue> = {
     fieldValue: readonly(fieldValue) as Ref<TValue | undefined>,
     isTouched: readonly(isTouched) as Ref<boolean>,
+    isBlurred: readonly(isBlurred) as Ref<boolean>,
     isDirty,
     isValid,
     errors,
@@ -136,6 +141,7 @@ export function useFieldState<TValue = unknown>(opts?: Partial<FieldStateInit<TV
     getName: () => toValue(opts?.path),
     setValue,
     setTouched,
+    setBlurred,
     setErrors,
     submitErrors,
     submitErrorMessage,
@@ -189,6 +195,7 @@ export function useFieldState<TValue = unknown>(opts?: Partial<FieldStateInit<TV
           path: newPath,
           value: cloneDeep(oldPath ? tf.getValue(oldPath) : pathlessValue.value),
           touched: oldPath ? tf.isTouched(oldPath) : pathlessTouched.value,
+          blurred: oldPath ? tf.isBlurred(oldPath) : pathlessBlurred.value,
           dirty: oldPath ? tf.isDirty(oldPath) : isDirty.value,
           disabled: isDisabled.value,
           errors: [...(oldPath ? tf.getErrors(oldPath) : pathlessValidity.errors.value)],
@@ -275,6 +282,47 @@ function createFormTouchedRef(getPath: Getter<string | undefined>, form: FormCon
   };
 }
 
+function useFieldBlurred(getPath: Getter<string | undefined>, form?: FormContext | null) {
+  return form ? createFormBlurredRef(getPath, form) : createLocalBlurredRef(false);
+}
+
+function createLocalBlurredRef(initialBlurred?: boolean) {
+  const isBlurred = shallowRef(initialBlurred ?? false);
+
+  return {
+    isBlurred,
+    pathlessBlurred: isBlurred,
+    setBlurred(value: boolean) {
+      isBlurred.value = value;
+    },
+  };
+}
+
+function createFormBlurredRef(getPath: Getter<string | undefined>, form: FormContext) {
+  const pathlessBlurred = shallowRef(false);
+  const isBlurred = computed(() => {
+    const path = getPath();
+
+    return path ? form.isBlurred(path) : pathlessBlurred.value;
+  }) as Ref<boolean>;
+
+  function setBlurred(value: boolean) {
+    const path = getPath();
+    const isDifferent = pathlessBlurred.value !== value;
+    pathlessBlurred.value = value;
+    // Only update it if the value is actually different, this avoids unnecessary path traversal/creation
+    if (path && isDifferent) {
+      form.setBlurred(path, value);
+    }
+  }
+
+  return {
+    isBlurred,
+    pathlessBlurred,
+    setBlurred,
+  };
+}
+
 function createFormValueRef<TValue = unknown>(
   getPath: Getter<string | undefined>,
   form: FormContext,
@@ -353,6 +401,7 @@ function initFormPathIfNecessary({
       path,
       value: assignedValue,
       touched: initialTouched,
+      blurred: false,
       dirty: initialDirty,
       disabled: toValue(isDisabled),
       errors: [...tf.getErrors(path)],

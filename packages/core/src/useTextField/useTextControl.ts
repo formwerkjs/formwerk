@@ -99,12 +99,11 @@ export function useTextControl(_props: Reactivify<TextControlProps, '_field' | '
   const handlers: InputEvents = {
     onInput(evt) {
       field.setValue((evt.target as HTMLInputElement).value);
-    },
-    onChange(evt) {
-      field.setValue((evt.target as HTMLInputElement).value);
+      field.setTouched(true);
     },
     onBlur() {
       field.setTouched(true);
+      field.setBlurred(true);
     },
   };
 

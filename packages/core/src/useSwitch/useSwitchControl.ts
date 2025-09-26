@@ -136,6 +136,9 @@ export function useSwitchControl<TValue = boolean>(
     },
     onChange: setValueFromEvent,
     onInput: setValueFromEvent,
+    onBlur: () => {
+      field.setBlurred(true);
+    },
     onClick(e: Event) {
       if (!isMutable()) {
         e.preventDefault();

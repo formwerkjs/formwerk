@@ -113,6 +113,7 @@ export function useFileControl(_props: Reactivify<FileControlProps, 'onUpload' |
   }
 
   function updateFieldValue() {
+    field.setTouched(true);
     if (isMultiple()) {
       setModelValue(entries.value.map(e => e.uploadResult ?? e.file));
       return;
@@ -177,7 +178,7 @@ export function useFileControl(_props: Reactivify<FileControlProps, 'onUpload' |
   }
 
   function onBlur() {
-    field.setTouched(true);
+    field.setBlurred(true);
   }
 
   function onChange(evt: Event) {
@@ -202,6 +203,7 @@ export function useFileControl(_props: Reactivify<FileControlProps, 'onUpload' |
     }
 
     inputEl.value?.showPicker();
+    field.setTouched(true);
   }
 
   function onCancel() {
@@ -262,6 +264,7 @@ export function useFileControl(_props: Reactivify<FileControlProps, 'onUpload' |
       }
 
       processFiles(Array.from(evt.dataTransfer?.files ?? []));
+      field.setTouched(true);
     },
     onClick(e: MouseEvent) {
       if (isDisabled.value) {
@@ -270,6 +273,7 @@ export function useFileControl(_props: Reactivify<FileControlProps, 'onUpload' |
       }
 
       if (e.target === dropzoneEl.value) {
+        field.setTouched(true);
         inputEl.value?.showPicker();
       }
     },

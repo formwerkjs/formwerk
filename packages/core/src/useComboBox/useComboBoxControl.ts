@@ -110,6 +110,7 @@ export function useComboBoxControl<TOption, TValue = TOption>(
       }
 
       setModelValue(value);
+      field.setTouched(true);
       inputValue.value = selectedOption.value?.label ?? '';
       isPopupOpen.value = false;
     },
@@ -122,9 +123,10 @@ export function useComboBoxControl<TOption, TValue = TOption>(
   const handlers: InputEvents & { onKeydown(evt: KeyboardEvent): void; onFocus(): void } = {
     onInput(evt) {
       inputValue.value = (evt.target as HTMLInputElement).value;
+      field.setTouched(true);
     },
     async onBlur(evt) {
-      field.setTouched(true);
+      field.setBlurred(true);
       if (isReadOnly()) {
         return;
       }
@@ -165,6 +167,7 @@ export function useComboBoxControl<TOption, TValue = TOption>(
       if (hasKeyCode(evt, 'Enter')) {
         if (isPopupOpen.value && !isReadOnly()) {
           evt.preventDefault();
+          field.setTouched(true);
           const option = findFocusedOption();
           if (option) {
             option.toggleSelected();
@@ -208,6 +211,7 @@ export function useComboBoxControl<TOption, TValue = TOption>(
 
       if (hasKeyCode(evt, 'Tab')) {
         isPopupOpen.value = false;
+        field.setTouched(true);
         findClosestOptionAndSetValue(inputValue.value);
 
         return;
