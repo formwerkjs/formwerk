@@ -114,7 +114,7 @@ export function useCheckbox<TValue = string>(_props: Reactivify<CheckboxProps<TV
       disableHtmlValidation: props.disableHtmlValidation,
     });
   }
-  const { fieldValue, setTouched, setValue, errorMessage, setErrors, isDisabled } = field.state;
+  const { fieldValue, setTouched, setValue, errorMessage, setErrors, isDisabled, setBlurred } = field.state;
 
   const checked = computed({
     get() {
@@ -169,7 +169,7 @@ export function useCheckbox<TValue = string>(_props: Reactivify<CheckboxProps<TV
         }
       },
       onBlur() {
-        setTouched(true);
+        setBlurred(true);
       },
     };
 

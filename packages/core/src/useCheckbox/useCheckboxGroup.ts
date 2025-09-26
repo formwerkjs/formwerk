@@ -52,6 +52,7 @@ export interface CheckboxGroupContext<TCheckbox> {
   hasValue(value: TCheckbox): boolean;
   toggleValue(value: TCheckbox, force?: boolean): void;
   setTouched(touched: boolean): void;
+  setBlurred(blurred: boolean): void;
 
   useCheckboxRegistration(checkbox: CheckboxRegistration): void;
 }
@@ -123,7 +124,7 @@ export function useCheckboxGroup<TCheckbox>(_props: Reactivify<CheckboxGroupProp
     getControlType: () => BuiltInControlTypes.CheckboxGroup,
   });
 
-  const { fieldValue, setValue, isTouched, setTouched, isDisabled } = field.state;
+  const { fieldValue, setValue, isTouched, setTouched, setBlurred, isDisabled } = field.state;
 
   const groupProps = computed<CheckboxGroupDomProps>(() => {
     return {
@@ -198,6 +199,7 @@ export function useCheckboxGroup<TCheckbox>(_props: Reactivify<CheckboxGroupProp
     toggleValue,
     hasValue,
     setTouched,
+    setBlurred,
   });
 
   provide(CheckboxGroupKey, context);
