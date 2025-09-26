@@ -115,6 +115,7 @@ export function useDateControl(_props: Reactivify<DateControlProps, '_field' | '
     readonly: props.readonly,
     onValueChange,
     onTouched: () => field.setTouched(true),
+    onBlurred: () => field.setBlurred(true),
     min,
     max,
     dispatchEvent: (type: string) => inputEl.value?.dispatchEvent(new Event(type)),
