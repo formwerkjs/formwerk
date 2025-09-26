@@ -60,6 +60,7 @@ export function useSliderThumb<TValue = number>(
       getIndex: () => 0,
       getThumbValue: () => 0,
       setThumbValue: NOOP,
+      setBlurred: NOOP,
       setTouched: NOOP,
       isDisabled: () => false,
       getAccessibleErrorProps: () => ({
@@ -97,12 +98,15 @@ export function useSliderThumb<TValue = number>(
     dir: () => slider.getInlineDirection(),
     onChange: next => {
       slider.setThumbValue(next);
-      slider.setTouched(true);
     },
   });
 
   function setValue(value: number) {
     slider.setThumbValue(applyClamp(value));
+  }
+
+  function onBlur() {
+    slider.setBlurred(true);
   }
 
   const thumbProps = useCaptureProps(() => {
@@ -118,6 +122,7 @@ export function useSliderThumb<TValue = number>(
       ...spinButtonProps.value,
       onMousedown: onPointerdown,
       onTouchstart: onPointerdown,
+      onBlur,
       style: getPositionStyle(),
     };
   }, thumbEl);

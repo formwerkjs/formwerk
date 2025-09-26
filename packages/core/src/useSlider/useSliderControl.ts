@@ -172,6 +172,8 @@ export interface SliderRegistration<TValue = number> {
    */
   setThumbValue(value: number): void;
 
+  setBlurred(value: boolean): void;
+
   setTouched(value: boolean): void;
 
   getAccessibleErrorProps(): ErrorableAttributes;
@@ -403,8 +405,10 @@ export function useSliderControl<TValue>(_props: Reactivify<SliderControlProps<T
       },
       setThumbValue(value) {
         setThumbValue(getThumbIndex(), value);
+        field.setTouched(true);
       },
       setTouched: field.setTouched ?? (() => {}),
+      setBlurred: field.setBlurred ?? (() => {}),
       getAccessibleErrorProps: () => controller?.accessibleErrorProps.value ?? ({} as ErrorableAttributes),
     };
 
