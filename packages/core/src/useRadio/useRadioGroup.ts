@@ -25,6 +25,7 @@ export interface RadioGroupContext<TValue> {
 
   setGroupValue(value: TValue): void;
   setTouched(touched: boolean): void;
+  setBlurred(blurred: boolean): void;
   useRadioRegistration(radio: RadioRegistration): { canReceiveFocus(): boolean };
 }
 
@@ -122,7 +123,7 @@ export function useRadioGroup<TValue = string>(_props: Reactivify<RadioGroupProp
     disableHtmlValidation: props.disableHtmlValidation,
   });
 
-  const { fieldValue, setValue, setTouched, isDisabled } = field.state;
+  const { fieldValue, setValue, setTouched, setBlurred, isDisabled } = field.state;
 
   function handleArrowNext() {
     let currentIdx = radios.value.findIndex(radio => radio.isChecked());
@@ -224,6 +225,7 @@ export function useRadioGroup<TValue = string>(_props: Reactivify<RadioGroupProp
     modelValue: fieldValue,
     setGroupValue,
     setTouched,
+    setBlurred,
     useRadioRegistration,
   });
 
