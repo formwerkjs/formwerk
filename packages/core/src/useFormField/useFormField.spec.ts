@@ -79,26 +79,88 @@ test('pathless field do not write to the form', async () => {
   expect(form.values).toEqual({});
 });
 
-test('pathless field maintains its own touched state', async () => {
-  const { isTouched, setTouched } = await renderSetup(() => {
-    return useFormField({ label: 'Field', initialValue: 'bar' }).state;
+describe('field touched state', () => {
+  test('pathless field maintains its own touched state', async () => {
+    const {
+      state: { isTouched, setTouched },
+    } = await renderSetup(() => {
+      return useFormField({ initialValue: 'bar' });
+    });
+
+    expect(isTouched.value).toBe(false);
+    setTouched(true);
+    expect(isTouched.value).toBe(true);
   });
 
-  expect(isTouched.value).toBe(false);
-  setTouched(true);
-  expect(isTouched.value).toBe(true);
+  test('field with path syncs touched state with form', async () => {
+    const { form, field } = await renderSetup(
+      () => {
+        const form = useForm({ initialValues: { field: 'foo' } });
+        return { form };
+      },
+      () => {
+        const field = useFormField({ path: 'field' });
+        return { field };
+      },
+    );
+
+    expect(field.state.isTouched.value).toBe(false);
+    expect(form.isTouched('field')).toBe(false);
+
+    field.state.setTouched(true);
+    expect(field.state.isTouched.value).toBe(true);
+    expect(form.isTouched('field')).toBe(true);
+  });
 });
 
-test('formless fields maintain their own dirty state', async () => {
-  const { isDirty, setValue } = await renderSetup(() => {
-    return useFormField({ label: 'Field', initialValue: 'bar' }).state;
+describe('field blurred state', () => {
+  test('pathless field maintains its own blurred state', async () => {
+    const {
+      state: { isBlurred, setBlurred },
+    } = await renderSetup(() => {
+      return useFormField({ initialValue: 'bar' });
+    });
+
+    expect(isBlurred.value).toBe(false);
+    setBlurred(true);
+    expect(isBlurred.value).toBe(true);
   });
 
-  expect(isDirty.value).toBe(false);
-  setValue('foo');
-  expect(isDirty.value).toBe(true);
-  setValue('bar');
-  expect(isDirty.value).toBe(false);
+  test('field with path syncs blurred state with form', async () => {
+    const { form, field } = await renderSetup(
+      () => {
+        const form = useForm({ initialValues: { field: 'foo' } });
+        return { form };
+      },
+      () => {
+        const field = useFormField({ path: 'field' });
+        return { field };
+      },
+    );
+
+    expect(field.state.isBlurred.value).toBe(false);
+    expect(form.isBlurred('field')).toBe(false);
+
+    field.state.setBlurred(true);
+    expect(field.state.isBlurred.value).toBe(true);
+    expect(form.isBlurred('field')).toBe(true);
+  });
+});
+
+describe('field dirty state', () => {
+  test('formless fields maintain their own dirty state', async () => {
+    const {
+      state: { isDirty, setValue },
+    } = await renderSetup(() => {
+      return useFormField({ initialValue: 'bar' });
+    });
+
+    expect(isDirty.value).toBe(false);
+    setValue('foo');
+    expect(isDirty.value).toBe(true);
+    setValue('bar');
+    expect(isDirty.value).toBe(false);
+  });
 });
 
 test('formless fields maintain their own error state', async () => {

@@ -106,6 +106,11 @@ export type ExposedField<TValue> = {
   isTouched: Ref<boolean>;
 
   /**
+   * Whether the field is blurred.
+   */
+  isBlurred: Ref<boolean>;
+
+  /**
    * Whether the field is valid.
    */
   isValid: Ref<boolean>;
@@ -124,6 +129,11 @@ export type ExposedField<TValue> = {
    * Sets the touched state for the field.
    */
   setTouched: (touched: boolean) => void;
+
+  /**
+   * Sets the blurred state for the field.
+   */
+  setBlurred: (blurred: boolean) => void;
 
   /**
    * Sets the value for the field.
@@ -164,6 +174,7 @@ export function exposeField<TReturns extends object, TValue>(
     fieldValue: field.state.fieldValue as Ref<TValue>,
     isDirty: field.state.isDirty,
     isTouched: field.state.isTouched,
+    isBlurred: field.state.isBlurred,
     isValid: field.state.isValid,
     isDisabled: field.state.isDisabled,
     labelProps: field.labelProps,
@@ -179,6 +190,7 @@ export function exposeField<TReturns extends object, TValue>(
         }
       : field.state.setErrors,
     setTouched: field.state.setTouched,
+    setBlurred: field.state.setBlurred,
     setValue: field.state.setValue,
     validate: (mutate = true) => field.state.validate(mutate),
     ...obj,
