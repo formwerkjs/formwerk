@@ -1,7 +1,5 @@
 import { InjectionKey, toValue, computed, onBeforeUnmount, reactive, provide, ref } from 'vue';
-import { registerField } from '@formwerk/devtools';
 import { useInputValidity } from '../validation/useInputValidity';
-import { useLabel, useErrorMessage } from '../a11y';
 import {
   Orientation,
   AriaLabelableProps,
@@ -9,20 +7,14 @@ import {
   AriaValidatableProps,
   Direction,
   Reactivify,
-  StandardSchema,
+  ControlProps,
+  BuiltInControlTypes,
 } from '../types';
-import {
-  useUniqId,
-  createDescribedByProps,
-  getNextCycleArrIdx,
-  normalizeProps,
-  isEmpty,
-  removeFirst,
-  hasKeyCode,
-} from '../utils/common';
+import { useUniqId, getNextCycleArrIdx, normalizeProps, isEmpty, removeFirst, hasKeyCode } from '../utils/common';
 import { useLocale } from '../i18n';
-import { useFormField, exposeField } from '../useFormField';
+import { useFormField, exposeField, WithFieldProps } from '../useFormField';
 import { FieldTypePrefixes } from '../constants';
+import { useSyncModel } from '../reactivity/useModelSync';
 
 export interface RadioGroupContext<TValue> {
   name: string;
@@ -33,6 +25,7 @@ export interface RadioGroupContext<TValue> {
 
   setGroupValue(value: TValue): void;
   setTouched(touched: boolean): void;
+  setBlurred(blurred: boolean): void;
   useRadioRegistration(radio: RadioRegistration): { canReceiveFocus(): boolean };
 }
 
@@ -47,7 +40,7 @@ export interface RadioRegistration {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const RadioGroupKey: InjectionKey<RadioGroupContext<any>> = Symbol('RadioGroupKey');
 
-export interface RadioGroupProps<TValue = string> {
+interface _RadioGroupProps<TValue = string> extends ControlProps<TValue> {
   /**
    * The orientation of the radio group (horizontal or vertical).
    */
@@ -59,44 +52,9 @@ export interface RadioGroupProps<TValue = string> {
   dir?: Direction;
 
   /**
-   * The label text for the radio group.
-   */
-  label: string;
-
-  /**
-   * The description text for the radio group.
-   */
-  description?: string;
-
-  /**
-   * The name attribute for the radio group.
-   */
-  name?: string;
-
-  /**
-   * The v-model value of the radio group.
-   */
-  modelValue?: TValue;
-
-  /**
-   * Whether the radio group is disabled.
-   */
-  disabled?: boolean;
-
-  /**
    * Whether the radio group is readonly.
    */
   readonly?: boolean;
-
-  /**
-   * Whether the radio group is required.
-   */
-  required?: boolean;
-
-  /**
-   * Schema for radio group validation.
-   */
-  schema?: StandardSchema<TValue>;
 
   /**
    * Whether to disable HTML5 form validation.
@@ -104,6 +62,8 @@ export interface RadioGroupProps<TValue = string> {
   // eslint-disable-next-line @typescript-eslint/no-wrapper-object-types
   disableHtmlValidation?: Boolean;
 }
+
+export type RadioGroupProps<TValue = string> = WithFieldProps<_RadioGroupProps<TValue>>;
 
 interface RadioGroupDomProps extends AriaLabelableProps, AriaDescribableProps, AriaValidatableProps {
   role: 'radiogroup';
@@ -133,37 +93,37 @@ export function useRadioGroup<TValue = string>(_props: Reactivify<RadioGroupProp
   const groupId = useUniqId(FieldTypePrefixes.RadioButtonGroup);
   const { direction } = useLocale();
   const radios = ref<RadioRegistration[]>([]);
-  const { labelProps, labelledByProps } = useLabel({
-    for: groupId,
-    label: props.label,
-  });
 
   const field = useFormField<TValue>({
+    label: props.label,
+    description: props.description,
     path: props.name,
     initialValue: toValue(props.modelValue) as TValue,
     disabled: props.disabled,
     schema: props.schema,
   });
 
-  const { validityDetails } = useInputValidity({
-    field,
+  useSyncModel({
+    model: field.state.fieldValue,
+    modelName: 'modelValue',
+    onModelPropUpdated: value => field.state.setValue(value as TValue),
+  });
+
+  field.registerControl({
+    getControlId: () => groupId,
+    getControlElement: () => undefined,
+    getControlType: () => BuiltInControlTypes.RadioGroup,
+  });
+
+  useInputValidity({
+    field: field.state,
     events: ['blur', 'click', ['keydown', e => hasKeyCode(e, 'Space')]],
     groupValidityBehavior: 'some',
     inputEl: computed(() => radios.value.map(r => r.getElem())),
     disableHtmlValidation: props.disableHtmlValidation,
   });
 
-  const { fieldValue, setValue, setTouched, errorMessage, isDisabled } = field;
-
-  const { descriptionProps, describedByProps } = createDescribedByProps({
-    inputId: groupId,
-    description: props.description,
-  });
-
-  const { accessibleErrorProps, errorMessageProps } = useErrorMessage({
-    inputId: groupId,
-    errorMessage,
-  });
+  const { fieldValue, setValue, setTouched, setBlurred, isDisabled } = field.state;
 
   function handleArrowNext() {
     let currentIdx = radios.value.findIndex(radio => radio.isChecked());
@@ -203,9 +163,9 @@ export function useRadioGroup<TValue = string>(_props: Reactivify<RadioGroupProp
 
   const groupProps = computed<RadioGroupDomProps>(() => {
     return {
-      ...labelledByProps.value,
-      ...describedByProps.value,
-      ...accessibleErrorProps.value,
+      ...field.labelledByProps.value,
+      ...field.describedByProps.value,
+      ...field.accessibleErrorProps.value,
       dir: toValue(props.dir) ?? direction.value,
       role: 'radiogroup',
       'aria-orientation': toValue(props.orientation) ?? undefined,
@@ -265,37 +225,23 @@ export function useRadioGroup<TValue = string>(_props: Reactivify<RadioGroupProp
     modelValue: fieldValue,
     setGroupValue,
     setTouched,
+    setBlurred,
     useRadioRegistration,
   });
 
   provide(RadioGroupKey, context);
 
-  if (__DEV__) {
-    registerField(field, 'Radio');
-  }
-
   return exposeField(
     {
-      /**
-       * Props for the description element.
-       */
-      descriptionProps,
-      /**
-       * Props for the error message element.
-       */
-      errorMessageProps,
       /**
        * Props for the group element.
        */
       groupProps,
+
       /**
-       * Props for the label element.
+       * The id of the group element.
        */
-      labelProps,
-      /**
-       * Validity details for the radio group.
-       */
-      validityDetails,
+      groupId,
     },
     field,
   );

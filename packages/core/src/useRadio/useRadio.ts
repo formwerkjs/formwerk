@@ -95,7 +95,7 @@ export function useRadio<TValue = string>(_props: Reactivify<RadioProps<TValue>>
       }
     },
     onBlur() {
-      group?.setTouched(true);
+      group?.setBlurred(true);
     },
   };
 
@@ -128,6 +128,10 @@ export function useRadio<TValue = string>(_props: Reactivify<RadioProps<TValue>>
   const inputProps = useCaptureProps(() => createBindings(isInputElement(inputEl.value)), inputEl);
 
   return {
+    /**
+     * The id of the input element.
+     */
+    controlId: inputId,
     /**
      * Reference to the input element.
      */

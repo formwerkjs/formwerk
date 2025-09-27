@@ -6,6 +6,7 @@ interface BaseStateTransaction<TForm extends FormObject> {
   path: Path<TForm>;
   value: PathValue<TForm, Path<TForm>>;
   touched: boolean;
+  blurred: boolean;
   dirty: boolean;
   disabled: boolean;
   errors: string[];
@@ -50,7 +51,7 @@ export interface FormTransactionManager<TForm extends FormObject> {
     tr: (
       formCtx: Pick<
         BaseFormContext<TForm>,
-        'getValues' | 'getValue' | 'isFieldSet' | 'isTouched' | 'getErrors' | 'isDirty'
+        'getValues' | 'getValue' | 'isFieldSet' | 'isTouched' | 'isBlurred' | 'getErrors' | 'isDirty'
       >,
       codes: typeof TransactionKind,
     ) => FormTransaction<TForm> | null,
@@ -91,6 +92,7 @@ export function useFormTransactions<TForm extends FormObject>(form: BaseFormCont
       if (tr.kind === TransactionKind.SET_PATH) {
         form.setValue(tr.path, tr.value);
         form.setTouched(tr.path, tr.touched);
+        form.setBlurred(tr.path, tr.blurred);
         form.setDirty(tr.path, tr.dirty);
         form.setFieldDisabled(tr.path, tr.disabled);
         form.setErrors(tr.path, tr.errors);
@@ -112,6 +114,7 @@ export function useFormTransactions<TForm extends FormObject>(form: BaseFormCont
         form.setValue(tr.path, tr.value ?? formInit);
         form.setFieldDisabled(tr.path, tr.disabled);
         form.setTouched(tr.path, tr.touched);
+        form.setBlurred(tr.path, tr.blurred);
         form.setDirty(tr.path, tr.dirty);
         form.unsetInitialValue(tr.path);
         form.setErrors(tr.path, tr.errors);

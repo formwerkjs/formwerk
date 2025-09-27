@@ -16,6 +16,7 @@ import {
   GenericFormSchema,
   StandardSchema,
   DirtySchema,
+  BlurredSchema,
   IssueCollection,
   PathValue,
 } from '../types';
@@ -150,6 +151,19 @@ export interface FormReturns<TInput extends FormObject = FormObject, TOutput ext
   setTouched<TPath extends Path<TInput>>(path: TPath, value: boolean): void;
 
   /**
+   * Checks if a form field has been blurred (focused and then lost focus). If no path is provided, checks if any field has been blurred.
+   * @param path - The path to check. If not provided, checks if any field has been blurred.
+   */
+  isBlurred<TPath extends Path<TInput>>(path?: TPath): boolean;
+
+  /**
+   * Sets the blurred state of a form field.
+   * @param path - The path to set the blurred state of.
+   * @param value - The value to set the blurred state to.
+   */
+  setBlurred<TPath extends Path<TInput>>(path: TPath, value: boolean): void;
+
+  /**
    * Get the errors for a form field, or the
    */
   getErrors: (path?: Path<TInput>) => string[];
@@ -267,6 +281,7 @@ export function useForm<
   const values = reactive(cloneDeep(valuesSnapshot.originals.value)) as PartialDeep<TResolvedInput>;
   const touched = reactive(cloneDeep(touchedSnapshot.originals.value)) as TouchedSchema<TResolvedInput>;
   const dirty = reactive(cloneDeep(dirtySnapshot.originals.value)) as DirtySchema<TResolvedInput>;
+  const blurred = reactive({}) as BlurredSchema<TResolvedInput>;
   const disabled = reactive({}) as DisabledSchema<TResolvedInput>;
   const errors = ref({}) as Ref<ErrorsSchema<TResolvedInput>>;
   const submitErrors = ref({}) as Ref<ErrorsSchema<TResolvedInput>>;
@@ -277,6 +292,7 @@ export function useForm<
     touched,
     disabled,
     dirty,
+    blurred,
     schema: schemaProps?.schema as StandardSchema<TInput, TOutput>,
     errors,
     submitErrors,
@@ -358,6 +374,8 @@ export function useForm<
     getValue: ctx.getValue,
     isTouched: ctx.isTouched,
     setTouched: ctx.setTouched,
+    isBlurred: ctx.isBlurred,
+    setBlurred: ctx.setBlurred,
     setErrors: ctx.setErrors,
     setValues: ctx.setValues,
     getError,

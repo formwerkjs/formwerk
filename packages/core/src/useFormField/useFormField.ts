@@ -1,407 +1,75 @@
-import { computed, inject, MaybeRefOrGetter, nextTick, readonly, Ref, shallowRef, toValue, watch } from 'vue';
-import { FormContext, FormKey } from '../useForm/useForm';
-import { Arrayable, Getter, StandardSchema, ValidationResult } from '../types';
-import { useSyncModel } from '../reactivity/useModelSync';
+import { Ref, toValue } from 'vue';
+import { useFieldController, FieldController, FieldControllerProps } from './useFieldController';
+import { useFieldState, FieldState, FieldStateInit } from './useFieldState';
 import {
-  cloneDeep,
-  isEqual,
-  normalizeArrayable,
-  combineStandardIssues,
-  tryOnScopeDispose,
-  warn,
-  isLowPriority,
-} from '../utils/common';
-import { FormGroupKey } from '../useFormGroup';
-import { usePathPrefixer } from '../helpers/usePathPrefixer';
-import { createDisabledContext } from '../helpers/createDisabledContext';
+  AriaDescriptionProps,
+  AriaErrorMessageProps,
+  AriaLabelProps,
+  Arrayable,
+  ControlProps,
+  NormalizedProps,
+  Reactivify,
+  ValidationResult,
+} from '../types';
+import { normalizeProps, warn } from '../utils/common';
+import { registerField } from '@formwerk/devtools';
 
-interface FormFieldOptions<TValue = unknown> {
-  path: MaybeRefOrGetter<string | undefined> | undefined;
-  initialValue: TValue;
-  initialTouched: boolean;
-  initialDirty: boolean;
-  syncModel: boolean;
-  modelName: string;
-  disabled: MaybeRefOrGetter<boolean | undefined>;
-  schema: StandardSchema<TValue>;
-}
+export type FormFieldInit<V = unknown> = Reactivify<FieldControllerProps> & Partial<FieldStateInit<V>>;
 
-export type FormField<TValue> = {
-  fieldValue: Ref<TValue | undefined>;
-  isTouched: Ref<boolean>;
-  isDirty: Ref<boolean>;
-  isValid: Ref<boolean>;
-  isDisabled: Ref<boolean>;
-  errors: Ref<string[]>;
-  errorMessage: Ref<string>;
-  submitErrors: Ref<string[]>;
-  submitErrorMessage: Ref<string | undefined>;
-  schema: StandardSchema<TValue> | undefined;
-  validate(mutate?: boolean): Promise<ValidationResult>;
-  getPath: Getter<string | undefined>;
-  getName: Getter<string | undefined>;
-  setValue: (value: TValue | undefined) => void;
-  setTouched: (touched: boolean) => void;
-  setErrors: (messages: Arrayable<string>) => void;
-  form?: FormContext | null;
+export type FormFieldProps = FieldControllerProps;
+
+export type FormField<TValue = unknown> = FieldController & {
+  state: FieldState<TValue>;
 };
 
-export function useFormField<TValue = unknown>(opts?: Partial<FormFieldOptions<TValue>>): FormField<TValue> {
-  const form = inject(FormKey, null);
-  const formGroup = inject(FormGroupKey, null);
-  const pathPrefixer = usePathPrefixer();
-  const isDisabled = createDisabledContext(opts?.disabled);
-  const getPath = () => {
-    const path = toValue(opts?.path);
+export type WithFieldProps<TControlProps extends object> = Omit<TControlProps, '_field'> & {
+  /**
+   * The label of the field.
+   */
+  label: string;
 
-    return pathPrefixer ? pathPrefixer.prefixPath(path) : path;
-  };
-  const initialValue = opts?.initialValue;
-  const { fieldValue, pathlessValue, setValue } = useFieldValue(getPath, form, initialValue);
-  const { isTouched, pathlessTouched, setTouched } = useFieldTouched(getPath, form);
-  const { errors, setErrors, isValid, errorMessage, pathlessValidity, submitErrors, submitErrorMessage } =
-    useFieldValidity(getPath, isDisabled, form);
+  /**
+   * The description of the field.
+   */
+  description?: string | undefined;
+};
 
-  const isDirty = computed(() => {
-    if (!form) {
-      return !isEqual(fieldValue.value, initialValue);
-    }
-
-    const path = getPath();
-    if (!path) {
-      return !isEqual(pathlessValue.value, initialValue);
-    }
-
-    return !isEqual(fieldValue.value, form.getFieldOriginalValue(path));
+export function useFormField<TValue = unknown>(
+  init?: FormFieldInit<TValue>,
+  controlType: string = 'Field',
+): FormField<TValue> {
+  const controllerProps = normalizeProps(init ?? { label: '' });
+  const state = useFieldState<TValue>(init);
+  const controller = useFieldController({
+    ...controllerProps,
+    errorMessage: state.errorMessage,
   });
 
-  if (opts?.syncModel ?? true) {
-    useSyncModel({
-      model: fieldValue,
-      modelName: opts?.modelName ?? 'modelValue',
-      onModelPropUpdated: setValue,
-    });
-  }
-
-  function createValidationResult(result: Omit<ValidationResult, 'type' | 'path'>): ValidationResult {
-    return {
-      type: 'FIELD',
-      path: (formGroup ? toValue(opts?.path) : getPath()) || '',
-      ...result,
-    };
-  }
-
-  async function validate(mutate?: boolean): Promise<ValidationResult> {
-    const schema = opts?.schema;
-    if (!schema) {
-      return Promise.resolve(
-        createValidationResult({ isValid: true, errors: [], output: cloneDeep(fieldValue.value) }),
-      );
-    }
-
-    if (__DEV__) {
-      if (isDisabled.value) {
-        warn('Field is disabled, the validation call will not have an immediate effect.');
-      }
-    }
-
-    const result = await schema['~standard']['validate'](fieldValue.value);
-    const errors = combineStandardIssues(result.issues || []);
-    const output = 'value' in result ? result.value : undefined;
-
-    if (mutate) {
-      setErrors(errors.map(e => e.messages).flat());
-    }
-
-    return createValidationResult({
-      isValid: errors.length === 0,
-      output,
-      errors,
-    });
-  }
-
-  const field: FormField<TValue> = {
-    fieldValue: readonly(fieldValue) as Ref<TValue | undefined>,
-    isTouched: readonly(isTouched) as Ref<boolean>,
-    isDirty,
-    isValid,
-    errors,
-    errorMessage,
-    isDisabled,
-    schema: opts?.schema,
-    validate,
-    getPath,
-    getName: () => toValue(opts?.path),
-    setValue,
-    setTouched,
-    setErrors,
-    submitErrors,
-    submitErrorMessage,
-  };
-
-  if (!form) {
-    return field;
-  }
-
-  initFormPathIfNecessary({
-    form,
-    getPath,
-    initialValue,
-    initialTouched: opts?.initialTouched ?? false,
-    initialDirty: opts?.initialDirty ?? false,
-    isDisabled,
-  });
-
-  form.onSubmitAttempt(() => {
-    setTouched(true);
-  });
-
-  tryOnScopeDispose(() => {
-    const path = getPath();
-    if (!path) {
-      return null;
-    }
-
-    form.transaction((_, { DESTROY_PATH }) => {
-      return {
-        kind: DESTROY_PATH,
-        path: path,
-      };
-    });
-  });
-
-  watch(getPath, (newPath, oldPath) => {
-    if (oldPath) {
-      form.transaction((_, { UNSET_PATH }) => {
-        return {
-          kind: UNSET_PATH,
-          path: oldPath,
-        };
-      });
-    }
-
-    if (newPath) {
-      form.transaction((tf, { SET_PATH }) => {
-        return {
-          kind: SET_PATH,
-          path: newPath,
-          value: cloneDeep(oldPath ? tf.getValue(oldPath) : pathlessValue.value),
-          touched: oldPath ? tf.isTouched(oldPath) : pathlessTouched.value,
-          dirty: oldPath ? tf.isDirty(oldPath) : isDirty.value,
-          disabled: isDisabled.value,
-          errors: [...(oldPath ? tf.getErrors(oldPath) : pathlessValidity.errors.value)],
-        };
-      });
-    }
-  });
-
-  watch(isDisabled, disabled => {
-    const path = getPath();
-    if (!path) {
-      return;
-    }
-
-    form.setFieldDisabled(path, disabled);
-  });
-
-  return { ...field, form };
-}
-
-function useFieldValidity(getPath: Getter<string | undefined>, isDisabled: Ref<boolean>, form?: FormContext | null) {
-  const validity = form ? createFormValidityRef(getPath, form) : createLocalValidity();
-  const errorMessage = computed(() => (isDisabled.value ? '' : (validity.errors.value[0] ?? '')));
-  const submitErrorMessage = computed(() => (isDisabled.value ? '' : (validity.submitErrors.value[0] ?? '')));
-  const isValid = computed(() => (isDisabled.value ? true : validity.errors.value.length === 0));
-
-  return {
-    ...validity,
-    errors: computed(() => (isDisabled.value ? [] : validity.errors.value)),
-    isValid,
-    errorMessage,
-    submitErrorMessage,
-  };
-}
-
-function useFieldValue<TValue = unknown>(
-  getPath: Getter<string | undefined>,
-  form?: FormContext | null,
-  initialValue?: TValue,
-) {
-  return form ? createFormValueRef<TValue>(getPath, form, initialValue) : createLocalValueRef<TValue>(initialValue);
-}
-
-function useFieldTouched(getPath: Getter<string | undefined>, form?: FormContext | null) {
-  return form ? createFormTouchedRef(getPath, form) : createLocalTouchedRef(false);
-}
-
-function createLocalTouchedRef(initialTouched?: boolean) {
-  const isTouched = shallowRef(initialTouched ?? false);
-
-  return {
-    isTouched,
-    pathlessTouched: isTouched,
-    setTouched(value: boolean) {
-      isTouched.value = value;
-    },
-  };
-}
-
-function createFormTouchedRef(getPath: Getter<string | undefined>, form: FormContext) {
-  const pathlessTouched = shallowRef(false);
-  const isTouched = computed(() => {
-    const path = getPath();
-
-    return path ? form.isTouched(path) : pathlessTouched.value;
-  }) as Ref<boolean>;
-
-  function setTouched(value: boolean) {
-    const path = getPath();
-    const isDifferent = pathlessTouched.value !== value;
-    pathlessTouched.value = value;
-    // Only update it if the value is actually different, this avoids unnecessary path traversal/creation
-    if (path && isDifferent) {
-      form.setTouched(path, value);
-    }
+  if (__DEV__) {
+    registerField(state, controller.controlType ?? controlType);
   }
 
   return {
-    isTouched,
-    pathlessTouched,
-    setTouched,
-  };
-}
-
-function createFormValueRef<TValue = unknown>(
-  getPath: Getter<string | undefined>,
-  form: FormContext,
-  initialValue?: TValue | undefined,
-) {
-  const pathlessValue = shallowRef(toValue(initialValue ?? undefined)) as Ref<TValue | undefined>;
-
-  const fieldValue = computed(() => {
-    const path = getPath();
-
-    return path ? form.getValue(path) : pathlessValue.value;
-  }) as Ref<TValue | undefined>;
-
-  function setValue(value: TValue | undefined) {
-    const path = getPath();
-    pathlessValue.value = value;
-    if (path) {
-      form.setValue(path, value);
-    }
-  }
-
-  return {
-    fieldValue,
-    pathlessValue,
-    setValue,
-  };
-}
-
-function createLocalValueRef<TValue = unknown>(initialValue?: TValue) {
-  const fieldValue = shallowRef(toValue(initialValue ?? undefined)) as Ref<TValue | undefined>;
-
-  return {
-    fieldValue,
-    pathlessValue: fieldValue,
-    setValue(value: TValue | undefined) {
-      fieldValue.value = cloneDeep(value);
-    },
-  };
-}
-
-interface FormPathInitOptions {
-  form: FormContext;
-  getPath: Getter<string | undefined>;
-  initialValue: unknown;
-  initialTouched: boolean;
-  initialDirty: boolean;
-  isDisabled: MaybeRefOrGetter<boolean>;
+    ...controller,
+    state,
+  } satisfies FormField<TValue>;
 }
 
 /**
- * Sets the initial value of the form if not already set and if an initial value is provided.
+ * Extracts the field init from control props.
  */
-function initFormPathIfNecessary({
-  form,
-  getPath,
-  initialValue,
-  initialTouched,
-  initialDirty,
-  isDisabled,
-}: FormPathInitOptions) {
-  const path = getPath();
-  if (!path) {
-    return;
-  }
-
-  // If form does have a path set and the value is different from the initial value, set it.
-  nextTick(() => {
-    const formInitialValue = form.getFieldInitialValue(path);
-    const currentValue = form.getValue(path);
-    const assignedValue = isLowPriority(initialValue)
-      ? (currentValue ?? formInitialValue ?? initialValue.value)
-      : (initialValue ?? currentValue ?? formInitialValue);
-
-    form.transaction((tf, { INIT_PATH }) => ({
-      kind: INIT_PATH,
-      path,
-      value: assignedValue,
-      touched: initialTouched,
-      dirty: initialDirty,
-      disabled: toValue(isDisabled),
-      errors: [...tf.getErrors(path)],
-    }));
-  });
-}
-
-function createFormValidityRef(getPath: Getter<string | undefined>, form: FormContext) {
-  const pathlessValidity = createLocalValidity();
-  const errors = computed(() => {
-    const path = getPath();
-
-    return path ? form.getErrors(path) : pathlessValidity.errors.value;
-  }) as Ref<string[]>;
-
-  const submitErrors = computed(() => {
-    const path = getPath();
-
-    return path ? form.getFieldSubmitErrors(path) : [];
-  });
-
-  function setErrors(messages: Arrayable<string>) {
-    pathlessValidity.setErrors(messages);
-    const path = getPath();
-    if (path) {
-      form.setErrors(path, messages);
-    }
-  }
-
+export function getFieldInit<TValue = unknown, TInitialValue = TValue>(
+  props: NormalizedProps<WithFieldProps<ControlProps<TValue, TInitialValue>>, 'schema'>,
+  resolveValue?: () => TValue,
+): Partial<FormFieldInit<TValue>> {
   return {
-    pathlessValidity,
-    errors,
-    setErrors,
-    submitErrors,
-  };
-}
-
-function createLocalValidity() {
-  const errors = shallowRef<string[]>([]);
-  const submitErrors = shallowRef<string[]>([]);
-
-  const api = {
-    errors,
-    submitErrors,
-    setErrors(messages: Arrayable<string>) {
-      errors.value = messages ? normalizeArrayable(messages) : [];
-    },
-  };
-
-  return {
-    pathlessValidity: api,
-    ...api,
-  };
+    label: props.label,
+    description: props.description,
+    path: props.name,
+    initialValue: resolveValue?.() ?? ((toValue(props.modelValue) ?? toValue(props.value)) as TValue),
+    disabled: props.disabled,
+    schema: props.schema,
+  } satisfies FormFieldInit<TValue>;
 }
 
 export type ExposedField<TValue> = {
@@ -438,6 +106,11 @@ export type ExposedField<TValue> = {
   isTouched: Ref<boolean>;
 
   /**
+   * Whether the field is blurred.
+   */
+  isBlurred: Ref<boolean>;
+
+  /**
    * Whether the field is valid.
    */
   isValid: Ref<boolean>;
@@ -458,6 +131,11 @@ export type ExposedField<TValue> = {
   setTouched: (touched: boolean) => void;
 
   /**
+   * Sets the blurred state for the field.
+   */
+  setBlurred: (blurred: boolean) => void;
+
+  /**
    * Sets the value for the field.
    */
   setValue: (value: TValue) => void;
@@ -467,38 +145,54 @@ export type ExposedField<TValue> = {
    * @param mutate - Whether to set errors on the field as a result of the validation call, defaults to `true`.
    */
   validate: (mutate?: boolean) => Promise<ValidationResult>;
+
+  /**
+   * Props for the label element.
+   */
+  labelProps: Ref<AriaLabelProps>;
+
+  /**
+   * Props for the description element.
+   */
+  descriptionProps: Ref<AriaDescriptionProps>;
+
+  /**
+   * Props for the error message element.
+   */
+  errorMessageProps: Ref<AriaErrorMessageProps>;
 };
 
 export function exposeField<TReturns extends object, TValue>(
   obj: TReturns,
   field: FormField<TValue>,
 ): ExposedField<TValue> & TReturns {
-  const exposedField = {
-    errorMessage: field.errorMessage,
-    errors: field.errors,
-    submitErrors: field.submitErrors,
-    submitErrorMessage: field.submitErrorMessage,
-    fieldValue: field.fieldValue as Ref<TValue>,
-    isDirty: field.isDirty,
-    isTouched: field.isTouched,
-    isValid: field.isValid,
-    isDisabled: field.isDisabled,
+  return {
+    errorMessage: field.state.errorMessage,
+    errors: field.state.errors,
+    submitErrors: field.state.submitErrors,
+    submitErrorMessage: field.state.submitErrorMessage,
+    fieldValue: field.state.fieldValue as Ref<TValue>,
+    isDirty: field.state.isDirty,
+    isTouched: field.state.isTouched,
+    isBlurred: field.state.isBlurred,
+    isValid: field.state.isValid,
+    isDisabled: field.state.isDisabled,
+    labelProps: field.labelProps,
+    descriptionProps: field.descriptionProps,
+    errorMessageProps: field.errorMessageProps,
     setErrors: __DEV__
       ? (messages: Arrayable<string>) => {
-          if (field.isDisabled.value) {
+          if (field.state.isDisabled.value) {
             warn('This field is disabled, setting errors will not take effect until the field is enabled.');
           }
 
-          field.setErrors(messages);
+          field.state.setErrors(messages);
         }
-      : field.setErrors,
-    setTouched: field.setTouched,
-    setValue: field.setValue,
-    validate: (mutate = true) => field.validate(mutate),
-  } satisfies ExposedField<TValue>;
-
-  return {
+      : field.state.setErrors,
+    setTouched: field.state.setTouched,
+    setBlurred: field.state.setBlurred,
+    setValue: field.state.setValue,
+    validate: (mutate = true) => field.state.validate(mutate),
     ...obj,
-    ...exposedField,
   } satisfies ExposedField<TValue> & TReturns;
 }

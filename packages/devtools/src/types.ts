@@ -1,5 +1,5 @@
-import type { FormField, FormReturns, IssueCollection } from '@core/index';
-import { ComponentInternalInstance } from 'vue';
+import type { FieldState as CoreFieldState, FormReturns, IssueCollection } from '@core/index';
+import { ComponentInternalInstance, MaybeRefOrGetter } from 'vue';
 
 interface BaseState<TValue = unknown> {
   touched: boolean;
@@ -37,7 +37,10 @@ export interface FieldState<TValue = unknown> extends BaseState<TValue> {
 export type NodeState = FormState | FieldState | PathState;
 
 // Devtools field type
-export type DevtoolsField = FormField<unknown> & { type: string; _vm?: ComponentInternalInstance | null };
+export type DevtoolsField = CoreFieldState<unknown> & {
+  type: MaybeRefOrGetter<string>;
+  _vm?: ComponentInternalInstance | null;
+};
 
 // Devtools form type
 export type DevtoolsForm = FormReturns & {
@@ -74,7 +77,7 @@ export function formToState(form: FormReturns): FormState {
   };
 }
 
-export function fieldToState(field: FormField<unknown>, formId?: string): FieldState<unknown> {
+export function fieldToState(field: CoreFieldState<unknown>, formId?: string): FieldState<unknown> {
   return {
     path: field.getPath() ?? '',
     name: field.getName() ?? '',

@@ -47,10 +47,10 @@ const makeTest = (props?: SetOptional<FileFieldProps, 'label'>): Component => ({
       clear,
       remove,
       isDragging,
-      validityDetails,
       isTouched,
       fieldValue,
       errorMessage,
+      isBlurred,
     } = useFileField({
       ...(props || {}),
       label,
@@ -65,16 +65,16 @@ const makeTest = (props?: SetOptional<FileFieldProps, 'label'>): Component => ({
       clear,
       remove,
       isDragging,
-      validityDetails,
       isTouched,
       fieldValue,
       errorMessage,
       label,
       printValue,
+      isBlurred,
     };
   },
   template: `
-    <div data-testid="fixture" :class="{ 'touched': isTouched, 'dragging': isDragging }">
+    <div data-testid="fixture" :class="{ 'touched': isTouched, 'dragging': isDragging, 'blurred': isBlurred }">
       <div v-bind="dropzoneProps">
         <input v-bind="inputProps" data-testid="input" />
         <button v-bind="triggerProps">{{ label }}</button>
@@ -93,10 +93,25 @@ test('should not have a11y errors', async () => {
   vi.useFakeTimers();
 });
 
-test('blur sets touched to true', async () => {
+test('blur sets blurred to true', async () => {
   await render(makeTest());
-  expect(screen.getByTestId('fixture').className).not.includes('touched');
+  expect(screen.getByTestId('fixture').className).not.includes('blurred');
   await fireEvent.blur(screen.getByTestId('input'));
+  expect(screen.getByTestId('fixture').className).includes('blurred');
+});
+
+test('selecting a file sets touched to true', async () => {
+  await render(makeTest());
+
+  expect(screen.getByTestId('fixture').className).not.includes('touched');
+  const file = new File(['test content'], 'test.txt', { type: 'text/plain' });
+  await fireEvent.change(screen.getByTestId('input'), {
+    target: {
+      files: [file],
+    },
+  });
+
+  await flush();
   expect(screen.getByTestId('fixture').className).includes('touched');
 });
 

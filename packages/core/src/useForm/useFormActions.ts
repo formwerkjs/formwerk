@@ -213,6 +213,7 @@ export function useFormActions<TForm extends FormObject = FormObject, TOutput ex
     if (pathOrStateOrUndefined === undefined) {
       wasSubmitted.value = false;
 
+      form.clearBlurred();
       form.revertValues();
       form.revertTouched();
       form.revertDirty();
@@ -248,6 +249,7 @@ export function useFormActions<TForm extends FormObject = FormObject, TOutput ex
       submitAttemptsCount.value = 0;
       isSubmitAttempted.value = false;
 
+      form.clearBlurred();
       form.revertValues();
       form.revertTouched();
       form.revertDirty();
@@ -275,6 +277,7 @@ export function useFormActions<TForm extends FormObject = FormObject, TOutput ex
      * Reset a specific part of the form.
      */
     if (stateOrOptsOrUndefined === undefined) {
+      form.clearBlurred();
       form.revertValues(path);
       form.revertTouched(path);
       form.revertDirty(path);
@@ -299,6 +302,7 @@ export function useFormActions<TForm extends FormObject = FormObject, TOutput ex
         form.setInitialTouchedPath(path, state.touched as any, opts);
       }
 
+      form.clearBlurred();
       form.revertValues(path);
       form.revertTouched(path);
       form.revertDirty(path);

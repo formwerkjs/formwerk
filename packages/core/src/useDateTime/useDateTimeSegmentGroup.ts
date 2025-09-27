@@ -33,6 +33,7 @@ export interface DateTimeSegmentGroupContext {
     clear(): void;
     isNumeric(): boolean;
     onTouched(): void;
+    onBlurred(): void;
     isLast(): boolean;
     focusNext(): void;
     isLockedByRange(): boolean;
@@ -54,6 +55,7 @@ export interface DateTimeSegmentGroupProps {
   max?: MaybeRefOrGetter<Maybe<ZonedDateTime>>;
   onValueChange: (value: ZonedDateTime) => void;
   onTouched: () => void;
+  onBlurred: () => void;
   dispatchEvent: (type: string) => void;
 }
 
@@ -69,6 +71,7 @@ export function useDateTimeSegmentGroup({
   max,
   onValueChange,
   onTouched,
+  onBlurred,
   dispatchEvent,
 }: DateTimeSegmentGroupProps) {
   const renderedSegments = ref<DateTimeSegmentRegistration[]>([]);
@@ -266,6 +269,7 @@ export function useDateTimeSegmentGroup({
       onDone: onSegmentDone,
       clear,
       onTouched,
+      onBlurred,
       isLast,
       focusNext,
       isNumeric,

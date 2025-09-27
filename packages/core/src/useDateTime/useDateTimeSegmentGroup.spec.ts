@@ -41,6 +41,7 @@ describe('useDateTimeSegmentGroup', () => {
             controlEl,
             onValueChange,
             onTouched: () => {},
+            onBlurred: () => {},
             dispatchEvent,
           });
 
@@ -91,6 +92,7 @@ describe('useDateTimeSegmentGroup', () => {
             controlEl,
             onValueChange,
             onTouched: () => {},
+            onBlurred: () => {},
             dispatchEvent,
           });
 
@@ -144,6 +146,7 @@ describe('useDateTimeSegmentGroup', () => {
             direction: 'rtl',
             onValueChange,
             onTouched: () => {},
+            onBlurred: () => {},
             dispatchEvent,
           });
 
@@ -196,6 +199,7 @@ describe('useDateTimeSegmentGroup', () => {
             controlEl,
             onValueChange,
             onTouched: () => {},
+            onBlurred: () => {},
             dispatchEvent,
           });
 
@@ -232,6 +236,7 @@ describe('useDateTimeSegmentGroup', () => {
             controlEl,
             onValueChange,
             onTouched: () => {},
+            onBlurred: () => {},
             dispatchEvent,
           });
 
@@ -268,6 +273,7 @@ describe('useDateTimeSegmentGroup', () => {
             controlEl,
             onValueChange,
             onTouched: () => {},
+            onBlurred: () => {},
             dispatchEvent,
           });
 
@@ -304,6 +310,7 @@ describe('useDateTimeSegmentGroup', () => {
             controlEl,
             onValueChange,
             onTouched: () => {},
+            onBlurred: () => {},
             dispatchEvent,
           });
 
@@ -342,6 +349,7 @@ describe('useDateTimeSegmentGroup', () => {
             controlEl,
             onValueChange,
             onTouched: () => {},
+            onBlurred: () => {},
             dispatchEvent,
           });
 
@@ -383,6 +391,7 @@ describe('useDateTimeSegmentGroup', () => {
             controlEl,
             onValueChange,
             onTouched: () => {},
+            onBlurred: () => {},
             dispatchEvent,
           });
 
@@ -445,6 +454,7 @@ describe('useDateTimeSegmentGroup', () => {
             controlEl,
             onValueChange,
             onTouched: () => {},
+            onBlurred: () => {},
             dispatchEvent,
           });
 
@@ -520,6 +530,7 @@ describe('useDateTimeSegmentGroup', () => {
             controlEl,
             onValueChange,
             onTouched: () => {},
+            onBlurred: () => {},
             dispatchEvent,
           });
 
@@ -583,6 +594,7 @@ describe('useDateTimeSegmentGroup', () => {
             controlEl,
             onValueChange,
             onTouched: () => {},
+            onBlurred: () => {},
             dispatchEvent,
           });
 
@@ -640,6 +652,7 @@ describe('useDateTimeSegmentGroup', () => {
             controlEl,
             onValueChange,
             onTouched: () => {},
+            onBlurred: () => {},
             dispatchEvent,
           });
 
@@ -714,6 +727,7 @@ describe('useDateTimeSegmentGroup', () => {
             controlEl,
             onValueChange,
             onTouched: () => {},
+            onBlurred: () => {},
             dispatchEvent,
           });
 
@@ -817,6 +831,7 @@ describe('useDateTimeSegmentGroup', () => {
             controlEl,
             onValueChange,
             onTouched: () => {},
+            onBlurred: () => {},
             dispatchEvent,
           });
 

@@ -1,0 +1,65 @@
+import { FormField } from '../useFormField';
+import { StandardSchema } from './forms';
+
+export interface ControlApi {
+  getControlElement(): HTMLElement | undefined;
+  getControlId(): string | undefined;
+  getControlType(): string | undefined;
+}
+
+export interface ControlProps<TValue = unknown, TInitialValue = TValue> {
+  /**
+   * The name of the field.
+   */
+  name?: string;
+
+  /**
+   * The field to use for the control. Internal usage only.
+   */
+  _field?: FormField<TValue | undefined>;
+
+  /**
+   * Schema for field validation.
+   */
+  schema?: StandardSchema<TValue>;
+
+  /**
+   * The v-model value of the field.
+   */
+  modelValue?: TValue | undefined;
+
+  /**
+   * The initial value of the field.
+   */
+  value?: TInitialValue;
+
+  /**
+   * Whether the field is disabled.
+   */
+  disabled?: boolean;
+
+  /**
+   * Whether the field is required.
+   */
+  required?: boolean;
+}
+
+export const BuiltInControlTypes = {
+  Text: 'Text',
+  Calendar: 'Calendar',
+  Date: 'Date',
+  Time: 'Time',
+  File: 'File',
+  Select: 'Select',
+  Number: 'Number',
+  OTP: 'OTP',
+  Slider: 'Slider',
+  Switch: 'Switch',
+  Checkbox: 'Checkbox',
+  CheckboxGroup: 'CheckboxGroup',
+  RadioGroup: 'RadioGroup',
+  ComboBox: 'ComboBox',
+  Hidden: 'Hidden',
+  Search: 'Search',
+  Custom: 'Custom',
+} as const;

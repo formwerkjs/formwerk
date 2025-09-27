@@ -77,6 +77,7 @@ export function useDateTimeSegment(_props: Reactivify<DateTimeSegmentProps>) {
     parser,
     clear,
     onTouched,
+    onBlurred,
     isLast,
     focusNext,
     isNumeric,
@@ -134,6 +135,7 @@ export function useDateTimeSegment(_props: Reactivify<DateTimeSegmentProps>) {
       }
 
       currentInput = nextValue;
+      onTouched();
       if (segmentEl.value) {
         segmentEl.value.textContent = currentInput;
       }
@@ -152,7 +154,7 @@ export function useDateTimeSegment(_props: Reactivify<DateTimeSegmentProps>) {
       }
     },
     onBlur() {
-      onTouched();
+      onBlurred();
       nextTick(() => {
         dispatchEvent('blur');
       });
@@ -190,6 +192,7 @@ export function useDateTimeSegment(_props: Reactivify<DateTimeSegmentProps>) {
         blockEvent(evt);
         if (!isNonMutable()) {
           increment();
+          onTouched();
         }
         return;
       }
@@ -198,6 +201,7 @@ export function useDateTimeSegment(_props: Reactivify<DateTimeSegmentProps>) {
         blockEvent(evt);
         if (!isNonMutable()) {
           decrement();
+          onTouched();
         }
         return;
       }
@@ -205,6 +209,7 @@ export function useDateTimeSegment(_props: Reactivify<DateTimeSegmentProps>) {
       if (hasKeyCode(evt, 'Backspace') || hasKeyCode(evt, 'Delete')) {
         blockEvent(evt);
         if (!isNonMutable()) {
+          onTouched();
           if (currentInput.length > 1) {
             currentInput = currentInput.slice(0, -1);
           } else {

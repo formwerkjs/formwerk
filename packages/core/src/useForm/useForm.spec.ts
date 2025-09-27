@@ -254,34 +254,99 @@ describe('form touched', () => {
   });
 });
 
+describe('form blurred', () => {
+  test('can set field blurred state', async () => {
+    const { setBlurred, isBlurred } = await renderSetup(() => {
+      return useForm({ initialValues: { foo: 'bar' } });
+    });
+
+    expect(isBlurred('foo')).toBe(false);
+    setBlurred('foo', true);
+    expect(isBlurred('foo')).toBe(true);
+  });
+
+  test('can set nested field blurred state', async () => {
+    const { setBlurred, isBlurred } = await renderSetup(() => {
+      return useForm<any>();
+    });
+
+    expect(isBlurred('foo.bar')).toBe(false);
+    setBlurred('foo.bar', true);
+    expect(isBlurred('foo.bar')).toBe(true);
+  });
+
+  test('has a form-level computed isBlurred state', async () => {
+    const { isBlurred, setBlurred } = await renderSetup(() => {
+      return useForm({ initialValues: { foo: 'bar' } });
+    });
+
+    expect(isBlurred()).toBe(false);
+    setBlurred('foo', true);
+    expect(isBlurred()).toBe(true);
+    setBlurred('foo', false);
+    expect(isBlurred()).toBe(false);
+  });
+
+  test('handles nested blurred states independently', async () => {
+    const { setBlurred, isBlurred } = await renderSetup(() => {
+      return useForm<any>({
+        initialValues: {
+          parent: {
+            child1: 'value1',
+            child2: 'value2',
+          },
+        },
+      });
+    });
+
+    // Blur just one nested field
+    setBlurred('parent.child1', true);
+    expect(isBlurred('parent.child1')).toBe(true);
+    expect(isBlurred('parent.child2')).toBe(false);
+    expect(isBlurred('parent')).toBe(true); // parent should be considered blurred
+
+    // Unblurring parent should unblur children
+    setBlurred('parent', false);
+    expect(isBlurred('parent')).toBe(false);
+    expect(isBlurred('parent.child1')).toBe(false);
+    expect(isBlurred('parent.child2')).toBe(false);
+  });
+});
+
 describe('form reset', () => {
-  test('can reset form values and touched to their original state', async () => {
-    const { values, reset, setValue, isTouched, setTouched } = await renderSetup(() => {
+  test('can reset form values and touched to their original state and blurred to false', async () => {
+    const { values, reset, setValue, isTouched, setTouched, isBlurred, setBlurred } = await renderSetup(() => {
       return useForm({ initialValues: { foo: 'bar' }, initialTouched: { foo: true } });
     });
 
     setValue('foo', '');
     setTouched('foo', false);
+    setBlurred('foo', true);
     expect(values).toEqual({ foo: '' });
     expect(isTouched('foo')).toBe(false);
+    expect(isBlurred('foo')).toBe(true);
     reset();
     expect(values).toEqual({ foo: 'bar' });
     expect(isTouched('foo')).toBe(true);
+    expect(isBlurred('foo')).toBe(false);
   });
 
-  test('can reset form values and touched to a new state', async () => {
-    const { values, reset, setValue, isTouched, setTouched } = await renderSetup(() => {
+  test('can reset form values, touched and blurred to a new state', async () => {
+    const { values, reset, setValue, isTouched, setTouched, isBlurred, setBlurred } = await renderSetup(() => {
       return useForm({ initialValues: { foo: 'bar' } });
     });
 
     reset({ value: { foo: 'baz' }, touched: { foo: true } });
     expect(values).toEqual({ foo: 'baz' });
     expect(isTouched('foo')).toBe(true);
+    expect(isBlurred('foo')).toBe(false); // Always false after reset since no initialBlurred support
     setTouched('foo', false);
+    setBlurred('foo', true); // User sets it to true
     setValue('foo', '');
     reset();
     expect(values).toEqual({ foo: 'baz' });
     expect(isTouched('foo')).toBe(true);
+    expect(isBlurred('foo')).toBe(false); // Reset always goes back to false
   });
 
   test('can reset form path values and touched to their original state', async () => {
@@ -412,7 +477,7 @@ describe('form submit', () => {
         return { form };
       },
       () => {
-        const field = useFormField({ path: 'field' });
+        const field = useFormField({ label: 'Field', path: 'field' });
 
         return { field };
       },
@@ -449,12 +514,12 @@ describe('form submit', () => {
         return useForm({ initialValues: defaults() });
       },
       () => {
-        useFormField({ path: 'field', disabled });
-        useFormField({ path: 'multiple.0' });
-        useFormField({ path: 'multiple.1', disabled });
-        useFormField({ path: 'multiple.2' });
-        useFormField({ path: 'multiple.3.name', disabled });
-        useFormField({ path: 'multiple.4' });
+        useFormField({ label: 'Field', path: 'field', disabled });
+        useFormField({ label: 'Multiple', path: 'multiple.0' });
+        useFormField({ label: 'Multiple', path: 'multiple.1', disabled });
+        useFormField({ label: 'Multiple', path: 'multiple.2' });
+        useFormField({ label: 'Multiple', path: 'multiple.3.name', disabled });
+        useFormField({ label: 'Multiple', path: 'multiple.4' });
 
         return {};
       },
@@ -920,7 +985,7 @@ describe('form dirty state', () => {
         return { form: useForm({ initialValues: { field: 'foo' } }) };
       },
       () => {
-        return { field: useFormField({ initialValue: 'bar' }) };
+        return { field: useFormField({ label: 'Field', initialValue: 'bar' }).state };
       },
     );
 
@@ -944,7 +1009,7 @@ describe('form dirty state', () => {
         return { form: useForm({ initialValues: { field: 'foo' } }) };
       },
       () => {
-        return { field: useFormField({ path: 'field' }) };
+        return { field: useFormField({ label: 'Field', path: 'field' }).state };
       },
     );
 
@@ -963,7 +1028,7 @@ describe('form dirty state', () => {
         return { form: useForm<any>({ initialValues: { foo: 'bar' } }) };
       },
       () => {
-        return { field: useFormField({ path: 'field' }) };
+        return { field: useFormField({ label: 'Field', path: 'field' }) };
       },
     );
 
@@ -982,7 +1047,7 @@ describe('form validation', () => {
     function createInputComponent(inputEl: Ref<HTMLInputElement | undefined>): Component {
       return {
         setup: () => {
-          const field = useFormField({ path: 'test' });
+          const field = useFormField({ label: 'Field', path: 'test' }).state;
           useInputValidity({ inputEl, field });
 
           return { input: inputEl, errorMessage: field.errorMessage };
@@ -1080,7 +1145,7 @@ describe('form validation', () => {
       const createInputComponent = (input: Ref<HTMLInputElement | undefined>) => {
         return {
           setup: () => {
-            const field = useFormField({ path: 'test' });
+            const field = useFormField({ label: 'Field', path: 'test' }).state;
             useInputValidity({ inputEl: input, field });
 
             return { input: input, errorMessage: field.errorMessage, submitErrorMessage: field.submitErrorMessage };

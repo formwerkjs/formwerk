@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/vue';
 import { useLabel } from './useLabel';
-import { shallowRef } from 'vue';
+import { defineComponent, shallowRef } from 'vue';
 
 describe('label element', () => {
   test('should render label with `for` attribute', async () => {
@@ -93,5 +93,40 @@ describe('label target (labelledBy)', () => {
     });
 
     expect(screen.getByTestId('input')?.getAttribute('aria-labelledby')).toBe(`${labelFor}-l`);
+  });
+});
+
+describe('label component', () => {
+  test('should render label component with `for` attribute', async () => {
+    const label = 'label';
+    const labelFor = 'input';
+    const inputRef = shallowRef<HTMLElement>();
+
+    const LabelComp = defineComponent({
+      props: ['for'],
+      template: `
+        <label data-testid="label" :for="$props.for">
+          <slot />
+        </label>
+      `,
+    });
+
+    await render({
+      components: { LabelComp },
+      setup: () => {
+        return {
+          ...useLabel({ label: label, for: labelFor, targetRef: inputRef }),
+          label,
+          inputRef,
+        };
+      },
+      template: `
+        <LabelComp v-bind="labelProps">{{ label }}</LabelComp>
+        <input data-testid="input" ref="inputRef" />
+      `,
+    });
+
+    expect(screen.getByTestId('label')).toHaveTextContent(label);
+    expect(screen.getByTestId('label')?.getAttribute('for')).toBe(labelFor);
   });
 });

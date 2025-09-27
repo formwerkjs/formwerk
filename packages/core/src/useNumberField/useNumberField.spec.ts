@@ -20,6 +20,7 @@ const makeTest = (props?: SetOptional<NumberFieldProps, 'label'>): Component => 
       isTouched,
       errorMessageProps,
       errorMessage,
+      isBlurred,
     } = useNumberField({
       ...(props || {}),
       label,
@@ -38,10 +39,11 @@ const makeTest = (props?: SetOptional<NumberFieldProps, 'label'>): Component => 
       fieldValue,
       errorMessageProps,
       errorMessage,
+      isBlurred,
     };
   },
   template: `
-      <div data-testid="fixture" :class="{ 'touched': isTouched }">
+      <div data-testid="fixture" :class="{ 'touched': isTouched, 'blurred': isBlurred }">
         <label v-bind="labelProps">{{ label }}</label>
         <input v-bind="inputProps" />
         <span v-bind="descriptionProps">description</span>
@@ -61,10 +63,18 @@ test('should not have a11y errors with labels or descriptions', async () => {
   vi.useFakeTimers();
 });
 
-test('blur sets touched to true', async () => {
+test('blur sets blurred to true', async () => {
+  await render(makeTest());
+  expect(screen.getByTestId('fixture').className).not.includes('blurred');
+  await fireEvent.blur(screen.getByLabelText(label));
+  expect(screen.getByTestId('fixture').className).includes('blurred');
+});
+
+test('input sets touched to true', async () => {
   await render(makeTest());
   expect(screen.getByTestId('fixture').className).not.includes('touched');
-  await fireEvent.blur(screen.getByLabelText(label));
+  await fireEvent.change(screen.getByLabelText(label), { target: { value: '10' } });
+  await flush();
   expect(screen.getByTestId('fixture').className).includes('touched');
 });
 

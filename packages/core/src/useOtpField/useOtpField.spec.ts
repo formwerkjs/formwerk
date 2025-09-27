@@ -15,6 +15,7 @@ const InputBase: string = `
     <span v-bind="errorMessageProps">{{ errorMessage }}</span>
     <span data-testid="value">{{ fieldValue }}</span>
     <span data-testid="touched">{{ isTouched }}</span>
+    <span data-testid="blurred">{{ isBlurred }}</span>
   </div>
 `;
 
@@ -144,7 +145,7 @@ describe('useOtpField', () => {
   });
 
   describe('blur behavior', () => {
-    test('sets touched state to true when a slot is blurred', async () => {
+    test('sets blurred state to true when a slot is blurred', async () => {
       const OtpField = createOtpField({ label: 'OTP Code', length: 4 });
 
       await render({
@@ -156,7 +157,24 @@ describe('useOtpField', () => {
       const slot = screen.getAllByTestId('slot')[0];
       await fireEvent.blur(slot);
 
-      // Verify that the slot has the touched state by checking its aria attributes
+      // Verify that the slot has the blurred state by checking its aria attributes
+      expect(screen.getByTestId('blurred')).toHaveTextContent('true');
+    });
+  });
+
+  describe('touched behavior', () => {
+    test('sets touched state to true when a slot is manipulated', async () => {
+      const OtpField = createOtpField({ label: 'OTP Code', length: 4 });
+
+      await render({
+        components: { OtpField },
+        template: `<OtpField />`,
+      });
+
+      const slot = screen.getAllByTestId('slot')[0];
+      await fireEvent(slot, new InputEvent('beforeinput', { data: '1', cancelable: true }));
+      await flush();
+
       expect(screen.getByTestId('touched')).toHaveTextContent('true');
     });
   });
