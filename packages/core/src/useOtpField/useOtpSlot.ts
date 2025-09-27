@@ -79,6 +79,10 @@ export function useOtpSlot(_props: Reactivify<OtpSlotProps>) {
     },
     onKeydown(e: KeyboardEvent) {
       if (hasKeyCode(e, 'Backspace') || hasKeyCode(e, 'Delete')) {
+        if (isDisabled.value || toValue(props.readonly)) {
+          return;
+        }
+
         blockEvent(e);
         setElementValue('');
         registration?.setValue('', e);

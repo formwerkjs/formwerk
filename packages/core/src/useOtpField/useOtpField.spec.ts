@@ -659,4 +659,251 @@ describe('useOtpField', () => {
       warnSpy.mockRestore();
     });
   });
+
+  describe('readonly and disabled state behavior', () => {
+    test('prevents character deletion with backspace and delete keys when readonly', async () => {
+      const OtpField = createOtpField({
+        label: 'OTP Code',
+        length: 4,
+        modelValue: '1234',
+        readonly: true,
+      });
+
+      await render({
+        components: { OtpField },
+        template: `<OtpField />`,
+      });
+
+      const slots = screen.getAllByTestId('slot');
+
+      // Verify initial value is set
+      expect(screen.getByTestId('value')).toHaveTextContent('1234');
+
+      // Focus a slot and try to delete with backspace
+      await fireEvent.focus(slots[2]);
+      await fireEvent.keyDown(slots[2], { key: 'Backspace', code: 'Backspace' });
+      await flush();
+
+      // Value should remain unchanged
+      expect(screen.getByTestId('value')).toHaveTextContent('1234');
+
+      // Try to delete with delete key
+      await fireEvent.keyDown(slots[2], { key: 'Delete', code: 'Delete' });
+      await flush();
+
+      // Value should still remain unchanged
+      expect(screen.getByTestId('value')).toHaveTextContent('1234');
+    });
+
+    test('prevents character deletion with backspace and delete keys when disabled', async () => {
+      const OtpField = createOtpField({
+        label: 'OTP Code',
+        length: 4,
+        modelValue: '1234',
+        disabled: true,
+      });
+
+      await render({
+        components: { OtpField },
+        template: `<OtpField />`,
+      });
+
+      const slots = screen.getAllByTestId('slot');
+
+      // Verify initial value is set
+      expect(screen.getByTestId('value')).toHaveTextContent('1234');
+
+      // Focus a slot and try to delete with backspace
+      await fireEvent.focus(slots[2]);
+      await fireEvent.keyDown(slots[2], { key: 'Backspace', code: 'Backspace' });
+      await flush();
+
+      // Value should remain unchanged
+      expect(screen.getByTestId('value')).toHaveTextContent('1234');
+
+      // Try to delete with delete key
+      await fireEvent.keyDown(slots[2], { key: 'Delete', code: 'Delete' });
+      await flush();
+
+      // Value should still remain unchanged
+      expect(screen.getByTestId('value')).toHaveTextContent('1234');
+    });
+
+    test('prevents character input with beforeinput when readonly', async () => {
+      const OtpField = createOtpField({
+        label: 'OTP Code',
+        length: 4,
+        modelValue: '1234',
+        readonly: true,
+      });
+
+      await render({
+        components: { OtpField },
+        template: `<OtpField />`,
+      });
+
+      const slots = screen.getAllByTestId('slot');
+
+      // Verify initial value is set
+      expect(screen.getByTestId('value')).toHaveTextContent('1234');
+
+      // Focus a slot and try to input a character
+      await fireEvent.focus(slots[1]);
+      await fireEvent(slots[1], new InputEvent('beforeinput', { data: '9', cancelable: true }));
+      await flush();
+
+      // Value should remain unchanged
+      expect(screen.getByTestId('value')).toHaveTextContent('1234');
+    });
+
+    test('prevents character input with beforeinput when disabled', async () => {
+      const OtpField = createOtpField({
+        label: 'OTP Code',
+        length: 4,
+        modelValue: '1234',
+        disabled: true,
+      });
+
+      await render({
+        components: { OtpField },
+        template: `<OtpField />`,
+      });
+
+      const slots = screen.getAllByTestId('slot');
+
+      // Verify initial value is set
+      expect(screen.getByTestId('value')).toHaveTextContent('1234');
+
+      // Focus a slot and try to input a character
+      await fireEvent.focus(slots[1]);
+      await fireEvent(slots[1], new InputEvent('beforeinput', { data: '9', cancelable: true }));
+      await flush();
+
+      // Value should remain unchanged
+      expect(screen.getByTestId('value')).toHaveTextContent('1234');
+    });
+
+    test('allows normal keyboard navigation when readonly', async () => {
+      const OtpField = createOtpField(
+        {
+          label: 'OTP Code',
+          length: 4,
+          modelValue: '1234',
+          readonly: true,
+        },
+        InputBase,
+        'input',
+      );
+
+      await render({
+        components: { OtpField },
+        template: `<OtpField />`,
+      });
+
+      const slots = screen.getAllByTestId('slot');
+
+      // Focus the first slot
+      await fireEvent.focus(slots[0]);
+
+      // Test that navigation keys work and don't throw errors or change the value
+      await fireEvent.keyDown(slots[0], { key: 'ArrowRight', code: 'ArrowRight' });
+      await flush();
+
+      await fireEvent.keyDown(slots[0], { key: 'ArrowLeft', code: 'ArrowLeft' });
+      await flush();
+
+      await fireEvent.keyDown(slots[0], { key: 'Enter', code: 'Enter' });
+      await flush();
+
+      // Value should remain unchanged throughout navigation
+      expect(screen.getByTestId('value')).toHaveTextContent('1234');
+    });
+
+    test('allows normal keyboard navigation when disabled', async () => {
+      const OtpField = createOtpField(
+        {
+          label: 'OTP Code',
+          length: 4,
+          modelValue: '1234',
+          disabled: true,
+        },
+        InputBase,
+        'input',
+      );
+
+      await render({
+        components: { OtpField },
+        template: `<OtpField />`,
+      });
+
+      const slots = screen.getAllByTestId('slot');
+
+      // Note: Disabled slots have tabindex="-1" so they can't be focused normally
+      // But we can test that if somehow focused, navigation still works
+      await fireEvent.focus(slots[0]);
+
+      // Arrow navigation should still work
+      await fireEvent.keyDown(slots[0], { key: 'ArrowRight', code: 'ArrowRight' });
+      await flush();
+
+      await fireEvent.keyDown(slots[1], { key: 'ArrowLeft', code: 'ArrowLeft' });
+      await flush();
+
+      // Enter key navigation should still work
+      await fireEvent.keyDown(slots[0], { key: 'Enter', code: 'Enter' });
+      await flush();
+
+      // Value should remain unchanged throughout navigation
+      expect(screen.getByTestId('value')).toHaveTextContent('1234');
+    });
+
+    test('readonly field correctly sets aria-readonly attribute', async () => {
+      const OtpField = createOtpField(
+        {
+          label: 'OTP Code',
+          length: 4,
+          readonly: true,
+        },
+        InputBase,
+        'span',
+      );
+
+      await render({
+        components: { OtpField },
+        template: `<OtpField />`,
+      });
+
+      const slots = screen.getAllByTestId('slot');
+
+      // Verify all slots have aria-readonly="true"
+      slots.forEach(slot => {
+        expect(slot).toHaveAttribute('aria-readonly', 'true');
+      });
+    });
+
+    test('disabled field correctly sets aria-disabled attribute and tabindex', async () => {
+      const OtpField = createOtpField(
+        {
+          label: 'OTP Code',
+          length: 4,
+          disabled: true,
+        },
+        InputBase,
+        'span',
+      );
+
+      await render({
+        components: { OtpField },
+        template: `<OtpField />`,
+      });
+
+      const slots = screen.getAllByTestId('slot');
+
+      // Verify all slots have aria-disabled="true" and tabindex="-1"
+      slots.forEach(slot => {
+        expect(slot).toHaveAttribute('aria-disabled', 'true');
+        expect(slot).toHaveAttribute('tabindex', '-1');
+      });
+    });
+  });
 });
