@@ -2,4 +2,4 @@
 '@formwerk/core': minor
 ---
 
-feat: split all fields into control composables
+feat(core): each field composable now has a control composable variant to allow for more granular components

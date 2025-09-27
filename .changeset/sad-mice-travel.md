@@ -2,4 +2,4 @@
 '@formwerk/core': minor
 ---
 
-track blurred fields
+feat(core): added `isBlurred` state to fields and forms
