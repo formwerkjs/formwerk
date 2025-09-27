@@ -54,6 +54,11 @@ export function useCustomControl<TValue = unknown>(
     controlId,
 
     /**
+     * Reference to the control element.
+     */
+    controlEl,
+
+    /**
      * Props for the control element/group.
      */
     controlProps,
