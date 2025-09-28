@@ -1,11 +1,11 @@
 import { isSSR } from '../utils/common';
 
 export function isMac() {
-  const macRE = /^Mac/i;
   if (isSSR) {
     return false;
   }
 
+  const macRE = /^Mac/i;
   let platform = navigator.platform;
   if ('userAgentData' in navigator) {
     platform = (navigator.userAgentData as { platform: string }).platform;
@@ -15,5 +15,9 @@ export function isMac() {
 }
 
 export function isFirefox() {
+  if (isSSR) {
+    return false;
+  }
+
   return /Firefox/i.test(navigator.userAgent);
 }
