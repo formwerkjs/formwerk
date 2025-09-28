@@ -1,5 +1,17 @@
 # @formwerk/core
 
+## 0.14.0
+
+### Minor Changes
+
+- 9a959c1: feat(core): each field composable now has a control composable variant to allow for more granular components
+- 9a959c1: feat(core): added `isBlurred` state to fields and forms
+
+### Patch Changes
+
+- cb8d5bc: fix(core): OTP fields allowing deletion while readonly is true
+  - @formwerk/devtools@0.14.0
+
 ## 0.13.0
 
 ### Minor Changes
