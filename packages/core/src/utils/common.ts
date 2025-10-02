@@ -304,6 +304,19 @@ export function isInputElement(el: Maybe<HTMLElement>): el is HTMLInputElement {
   return isComponent(el) || ['INPUT', 'TEXTAREA', 'SELECT'].includes(el.tagName);
 }
 
+/**
+ * Checks if an element is labelable.
+ * https://developer.mozilla.org/en-US/docs/Web/HTML/Guides/Content_categories#labelable
+ */
+export function isLabelableElement(el: Maybe<HTMLElement | ComponentPublicInstance>): boolean {
+  return (
+    isComponent(el) ||
+    isInputElement(el) ||
+    isButtonElement(el) ||
+    ['METER', 'OUTPUT', 'PROGRESS'].includes(el?.tagName ?? '')
+  );
+}
+
 export function isLabelElement(el: Maybe<HTMLElement | ComponentPublicInstance>): el is HTMLLabelElement {
   if (!el) {
     return false;
@@ -320,7 +333,7 @@ export function isComponent(ref: Maybe<HTMLElement | ComponentPublicInstance>): 
   return '$' in ref;
 }
 
-export function isButtonElement(el: Maybe<HTMLElement>): el is HTMLButtonElement {
+export function isButtonElement(el: Maybe<HTMLElement | ComponentPublicInstance>): el is HTMLButtonElement {
   return isComponent(el) || el?.tagName === 'BUTTON';
 }
 
