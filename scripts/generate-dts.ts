@@ -54,7 +54,11 @@ async function bundleDts(declarationDir, pkg) {
   const config = {
     input: entry,
     output: { file: `packages/${pkg}/dist/${pkgNameMap[pkg]}.d.ts`, format: 'es' },
-    plugins: [dts()],
+    plugins: [
+      dts({
+        tsconfig: path.resolve(__dirname, `../tsconfig.lib.json`),
+      }),
+    ],
   };
 
   const bundle = await rolldown(config as RolldownOptions);
