@@ -26,6 +26,12 @@ export interface ListBoxProps<TOption, TValue = TOption> {
   onToggleAfter?(): void;
 }
 
+export interface ListOption<TValue = unknown> {
+  id: string;
+  label: string;
+  value: TValue;
+}
+
 export interface ListBoxDomProps extends AriaLabelableProps {
   role: 'listbox';
   'aria-multiselectable'?: boolean;
@@ -281,7 +287,7 @@ export function useListBox<TOption, TValue = TOption>(
     focusNext();
   });
 
-  function mapOption(opt: OptionRegistration<TValue>) {
+  function mapOption(opt: OptionRegistration<TValue>): ListOption<TValue> {
     return {
       id: opt.id,
       value: opt.getValue(),
