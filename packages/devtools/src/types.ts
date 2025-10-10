@@ -3,6 +3,7 @@ import { ComponentInternalInstance, MaybeRefOrGetter } from 'vue';
 
 interface BaseState<TValue = unknown> {
   touched: boolean;
+  blurred: boolean;
   dirty: boolean;
   valid: boolean;
   errors: string[];
@@ -66,6 +67,7 @@ export function formToState(form: FormReturns): FormState {
   return {
     id: form.context.id,
     touched: form.isTouched(),
+    blurred: form.isBlurred(),
     dirty: form.isDirty(),
     isSubmitting: form.isSubmitting.value,
     submitCount: form.submitAttemptsCount.value,
@@ -82,6 +84,7 @@ export function fieldToState(field: CoreFieldState<unknown>, formId?: string): F
     path: field.getPath() ?? '',
     name: field.getName() ?? '',
     touched: field.isTouched.value,
+    blurred: field.isBlurred.value,
     dirty: field.isDirty.value,
     valid: !!field.isValid.value,
     value: field.fieldValue,
