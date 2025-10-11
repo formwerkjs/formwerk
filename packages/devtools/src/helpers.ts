@@ -30,6 +30,10 @@ export function buildFieldState(state: FieldState | PathState): CustomInspectorS
         value: state.touched,
       },
       {
+        key: 'blurred',
+        value: state.blurred,
+      },
+      {
         key: 'dirty',
         value: state.dirty,
       },
@@ -55,6 +59,10 @@ export function buildFormState(form: FormState): CustomInspectorState {
       {
         key: 'touched',
         value: form.touched,
+      },
+      {
+        key: 'blurred',
+        value: form.blurred,
       },
       {
         key: 'dirty',
@@ -152,6 +160,7 @@ export function decodeNode(nodeId: string): NodeState | null {
         path: idObject.fp,
         formId: idObject.f,
         touched: form.isTouched(idObject.fp),
+        blurred: form.isBlurred(idObject.fp),
         dirty: form.isDirty(idObject.fp),
         valid: form.isValid(idObject.fp),
         errors: form.getErrors(idObject.fp),
@@ -278,6 +287,7 @@ export function buildFormTree(
   const nodeState: PathState = {
     formId: form.context.id,
     dirty: form.isDirty(fullPath),
+    blurred: form.isBlurred(fullPath),
     valid: form.isValid(fullPath),
     errors: form.getErrors(fullPath),
     value: form.getValue(fullPath),
