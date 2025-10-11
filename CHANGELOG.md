@@ -1,5 +1,14 @@
 # @formwerk/core
 
+## 0.14.1
+
+### Patch Changes
+
+- f8222de: fix(core): OTP fields crashing in SSR environments
+- 77a2abc: fix(core): properly render 'for' attribute for labelable elements
+- Updated dependencies [98e3cc5]
+  - @formwerk/devtools@0.14.1
+
 ## 0.14.0
 
 ### Minor Changes

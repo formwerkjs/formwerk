@@ -1,5 +1,11 @@
 # @formwerk/devtools
 
+## 0.14.1
+
+### Patch Changes
+
+- 98e3cc5: Enhance the devtools to include blurred state at the form and field level
+
 ## 0.14.0
 
 ## 0.13.0
