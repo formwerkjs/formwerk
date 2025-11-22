@@ -1,6 +1,7 @@
 import path, { dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { InputOptions, ModuleFormat, OutputOptions } from 'rolldown';
+import { replacePlugin } from 'rolldown/plugins';
 import { normalizePath, slashes } from './normalize-path';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -38,14 +39,18 @@ async function createConfig(pkg: keyof typeof pkgNameMap, format: ModuleFormat) 
   const { version } = info;
   const isEsm = testEsm(format);
 
+  const plugins = [
+    replacePlugin({
+      __VERSION__: JSON.stringify(version),
+      __DEV__: isEsm ? `(process.env.NODE_ENV !== 'production')` : 'false',
+    }),
+  ];
+
   const config: { input: InputOptions; output: OutputOptions; bundleName: string } = {
     bundleName: `${pkgNameMap[pkg]}.${formatExt[format] ?? 'js'}`,
     input: {
+      plugins,
       tsconfig: slashes(path.resolve(__dirname, `../tsconfig.lib.json`)),
-      define: {
-        __VERSION__: JSON.stringify(version),
-        __DEV__: isEsm ? `(process.env.NODE_ENV !== 'production')` : 'false',
-      },
       input: slashes(path.resolve(__dirname, `../packages/${pkg}/src/index.ts`)),
       external: [
         'vue',
