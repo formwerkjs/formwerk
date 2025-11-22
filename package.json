@@ -37,6 +37,7 @@
     "@types/node": "^24.6.2",
     "@vitest/coverage-v8": "^3.2.4",
     "@vitest/ui": "^3.2.4",
+    "@vue/server-renderer": "3.5.13",
     "concurrently": "^9.2.1",
     "consola": "^3.4.2",
     "filesize": "^11.0.13",
