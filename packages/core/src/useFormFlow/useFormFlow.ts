@@ -1,8 +1,8 @@
-import { computed, nextTick, onMounted, provide, reactive, Ref, ref, toValue, shallowRef } from 'vue';
+import { computed, nextTick, provide, reactive, Ref, ref, toValue, shallowRef } from 'vue';
 import { NoSchemaFormProps, useForm } from '../useForm';
 import { FormObject, IssueCollection, Path } from '../types';
 import { isObject, merge } from '../../../shared/src';
-import { cloneDeep } from '../utils/common';
+import { cloneDeep, isSSR } from '../utils/common';
 import { FormFlowContextKey, SegmentMetadata, SegmentRegistrationMetadata, StepIdentifier } from './types';
 import { asConsumableData, ConsumableData } from '../useForm/useFormActions';
 import { createEventDispatcher } from '../utils/events';
@@ -25,6 +25,10 @@ export interface GoToPredicateContext {
   relativeDistance: number;
 }
 
+export interface RenderedSegment {
+  id: string;
+}
+
 export function useFormFlow<TInput extends FormObject = FormObject>(_props?: FormFlowProps<TInput>) {
   const currentSegmentId = ref<string>();
   const formElement = shallowRef<HTMLElement>();
@@ -33,9 +37,7 @@ export function useFormFlow<TInput extends FormObject = FormObject>(_props?: For
   const form = useForm(_props);
   const segments = ref<SegmentMetadata[]>([]);
 
-  function getCurrentSegment() {
-    return segments.value.find(segment => segment.id === currentSegmentId.value);
-  }
+  const rawCurrentSegment = computed(() => segments.value.find(segment => segment.id === currentSegmentId.value));
 
   const [dispatchActiveSegmentChange, onActiveSegmentChange] = createEventDispatcher<{
     data: ConsumableData<TInput>;
@@ -44,7 +46,7 @@ export function useFormFlow<TInput extends FormObject = FormObject>(_props?: For
   }>('activeSegmentChange');
 
   function beforeSegmentChange(nextSegment: SegmentMetadata, applyChange: () => void) {
-    const currentSegment = getCurrentSegment();
+    const currentSegment = rawCurrentSegment.value;
     if (currentSegment) {
       saveValues();
       dispatchActiveSegmentChange({
@@ -59,7 +61,7 @@ export function useFormFlow<TInput extends FormObject = FormObject>(_props?: For
   }
 
   function saveValues() {
-    const currentSegment = getCurrentSegment();
+    const currentSegment = rawCurrentSegment.value;
     if (!currentSegment) {
       return;
     }
@@ -74,8 +76,8 @@ export function useFormFlow<TInput extends FormObject = FormObject>(_props?: For
   }
 
   provide(FormFlowContextKey, {
-    isSegmentActive: (segmentId: string) => getCurrentSegment()?.id === segmentId,
-    registerSegment: (metadata: SegmentRegistrationMetadata) =>
+    isSegmentActive: (segmentId: string) => rawCurrentSegment.value?.id === segmentId,
+    registerSegment: (metadata: SegmentRegistrationMetadata) => {
       segments.value.push({
         id: metadata.id,
         name: () => toValue(metadata.name),
@@ -83,11 +85,18 @@ export function useFormFlow<TInput extends FormObject = FormObject>(_props?: For
         visited: segments.value.length === 0,
         submitted: false,
         getValue: () => segmentValuesMap.value.get(metadata.id)?.values,
-      }),
+      });
+
+      // Activate the first segment if there is only one by default
+      // Fixes SSR #231
+      if (segments.value.length === 1) {
+        currentSegmentId.value = metadata.id;
+      }
+    },
   });
 
   const currentSegment = computed(() => {
-    const curr = getCurrentSegment();
+    const curr = rawCurrentSegment.value;
     if (!curr) {
       return null;
     }
@@ -101,7 +110,7 @@ export function useFormFlow<TInput extends FormObject = FormObject>(_props?: For
       return -1;
     }
 
-    return getDomSegments().findIndex(segment => segment.dataset.formSegmentId === current.id);
+    return getRenderedSegments().findIndex(segment => segment.id === current.id);
   });
 
   const isLastSegment = computed(() => currentSegmentIndex.value === segments.value.length - 1);
@@ -125,7 +134,7 @@ export function useFormFlow<TInput extends FormObject = FormObject>(_props?: For
 
   async function restoreSegmentValues() {
     await nextTick();
-    const currentSegment = getCurrentSegment();
+    const currentSegment = rawCurrentSegment.value;
     // restore field values
     if (currentSegment && hasState(currentSegment.id)) {
       const state = segmentValuesMap.value.get(currentSegment.id) as StepState<TInput>;
@@ -136,14 +145,20 @@ export function useFormFlow<TInput extends FormObject = FormObject>(_props?: For
     }
   }
 
-  function getDomSegments() {
-    return Array.from(formElement.value?.querySelectorAll(`[data-form-segment-id]`) || []) as HTMLElement[];
+  function getRenderedSegments(): RenderedSegment[] {
+    if (isSSR) {
+      return segments.value.map(segment => ({ id: segment.id }));
+    }
+
+    return Array.from(formElement.value?.querySelectorAll(`[data-form-segment-id]`) || []).map(segment => ({
+      id: (segment as HTMLElement).dataset.formSegmentId ?? '',
+    }));
   }
 
   function getSegmentAt(idx: number): { idx: number; segment: SegmentMetadata } | undefined {
-    const domSegments = getDomSegments();
+    const domSegments = getRenderedSegments();
 
-    const i = segments.value.findIndex(segment => segment.id === domSegments[idx].dataset.formSegmentId);
+    const i = segments.value.findIndex(segment => segment.id === domSegments[idx].id);
     if (i === -1) {
       return undefined;
     }
@@ -225,10 +240,6 @@ export function useFormFlow<TInput extends FormObject = FormObject>(_props?: For
     }
   }
 
-  onMounted(() => {
-    moveRelative(0);
-  });
-
   return {
     form,
 
@@ -275,7 +286,7 @@ export function useFormFlow<TInput extends FormObject = FormObject>(_props?: For
     /**
      * Returns the DOM segments.
      */
-    getDomSegments,
+    getRenderedSegments,
 
     /**
      * The segments.
