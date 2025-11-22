@@ -1,4 +1,4 @@
-import { defineComponent } from 'vue';
+import { defineComponent, watch } from 'vue';
 import { fireEvent, render, screen } from '@testing-library/vue';
 import { axe } from 'vitest-axe';
 import { StepResolveContext, useStepFormFlow } from '.';
@@ -1431,5 +1431,143 @@ describe('warnings', () => {
         'There is no current step resolved, maybe you are trying to resolve a step before the first step is resolved?',
       ),
     );
+  });
+});
+
+describe('single-step forms', () => {
+  test('should correctly identify isLastStep as true for single-step form', async () => {
+    await render({
+      components: {
+        SteppedFormFlow,
+        FormFlowSegment,
+        TextField,
+      },
+      template: `
+        <SteppedFormFlow>
+          <FormFlowSegment name="only-step">
+            <span>Only Step</span>
+            <TextField label="Name" name="name" />
+          </FormFlowSegment>
+        </SteppedFormFlow>
+      `,
+    });
+
+    await flush();
+
+    // With only one step, the next button should say "Submit" not "Next"
+    expect(screen.getByTestId('next-button')).toHaveTextContent('Submit');
+  });
+
+  test('should trigger onDone when submitting single-step form', async () => {
+    const onDone = vi.fn();
+
+    await render({
+      setup() {
+        return { onDone };
+      },
+      components: {
+        SteppedFormFlow,
+        FormFlowSegment,
+        TextField,
+      },
+      template: `
+        <SteppedFormFlow @done="onDone">
+          <FormFlowSegment name="only-step">
+            <TextField label="Name" name="name" />
+          </FormFlowSegment>
+        </SteppedFormFlow>
+      `,
+    });
+
+    await flush();
+
+    // Fill in the field
+    await fireEvent.update(screen.getByLabelText('Name'), 'John Doe');
+    await flush();
+
+    // Click next/submit button
+    await fireEvent.click(screen.getByTestId('next-button'));
+    await flush();
+
+    // Should have triggered onDone, not moved to another step
+    expect(onDone).toHaveBeenCalledWith({
+      name: 'John Doe',
+    });
+  });
+
+  test('should not change button text while segments are registering', async () => {
+    // This test verifies the segmentsStable flag works correctly
+    // by checking that isLastStep doesn't prematurely return true during registration
+    let buttonTexts: string[] = [];
+
+    await render({
+      setup() {
+        const { isLastStep } = useStepFormFlow();
+
+        // Track button text as it changes
+        watch(
+          () => isLastStep.value,
+          val => {
+            buttonTexts.push(val ? 'Submit' : 'Next');
+          },
+          { immediate: true },
+        );
+
+        return { isLastStep };
+      },
+      components: {
+        FormFlowSegment,
+        TextField,
+      },
+      template: `
+        <div>
+          <FormFlowSegment name="step1">
+            <TextField label="Name" name="name" />
+          </FormFlowSegment>
+          <FormFlowSegment name="step2">
+            <TextField label="Email" name="email" />
+          </FormFlowSegment>
+          <FormFlowSegment name="step3">
+            <TextField label="Phone" name="phone" />
+          </FormFlowSegment>
+          <button>{{ isLastStep ? 'Submit' : 'Next' }}</button>
+        </div>
+      `,
+    });
+
+    await flush();
+
+    // The button should start as "Next" and not flicker to "Submit" during registration
+    // First value should be "Next" (not "Submit")
+    expect(buttonTexts[0]).toBe('Next');
+
+    // After all segments register and stabilize, should still be "Next" (we're on step 1 of 3)
+    expect(screen.getByRole('button')).toHaveTextContent('Next');
+  });
+
+  test('single-step form isLastStep should become true after segments stabilize', async () => {
+    await render({
+      components: {
+        SteppedFormFlow,
+        FormFlowSegment,
+        TextField,
+      },
+      template: `
+        <SteppedFormFlow>
+          <FormFlowSegment name="only-step">
+            <TextField label="Name" name="name" />
+          </FormFlowSegment>
+        </SteppedFormFlow>
+      `,
+    });
+
+    await flush();
+
+    // Wait an extra tick for the microtask (segmentsStable) to resolve
+    await new Promise(resolve => Promise.resolve().then(resolve));
+    await flush();
+
+    // After segments stabilize, single-step form should show "Submit"
+    expect(screen.getByTestId('next-button')).toHaveTextContent('Submit');
   });
 });

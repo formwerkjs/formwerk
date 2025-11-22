@@ -36,7 +36,7 @@ export function useFormFlow<TInput extends FormObject = FormObject>(_props?: For
   const segmentValuesMap = ref(new Map<string, StepState<TInput>>()) as Ref<Map<string, StepState<TInput>>>;
   const form = useForm(_props);
   const segments = ref<SegmentMetadata[]>([]);
-
+  const isSegmentsStable = ref(false);
   const rawCurrentSegment = computed(() => segments.value.find(segment => segment.id === currentSegmentId.value));
 
   const [dispatchActiveSegmentChange, onActiveSegmentChange] = createEventDispatcher<{
@@ -78,19 +78,29 @@ export function useFormFlow<TInput extends FormObject = FormObject>(_props?: For
   provide(FormFlowContextKey, {
     isSegmentActive: (segmentId: string) => rawCurrentSegment.value?.id === segmentId,
     registerSegment: (metadata: SegmentRegistrationMetadata) => {
+      const isFirstSegment = segments.value.length === 0;
+
       segments.value.push({
         id: metadata.id,
         name: () => toValue(metadata.name),
         // The first segment is always visited.
-        visited: segments.value.length === 0,
+        visited: isFirstSegment,
         submitted: false,
         getValue: () => segmentValuesMap.value.get(metadata.id)?.values,
       });
 
-      // Activate the first segment if there is only one by default
-      // Fixes SSR #231
-      if (segments.value.length === 1) {
+      // Activate the first segment immediately to ensure SSR/client consistency
+      // Fixes SSR hydration mismatch with isActive state
+      if (isFirstSegment) {
         currentSegmentId.value = metadata.id;
+      }
+
+      // Mark segments as stable after a microtask to ensure all synchronous registrations complete
+      // This helps distinguish between "only 1 segment registered so far" vs "only 1 segment total"
+      if (!isSegmentsStable.value) {
+        nextTick(() => {
+          isSegmentsStable.value = true;
+        });
       }
     },
   });
@@ -113,7 +123,24 @@ export function useFormFlow<TInput extends FormObject = FormObject>(_props?: For
     return getRenderedSegments().findIndex(segment => segment.id === current.id);
   });
 
-  const isLastSegment = computed(() => currentSegmentIndex.value === segments.value.length - 1);
+  const isLastSegment = computed(() => {
+    const current = currentSegment.value;
+    if (!current) {
+      return false;
+    }
+
+    const index = currentSegmentIndex.value;
+    const total = segments.value.length;
+
+    // If we're on the first segment and only one segment has registered so far,
+    // only return true if segments are stable (all registered).
+    // This prevents SSR hydration mismatch when segments register incrementally on client.
+    if (index === 0 && total === 1 && !isSegmentsStable.value) {
+      return false;
+    }
+
+    return index === total - 1;
+  });
 
   function resolveRelative(delta: number): SegmentMetadata | null {
     const domSegments = Array.from(
