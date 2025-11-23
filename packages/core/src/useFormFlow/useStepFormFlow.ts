@@ -258,25 +258,29 @@ export function useStepFormFlow<TInput extends FormObject>(props?: StepFormFlowP
    */
   function goToStep(segmentId: number | string, opts?: { force?: true }) {
     if (opts?.force) {
-      return flow.goTo(segmentId);
+      return flow.goTo(segmentId, undefined, true);
     }
 
-    flow.goTo(segmentId, ({ segments, index, relativeDistance }) => {
-      // Going backward is always allowed.
-      if (relativeDistance < 0) {
-        return true;
-      }
+    flow.goTo(
+      segmentId,
+      ({ segments, index, relativeDistance }) => {
+        // Going backward is always allowed.
+        if (relativeDistance < 0) {
+          return true;
+        }
 
-      // If same step, don't allow the jump.
-      if (relativeDistance === 0) {
-        return false;
-      }
+        // If same step, don't allow the jump.
+        if (relativeDistance === 0) {
+          return false;
+        }
 
-      // Check if all segments up to the target segment have state, otherwise we don't allow the jump.
-      return segments.slice(0, index + 1).every(segment => {
-        return segment.visited;
-      });
-    });
+        // Check if all segments up to the target segment have state, otherwise we don't allow the jump.
+        return segments.slice(0, index + 1).every(segment => {
+          return segment.visited;
+        });
+      },
+      true,
+    );
   }
 
   function isCurrentStep(segmentId: number | string) {
@@ -334,11 +338,11 @@ export function useStepFormFlow<TInput extends FormObject>(props?: StepFormFlowP
      */
     currentStep: flow.currentSegment,
 
-     /**
+    /**
      * The current step index in the flow.
      */
     currentIndex: flow.currentSegmentIndex,
-    
+
     /**
      * Activates the step in the flow, if it is already at the last step it will trigger the `onDone` handler.
      */

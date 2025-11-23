@@ -1,4 +1,4 @@
-import { defineComponent, watch } from 'vue';
+import { defineComponent, watch, ref, onMounted } from 'vue';
 import { fireEvent, render, screen } from '@testing-library/vue';
 import { axe } from 'vitest-axe';
 import { StepResolveContext, useStepFormFlow } from '.';
@@ -1569,5 +1569,180 @@ describe('single-step forms', () => {
 
     // After segments stabilize, single-step form should show "Submit"
     expect(screen.getByTestId('next-button')).toHaveTextContent('Submit');
+  });
+});
+
+describe('conditional rendering with v-if', () => {
+  test('should handle first step not being rendered initially and activate it when it appears on mount', async () => {
+    await render({
+      setup() {
+        const showFirstStep = ref(false);
+
+        onMounted(() => {
+          showFirstStep.value = true;
+        });
+
+        return { showFirstStep };
+      },
+      components: {
+        SteppedFormFlow,
+        FormFlowSegment,
+        TextField,
+      },
+      template: `
+        <SteppedFormFlow>
+          <FormFlowSegment v-if="showFirstStep" name="step1">
+            <span>Step 1</span>
+            <TextField label="Name" name="name" />
+          </FormFlowSegment>
+          <FormFlowSegment name="step2">
+            <span>Step 2</span>
+            <TextField label="Email" name="email" />
+          </FormFlowSegment>
+          <FormFlowSegment name="step3">
+            <span>Step 3</span>
+            <TextField label="Phone" name="phone" />
+          </FormFlowSegment>
+        </SteppedFormFlow>
+      `,
+    });
+
+    await flush();
+
+    // After showFirstStep becomes true, step 1 should appear and be active
+    expect(screen.getByText('Step 1')).toBeVisible();
+    expect(screen.getByTestId('current-segment')).toHaveTextContent('Current: step1');
+  });
+
+  test('should activate first available step when first step is conditionally hidden', async () => {
+    render({
+      setup() {
+        const showFirstStep = ref(false);
+
+        return { showFirstStep };
+      },
+      components: {
+        SteppedFormFlow,
+        FormFlowSegment,
+        TextField,
+      },
+      template: `
+        <SteppedFormFlow>
+          <FormFlowSegment v-if="showFirstStep" name="step1">
+            <span>Step 1</span>
+            <TextField label="Name" name="name" />
+          </FormFlowSegment>
+          <FormFlowSegment name="step2">
+            <span>Step 2</span>
+            <TextField label="Email" name="email" />
+          </FormFlowSegment>
+          <FormFlowSegment name="step3">
+            <span>Step 3</span>
+            <TextField label="Phone" name="phone" />
+          </FormFlowSegment>
+        </SteppedFormFlow>
+      `,
+    });
+
+    await flush();
+
+    // Step 1 is not rendered, so step 2 should be the first available step
+    // However, step 1 was registered first, so currentSegmentId points to step1
+    // but step1 is not in the DOM, causing a mismatch
+    // The current segment should show step2 content (first available in DOM)
+    expect(screen.queryByText('Step 2')).toBeVisible();
+    expect(screen.queryByText('Step 3')).toBeNull();
+  });
+
+  test('should reset to first available step on mount when initial step is not rendered', async () => {
+    await render({
+      setup() {
+        const showFirstStep = ref(false);
+
+        return { showFirstStep };
+      },
+      components: {
+        SteppedFormFlow,
+        FormFlowSegment,
+        TextField,
+      },
+      template: `
+        <SteppedFormFlow>
+          <FormFlowSegment v-if="showFirstStep" name="step1">
+            <span>Step 1</span>
+            <TextField label="Name" name="name" />
+          </FormFlowSegment>
+          <FormFlowSegment name="step2">
+            <span>Step 2</span>
+            <TextField label="Email" name="email" />
+          </FormFlowSegment>
+          <FormFlowSegment name="step3">
+            <span>Step 3</span>
+            <TextField label="Phone" name="phone" />
+          </FormFlowSegment>
+        </SteppedFormFlow>
+      `,
+    });
+
+    await flush();
+
+    // With the fix, step 2 (first available) should be active and visible
+    const step2 = screen.queryByText('Step 2');
+    expect(step2).toBeVisible();
+
+    const step3 = screen.queryByText('Step 3');
+    expect(step3).toBeNull();
+
+    // Current step name should be 'step2'
+    expect(screen.getByTestId('current-segment')).toHaveTextContent('Current: step2');
+  });
+
+  test('should not override user navigation if they manually change step', async () => {
+    const showFirstStep = ref(false);
+    const goToStepFn = ref<((step: string | number, opts?: { force?: true }) => void) | null>(null);
+
+    await render({
+      setup() {
+        const { goToStep, currentStep } = useStepFormFlow();
+        goToStepFn.value = goToStep;
+
+        onMounted(() => {
+          goToStep('step3', { force: true });
+          showFirstStep.value = true;
+        });
+
+        return { showFirstStep, currentStep };
+      },
+      components: {
+        SteppedFormFlow,
+        FormFlowSegment,
+        TextField,
+      },
+      template: `
+        <div data-testid="current-step">Current: {{ currentStep?.name }}</div>
+        <FormFlowSegment v-if="showFirstStep" name="step1">
+          <span>Step 1</span>
+          <TextField label="Name" name="name" />
+        </FormFlowSegment>
+
+        <FormFlowSegment name="step2">
+          <span>Step 2</span>
+          <TextField label="Email" name="email" />
+        </FormFlowSegment>
+
+        <FormFlowSegment name="step3">
+          <span>Step 3</span>
+          <TextField label="Phone" name="phone" />
+        </FormFlowSegment>
+    `,
+    });
+
+    await flush();
+
+    // Should be on step 3 and not step 1, meaning the correction did not happen
+    expect(screen.getByText('Step 3')).toBeVisible();
+    expect(screen.queryByText('Step 1')).toBeNull();
+    expect(screen.queryByText('Step 2')).toBeNull();
+    expect(screen.getByTestId('current-step')).toHaveTextContent('Current: step3');
   });
 });

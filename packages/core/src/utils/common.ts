@@ -3,6 +3,7 @@ import {
   computed,
   getCurrentScope,
   MaybeRefOrGetter,
+  nextTick,
   onScopeDispose,
   Ref,
   toValue,
@@ -489,4 +490,13 @@ export function toPrimitiveBooleanValue(val: MaybeRefOrGetter<Boolean | undefine
     return true;
   }
   return unwrapped?.valueOf();
+}
+
+/**
+ * Waits for the given number of ticks to complete.
+ */
+export async function waitForTicks(n: number) {
+  for (let i = 0; i < n; i++) {
+    await nextTick();
+  }
 }

@@ -1,8 +1,8 @@
-import { computed, nextTick, provide, reactive, Ref, ref, toValue, shallowRef } from 'vue';
+import { computed, nextTick, onMounted, provide, reactive, Ref, ref, toValue, shallowRef } from 'vue';
 import { NoSchemaFormProps, useForm } from '../useForm';
 import { FormObject, IssueCollection, Path } from '../types';
 import { isObject, merge } from '../../../shared/src';
-import { cloneDeep, isSSR } from '../utils/common';
+import { cloneDeep, isNullOrUndefined, isSSR, waitForTicks } from '../utils/common';
 import { FormFlowContextKey, SegmentMetadata, SegmentRegistrationMetadata, StepIdentifier } from './types';
 import { asConsumableData, ConsumableData } from '../useForm/useFormActions';
 import { createEventDispatcher } from '../utils/events';
@@ -27,6 +27,7 @@ export interface GoToPredicateContext {
 
 export interface RenderedSegment {
   id: string;
+  active: boolean;
 }
 
 export function useFormFlow<TInput extends FormObject = FormObject>(_props?: FormFlowProps<TInput>) {
@@ -37,6 +38,7 @@ export function useFormFlow<TInput extends FormObject = FormObject>(_props?: For
   const form = useForm(_props);
   const segments = ref<SegmentMetadata[]>([]);
   const isSegmentsStable = ref(false);
+  let pendingStep: StepIdentifier | undefined;
   const rawCurrentSegment = computed(() => segments.value.find(segment => segment.id === currentSegmentId.value));
 
   const [dispatchActiveSegmentChange, onActiveSegmentChange] = createEventDispatcher<{
@@ -78,7 +80,7 @@ export function useFormFlow<TInput extends FormObject = FormObject>(_props?: For
   provide(FormFlowContextKey, {
     isSegmentActive: (segmentId: string) => rawCurrentSegment.value?.id === segmentId,
     registerSegment: (metadata: SegmentRegistrationMetadata) => {
-      const isFirstSegment = segments.value.length === 0;
+      let isFirstSegment = segments.value.length === 0;
 
       segments.value.push({
         id: metadata.id,
@@ -143,10 +145,8 @@ export function useFormFlow<TInput extends FormObject = FormObject>(_props?: For
   });
 
   function resolveRelative(delta: number): SegmentMetadata | null {
-    const domSegments = Array.from(
-      formElement.value?.querySelectorAll(`[data-form-segment-id]`) || [],
-    ) as HTMLElement[];
-    let idx = domSegments.findIndex(step => step.dataset.active);
+    const domSegments = getRenderedSegments();
+    let idx = domSegments.findIndex(step => step.active);
     if (idx === -1) {
       idx = 0;
     }
@@ -174,18 +174,19 @@ export function useFormFlow<TInput extends FormObject = FormObject>(_props?: For
 
   function getRenderedSegments(): RenderedSegment[] {
     if (isSSR) {
-      return segments.value.map(segment => ({ id: segment.id }));
+      return segments.value.map(segment => ({ id: segment.id, active: segment.id === currentSegmentId.value }));
     }
 
     return Array.from(formElement.value?.querySelectorAll(`[data-form-segment-id]`) || []).map(segment => ({
       id: (segment as HTMLElement).dataset.formSegmentId ?? '',
+      active: (segment as HTMLElement).dataset.active === 'true',
     }));
   }
 
   function getSegmentAt(idx: number): { idx: number; segment: SegmentMetadata } | undefined {
     const domSegments = getRenderedSegments();
 
-    const i = segments.value.findIndex(segment => segment.id === domSegments[idx].id);
+    const i = segments.value.findIndex(segment => segment.id === domSegments[idx]?.id);
     if (i === -1) {
       return undefined;
     }
@@ -196,7 +197,11 @@ export function useFormFlow<TInput extends FormObject = FormObject>(_props?: For
     };
   }
 
-  function goTo(segmentId: StepIdentifier, predicate?: (context: GoToPredicateContext) => boolean): boolean {
+  function goTo(
+    segmentId: StepIdentifier,
+    predicate?: (context: GoToPredicateContext) => boolean,
+    userInitiated = false,
+  ): boolean {
     const currentIdx = currentSegmentIndex.value;
 
     let idx = -1;
@@ -210,6 +215,11 @@ export function useFormFlow<TInput extends FormObject = FormObject>(_props?: For
       idx = segments.value.findIndex(segment => segment.id === segmentId.id);
     } else {
       idx = segments.value.findIndex(segment => toValue(segment.name) === segmentId);
+    }
+
+    // Track user-initiated navigation (to be executed after mount completes)
+    if (userInitiated) {
+      pendingStep = segmentId;
     }
 
     if (idx === -1 || !segments.value[idx]) {
@@ -266,6 +276,22 @@ export function useFormFlow<TInput extends FormObject = FormObject>(_props?: For
       goTo(next);
     }
   }
+
+  onMounted(async () => {
+    // Wait for all onMounted hooks to complete before auto-correcting the active segment
+    // also wait one more tick for v-if conditions to resolve and update DOM if any
+    await waitForTicks(2);
+
+    // If no user navigation was initiated, set the first available segment as the active segment
+    if (!isNullOrUndefined(pendingStep)) {
+      const renderedSegments = getRenderedSegments();
+      // Prefer first registered segment if it's now available in DOM
+      // oxlint-disable-next-line no-unused-expressions
+      pendingStep = segments.value.find(segment => segment.id === renderedSegments[0]?.id);
+    }
+
+    goTo(pendingStep ?? 0);
+  });
 
   return {
     form,
