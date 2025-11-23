@@ -557,6 +557,73 @@ describe('track behavior', () => {
   });
 });
 
+describe('decimal steps', () => {
+  const Thumb = createThumbComponent({});
+
+  test('handles decimal step increments correctly', async () => {
+    const DecimalSlider = createSliderComponent({
+      label: 'Slider',
+      min: 0,
+      max: 1,
+      step: 0.1,
+      modelValue: 0,
+    });
+
+    await render({
+      components: { Thumb, DecimalSlider },
+      template: `
+        <DecimalSlider>
+          <Thumb />
+        </DecimalSlider>
+      `,
+    });
+
+    expect(screen.getByTestId('slider-value')).toHaveTextContent('0');
+    expect(screen.getByRole('slider')).toHaveAttribute('aria-valuenow', '0');
+
+    await fireEvent.keyDown(screen.getByRole('slider'), { code: 'ArrowUp' });
+    expect(screen.getByTestId('slider-value')).toHaveTextContent('0.1');
+    expect(screen.getByRole('slider')).toHaveAttribute('aria-valuenow', '0.1');
+
+    await fireEvent.keyDown(screen.getByRole('slider'), { code: 'ArrowUp' });
+    expect(screen.getByTestId('slider-value')).toHaveTextContent('0.2');
+    expect(screen.getByRole('slider')).toHaveAttribute('aria-valuenow', '0.2');
+
+    await fireEvent.keyDown(screen.getByRole('slider'), { code: 'ArrowDown' });
+    expect(screen.getByTestId('slider-value')).toHaveTextContent('0.1');
+    expect(screen.getByRole('slider')).toHaveAttribute('aria-valuenow', '0.1');
+  });
+
+  test('handles step 1.5 increments correctly', async () => {
+    const DecimalSlider = createSliderComponent({
+      label: 'Slider',
+      min: 0,
+      max: 10,
+      step: 1.5,
+      modelValue: 0,
+    });
+
+    await render({
+      components: { Thumb, DecimalSlider },
+      template: `
+        <DecimalSlider>
+          <Thumb />
+        </DecimalSlider>
+      `,
+    });
+
+    expect(screen.getByTestId('slider-value')).toHaveTextContent('0');
+
+    await fireEvent.keyDown(screen.getByRole('slider'), { code: 'ArrowUp' });
+    expect(screen.getByTestId('slider-value')).toHaveTextContent('1.5');
+    expect(screen.getByRole('slider')).toHaveAttribute('aria-valuenow', '1.5');
+
+    await fireEvent.keyDown(screen.getByRole('slider'), { code: 'ArrowUp' });
+    expect(screen.getByTestId('slider-value')).toHaveTextContent('3');
+    expect(screen.getByRole('slider')).toHaveAttribute('aria-valuenow', '3');
+  });
+});
+
 describe('discrete steps', () => {
   const Thumb = createThumbComponent({});
 

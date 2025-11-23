@@ -123,6 +123,52 @@ test('Applies decimal inputmode if the step contains decimals', async () => {
   expect(screen.getByLabelText(label)).toHaveAttribute('inputmode', 'decimal');
 });
 
+test('Increments and decrements correctly with decimal steps', async () => {
+  await render(makeTest({ step: 0.1, value: 0 }));
+
+  // Test increment
+  await fireEvent.keyDown(screen.getByLabelText(label), { code: 'ArrowUp' });
+  expect(screen.getByLabelText(label)).toHaveDisplayValue('0.1');
+  expect(screen.getByTestId('value')).toHaveTextContent('0.1');
+
+  await fireEvent.keyDown(screen.getByLabelText(label), { code: 'ArrowUp' });
+  expect(screen.getByLabelText(label)).toHaveDisplayValue('0.2');
+  expect(screen.getByTestId('value')).toHaveTextContent('0.2');
+
+  // Test decrement
+  await fireEvent.keyDown(screen.getByLabelText(label), { code: 'ArrowDown' });
+  expect(screen.getByLabelText(label)).toHaveDisplayValue('0.1');
+  expect(screen.getByTestId('value')).toHaveTextContent('0.1');
+
+  // Test with increment button
+  await fireEvent.mouseDown(screen.getByLabelText('Increment'));
+  expect(screen.getByLabelText(label)).toHaveDisplayValue('0.2');
+  expect(screen.getByTestId('value')).toHaveTextContent('0.2');
+
+  // Test with decrement button
+  await fireEvent.mouseDown(screen.getByLabelText('Decrement'));
+  expect(screen.getByLabelText(label)).toHaveDisplayValue('0.1');
+  expect(screen.getByTestId('value')).toHaveTextContent('0.1');
+});
+
+test('Increments and decrements correctly with step 1.5', async () => {
+  await render(makeTest({ step: 1.5, value: 0 }));
+
+  // Test increment
+  await fireEvent.keyDown(screen.getByLabelText(label), { code: 'ArrowUp' });
+  expect(screen.getByLabelText(label)).toHaveDisplayValue('1.5');
+  expect(screen.getByTestId('value')).toHaveTextContent('1.5');
+
+  await fireEvent.keyDown(screen.getByLabelText(label), { code: 'ArrowUp' });
+  expect(screen.getByLabelText(label)).toHaveDisplayValue('3');
+  expect(screen.getByTestId('value')).toHaveTextContent('3');
+
+  // Test decrement
+  await fireEvent.keyDown(screen.getByLabelText(label), { code: 'ArrowDown' });
+  expect(screen.getByLabelText(label)).toHaveDisplayValue('1.5');
+  expect(screen.getByTestId('value')).toHaveTextContent('1.5');
+});
+
 describe('validation', () => {
   test('picks up native error messages', async () => {
     await render(makeTest({ required: true }));
