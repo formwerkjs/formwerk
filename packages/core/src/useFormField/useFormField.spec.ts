@@ -294,3 +294,118 @@ test('validate warns and skips validation on a disabled field', async () => {
   // Clean up the mocks
   consoleWarnSpy.mockRestore();
 });
+
+describe('isValidated state', () => {
+  test('field starts with isValidated as false', async () => {
+    const { isValidated } = await renderSetup(() => {
+      return useFormField({ label: 'Field', initialValue: 'bar' }).state;
+    });
+
+    expect(isValidated.value).toBe(false);
+  });
+
+  test('isValidated remains false after programmatic validation without schema', async () => {
+    const { isValidated, validate } = await renderSetup(() => {
+      return useFormField({ label: 'Field', initialValue: 'bar' }).state;
+    });
+
+    expect(isValidated.value).toBe(false);
+    await validate();
+    expect(isValidated.value).toBe(false); // Should remain false - programmatic validation
+  });
+
+  test('isValidated remains false after programmatic validation with schema', async () => {
+    const { isValidated, validate } = await renderSetup(() => {
+      return useFormField({
+        label: 'Field',
+        initialValue: 'bar',
+        schema: defineStandardSchema(async () => {
+          return { value: 'bar' };
+        }),
+      }).state;
+    });
+
+    expect(isValidated.value).toBe(false);
+    await validate();
+    expect(isValidated.value).toBe(false); // Should remain false - programmatic validation
+  });
+
+  test('isValidated remains false after programmatic validation with errors', async () => {
+    const { isValidated, validate } = await renderSetup(() => {
+      return useFormField({
+        label: 'Field',
+        initialValue: '',
+        schema: defineStandardSchema(async () => {
+          return { issues: [{ message: 'Required', path: ['field'] }] };
+        }),
+      }).state;
+    });
+
+    expect(isValidated.value).toBe(false);
+    await validate(true);
+    expect(isValidated.value).toBe(false); // Should remain false - programmatic validation
+  });
+
+  test('isValidated can be set manually', async () => {
+    const { isValidated, setIsValidated } = await renderSetup(() => {
+      return useFormField({ label: 'Field', initialValue: 'bar' }).state;
+    });
+
+    expect(isValidated.value).toBe(false);
+    setIsValidated(true);
+    expect(isValidated.value).toBe(true);
+    setIsValidated(false);
+    expect(isValidated.value).toBe(false);
+  });
+
+  test('isValidated becomes true after form submit attempt', async () => {
+    const { form, field } = await renderSetup(
+      () => {
+        const form = useForm({
+          initialValues: { field: 'valid' },
+          schema: defineStandardSchema<{ field: string }>(async () => {
+            return { value: { field: 'valid' } };
+          }),
+        });
+        return { form };
+      },
+      () => {
+        const field = useFormField({
+          path: 'field',
+          schema: defineStandardSchema(async () => {
+            return { value: 'valid' };
+          }),
+        });
+        return { field };
+      },
+    );
+
+    expect(field.state.isValidated.value).toBe(false);
+
+    // Submit attempt is a user interaction
+    const handleSubmit = form.handleSubmit(async () => {});
+    await handleSubmit();
+
+    expect(field.state.isValidated.value).toBe(true);
+  });
+
+  test('isValidated is independent for pathless fields', async () => {
+    const { field1, field2 } = await renderSetup(() => {
+      const field1 = useFormField({ label: 'Field1', initialValue: 'bar' });
+      const field2 = useFormField({ label: 'Field2', initialValue: 'baz' });
+      return { field1, field2 };
+    });
+
+    expect(field1.state.isValidated.value).toBe(false);
+    expect(field2.state.isValidated.value).toBe(false);
+
+    // Manually set isValidated (simulating user interaction)
+    field1.state.setIsValidated(true);
+    expect(field1.state.isValidated.value).toBe(true);
+    expect(field2.state.isValidated.value).toBe(false);
+
+    field2.state.setIsValidated(true);
+    expect(field1.state.isValidated.value).toBe(true);
+    expect(field2.state.isValidated.value).toBe(true);
+  });
+});

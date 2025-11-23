@@ -103,6 +103,7 @@ export function useFormActions<TForm extends FormObject = FormObject, TOutput ex
   const isSubmitAttempted = shallowRef(false);
   const wasSubmitted = shallowRef(false);
   const [dispatchSubmit, onSubmitAttempt] = createEventDispatcher<void>('submit');
+  const [dispatchSubmitDone, onSubmitDone] = createEventDispatcher<void>('submit:done');
   const {
     validate: _validate,
     onValidationDispatch,
@@ -129,6 +130,7 @@ export function useFormActions<TForm extends FormObject = FormObject, TOutput ex
 
       // Prevent submission if the form has errors
       if (!isValid) {
+        dispatchSubmitDone();
         isSubmitting.value = false;
         scrollToFirstInvalidField(form.id, scrollToInvalidFieldOnSubmit);
         return;
@@ -143,6 +145,7 @@ export function useFormActions<TForm extends FormObject = FormObject, TOutput ex
         unsetPath(output, path, true);
       }
 
+      dispatchSubmitDone();
       const result = await onSuccess(asConsumableData(output), { event: e, form: e?.target as HTMLFormElement });
       isSubmitting.value = false;
       wasSubmitted.value = true;
@@ -332,6 +335,7 @@ export function useFormActions<TForm extends FormObject = FormObject, TOutput ex
     onSubmitAttempt,
     onValidationDispatch,
     onValidationDone,
+    onSubmitDone,
     isSubmitting,
     submitAttemptsCount,
     wasSubmitted,

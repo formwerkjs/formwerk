@@ -116,6 +116,11 @@ export type ExposedField<TValue> = {
   isValid: Ref<boolean>;
 
   /**
+   * Whether the field is validated, used to determine whether to show validation errors or not.
+   */
+  isValidated: Ref<boolean>;
+
+  /**
    * Whether the field is disabled.
    */
   isDisabled: Ref<boolean>;
@@ -134,6 +139,11 @@ export type ExposedField<TValue> = {
    * Sets the blurred state for the field.
    */
   setBlurred: (blurred: boolean) => void;
+
+  /**
+   * Sets the validated state for the field.
+   */
+  setIsValidated: (isValidated: boolean) => void;
 
   /**
    * Sets the value for the field.
@@ -176,6 +186,7 @@ export function exposeField<TReturns extends object, TValue>(
     isTouched: field.state.isTouched,
     isBlurred: field.state.isBlurred,
     isValid: field.state.isValid,
+    isValidated: field.state.isValidated,
     isDisabled: field.state.isDisabled,
     labelProps: field.labelProps,
     descriptionProps: field.descriptionProps,
@@ -191,6 +202,7 @@ export function exposeField<TReturns extends object, TValue>(
       : field.state.setErrors,
     setTouched: field.state.setTouched,
     setBlurred: field.state.setBlurred,
+    setIsValidated: field.state.setIsValidated,
     setValue: field.state.setValue,
     validate: (mutate = true) => field.state.validate(mutate),
     ...obj,
