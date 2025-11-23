@@ -32,12 +32,17 @@ export function useInputValidity(opts: InputValidityOptions) {
     getConfig().disableHtmlValidation;
 
   function validateNative(mutate?: boolean): ValidationResult {
+    nextTick(() => {
+      opts.field.setIsValidated(true);
+    });
+
     const baseReturns: Omit<ValidationResult, 'errors' | 'isValid'> = {
       type: 'FIELD',
       path: getPath() || '',
     };
 
     const inputs = normalizeArrayable(opts.inputEl?.value).filter(el => isInputElement(el));
+
     if (!inputs.length || isHtmlValidationDisabled()) {
       return {
         ...baseReturns,
