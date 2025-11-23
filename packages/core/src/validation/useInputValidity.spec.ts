@@ -1,8 +1,9 @@
-import { computed, nextTick, ref } from 'vue';
+import { computed, ref } from 'vue';
 import { useInputValidity } from './useInputValidity';
 import { fireEvent, render, screen } from '@testing-library/vue';
 import { FieldState, useFormField } from '../useFormField';
 import { EventExpression } from '../helpers/useEventListener';
+import { flush } from '../../../test-utils/src';
 
 test('updates the validity state on blur events', async () => {
   const input = ref<HTMLInputElement>();
@@ -92,9 +93,9 @@ test('updates the input native validity with custom validity errors', async () =
     `,
   });
 
-  await nextTick();
+  await flush();
   field.setErrors('Custom error');
-  await nextTick();
+  await flush();
   expect(screen.getByTestId('err').textContent).toBe('Custom error');
   expect(input.value?.validationMessage).toBe('Custom error');
 });
@@ -162,8 +163,7 @@ describe('isValidated tracking', () => {
     expect(screen.getByTestId('display-err').textContent).toBe('');
 
     // Raw error should exist after mount validation
-    await nextTick();
-    await nextTick();
+    await flush();
     expect(screen.getByTestId('raw-err').textContent).toBe('Constraints not satisfied');
 
     // isValidated should still be false after mount (not user interaction)
@@ -176,7 +176,7 @@ describe('isValidated tracking', () => {
     await fireEvent.focus(screen.getByTestId('input'));
     field.setBlurred(true);
     await fireEvent.blur(screen.getByTestId('input'));
-    await nextTick();
+    await flush();
 
     // Now isValidated should be true (user interaction)
     expect(field.isValidated.value).toBe(true);
@@ -207,8 +207,7 @@ describe('isValidated tracking', () => {
     });
 
     // After mount, validation runs but isValidated should remain false
-    await nextTick();
-    await nextTick();
+    await flush();
     expect(screen.getByTestId('validated').textContent).toBe('false');
     expect(field.isValidated.value).toBe(false);
   });
@@ -237,8 +236,7 @@ describe('isValidated tracking', () => {
 
     // User blurs the field (user interaction)
     await fireEvent.blur(screen.getByTestId('input'));
-    await nextTick();
-    await nextTick(); // Need extra tick for the deferred setIsValidated
+    await flush();
 
     // Now isValidated should be true
     expect(field.isValidated.value).toBe(true);
@@ -265,13 +263,12 @@ describe('isValidated tracking', () => {
     });
 
     // Initially false even after mount
-    await nextTick();
-    await nextTick();
+    await flush();
     expect(field.isValidated.value).toBe(false);
 
     // User triggers change event (user interaction)
     await fireEvent.change(screen.getByTestId('input'), { target: { value: 'test' } });
-    await nextTick();
+    await flush();
     expect(field.isValidated.value).toBe(true);
 
     // Can be manually reset
@@ -280,7 +277,7 @@ describe('isValidated tracking', () => {
 
     // And set again by user interaction
     await fireEvent.change(screen.getByTestId('input'), { target: { value: 'test2' } });
-    await nextTick();
+    await flush();
     expect(field.isValidated.value).toBe(true);
   });
 
@@ -310,8 +307,7 @@ describe('isValidated tracking', () => {
     });
 
     // Validation runs on mount and sets errors
-    await nextTick();
-    await nextTick();
+    await flush();
 
     // Raw error exists
     expect(screen.getByTestId('raw-err').textContent).toBe('Constraints not satisfied');
@@ -322,8 +318,7 @@ describe('isValidated tracking', () => {
 
     // User interaction (blur) sets isValidated to true (field is still empty/invalid)
     await fireEvent.blur(screen.getByTestId('input'));
-    await nextTick();
-    await nextTick(); // Extra tick for deferred setIsValidated
+    await flush();
 
     // Now errors should show because isValidated is true
     expect(field.isValidated.value).toBe(true);
@@ -359,10 +354,10 @@ describe('isValidated tracking', () => {
 
     // After blur, error should show
     await fireEvent.blur(screen.getByTestId('input'));
-    await nextTick();
+    await flush();
 
     field.setBlurred(true);
-    await nextTick();
+    await flush();
 
     expect(field.isValidated.value).toBe(true);
     expect(field.isBlurred.value).toBe(true);
@@ -371,7 +366,7 @@ describe('isValidated tracking', () => {
     // Fill in value and blur again
     await fireEvent.update(screen.getByTestId('input'), 'valid');
     await fireEvent.blur(screen.getByTestId('input'));
-    await nextTick();
+    await flush();
 
     // Error should be gone
     expect(screen.getByTestId('err').textContent).toBe('');

@@ -95,16 +95,15 @@ export function useInputValidity(opts: InputValidityOptions) {
     }
 
     if (!result.isValid) {
-      return;
+      return Promise.resolve();
     }
 
-    (formGroup || form)?.requestValidation();
+    return (formGroup || form)?.requestValidation();
   }
 
   async function updateValidity() {
     await nextTick();
-    _updateValidity();
-    // User interaction detected - mark field as validated
+    await _updateValidity();
     nextTick(() => {
       opts.field.setIsValidated(true);
     });
@@ -133,17 +132,18 @@ export function useInputValidity(opts: InputValidityOptions) {
     // It should self-mutate the field errors because this is fired by a native validation and not sourced by the form.
     useEventListener(opts.inputEl, opts?.events || ['invalid'], () => {
       validateNative(true);
-      // User interaction detected - mark field as validated
-      nextTick(() => {
-        opts.field.setIsValidated(true);
-      });
+      if (!isHtmlValidationDisabled()) {
+        nextTick(() => {
+          opts.field.setIsValidated(true);
+        });
+      }
     });
   }
 
   // TODO: is this the best approach?
   if (!opts.inputEl) {
-    watch(opts.field.fieldValue, () => {
-      updateValidity();
+    watch(opts.field.fieldValue, async () => {
+      await updateValidity();
       // Field value change is user interaction - mark as validated
       nextTick(() => {
         opts.field.setIsValidated(true);
