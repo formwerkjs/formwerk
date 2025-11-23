@@ -104,7 +104,6 @@ export function useFieldState<TValue = unknown>(opts?: Partial<FieldStateInit<TV
   async function validate(mutate?: boolean): Promise<ValidationResult> {
     const schema = opts?.schema;
     if (!schema) {
-      setIsValidated(true);
       return Promise.resolve(
         createValidationResult({ isValid: true, errors: [], output: cloneDeep(fieldValue.value) }),
       );
@@ -123,8 +122,6 @@ export function useFieldState<TValue = unknown>(opts?: Partial<FieldStateInit<TV
     if (mutate) {
       setErrors(errors.map(e => e.messages).flat());
     }
-
-    setIsValidated(true);
 
     return createValidationResult({
       isValid: errors.length === 0,
@@ -173,7 +170,7 @@ export function useFieldState<TValue = unknown>(opts?: Partial<FieldStateInit<TV
     setTouched(true);
   });
 
-  form.onValidationDone(() => {
+  form.onSubmitDone(() => {
     setIsValidated(true);
   });
 

@@ -32,10 +32,6 @@ export function useInputValidity(opts: InputValidityOptions) {
     getConfig().disableHtmlValidation;
 
   function validateNative(mutate?: boolean): ValidationResult {
-    nextTick(() => {
-      opts.field.setIsValidated(true);
-    });
-
     const baseReturns: Omit<ValidationResult, 'errors' | 'isValid'> = {
       type: 'FIELD',
       path: getPath() || '',
@@ -108,6 +104,10 @@ export function useInputValidity(opts: InputValidityOptions) {
   async function updateValidity() {
     await nextTick();
     _updateValidity();
+    // User interaction detected - mark field as validated
+    nextTick(() => {
+      opts.field.setIsValidated(true);
+    });
   }
 
   useEventListener(opts.inputEl, opts?.events || ['change', 'blur'], updateValidity);
@@ -131,16 +131,28 @@ export function useInputValidity(opts: InputValidityOptions) {
 
   if (!schema) {
     // It should self-mutate the field errors because this is fired by a native validation and not sourced by the form.
-    useEventListener(opts.inputEl, opts?.events || ['invalid'], () => validateNative(true));
+    useEventListener(opts.inputEl, opts?.events || ['invalid'], () => {
+      validateNative(true);
+      // User interaction detected - mark field as validated
+      nextTick(() => {
+        opts.field.setIsValidated(true);
+      });
+    });
   }
 
   // TODO: is this the best approach?
   if (!opts.inputEl) {
-    watch(opts.field.fieldValue, updateValidity);
+    watch(opts.field.fieldValue, () => {
+      updateValidity();
+      // Field value change is user interaction - mark as validated
+      nextTick(() => {
+        opts.field.setIsValidated(true);
+      });
+    });
   }
 
   /**
-   * Validity is always updated on mount.
+   * Validity is always updated on mount, but NOT as user interaction.
    */
   onMounted(() => {
     nextTick(() => _updateValidity());

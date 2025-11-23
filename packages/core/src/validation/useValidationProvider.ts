@@ -33,7 +33,7 @@ export function useValidationProvider<
 >({ schema, getValues, type, getPath }: ValidationProviderOptions<TInput, TOutput, TType>) {
   const [dispatchValidate, onValidationDispatch] =
     createEventDispatcher<(pending: Promise<ValidationResult>) => void>('validate');
-  const [dispatchValidateDone, onValidationDone] = createEventDispatcher<void>('validate-done');
+  const [dispatchValidateDone, onValidationDone] = createEventDispatcher<void>('validate:done');
 
   /**
    * Validates but tries to not mutate anything if possible.

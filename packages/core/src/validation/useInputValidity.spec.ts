@@ -166,6 +166,9 @@ describe('isValidated tracking', () => {
     await nextTick();
     expect(screen.getByTestId('raw-err').textContent).toBe('Constraints not satisfied');
 
+    // isValidated should still be false after mount (not user interaction)
+    expect(field.isValidated.value).toBe(false);
+
     // User types a valid value
     await fireEvent.update(screen.getByTestId('input'), 'valid value');
 
@@ -175,13 +178,16 @@ describe('isValidated tracking', () => {
     await fireEvent.blur(screen.getByTestId('input'));
     await nextTick();
 
+    // Now isValidated should be true (user interaction)
+    expect(field.isValidated.value).toBe(true);
+
     // Key assertion: NO error should flash because the field is now valid
     // If there was a bug, we'd see the stale error flash before async validation completes
     expect(screen.getByTestId('display-err').textContent).toBe('');
     expect(screen.getByTestId('raw-err').textContent).toBe('');
   });
 
-  test('isValidated is set to true after blur event triggers validation', async () => {
+  test('isValidated remains false after mount validation', async () => {
     const input = ref<HTMLInputElement>();
     let field!: FieldState<any>;
 
@@ -200,9 +206,42 @@ describe('isValidated tracking', () => {
       `,
     });
 
-    // After mount, validation runs but isValidated should eventually be true
+    // After mount, validation runs but isValidated should remain false
     await nextTick();
     await nextTick();
+    expect(screen.getByTestId('validated').textContent).toBe('false');
+    expect(field.isValidated.value).toBe(false);
+  });
+
+  test('isValidated becomes true after blur event triggers validation', async () => {
+    const input = ref<HTMLInputElement>();
+    let field!: FieldState<any>;
+
+    await render({
+      setup: () => {
+        field = useFormField().state;
+        useInputValidity({ inputEl: input, field });
+
+        return { input, isValidated: field.isValidated };
+      },
+      template: `
+        <form>
+          <input ref="input" data-testid="input" required />
+          <span data-testid="validated">{{ isValidated }}</span>
+        </form>
+      `,
+    });
+
+    // Initially false
+    expect(field.isValidated.value).toBe(false);
+
+    // User blurs the field (user interaction)
+    await fireEvent.blur(screen.getByTestId('input'));
+    await nextTick();
+    await nextTick(); // Need extra tick for the deferred setIsValidated
+
+    // Now isValidated should be true
+    expect(field.isValidated.value).toBe(true);
     expect(screen.getByTestId('validated').textContent).toBe('true');
   });
 
@@ -225,14 +264,22 @@ describe('isValidated tracking', () => {
       `,
     });
 
+    // Initially false even after mount
     await nextTick();
+    await nextTick();
+    expect(field.isValidated.value).toBe(false);
+
+    // User triggers change event (user interaction)
+    await fireEvent.change(screen.getByTestId('input'), { target: { value: 'test' } });
     await nextTick();
     expect(field.isValidated.value).toBe(true);
 
+    // Can be manually reset
     field.setIsValidated(false);
     expect(field.isValidated.value).toBe(false);
 
-    await fireEvent.change(screen.getByTestId('input'), { target: { value: 'test' } });
+    // And set again by user interaction
+    await fireEvent.change(screen.getByTestId('input'), { target: { value: 'test2' } });
     await nextTick();
     expect(field.isValidated.value).toBe(true);
   });
@@ -251,26 +298,35 @@ describe('isValidated tracking', () => {
           return field.isValidated.value ? field.errorMessage.value : '';
         });
 
-        return { input, displayError };
+        return { input, displayError, errorMessage: field.errorMessage };
       },
       template: `
         <form>
           <input ref="input" data-testid="input" required />
           <span data-testid="err">{{ displayError }}</span>
+          <span data-testid="raw-err">{{ errorMessage }}</span>
         </form>
       `,
     });
 
-    // Even though validation runs on mount and sets errors,
-    // the displayError computed should handle not showing them initially
-    // We need to check immediately after mount
-    expect(screen.getByTestId('err').textContent).toBe('');
+    // Validation runs on mount and sets errors
+    await nextTick();
+    await nextTick();
 
-    // After nextTick, isValidated becomes true (from mount validation)
+    // Raw error exists
+    expect(screen.getByTestId('raw-err').textContent).toBe('Constraints not satisfied');
+
+    // But displayError should NOT show because isValidated is still false (mount is not user interaction)
+    expect(screen.getByTestId('err').textContent).toBe('');
+    expect(field.isValidated.value).toBe(false);
+
+    // User interaction (blur) sets isValidated to true (field is still empty/invalid)
+    await fireEvent.blur(screen.getByTestId('input'));
     await nextTick();
-    await nextTick();
+    await nextTick(); // Extra tick for deferred setIsValidated
 
     // Now errors should show because isValidated is true
+    expect(field.isValidated.value).toBe(true);
     expect(screen.getByTestId('err').textContent).toBe('Constraints not satisfied');
   });
 

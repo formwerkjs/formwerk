@@ -239,6 +239,7 @@ export interface FormContext<TInput extends FormObject = FormObject, TOutput ext
     FormTransactionManager<TInput> {
   requestValidation(): Promise<FormValidationResult<TOutput>>;
   onSubmitAttempt(cb: () => void): void;
+  onSubmitDone(cb: () => void): void;
   onValidationDone(cb: () => void): void;
   isHtmlValidationDisabled(): boolean;
   onValidationDispatch(
