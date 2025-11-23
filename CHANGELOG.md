@@ -1,5 +1,13 @@
 # @formwerk/core
 
+## 0.14.2
+
+### Patch Changes
+
+- 4cb9201: perf: improve the stepped form lookup performance
+- 32b76be: fix: Ensure stepped forms SSR hydration matches client closes #231
+  - @formwerk/devtools@0.14.2
+
 ## 0.14.1
 
 ### Patch Changes
