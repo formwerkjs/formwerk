@@ -1,5 +1,14 @@
 # @formwerk/core
 
+## 0.14.3
+
+### Patch Changes
+
+- 0b30be9: feat: introduce isValidated field-level flag
+- 6ef765d: fix: handle decimal precision correctly in slider and number fields
+- 649bb38: fix: enhance form flow behavior on mount and improve segment activation logic
+  - @formwerk/devtools@0.14.3
+
 ## 0.14.2
 
 ### Patch Changes
