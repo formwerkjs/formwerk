@@ -67,8 +67,9 @@ export interface NoSchemaFormProps<TInput extends FormObject> extends _FormProps
   initialValues?: MaybeGetter<MaybeAsync<PartialDeep<TInput>>>;
 }
 
-export interface SchemaFormProps<TSchema extends GenericFormSchema>
-  extends _FormProps<StandardSchemaV1.InferInput<TSchema>> {
+export interface SchemaFormProps<TSchema extends GenericFormSchema> extends _FormProps<
+  StandardSchemaV1.InferInput<TSchema>
+> {
   /**
    * The validation schema for the form.
    */
@@ -235,8 +236,7 @@ export interface FormReturns<TInput extends FormObject = FormObject, TOutput ext
 }
 
 export interface FormContext<TInput extends FormObject = FormObject, TOutput extends FormObject = TInput>
-  extends BaseFormContext<TInput>,
-    FormTransactionManager<TInput> {
+  extends BaseFormContext<TInput>, FormTransactionManager<TInput> {
   requestValidation(): Promise<FormValidationResult<TOutput>>;
   onSubmitAttempt(cb: () => void): void;
   onSubmitDone(cb: () => void): void;
@@ -330,12 +330,14 @@ export function useForm<
     return ctx.isPathDisabled(path) ? undefined : ctx.getFieldSubmitErrors(path)[0];
   }
 
-  provide(FormKey, {
+  const formContext = {
     ...ctx,
     ...transactionsManager,
     ...privateActions,
     isHtmlValidationDisabled,
-  } as FormContext<TInput, TOutput>);
+  } as FormContext<TInput, TOutput>;
+
+  provide(FormKey, formContext);
 
   if (ctx.getValidationMode() === 'schema') {
     onMounted(privateActions.requestValidation);
@@ -363,7 +365,7 @@ export function useForm<
 
   const baseReturns = {
     values: readonly(values),
-    context: ctx as FormContext<TInput, TOutput>,
+    context: formContext as FormContext<TInput, TOutput>,
     isSubmitting,
     isValid,
     isDisabled,
