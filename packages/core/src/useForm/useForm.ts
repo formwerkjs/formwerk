@@ -85,6 +85,12 @@ export interface FormReturns<TInput extends FormObject = FormObject, TOutput ext
   values: PartialDeep<TInput>;
 
   /**
+   * The form context object, for internal use.
+   * @private
+   */
+  context: FormContext<TInput, TOutput>;
+
+  /**
    * Whether the form is submitting.
    */
   isSubmitting: Ref<boolean>;
@@ -227,12 +233,6 @@ export interface FormReturns<TInput extends FormObject = FormObject, TOutput ext
    * The form props.
    */
   formProps: FormDomProps;
-
-  /**
-   * The internal form context. Use this when you need to pass the form to useFormRepeater
-   * in the same component where useForm is called.
-   */
-  context: FormContext<TInput, TOutput>;
 }
 
 export interface FormContext<TInput extends FormObject = FormObject, TOutput extends FormObject = TInput>

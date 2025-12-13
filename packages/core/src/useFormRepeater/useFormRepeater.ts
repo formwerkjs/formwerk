@@ -66,10 +66,9 @@ export interface FormRepeaterProps<TForm extends FormObject = FormObject> {
   moveDownButtonLabel?: string;
 
   /**
-   * The form context to use. If not provided, will attempt to inject from parent.
-   * Use this when useFormRepeater is called in the same component as useForm.
+   * The form object returned from `useForm`. If not provided, will attempt to inject from parent.
+   * Use this when `useFormRepeater` is called in the same component as `useForm`.
    */
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   form?: FormReturns<TForm>;
 }
 
