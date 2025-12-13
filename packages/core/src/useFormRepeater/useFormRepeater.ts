@@ -123,6 +123,7 @@ export function useFormRepeater<TItem = unknown>(_props: Reactivify<FormRepeater
   const repeaterProps = normalizeProps(_props, ['form']);
   // Use the provided form prop, or fall back to injecting from parent
   const form = repeaterProps.form?.context ?? inject(FormKey, null);
+
   const getPath = () => toValue(repeaterProps.name);
   const getPathValue = () => (form?.getValue(getPath()) || []) as TItem[];
   let lastControlledValueSnapshot: TItem[] | undefined;
@@ -141,6 +142,12 @@ export function useFormRepeater<TItem = unknown>(_props: Reactivify<FormRepeater
   }
 
   if (__DEV__) {
+    if (!form) {
+      warn(
+        'No form context was found for useFormRepeater, either provide a form prop or call useFormRepeater within a useForm component.',
+      );
+    }
+
     if (!getPath()) {
       warn('"name" prop is required for useFormRepeater');
     }
