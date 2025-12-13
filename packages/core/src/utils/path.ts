@@ -185,6 +185,7 @@ export function unsetPath(object: NestedRecord, path: string, destroy?: boolean)
 
   const normalizedPath = normalizePath(path);
   const keys = normalizedPath.split('.').filter(Boolean);
+
   let acc: Record<string, unknown> = object;
   for (let i = 0; i < keys.length; i++) {
     // Last key, unset it

@@ -1,7 +1,9 @@
-import { defineComponent } from 'vue';
+import { defineComponent, ref } from 'vue';
 import { render, screen, fireEvent } from '@testing-library/vue';
 import { useFormRepeater, FormRepeaterProps } from './useFormRepeater';
 import { flush } from '@test-utils/index';
+import { useForm } from '../useForm';
+import { useTextField } from '../useTextField';
 
 async function renderTest(props: FormRepeaterProps) {
   const { addButtonProps, items, Iteration, swap, insert, remove, move } = useFormRepeater(props);
@@ -416,4 +418,557 @@ test('warns if swap is called with an out of bounds index', async () => {
 
   expect(warn).toHaveBeenCalledOnce();
   warn.mockRestore();
+});
+
+describe('form repeater with form context', () => {
+  test('removing an item after conditionally unmounting a field keeps form values in sync', async () => {
+    // This test reproduces the bug where:
+    // 1. Form has 3 users with firstName and lastName
+    // 2. User clears the second user's firstName (making it empty)
+    // 3. This causes the lastName field to unmount (due to v-if condition)
+    // 4. User removes the second row
+    // 5. Form values should correctly have 2 users with their original data
+
+    const formReturns = ref<ReturnType<typeof useForm<any>> | null>(null);
+
+    // TextField component
+    const TextField = defineComponent({
+      props: {
+        name: { type: String, required: true },
+        label: { type: String, required: true },
+      },
+      setup(props) {
+        const { inputProps, labelProps } = useTextField({
+          name: props.name,
+          label: props.label,
+        });
+        return { inputProps, labelProps };
+      },
+      template: `
+        <div>
+          <label v-bind="labelProps">{{ label }}</label>
+          <input v-bind="inputProps" />
+        </div>
+      `,
+    });
+
+    // Child component that uses the repeater (must be child to inject form context)
+    const RepeaterChild = defineComponent({
+      components: { TextField },
+      props: {
+        form: { type: Object, required: true },
+      },
+      setup(props) {
+        const { items, Iteration } = useFormRepeater<{ firstName: string; lastName?: string }>({
+          name: 'users',
+        });
+
+        return { items, Iteration, form: props.form };
+      },
+      template: `
+        <component
+          :is="Iteration"
+          v-for="(key, index) in items"
+          :key="key"
+          :index="index"
+          v-slot="{ removeButtonProps }"
+        >
+          <div :data-testid="'user-' + index">
+            <TextField name="firstName" label="First Name" />
+            <TextField
+              v-if="form.values.users?.[index]?.firstName"
+              name="lastName"
+              label="Last Name"
+            />
+            <button v-bind="removeButtonProps" :data-testid="'remove-' + index">Remove</button>
+          </div>
+        </component>
+      `,
+    });
+
+    // Parent component with form
+    const TestComponent = defineComponent({
+      components: { RepeaterChild },
+      setup() {
+        const form = useForm<{ users: Array<{ firstName: string; lastName?: string }> }>({
+          initialValues: {
+            users: [
+              { firstName: 'First Name 1', lastName: 'Last Name 1' },
+              { firstName: 'First Name 2', lastName: 'Last Name 2' },
+              { firstName: 'First Name 3', lastName: 'Last Name 3' },
+            ],
+          },
+        });
+
+        formReturns.value = form;
+
+        return { form };
+      },
+      template: `<RepeaterChild :form="form" />`,
+    });
+
+    await render(TestComponent);
+    await flush();
+
+    // Verify initial state - 3 users with all data
+    expect(formReturns.value!.values.users).toHaveLength(3);
+    expect(formReturns.value!.values.users).toEqual([
+      { firstName: 'First Name 1', lastName: 'Last Name 1' },
+      { firstName: 'First Name 2', lastName: 'Last Name 2' },
+      { firstName: 'First Name 3', lastName: 'Last Name 3' },
+    ]);
+
+    // Step 2: Clear the second user's firstName
+    // Get the second firstName input (index 1)
+    const inputs = screen.getAllByRole('textbox');
+    // Inputs are: firstName1, lastName1, firstName2, lastName2, firstName3, lastName3
+    const secondUserFirstNameInput = inputs[2]; // 0=fn1, 1=ln1, 2=fn2
+
+    await fireEvent.update(secondUserFirstNameInput, '');
+    await flush();
+
+    // After clearing firstName, lastName should be unmounted (due to v-if)
+    // The form value for firstName should be empty
+    expect(formReturns.value!.values.users![1].firstName).toBe('');
+
+    // Step 3: Remove the second row
+    const removeButton = screen.getByTestId('remove-1');
+    await fireEvent.click(removeButton);
+    await flush();
+
+    // After removal, we should have 2 users
+    expect(formReturns.value!.values.users).toHaveLength(2);
+
+    // The first user should be unchanged
+    expect(formReturns.value!.values.users![0]).toEqual({ firstName: 'First Name 1', lastName: 'Last Name 1' });
+
+    // The second user should now be what was previously the third user
+    expect(formReturns.value!.values.users![1]).toEqual({ firstName: 'First Name 3', lastName: 'Last Name 3' });
+  });
+
+  test('removing an item updates form values correctly', async () => {
+    const formReturns = ref<ReturnType<typeof useForm<any>> | null>(null);
+
+    // TextField component
+    const TextField = defineComponent({
+      props: {
+        name: { type: String, required: true },
+        label: { type: String, required: true },
+      },
+      setup(props) {
+        const { inputProps, labelProps } = useTextField({
+          name: props.name,
+          label: props.label,
+        });
+        return { inputProps, labelProps };
+      },
+      template: `
+        <div>
+          <label v-bind="labelProps">{{ label }}</label>
+          <input v-bind="inputProps" />
+        </div>
+      `,
+    });
+
+    // Child component that uses the repeater
+    const RepeaterChild = defineComponent({
+      components: { TextField },
+      setup() {
+        const { items, Iteration } = useFormRepeater<{ firstName: string }>({
+          name: 'users',
+        });
+
+        return { items, Iteration };
+      },
+      template: `
+        <component
+          :is="Iteration"
+          v-for="(key, index) in items"
+          :key="key"
+          :index="index"
+          v-slot="{ removeButtonProps }"
+        >
+          <div :data-testid="'user-' + index">
+            <TextField name="firstName" label="First Name" />
+            <button v-bind="removeButtonProps" :data-testid="'remove-' + index">Remove</button>
+          </div>
+        </component>
+      `,
+    });
+
+    // Parent component with form
+    const TestComponent = defineComponent({
+      components: { RepeaterChild },
+      setup() {
+        const form = useForm<{ users: Array<{ firstName: string }> }>({
+          initialValues: {
+            users: [{ firstName: 'User 1' }, { firstName: 'User 2' }, { firstName: 'User 3' }],
+          },
+        });
+
+        formReturns.value = form;
+
+        return { form };
+      },
+      template: `<RepeaterChild />`,
+    });
+
+    await render(TestComponent);
+    await flush();
+
+    // Verify initial state
+    expect(formReturns.value!.values.users).toHaveLength(3);
+    expect(formReturns.value!.values.users![0].firstName).toBe('User 1');
+    expect(formReturns.value!.values.users![1].firstName).toBe('User 2');
+    expect(formReturns.value!.values.users![2].firstName).toBe('User 3');
+
+    // Remove the second item (index 1)
+    const removeButton = screen.getByTestId('remove-1');
+    await fireEvent.click(removeButton);
+    await flush();
+
+    // After removal, we should have 2 users
+    expect(formReturns.value!.values.users).toHaveLength(2);
+    expect(formReturns.value!.values.users![0].firstName).toBe('User 1');
+    expect(formReturns.value!.values.users![1].firstName).toBe('User 3');
+  });
+
+  test('swapping items updates form values correctly', async () => {
+    const formReturns = ref<ReturnType<typeof useForm<any>> | null>(null);
+    const repeaterReturns = ref<ReturnType<typeof useFormRepeater<any>> | null>(null);
+
+    const TextField = defineComponent({
+      props: {
+        name: { type: String, required: true },
+        label: { type: String, required: true },
+      },
+      setup(props) {
+        const { inputProps, labelProps } = useTextField({
+          name: props.name,
+          label: props.label,
+        });
+        return { inputProps, labelProps };
+      },
+      template: `
+        <div>
+          <label v-bind="labelProps">{{ label }}</label>
+          <input v-bind="inputProps" />
+        </div>
+      `,
+    });
+
+    const RepeaterChild = defineComponent({
+      components: { TextField },
+      setup() {
+        const repeater = useFormRepeater<{ firstName: string }>({
+          name: 'users',
+        });
+
+        repeaterReturns.value = repeater;
+
+        return { items: repeater.items, Iteration: repeater.Iteration };
+      },
+      template: `
+        <component
+          :is="Iteration"
+          v-for="(key, index) in items"
+          :key="key"
+          :index="index"
+        >
+          <div :data-testid="'user-' + index">
+            <TextField name="firstName" label="First Name" />
+          </div>
+        </component>
+      `,
+    });
+
+    const TestComponent = defineComponent({
+      components: { RepeaterChild },
+      setup() {
+        const form = useForm<{ users: Array<{ firstName: string }> }>({
+          initialValues: {
+            users: [{ firstName: 'User 1' }, { firstName: 'User 2' }, { firstName: 'User 3' }],
+          },
+        });
+
+        formReturns.value = form;
+
+        return { form };
+      },
+      template: `<RepeaterChild />`,
+    });
+
+    await render(TestComponent);
+    await flush();
+
+    // Verify initial state
+    expect(formReturns.value!.values.users).toHaveLength(3);
+    expect(formReturns.value!.values.users![0].firstName).toBe('User 1');
+    expect(formReturns.value!.values.users![1].firstName).toBe('User 2');
+    expect(formReturns.value!.values.users![2].firstName).toBe('User 3');
+
+    // Swap first and third items (index 0 and 2)
+    repeaterReturns.value!.swap(0, 2);
+    await flush();
+
+    // After swap, User 1 and User 3 should be swapped
+    expect(formReturns.value!.values.users).toHaveLength(3);
+    expect(formReturns.value!.values.users![0].firstName).toBe('User 3');
+    expect(formReturns.value!.values.users![1].firstName).toBe('User 2');
+    expect(formReturns.value!.values.users![2].firstName).toBe('User 1');
+  });
+
+  test('moving an item updates form values correctly', async () => {
+    const formReturns = ref<ReturnType<typeof useForm<any>> | null>(null);
+    const repeaterReturns = ref<ReturnType<typeof useFormRepeater<any>> | null>(null);
+
+    const TextField = defineComponent({
+      props: {
+        name: { type: String, required: true },
+        label: { type: String, required: true },
+      },
+      setup(props) {
+        const { inputProps, labelProps } = useTextField({
+          name: props.name,
+          label: props.label,
+        });
+        return { inputProps, labelProps };
+      },
+      template: `
+        <div>
+          <label v-bind="labelProps">{{ label }}</label>
+          <input v-bind="inputProps" />
+        </div>
+      `,
+    });
+
+    const RepeaterChild = defineComponent({
+      components: { TextField },
+      setup() {
+        const repeater = useFormRepeater<{ firstName: string }>({
+          name: 'users',
+        });
+
+        repeaterReturns.value = repeater;
+
+        return { items: repeater.items, Iteration: repeater.Iteration };
+      },
+      template: `
+        <component
+          :is="Iteration"
+          v-for="(key, index) in items"
+          :key="key"
+          :index="index"
+        >
+          <div :data-testid="'user-' + index">
+            <TextField name="firstName" label="First Name" />
+          </div>
+        </component>
+      `,
+    });
+
+    const TestComponent = defineComponent({
+      components: { RepeaterChild },
+      setup() {
+        const form = useForm<{ users: Array<{ firstName: string }> }>({
+          initialValues: {
+            users: [{ firstName: 'User 1' }, { firstName: 'User 2' }, { firstName: 'User 3' }],
+          },
+        });
+
+        formReturns.value = form;
+
+        return { form };
+      },
+      template: `<RepeaterChild />`,
+    });
+
+    await render(TestComponent);
+    await flush();
+
+    // Verify initial state
+    expect(formReturns.value!.values.users).toHaveLength(3);
+    expect(formReturns.value!.values.users![0].firstName).toBe('User 1');
+    expect(formReturns.value!.values.users![1].firstName).toBe('User 2');
+    expect(formReturns.value!.values.users![2].firstName).toBe('User 3');
+
+    // Move first item to the end (from index 0 to index 2)
+    repeaterReturns.value!.move(0, 2);
+    await flush();
+
+    // After move, User 1 should be at the end
+    expect(formReturns.value!.values.users).toHaveLength(3);
+    expect(formReturns.value!.values.users![0].firstName).toBe('User 2');
+    expect(formReturns.value!.values.users![1].firstName).toBe('User 3');
+    expect(formReturns.value!.values.users![2].firstName).toBe('User 1');
+  });
+
+  test('inserting an item updates form values correctly', async () => {
+    const formReturns = ref<ReturnType<typeof useForm<any>> | null>(null);
+    const repeaterReturns = ref<ReturnType<typeof useFormRepeater<any>> | null>(null);
+
+    const TextField = defineComponent({
+      props: {
+        name: { type: String, required: true },
+        label: { type: String, required: true },
+      },
+      setup(props) {
+        const { inputProps, labelProps } = useTextField({
+          name: props.name,
+          label: props.label,
+        });
+        return { inputProps, labelProps };
+      },
+      template: `
+        <div>
+          <label v-bind="labelProps">{{ label }}</label>
+          <input v-bind="inputProps" />
+        </div>
+      `,
+    });
+
+    const RepeaterChild = defineComponent({
+      components: { TextField },
+      setup() {
+        const repeater = useFormRepeater<{ firstName: string }>({
+          name: 'users',
+        });
+
+        repeaterReturns.value = repeater;
+
+        return { items: repeater.items, Iteration: repeater.Iteration };
+      },
+      template: `
+        <component
+          :is="Iteration"
+          v-for="(key, index) in items"
+          :key="key"
+          :index="index"
+        >
+          <div :data-testid="'user-' + index">
+            <TextField name="firstName" label="First Name" />
+          </div>
+        </component>
+      `,
+    });
+
+    const TestComponent = defineComponent({
+      components: { RepeaterChild },
+      setup() {
+        const form = useForm<{ users: Array<{ firstName: string }> }>({
+          initialValues: {
+            users: [{ firstName: 'User 1' }, { firstName: 'User 2' }, { firstName: 'User 3' }],
+          },
+        });
+
+        formReturns.value = form;
+
+        return { form };
+      },
+      template: `<RepeaterChild />`,
+    });
+
+    await render(TestComponent);
+    await flush();
+
+    // Verify initial state
+    expect(formReturns.value!.values.users).toHaveLength(3);
+    expect(formReturns.value!.values.users![0].firstName).toBe('User 1');
+    expect(formReturns.value!.values.users![1].firstName).toBe('User 2');
+    expect(formReturns.value!.values.users![2].firstName).toBe('User 3');
+
+    // Insert at index 1 (between User 1 and User 2)
+    repeaterReturns.value!.insert(1);
+    await flush();
+
+    // After insert, we should have 4 items with an empty item at index 1
+    expect(formReturns.value!.values.users).toHaveLength(4);
+    expect(formReturns.value!.values.users![0].firstName).toBe('User 1');
+    expect(formReturns.value!.values.users![1].firstName).toBeUndefined(); // New empty item
+    expect(formReturns.value!.values.users![2].firstName).toBe('User 2');
+    expect(formReturns.value!.values.users![3].firstName).toBe('User 3');
+  });
+
+  test('removing an item works when form is passed as prop (same component setup)', async () => {
+    const formReturns = ref<ReturnType<typeof useForm<any>> | null>(null);
+    const repeaterReturns = ref<ReturnType<typeof useFormRepeater<any>> | null>(null);
+
+    const TextField = defineComponent({
+      props: {
+        name: { type: String, required: true },
+        label: { type: String, required: true },
+      },
+      setup(props) {
+        const { inputProps, labelProps } = useTextField({
+          name: props.name,
+          label: props.label,
+        });
+        return { inputProps, labelProps };
+      },
+      template: `
+        <div>
+          <label v-bind="labelProps">{{ label }}</label>
+          <input v-bind="inputProps" />
+        </div>
+      `,
+    });
+
+    // This test simulates using useForm and useFormRepeater in the same component
+    // by passing the form explicitly via the form prop
+    const TestComponent = defineComponent({
+      components: { TextField },
+      setup() {
+        const form = useForm<{ users: Array<{ firstName: string }> }>({
+          initialValues: {
+            users: [{ firstName: 'User 1' }, { firstName: 'User 2' }, { firstName: 'User 3' }],
+          },
+        });
+
+        formReturns.value = form;
+
+        // Pass form.context explicitly since we're in the same component
+        const repeater = useFormRepeater<{ firstName: string }>({
+          name: 'users',
+          form: form as any,
+        });
+
+        repeaterReturns.value = repeater;
+
+        return { form, items: repeater.items, Iteration: repeater.Iteration };
+      },
+      template: `
+        <component
+          :is="Iteration"
+          v-for="(key, index) in items"
+          :key="key"
+          :index="index"
+          v-slot="{ removeButtonProps }"
+        >
+          <div :data-testid="'user-' + index">
+            <TextField name="firstName" label="First Name" />
+            <button v-bind="removeButtonProps" :data-testid="'remove-' + index">Remove</button>
+          </div>
+        </component>
+      `,
+    });
+
+    await render(TestComponent);
+    await flush();
+
+    // Verify initial state
+    expect(formReturns.value!.values.users).toHaveLength(3);
+    expect(formReturns.value!.values.users![0].firstName).toBe('User 1');
+    expect(formReturns.value!.values.users![1].firstName).toBe('User 2');
+    expect(formReturns.value!.values.users![2].firstName).toBe('User 3');
+
+    // Remove the second item (index 1)
+    const removeButton = screen.getByTestId('remove-1');
+    await fireEvent.click(removeButton);
+    await flush();
+
+    // After removal, we should have 2 users
+    expect(formReturns.value!.values.users).toHaveLength(2);
+    expect(formReturns.value!.values.users![0].firstName).toBe('User 1');
+    expect(formReturns.value!.values.users![1].firstName).toBe('User 3');
+  });
 });

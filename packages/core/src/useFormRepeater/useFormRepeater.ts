@@ -13,8 +13,8 @@ import {
   watch,
   shallowRef,
 } from 'vue';
-import { Numberish, Reactivify } from '../types';
-import { FormKey } from '../useForm';
+import { FormObject, Numberish, Reactivify } from '../types';
+import { FormKey, FormReturns } from '../useForm';
 import {
   cloneDeep,
   fromNumberish,
@@ -29,7 +29,7 @@ import { FieldTypePrefixes } from '../constants';
 import { createPathPrefixer } from '../helpers/usePathPrefixer';
 import { prefixPath } from '../utils/path';
 
-export interface FormRepeaterProps {
+export interface FormRepeaterProps<TForm extends FormObject = FormObject> {
   /**
    * The name/path of the repeater field.
    */
@@ -64,6 +64,13 @@ export interface FormRepeaterProps {
    * The label for the move down button.
    */
   moveDownButtonLabel?: string;
+
+  /**
+   * The form context to use. If not provided, will attempt to inject from parent.
+   * Use this when useFormRepeater is called in the same component as useForm.
+   */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  form?: FormReturns<TForm>;
 }
 
 export interface FormRepeaterButtonProps {
@@ -110,11 +117,12 @@ export interface FormRepeaterIterationSlotProps {
   removeButtonProps: FormRepeaterButtonDomProps;
 }
 
-export function useFormRepeater<TItem = unknown>(_props: Reactivify<FormRepeaterProps>) {
+export function useFormRepeater<TItem = unknown>(_props: Reactivify<FormRepeaterProps, 'form'>) {
   const id = useUniqId(FieldTypePrefixes.FormRepeater);
   let counter = 0;
-  const form = inject(FormKey, null);
-  const repeaterProps = normalizeProps(_props);
+  const repeaterProps = normalizeProps(_props, ['form']);
+  // Use the provided form prop, or fall back to injecting from parent
+  const form = repeaterProps.form?.context ?? inject(FormKey, null);
   const getPath = () => toValue(repeaterProps.name);
   const getPathValue = () => (form?.getValue(getPath()) || []) as TItem[];
   let lastControlledValueSnapshot: TItem[] | undefined;
@@ -187,6 +195,20 @@ export function useFormRepeater<TItem = unknown>(_props: Reactivify<FormRepeater
       return;
     }
 
+    // Queue ARRAY_MUT transaction with the new array value (item removed)
+    if (form) {
+      const currentArray = cloneDeep(getPathValue()) ?? [];
+      if (Array.isArray(currentArray) && index < currentArray.length) {
+        const newArray = [...currentArray];
+        newArray.splice(index, 1);
+        form.transaction((_, { ARRAY_MUT }) => ({
+          kind: ARRAY_MUT,
+          path: getPath(),
+          value: newArray,
+        }));
+      }
+    }
+
     mutateWith(() => {
       records.value.splice(index, 1);
     });
@@ -207,6 +229,21 @@ export function useFormRepeater<TItem = unknown>(_props: Reactivify<FormRepeater
       }
 
       return;
+    }
+
+    // Queue ARRAY_MUT transaction with the new array value (item inserted)
+    if (form) {
+      const currentArray = cloneDeep(getPathValue()) ?? [];
+      if (Array.isArray(currentArray)) {
+        const newArray = [...currentArray];
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        newArray.splice(index, 0, undefined as any);
+        form.transaction((_, { ARRAY_MUT }) => ({
+          kind: ARRAY_MUT,
+          path: getPath(),
+          value: newArray,
+        }));
+      }
     }
 
     mutateWith(() => {

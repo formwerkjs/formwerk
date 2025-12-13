@@ -30,16 +30,25 @@ interface InitializeFieldTransaction<TForm extends FormObject> extends BaseState
   kind: 3;
 }
 
+interface ArrayMutTransaction<TForm extends FormObject> {
+  kind: 4;
+  path: Path<TForm>;
+  value: unknown[];
+}
+
 export type FormTransaction<TForm extends FormObject> =
   | SetPathStateTransaction<TForm>
   | UnsetPathStateTransaction<TForm>
   | DestroyPathStateTransaction<TForm>
-  | InitializeFieldTransaction<TForm>;
+  | InitializeFieldTransaction<TForm>
+  | ArrayMutTransaction<TForm>;
 
 /**
  * Transaction kinds, we use numbers for faster comparison and easier sorting.
+ * ARRAY_MUT has the highest value to be processed first (after sorting descending).
  */
 const TransactionKind = {
+  ARRAY_MUT: 4,
   INIT_PATH: 3,
   SET_PATH: 2,
   UNSET_PATH: 1,
@@ -62,6 +71,10 @@ export function useFormTransactions<TForm extends FormObject>(form: BaseFormCont
   const transactions = new Set<FormTransaction<TForm>>([]);
 
   let tick: Promise<void>;
+
+  // Track array paths that have been mutated - persisted across batches
+  const mutatedArrayPaths = new Set<string>();
+  let clearMutatedPathsTimeout: ReturnType<typeof setTimeout> | null = null;
 
   function transaction(
     tr: (formCtx: BaseFormContext<TForm>, codes: typeof TransactionKind) => FormTransaction<TForm> | null,
@@ -88,7 +101,42 @@ export function useFormTransactions<TForm extends FormObject>(form: BaseFormCont
      */
     const trs = cleanTransactions(transactions);
 
+    // Process ARRAY_MUT transactions first (they have highest kind value so come first after sorting)
     for (const tr of trs) {
+      if (tr.kind === TransactionKind.ARRAY_MUT) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        form.setValue(tr.path as any, tr.value as any);
+        mutatedArrayPaths.add(tr.path);
+
+        // Schedule clearing of mutated paths after field transactions have been processed
+        // This allows subsequent field destroy/set transactions to be filtered out
+        if (clearMutatedPathsTimeout) {
+          clearTimeout(clearMutatedPathsTimeout);
+        }
+        clearMutatedPathsTimeout = setTimeout(() => {
+          mutatedArrayPaths.clear();
+          clearMutatedPathsTimeout = null;
+        }, 0);
+      }
+    }
+
+    // Process remaining transactions, filtering out those under mutated array paths
+    for (const tr of trs) {
+      // Skip ARRAY_MUT as they've already been processed
+      if (tr.kind === TransactionKind.ARRAY_MUT) {
+        continue;
+      }
+
+      // Skip DESTROY_PATH and SET_PATH transactions for paths under mutated arrays
+      // These are stale transactions from fields that were part of the array before mutation
+      // Allow INIT_PATH through as those are for newly mounted fields
+      if (
+        (tr.kind === TransactionKind.DESTROY_PATH || tr.kind === TransactionKind.SET_PATH) &&
+        isPathUnderMutatedArray(tr.path, mutatedArrayPaths)
+      ) {
+        continue;
+      }
+
       if (tr.kind === TransactionKind.SET_PATH) {
         form.setValue(tr.path, tr.value);
         form.setTouched(tr.path, tr.touched);
@@ -123,6 +171,20 @@ export function useFormTransactions<TForm extends FormObject>(form: BaseFormCont
     }
 
     transactions.clear();
+  }
+
+  /**
+   * Check if a path is under any of the mutated array paths.
+   * For example, if 'users' is mutated, then 'users.0.firstName' is under it.
+   */
+  function isPathUnderMutatedArray(path: string, mutatedArrayPaths: Set<string>): boolean {
+    for (const arrayPath of mutatedArrayPaths) {
+      // Check if the path starts with the array path followed by a dot or bracket
+      if (path.startsWith(arrayPath + '.') || path.startsWith(arrayPath + '[')) {
+        return true;
+      }
+    }
+    return false;
   }
 
   const ctx: FormTransactionManager<TForm> = { transaction };
