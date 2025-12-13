@@ -74,7 +74,9 @@ export function useFormTransactions<TForm extends FormObject>(form: BaseFormCont
 
   // Track array paths that have been mutated - persisted across batches
   const mutatedArrayPaths = new Set<string>();
-  let clearMutatedPathsTimeout: ReturnType<typeof setTimeout> | null = null;
+  // Flag to track if ARRAY_MUT occurred in the previous batch
+  // Used to determine when to clear mutatedArrayPaths
+  let hadArrayMutInPreviousBatch = false;
 
   function transaction(
     tr: (formCtx: BaseFormContext<TForm>, codes: typeof TransactionKind) => FormTransaction<TForm> | null,
@@ -101,22 +103,19 @@ export function useFormTransactions<TForm extends FormObject>(form: BaseFormCont
      */
     const trs = cleanTransactions(transactions);
 
+    // Clear mutated paths if the previous batch didn't have an ARRAY_MUT
+    // This ensures paths persist for exactly one batch after the ARRAY_MUT
+    if (!hadArrayMutInPreviousBatch) {
+      mutatedArrayPaths.clear();
+    }
+    hadArrayMutInPreviousBatch = false;
+
     // Process ARRAY_MUT transactions first (they have highest kind value so come first after sorting)
     for (const tr of trs) {
       if (tr.kind === TransactionKind.ARRAY_MUT) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        form.setValue(tr.path as any, tr.value as any);
+        form.setValue(tr.path, tr.value as PathValue<TForm, Path<TForm>>);
         mutatedArrayPaths.add(tr.path);
-
-        // Schedule clearing of mutated paths after field transactions have been processed
-        // This allows subsequent field destroy/set transactions to be filtered out
-        if (clearMutatedPathsTimeout) {
-          clearTimeout(clearMutatedPathsTimeout);
-        }
-        clearMutatedPathsTimeout = setTimeout(() => {
-          mutatedArrayPaths.clear();
-          clearMutatedPathsTimeout = null;
-        }, 0);
+        hadArrayMutInPreviousBatch = true;
       }
     }
 
