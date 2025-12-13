@@ -1,5 +1,12 @@
 # @formwerk/core
 
+## 0.14.4
+
+### Patch Changes
+
+- 34a75f7: fix(repeater): prevent form values corruption during array mutations
+  - @formwerk/devtools@0.14.4
+
 ## 0.14.3
 
 ### Patch Changes
