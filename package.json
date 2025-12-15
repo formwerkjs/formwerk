@@ -8,8 +8,8 @@
   "homepage": "https://formwerk.dev",
   "repository": "https://github.com/formwerkjs/formwerk",
   "scripts": {
-    "test": "vitest -c vitest.browser.config.ts",
-    "cover": "vitest run --coverage -c vitest.browser.config.ts",
+    "test": "vitest",
+    "cover": "vitest run --coverage",
     "lint": "oxlint",
     "format": "prettier \"./**/*.ts\" --write",
     "build": "tsx scripts/build.ts",
@@ -69,11 +69,11 @@
     "*.ts": [
       "oxlint",
       "prettier --write",
-      "vitest run related --passWithNoTests"
+      "vitest run related --passWithNoTests --browser.headless"
     ],
     "*.js": [
       "oxlint",
-      "vitest run related --passWithNoTests"
+      "vitest run related --passWithNoTests --browser.headless"
     ]
   },
   "keywords": [],

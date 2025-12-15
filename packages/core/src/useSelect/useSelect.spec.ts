@@ -170,7 +170,7 @@ function getSelect() {
 }
 
 describe('keyboard features for a single select', () => {
-  async function renderSelect(opts?: { label: string; disabled?: boolean }[]) {
+  function renderSelect(opts?: { label: string; disabled?: boolean }[]) {
     page.render({
       components: {
         MySelect: createSelect(),
@@ -220,7 +220,7 @@ describe('keyboard features for a single select', () => {
   });
 
   test('Pressing ArrowDown should Move focus through the options and stays at the bottom', async () => {
-    (await renderSelect()).open();
+    await renderSelect().open();
 
     const listbox = page.getByRole('listbox');
     await keyDown(listbox, { code: 'ArrowDown' });
@@ -232,7 +232,7 @@ describe('keyboard features for a single select', () => {
   });
 
   test('Pressing End should Move focus to the last option', async () => {
-    (await renderSelect()).open();
+    await renderSelect().open();
     const listbox = page.getByRole('listbox');
 
     await keyDown(listbox, { code: 'End' });
@@ -240,7 +240,7 @@ describe('keyboard features for a single select', () => {
   });
 
   test('Pressing Home should Move focus to the first option', async () => {
-    (await renderSelect()).open();
+    await renderSelect().open();
     const listbox = page.getByRole('listbox');
 
     await keyDown(listbox, { code: 'End' });
@@ -250,7 +250,7 @@ describe('keyboard features for a single select', () => {
   });
 
   test('Pressing PageUp should Move focus to the first option', async () => {
-    (await renderSelect()).open();
+    await renderSelect().open();
     const listbox = page.getByRole('listbox');
 
     await keyDown(listbox, { code: 'End' });
@@ -260,7 +260,7 @@ describe('keyboard features for a single select', () => {
   });
 
   test('Pressing PageDown should Move focus to the first option', async () => {
-    (await renderSelect()).open();
+    await renderSelect().open();
     const listbox = page.getByRole('listbox');
 
     await keyDown(listbox, { code: 'PageDown' });
@@ -268,7 +268,7 @@ describe('keyboard features for a single select', () => {
   });
 
   test('Pressing ArrowUp should Move focus through the options backwards and stays at the top', async () => {
-    (await renderSelect()).open();
+    await renderSelect().open();
     const listbox = page.getByRole('listbox');
 
     await keyDown(listbox, { code: 'End' });
@@ -282,7 +282,7 @@ describe('keyboard features for a single select', () => {
   });
 
   test('tabbing should close the listbox', async () => {
-    (await renderSelect()).open();
+    await renderSelect().open();
     const listbox = page.getByRole('listbox');
 
     await expect.element(getSelect()).toHaveAttribute('aria-expanded', 'true');
@@ -291,8 +291,7 @@ describe('keyboard features for a single select', () => {
   });
 
   test('Finds most suitable option when typing', async () => {
-    const renderedSelect = renderSelect([{ label: 'Egypt' }, { label: 'Estonia' }, { label: 'Ethiopia' }]);
-    renderedSelect.open();
+    await renderSelect([{ label: 'Egypt' }, { label: 'Estonia' }, { label: 'Ethiopia' }]).open();
 
     const listbox = page.getByRole('listbox');
     await keyDown(listbox, { key: 'E' });
@@ -305,7 +304,7 @@ describe('keyboard features for a single select', () => {
   });
 
   test('Pressing Space should select the focused option', async () => {
-    (await renderSelect()).open();
+    await renderSelect().open();
 
     const option = page.getByRole('option').nth(1);
     await keyDown(option, { code: 'Space' });
@@ -321,7 +320,7 @@ describe('keyboard features for a single select', () => {
   });
 
   test('Pressing Enter should select the focused option', async () => {
-    (await renderSelect()).open();
+    await renderSelect().open();
 
     const option = page.getByRole('option').nth(1);
     await keyDown(option, { code: 'Enter' });
@@ -337,7 +336,7 @@ describe('keyboard features for a single select', () => {
   });
 
   test('Clicking should select the clicked option', async () => {
-    (await renderSelect()).open();
+    await renderSelect().open();
 
     const option = page.getByRole('option').nth(2);
     await click(option);
@@ -354,7 +353,7 @@ describe('keyboard features for a single select', () => {
 });
 
 describe('keyboard features for a multi select', () => {
-  async function renderSelect(opts?: { label: string; disabled?: boolean }[]) {
+  function renderSelect(opts?: { label: string; disabled?: boolean }[]) {
     page.render({
       components: {
         MySelect: createSelect(),
@@ -380,7 +379,7 @@ describe('keyboard features for a multi select', () => {
   }
 
   test('Shift + ArrowDown should select the next option', async () => {
-    (await renderSelect()).open();
+    await renderSelect().open();
 
     const listbox = page.getByRole('listbox');
     windowKeyDown({ code: 'ShiftLeft' });
@@ -391,7 +390,7 @@ describe('keyboard features for a multi select', () => {
   });
 
   test('Shift + ArrowUp should select the previous option', async () => {
-    (await renderSelect()).open();
+    await renderSelect().open();
 
     const listbox = page.getByRole('listbox');
     await keyDown(listbox, { code: 'End' });
@@ -403,7 +402,7 @@ describe('keyboard features for a multi select', () => {
   });
 
   test('Shift + Home should select all options from the first to the toggled option', async () => {
-    (await renderSelect()).open();
+    await renderSelect().open();
 
     const listbox = page.getByRole('listbox');
     await keyDown(listbox, { code: 'ArrowDown' });
@@ -415,7 +414,7 @@ describe('keyboard features for a multi select', () => {
   });
 
   test('Shift + PageUp should select all options from the first to the toggled option', async () => {
-    (await renderSelect()).open();
+    await renderSelect().open();
 
     const listbox = page.getByRole('listbox');
     await keyDown(listbox, { code: 'ArrowDown' });
@@ -427,7 +426,7 @@ describe('keyboard features for a multi select', () => {
   });
 
   test('Shift + End should select all options from the first to the toggled option', async () => {
-    (await renderSelect()).open();
+    await renderSelect().open();
 
     const listbox = page.getByRole('listbox');
     await keyDown(listbox, { code: 'ArrowDown' });
@@ -439,7 +438,7 @@ describe('keyboard features for a multi select', () => {
   });
 
   test('Shift + PageDown should select all options from the first to the toggled option', async () => {
-    (await renderSelect()).open();
+    await renderSelect().open();
 
     const listbox = page.getByRole('listbox');
     await keyDown(listbox, { code: 'ArrowDown' });
@@ -451,7 +450,7 @@ describe('keyboard features for a multi select', () => {
   });
 
   test('Control + A should select all options', async () => {
-    (await renderSelect()).open();
+    await renderSelect().open();
 
     const listbox = page.getByRole('listbox');
     const modifier = isMac() ? 'MetaLeft' : 'ControlLeft';
@@ -494,7 +493,7 @@ describe('keyboard features for a multi select', () => {
 });
 
 describe('selection state', () => {
-  async function renderSelect(select: any, opts?: { label: string; disabled?: boolean }[]) {
+  function renderSelect(select: any, opts?: { label: string; disabled?: boolean }[]) {
     page.render({
       components: {
         MySelect: select,
