@@ -1,7 +1,8 @@
 import { nextTick, onMounted, ref, shallowRef } from 'vue';
 import { dateToString, useConstraintsValidator } from './useConstraintsValidator';
-import { fireEvent, render, screen } from '@testing-library/vue';
+import { render } from '@testing-library/vue';
 import { renderSetup } from '@test-utils/index';
+import { page } from 'vitest/browser';
 
 describe('useConstraintsValidator', () => {
   describe('text constraints', () => {
@@ -9,7 +10,7 @@ describe('useConstraintsValidator', () => {
       const source = shallowRef<HTMLElement>();
       const value = ref('test');
 
-      const { element } = await renderSetup(() => {
+      const { element } = renderSetup(() => {
         return useConstraintsValidator({
           type: 'text',
           value,
@@ -26,7 +27,7 @@ describe('useConstraintsValidator', () => {
       const value = ref('test');
       const required = ref(true);
 
-      const { element } = await renderSetup(() => {
+      const { element } = renderSetup(() => {
         return useConstraintsValidator({
           type: 'text',
           value,
@@ -49,7 +50,7 @@ describe('useConstraintsValidator', () => {
       const minLength = ref(2);
       const maxLength = ref(10);
 
-      const { element } = await renderSetup(() => {
+      const { element } = renderSetup(() => {
         return useConstraintsValidator({
           type: 'text',
           value,
@@ -74,7 +75,7 @@ describe('useConstraintsValidator', () => {
       const source = shallowRef<HTMLElement>();
       const value = ref('test');
 
-      const { element } = await renderSetup(() => {
+      const { element } = renderSetup(() => {
         return useConstraintsValidator({
           type: 'text',
           value,
@@ -95,7 +96,7 @@ describe('useConstraintsValidator', () => {
       const source = shallowRef<HTMLElement>();
       const value = ref('option1');
 
-      const { element } = await renderSetup(() => {
+      const { element } = renderSetup(() => {
         return useConstraintsValidator({
           type: 'select',
           value,
@@ -113,7 +114,7 @@ describe('useConstraintsValidator', () => {
       const source = shallowRef<HTMLElement>();
       const value = ref(42);
 
-      const { element } = await renderSetup(() => {
+      const { element } = renderSetup(() => {
         return useConstraintsValidator({
           type: 'number',
           value,
@@ -131,7 +132,7 @@ describe('useConstraintsValidator', () => {
       const min = ref(0);
       const max = ref(100);
 
-      const { element } = await renderSetup(() => {
+      const { element } = renderSetup(() => {
         return useConstraintsValidator({
           type: 'number',
           value,
@@ -158,7 +159,7 @@ describe('useConstraintsValidator', () => {
       const source = shallowRef<HTMLElement>();
       const value = ref(new Date('2023-01-01'));
 
-      const { element } = await renderSetup(() => {
+      const { element } = renderSetup(() => {
         return useConstraintsValidator({
           type: 'date',
           value,
@@ -176,7 +177,7 @@ describe('useConstraintsValidator', () => {
       const min = ref(new Date('2023-01-01'));
       const max = ref(new Date('2023-01-31'));
 
-      const { element } = await renderSetup(() => {
+      const { element } = renderSetup(() => {
         return useConstraintsValidator({
           type: 'date',
           value,
@@ -201,7 +202,7 @@ describe('useConstraintsValidator', () => {
       const source = shallowRef<HTMLElement>();
       const value = ref<Date | null>(null);
 
-      const { element } = await renderSetup(() => {
+      const { element } = renderSetup(() => {
         return useConstraintsValidator({
           type: 'date',
           value,
@@ -223,7 +224,7 @@ describe('useConstraintsValidator', () => {
       const value = ref('test');
       const dispatchedEvents: string[] = [];
 
-      await render({
+      render({
         setup: () => {
           const { element } = useConstraintsValidator({
             type: 'text',
@@ -247,9 +248,10 @@ describe('useConstraintsValidator', () => {
       await nextTick();
 
       // Trigger events on the source element
-      await fireEvent.change(screen.getByTestId('source'));
-      await fireEvent.blur(screen.getByTestId('source'));
-      await fireEvent.input(screen.getByTestId('source'));
+      const src = (await page.getByTestId('source').element()) as HTMLElement;
+      src.dispatchEvent(new Event('change', { bubbles: true }));
+      src.dispatchEvent(new FocusEvent('blur', { bubbles: true }));
+      src.dispatchEvent(new Event('input', { bubbles: true }));
 
       // Check if events were forwarded to the element
       expect(dispatchedEvents).toContain('change');
@@ -263,7 +265,7 @@ describe('useConstraintsValidator', () => {
       const source = shallowRef<HTMLElement>();
       const value = ref<string | undefined>(undefined);
 
-      const { element } = await renderSetup(() => {
+      const { element } = renderSetup(() => {
         return useConstraintsValidator({
           type: 'text',
           value,

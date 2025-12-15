@@ -1,9 +1,10 @@
 import { defineComponent, ref } from 'vue';
-import { render, screen, fireEvent } from '@testing-library/vue';
+import { render } from '@testing-library/vue';
 import { useFormRepeater, FormRepeaterProps } from './useFormRepeater';
 import { flush } from '@test-utils/index';
 import { useForm } from '../useForm';
 import { useTextField } from '../useTextField';
+import { page } from 'vitest/browser';
 
 async function renderTest(props: FormRepeaterProps) {
   const { addButtonProps, items, Iteration, swap, insert, remove, move } = useFormRepeater(props);
@@ -33,7 +34,7 @@ async function renderTest(props: FormRepeaterProps) {
     `,
   });
 
-  await render(TestComponent);
+  render(TestComponent);
 
   return {
     swap,
@@ -44,166 +45,159 @@ async function renderTest(props: FormRepeaterProps) {
 }
 
 test('renders the minimum number of repeater items', async () => {
-  await renderTest({
+  renderTest({
     name: 'testRepeater',
     min: 1,
   });
 
-  const items = screen.getAllByTestId('repeater-item');
-  expect(items).toHaveLength(1);
+  expect(document.querySelectorAll('[data-testid="repeater-item"]').length).toBe(1);
 });
 
 test('adds a new item when add button is clicked', async () => {
-  await renderTest({
+  renderTest({
     name: 'testRepeater',
     min: 1,
   });
-  const addButton = screen.getByTestId('add-button');
-  await fireEvent.click(addButton);
-  const items = screen.getAllByTestId('repeater-item');
-  expect(items).toHaveLength(2);
+  await page.getByTestId('add-button').click();
+  await flush();
+  expect(document.querySelectorAll('[data-testid="repeater-item"]').length).toBe(2);
 });
 
 test('does not add a new item when max limit is reached', async () => {
-  await renderTest({
+  renderTest({
     name: 'testRepeater',
     min: 1,
     max: 3,
   });
-  const addButton = screen.getByTestId('add-button');
+  const addButton = page.getByTestId('add-button');
   // Add items up to the maximum limit
-  await fireEvent.click(addButton); // 2nd item
-  await fireEvent.click(addButton); // 3rd item
-  await fireEvent.click(addButton); // Attempt to add 4th item
+  await addButton.click(); // 2nd item
+  await addButton.click(); // 3rd item
+  // Attempt to add 4th item, but the button is disabled.
+  // Don't use locator.click() here because it waits for the element to become enabled.
+  ((await addButton.element()) as HTMLButtonElement).click();
+  await flush();
 
-  const items = screen.getAllByTestId('repeater-item');
-  expect(items).toHaveLength(3); // Should not exceed max
+  expect(document.querySelectorAll('[data-testid="repeater-item"]').length).toBe(3); // Should not exceed max
 
   // Verify that the add button is disabled
-  expect(addButton).toBeDisabled();
+  expect(((await addButton.element()) as HTMLButtonElement).disabled).toBe(true);
 });
 
 test('removes an item when remove button is clicked', async () => {
-  await renderTest({
+  renderTest({
     name: 'testRepeater',
     min: 1,
     max: 3,
   });
-  const addButton = screen.getByTestId('add-button');
+  const addButton = page.getByTestId('add-button');
   // Add two more items to have three in total
-  await fireEvent.click(addButton);
-  await fireEvent.click(addButton);
-  let items = screen.getAllByTestId('repeater-item');
-  expect(items).toHaveLength(3);
+  await addButton.click();
+  await addButton.click();
+  await flush();
+  expect(document.querySelectorAll('[data-testid="repeater-item"]').length).toBe(3);
 
   // Remove the second item
-  const removeButtons = screen.getAllByTestId('remove-button');
-  await fireEvent.click(removeButtons[1]);
-  items = screen.getAllByTestId('repeater-item');
-  expect(items).toHaveLength(2);
+  await page.getByTestId('remove-button').nth(1).click();
+  await flush();
+  expect(document.querySelectorAll('[data-testid="repeater-item"]').length).toBe(2);
 
   // Verify that the add button is enabled again
-  expect(addButton).not.toBeDisabled();
+  expect(((await addButton.element()) as HTMLButtonElement).disabled).toBe(false);
 });
 
 test('should disable add button when max is reached', async () => {
-  await renderTest({
+  renderTest({
     name: 'testRepeater',
     min: 1,
     max: 3,
   });
-  const addButton = screen.getByTestId('add-button');
+  const addButton = page.getByTestId('add-button');
   // Add items to reach the maximum limit
-  await fireEvent.click(addButton); // 2nd item
-  await fireEvent.click(addButton); // 3rd item
+  await addButton.click(); // 2nd item
+  await addButton.click(); // 3rd item
+  await flush();
 
-  expect(addButton).toBeDisabled();
+  expect(((await addButton.element()) as HTMLButtonElement).disabled).toBe(true);
 });
 
 test('should enable add button when max is not reached', async () => {
-  await renderTest({
+  renderTest({
     name: 'testRepeater',
     min: 1,
     max: 3,
   });
-  const addButton = screen.getByTestId('add-button');
-  expect(addButton).not.toBeDisabled();
+  const addButton = page.getByTestId('add-button');
+  expect(((await addButton.element()) as HTMLButtonElement).disabled).toBe(false);
 });
 
 test('moves an item up', async () => {
-  await renderTest({
+  renderTest({
     name: 'testRepeater',
     min: 1,
     max: 3,
   });
-  const addButton = screen.getByTestId('add-button');
+  const addButton = page.getByTestId('add-button');
   // Add two more items to have three in total
-  await fireEvent.click(addButton); // 2nd item
-  await fireEvent.click(addButton); // 3rd item
+  await addButton.click(); // 2nd item
+  await addButton.click(); // 3rd item
+  await flush();
 
-  let items = screen.getAllByTestId('repeater-item');
-  expect(items).toHaveLength(3);
+  expect(document.querySelectorAll('[data-testid="repeater-item"]').length).toBe(3);
 
   // Move the third item up to the second position
-  const moveUpButtons = screen.getAllByTestId('move-up-button');
-  await fireEvent.click(moveUpButtons[2]);
-
-  // Re-fetch items after the move
-  items = screen.getAllByTestId('repeater-item');
+  await page.getByTestId('move-up-button').nth(2).click();
+  await flush();
 
   // Since we're not tracking the order, we'll assume the move was successful if no errors occur
-  expect(items).toHaveLength(3);
+  expect(document.querySelectorAll('[data-testid="repeater-item"]').length).toBe(3);
 });
 
 test('moves an item down', async () => {
-  await renderTest({
+  renderTest({
     name: 'testRepeater',
     min: 1,
     max: 3,
   });
-  const addButton = screen.getByTestId('add-button');
+  const addButton = page.getByTestId('add-button');
   // Add two more items to have three in total
-  await fireEvent.click(addButton); // 2nd item
-  await fireEvent.click(addButton); // 3rd item
+  await addButton.click(); // 2nd item
+  await addButton.click(); // 3rd item
+  await flush();
 
-  let items = screen.getAllByTestId('repeater-item');
-  expect(items).toHaveLength(3);
+  expect(document.querySelectorAll('[data-testid="repeater-item"]').length).toBe(3);
 
   // Move the first item down to the second position
-  const moveDownButtons = screen.getAllByTestId('move-down-button');
-  await fireEvent.click(moveDownButtons[0]);
-
-  // Re-fetch items after the move
-  items = screen.getAllByTestId('repeater-item');
+  await page.getByTestId('move-down-button').nth(0).click();
+  await flush();
 
   // Since we're not tracking the order, we'll assume the move was successful if no errors occur
-  expect(items).toHaveLength(3);
+  expect(document.querySelectorAll('[data-testid="repeater-item"]').length).toBe(3);
 });
 
 test('swaps two items', async () => {
-  const { swap } = await renderTest({
+  const { swap } = renderTest({
     name: 'testRepeater',
     min: 1,
     max: 3,
   });
 
-  const addButton = screen.getByTestId('add-button');
-  await fireEvent.click(addButton);
-  await fireEvent.click(addButton);
-  let items = screen.getAllByTestId('key');
-  expect(items[0]).toHaveTextContent('-0');
-  expect(items[1]).toHaveTextContent('-1');
+  const addButton = page.getByTestId('add-button');
+  await addButton.click();
+  await addButton.click();
+  await flush();
+  await expect.element(page.getByTestId('key').nth(0)).toHaveTextContent('-0');
+  await expect.element(page.getByTestId('key').nth(1)).toHaveTextContent('-1');
 
   swap(0, 1);
   await flush();
 
-  items = screen.getAllByTestId('key');
-  expect(items[0]).toHaveTextContent('-1');
-  expect(items[1]).toHaveTextContent('-0');
+  await expect.element(page.getByTestId('key').nth(0)).toHaveTextContent('-1');
+  await expect.element(page.getByTestId('key').nth(1)).toHaveTextContent('-0');
 });
 
 test('inserts an item at a specific index', async () => {
-  const { insert } = await renderTest({
+  const { insert } = renderTest({
     name: 'testRepeater',
     min: 1,
     max: 3,
@@ -212,27 +206,26 @@ test('inserts an item at a specific index', async () => {
   insert(1);
   await flush();
 
-  const items = screen.getAllByTestId('repeater-item');
-  expect(items).toHaveLength(2);
+  expect(document.querySelectorAll('[data-testid="repeater-item"]').length).toBe(2);
 });
 
 test('does not insert an item when max is reached', async () => {
-  const { insert } = await renderTest({
+  const { insert } = renderTest({
     name: 'testRepeater',
     min: 1,
     max: 3,
   });
 
-  const addButton = screen.getByTestId('add-button');
-  await fireEvent.click(addButton);
-  await fireEvent.click(addButton);
+  const addButton = page.getByTestId('add-button');
+  await addButton.click();
+  await addButton.click();
+  await flush();
 
   const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
   insert(1);
   await flush();
 
-  const items = screen.getAllByTestId('repeater-item');
-  expect(items).toHaveLength(3);
+  expect(document.querySelectorAll('[data-testid="repeater-item"]').length).toBe(3);
 
   expect(warn).toHaveBeenCalledOnce();
   warn.mockRestore();
@@ -240,7 +233,7 @@ test('does not insert an item when max is reached', async () => {
 
 test('warns if name is not provided', async () => {
   const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
-  await renderTest({
+  renderTest({
     name: '',
     min: 1,
     max: 3,
@@ -251,7 +244,7 @@ test('warns if name is not provided', async () => {
 });
 
 test('does not remove an item when min is reached', async () => {
-  const { remove } = await renderTest({
+  const { remove } = renderTest({
     name: 'testRepeater',
     min: 1,
     max: 3,
@@ -262,22 +255,20 @@ test('does not remove an item when min is reached', async () => {
   remove(0);
   await flush();
 
-  const items = screen.getAllByTestId('repeater-item');
-  expect(items).toHaveLength(1);
+  expect(document.querySelectorAll('[data-testid="repeater-item"]').length).toBe(1);
   expect(warn).toHaveBeenCalledOnce();
   warn.mockRestore();
 });
 
 test('can remove all if no min is set', async () => {
-  const { remove } = await renderTest({
+  const { remove } = renderTest({
     name: 'testRepeater',
   });
 
   remove(0);
   await flush();
 
-  const items = screen.queryAllByTestId('repeater-item');
-  expect(items).toHaveLength(0);
+  expect(document.querySelectorAll('[data-testid="repeater-item"]').length).toBe(0);
 });
 
 test('renders Iteration component with correct props', async () => {
@@ -303,23 +294,19 @@ test('renders Iteration component with correct props', async () => {
     `,
   });
 
-  await render(TestComponent);
+  render(TestComponent);
 
-  const content = screen.getByTestId('iteration-content');
-  expect(content).toBeInTheDocument();
+  await expect.element(page.getByTestId('iteration-content')).toBeInTheDocument();
 
-  const removeButton = screen.getByTestId('remove-button');
-  expect(removeButton).toBeInTheDocument();
-  expect(removeButton).toHaveAttribute('type', 'button');
+  await expect.element(page.getByTestId('remove-button')).toBeInTheDocument();
+  await expect.element(page.getByTestId('remove-button')).toHaveAttribute('type', 'button');
 
-  const moveUpButton = screen.getByTestId('move-up-button');
-  expect(moveUpButton).toBeInTheDocument();
-  expect(moveUpButton).toHaveAttribute('type', 'button');
-  expect(moveUpButton).toBeDisabled();
+  await expect.element(page.getByTestId('move-up-button')).toBeInTheDocument();
+  await expect.element(page.getByTestId('move-up-button')).toHaveAttribute('type', 'button');
+  expect(((await page.getByTestId('move-up-button').element()) as HTMLButtonElement).disabled).toBe(true);
 
-  const moveDownButton = screen.getByTestId('move-down-button');
-  expect(moveDownButton).toBeInTheDocument();
-  expect(moveDownButton).toHaveAttribute('type', 'button');
+  await expect.element(page.getByTestId('move-down-button')).toBeInTheDocument();
+  await expect.element(page.getByTestId('move-down-button')).toHaveAttribute('type', 'button');
 });
 
 test('renders Iteration component with correct props with custom element', async () => {
@@ -344,14 +331,13 @@ test('renders Iteration component with correct props with custom element', async
     `,
   });
 
-  await render(TestComponent);
+  render(TestComponent);
 
-  const content = screen.getByTestId('repeater-item');
-  expect(content).toBeInTheDocument();
+  await expect.element(page.getByTestId('repeater-item')).toBeInTheDocument();
 });
 
 test('warns if move is called with the same index', async () => {
-  const { move } = await renderTest({
+  const { move } = renderTest({
     name: 'testRepeater',
     min: 1,
   });
@@ -365,7 +351,7 @@ test('warns if move is called with the same index', async () => {
 });
 
 test('warns if move is called with an out of bounds index', async () => {
-  const { move } = await renderTest({
+  const { move } = renderTest({
     name: 'testRepeater',
     min: 1,
   });
@@ -379,7 +365,7 @@ test('warns if move is called with an out of bounds index', async () => {
 });
 
 test('warns if insert is called with an out of bounds index', async () => {
-  const { insert } = await renderTest({
+  const { insert } = renderTest({
     name: 'testRepeater',
     min: 1,
   });
@@ -393,7 +379,7 @@ test('warns if insert is called with an out of bounds index', async () => {
 });
 
 test('warns if swap is called with the same index', async () => {
-  const { swap } = await renderTest({
+  const { swap } = renderTest({
     name: 'testRepeater',
     min: 1,
   });
@@ -407,7 +393,7 @@ test('warns if swap is called with the same index', async () => {
 });
 
 test('warns if swap is called with an out of bounds index', async () => {
-  const { swap } = await renderTest({
+  const { swap } = renderTest({
     name: 'testRepeater',
     min: 1,
   });
@@ -507,7 +493,7 @@ describe('form repeater with form context', () => {
       template: `<RepeaterChild :form="form" />`,
     });
 
-    await render(TestComponent);
+    render(TestComponent);
     await flush();
 
     // Verify initial state - 3 users with all data
@@ -520,11 +506,10 @@ describe('form repeater with form context', () => {
 
     // Step 2: Clear the second user's firstName
     // Get the second firstName input (index 1)
-    const inputs = screen.getAllByRole('textbox');
-    // Inputs are: firstName1, lastName1, firstName2, lastName2, firstName3, lastName3
-    const secondUserFirstNameInput = inputs[2]; // 0=fn1, 1=ln1, 2=fn2
-
-    await fireEvent.update(secondUserFirstNameInput, '');
+    const firstNameInputs = Array.from(document.querySelectorAll('input[name="firstName"]')) as HTMLInputElement[];
+    const secondUserFirstNameInput = firstNameInputs[1];
+    secondUserFirstNameInput.value = '';
+    secondUserFirstNameInput.dispatchEvent(new Event('input', { bubbles: true }));
     await flush();
 
     // After clearing firstName, lastName should be unmounted (due to v-if)
@@ -532,8 +517,7 @@ describe('form repeater with form context', () => {
     expect(formReturns.value!.values.users![1].firstName).toBe('');
 
     // Step 3: Remove the second row
-    const removeButton = screen.getByTestId('remove-1');
-    await fireEvent.click(removeButton);
+    await page.getByTestId('remove-1').click();
     await flush();
 
     // After removal, we should have 2 users
@@ -613,7 +597,7 @@ describe('form repeater with form context', () => {
       template: `<RepeaterChild />`,
     });
 
-    await render(TestComponent);
+    render(TestComponent);
     await flush();
 
     // Verify initial state
@@ -623,8 +607,7 @@ describe('form repeater with form context', () => {
     expect(formReturns.value!.values.users![2].firstName).toBe('User 3');
 
     // Remove the second item (index 1)
-    const removeButton = screen.getByTestId('remove-1');
-    await fireEvent.click(removeButton);
+    await page.getByTestId('remove-1').click();
     await flush();
 
     // After removal, we should have 2 users
@@ -698,7 +681,7 @@ describe('form repeater with form context', () => {
       template: `<RepeaterChild />`,
     });
 
-    await render(TestComponent);
+    render(TestComponent);
     await flush();
 
     // Verify initial state
@@ -783,7 +766,7 @@ describe('form repeater with form context', () => {
       template: `<RepeaterChild />`,
     });
 
-    await render(TestComponent);
+    render(TestComponent);
     await flush();
 
     // Verify initial state
@@ -868,7 +851,7 @@ describe('form repeater with form context', () => {
       template: `<RepeaterChild />`,
     });
 
-    await render(TestComponent);
+    render(TestComponent);
     await flush();
 
     // Verify initial state
@@ -952,7 +935,7 @@ describe('form repeater with form context', () => {
       `,
     });
 
-    await render(TestComponent);
+    render(TestComponent);
     await flush();
 
     // Verify initial state
@@ -962,8 +945,7 @@ describe('form repeater with form context', () => {
     expect(formReturns.value!.values.users![2].firstName).toBe('User 3');
 
     // Remove the second item (index 1)
-    const removeButton = screen.getByTestId('remove-1');
-    await fireEvent.click(removeButton);
+    await page.getByTestId('remove-1').click();
     await flush();
 
     // After removal, we should have 2 users

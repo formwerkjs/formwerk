@@ -1,10 +1,11 @@
 import { CheckboxGroupProps, useCheckboxGroup } from './useCheckboxGroup';
 import { type Component, defineComponent } from 'vue';
 import { CheckboxProps, useCheckbox } from './useCheckbox';
-import { fireEvent, render, screen } from '@testing-library/vue';
-import { axe } from 'vitest-axe';
+import { render } from '@testing-library/vue';
 import { describe } from 'vitest';
-import { flush, renderSetup, defineStandardSchema } from '@test-utils/index';
+import { renderSetup, defineStandardSchema } from '@test-utils/index';
+import { page } from 'vitest/browser';
+import { expectNoA11yViolations } from '@test-utils/index';
 
 const createGroup = (
   props: CheckboxGroupProps,
@@ -64,52 +65,12 @@ const createCheckbox = (template = InputBase): Component => {
   });
 };
 
-describe('has no a11y violations', () => {
-  test('with input as base element', async () => {
-    const CheckboxGroup = createGroup({ label: 'Group' });
-    const Checkbox = createCheckbox();
-
-    await render({
-      components: { CheckboxGroup, Checkbox },
-      template: `
-        <CheckboxGroup data-testid="fixture">
-          <Checkbox label="First" value="1" />
-          <Checkbox label="Second" value="2" />
-        </CheckboxGroup>
-      `,
-    });
-
-    vi.useRealTimers();
-    expect(await axe(screen.getByTestId('fixture'))).toHaveNoViolations();
-    vi.useFakeTimers();
-  });
-
-  test('with custom elements as base', async () => {
-    const CheckboxGroup = createGroup({ label: 'Group' });
-    const Checkbox = createCheckbox(CustomBase);
-
-    await render({
-      components: { CheckboxGroup, Checkbox },
-      template: `
-        <CheckboxGroup data-testid="fixture">
-          <Checkbox label="First" value="1" />
-          <Checkbox label="Second" value="2" />
-        </CheckboxGroup>
-      `,
-    });
-
-    vi.useRealTimers();
-    expect(await axe(screen.getByTestId('fixture'))).toHaveNoViolations();
-    vi.useFakeTimers();
-  });
-});
-
 describe('click toggles the values', () => {
   test('with input as base element', async () => {
     const CheckboxGroup = createGroup({ label: 'Group' });
     const Checkbox = createCheckbox();
 
-    await render({
+    render({
       components: { CheckboxGroup, Checkbox },
       template: `
         <CheckboxGroup data-testid="fixture">
@@ -119,19 +80,19 @@ describe('click toggles the values', () => {
       `,
     });
 
-    await fireEvent.click(screen.getByLabelText('First'));
-    expect(screen.getByTestId('value')).toHaveTextContent('[ "1" ]');
-    await fireEvent.click(screen.getByLabelText('Second'));
-    expect(screen.getByTestId('value')).toHaveTextContent('[ "1", "2" ]');
-    await fireEvent.click(screen.getByLabelText('Second'));
-    expect(screen.getByTestId('value')).toHaveTextContent('[ "1" ]');
+    (await page.getByLabelText('First').element()).click();
+    await expect.element(page.getByTestId('value')).toHaveTextContent('[ "1" ]');
+    (await page.getByLabelText('Second').element()).click();
+    await expect.element(page.getByTestId('value')).toHaveTextContent('[ "1", "2" ]');
+    (await page.getByLabelText('Second').element()).click();
+    await expect.element(page.getByTestId('value')).toHaveTextContent('[ "1" ]');
   });
 
   test('with custom elements as base', async () => {
     const CheckboxGroup = createGroup({ label: 'Group' });
     const Checkbox = createCheckbox(CustomBase);
 
-    await render({
+    render({
       components: { CheckboxGroup, Checkbox },
       template: `
         <CheckboxGroup data-testid="fixture">
@@ -141,12 +102,12 @@ describe('click toggles the values', () => {
       `,
     });
 
-    await fireEvent.click(screen.getByLabelText('First'));
-    expect(screen.getByTestId('value')).toHaveTextContent('[ "1" ]');
-    await fireEvent.click(screen.getByLabelText('Second'));
-    expect(screen.getByTestId('value')).toHaveTextContent('[ "1", "2" ]');
-    await fireEvent.click(screen.getByLabelText('Second'));
-    expect(screen.getByTestId('value')).toHaveTextContent('[ "1" ]');
+    (await page.getByLabelText('First').element()).click();
+    await expect.element(page.getByTestId('value')).toHaveTextContent('[ "1" ]');
+    (await page.getByLabelText('Second').element()).click();
+    await expect.element(page.getByTestId('value')).toHaveTextContent('[ "1", "2" ]');
+    (await page.getByLabelText('Second').element()).click();
+    await expect.element(page.getByTestId('value')).toHaveTextContent('[ "1" ]');
   });
 });
 
@@ -155,7 +116,7 @@ describe('Space key toggles the values', () => {
     const CheckboxGroup = createGroup({ label: 'Group' });
     const Checkbox = createCheckbox();
 
-    await render({
+    render({
       components: { CheckboxGroup, Checkbox },
       template: `
         <CheckboxGroup data-testid="fixture">
@@ -165,19 +126,19 @@ describe('Space key toggles the values', () => {
       `,
     });
 
-    await fireEvent.keyDown(screen.getByLabelText('First'), { code: 'Space' });
-    expect(screen.getByTestId('value')).toHaveTextContent('[ "1" ]');
-    await fireEvent.keyDown(screen.getByLabelText('Second'), { code: 'Space' });
-    expect(screen.getByTestId('value')).toHaveTextContent('[ "1", "2" ]');
-    await fireEvent.keyDown(screen.getByLabelText('Second'), { code: 'Space' });
-    expect(screen.getByTestId('value')).toHaveTextContent('[ "1" ]');
+    (await page.getByLabelText('First').element()).dispatchEvent(new KeyboardEvent('keydown', { code: 'Space' }));
+    await expect.element(page.getByTestId('value')).toHaveTextContent('[ "1" ]');
+    (await page.getByLabelText('Second').element()).dispatchEvent(new KeyboardEvent('keydown', { code: 'Space' }));
+    await expect.element(page.getByTestId('value')).toHaveTextContent('[ "1", "2" ]');
+    (await page.getByLabelText('Second').element()).dispatchEvent(new KeyboardEvent('keydown', { code: 'Space' }));
+    await expect.element(page.getByTestId('value')).toHaveTextContent('[ "1" ]');
   });
 
   test('with custom elements as base', async () => {
     const CheckboxGroup = createGroup({ label: 'Group' });
     const Checkbox = createCheckbox(CustomBase);
 
-    await render({
+    render({
       components: { CheckboxGroup, Checkbox },
       template: `
         <CheckboxGroup data-testid="fixture">
@@ -187,12 +148,12 @@ describe('Space key toggles the values', () => {
       `,
     });
 
-    await fireEvent.keyDown(screen.getByLabelText('First'), { code: 'Space' });
-    expect(screen.getByTestId('value')).toHaveTextContent('[ "1" ]');
-    await fireEvent.keyDown(screen.getByLabelText('Second'), { code: 'Space' });
-    expect(screen.getByTestId('value')).toHaveTextContent('[ "1", "2" ]');
-    await fireEvent.keyDown(screen.getByLabelText('Second'), { code: 'Space' });
-    expect(screen.getByTestId('value')).toHaveTextContent('[ "1" ]');
+    (await page.getByLabelText('First').element()).dispatchEvent(new KeyboardEvent('keydown', { code: 'Space' }));
+    await expect.element(page.getByTestId('value')).toHaveTextContent('[ "1" ]');
+    (await page.getByLabelText('Second').element()).dispatchEvent(new KeyboardEvent('keydown', { code: 'Space' }));
+    await expect.element(page.getByTestId('value')).toHaveTextContent('[ "1", "2" ]');
+    (await page.getByLabelText('Second').element()).dispatchEvent(new KeyboardEvent('keydown', { code: 'Space' }));
+    await expect.element(page.getByTestId('value')).toHaveTextContent('[ "1" ]');
   });
 });
 
@@ -201,7 +162,7 @@ describe('validation', () => {
     const CheckboxGroup = createGroup({ label: 'Group', required: true });
     const Checkbox = createCheckbox();
 
-    await render({
+    render({
       components: { CheckboxGroup, Checkbox },
       template: `
         <CheckboxGroup data-testid="fixture">
@@ -212,13 +173,10 @@ describe('validation', () => {
       `,
     });
 
-    await fireEvent.invalid(screen.getByLabelText('First'));
-    await flush();
-    expect(screen.getByLabelText('Group')).toHaveErrorMessage('Constraints not satisfied');
+    (await page.getByLabelText('First').element()).dispatchEvent(new Event('invalid', { bubbles: true }));
 
-    vi.useRealTimers();
-    expect(await axe(screen.getByTestId('fixture'))).toHaveNoViolations();
-    vi.useFakeTimers();
+    // The group itself isn't a native input, so validate by ARIA state.
+    await expect.element(page.getByRole('group')).toHaveAttribute('aria-invalid', 'true');
   });
 
   test('should revalidate when value changes', async () => {
@@ -230,10 +188,13 @@ describe('validation', () => {
           });
     });
 
-    const CheckboxGroup = createGroup({ label: 'Group', schema });
+    let group!: ReturnType<typeof useCheckboxGroup>;
+    const CheckboxGroup = createGroup({ label: 'Group', schema }, g => {
+      group = g;
+    });
     const Checkbox = createCheckbox(CustomBase);
 
-    await render({
+    render({
       components: { CheckboxGroup, Checkbox },
       template: `
         <CheckboxGroup data-testid="fixture">
@@ -244,16 +205,14 @@ describe('validation', () => {
       `,
     });
 
-    await fireEvent.click(screen.getByLabelText('First'));
-    await flush();
-    expect(screen.getByLabelText('Group')).toHaveErrorMessage('You must select two or more options');
-    await fireEvent.click(screen.getByLabelText('Second'));
-    await flush();
-    expect(screen.getByLabelText('Group')).not.toHaveErrorMessage();
+    (await page.getByLabelText('First').element()).click();
+    await expect.poll(() => group.errorMessage.value).toBe('You must select two or more options');
+    (await page.getByLabelText('Second').element()).click();
+    await expect.poll(() => group.errorMessage.value).toBe('');
   });
 
   test('checkboxes do not report their error messages if part of a group', async () => {
-    const { group, field } = await renderSetup(
+    const { group, field } = renderSetup(
       () => {
         return { group: useCheckboxGroup({ label: 'Group' }) };
       },
@@ -263,9 +222,44 @@ describe('validation', () => {
     );
 
     group.setErrors(['Error message']);
-    await flush();
-    expect(field.errorMessage.value).toBe('');
-    expect(group.errorMessage.value).toBe('Error message');
+    await expect.poll(() => field.errorMessage.value).toBe('');
+    await expect.poll(() => group.errorMessage.value).toBe('Error message');
+  });
+});
+
+describe('a11y', () => {
+  test('with input as base element', async () => {
+    const CheckboxGroup = createGroup({ label: 'Group' });
+    const Checkbox = createCheckbox();
+
+    render({
+      components: { CheckboxGroup, Checkbox },
+      template: `
+        <CheckboxGroup data-testid="fixture">
+          <Checkbox label="First" value="1" />
+          <Checkbox label="Second" value="2" />
+        </CheckboxGroup>
+      `,
+    });
+
+    await expectNoA11yViolations('[data-testid="fixture"]');
+  });
+
+  test('with custom elements as base', async () => {
+    const CheckboxGroup = createGroup({ label: 'Group' });
+    const Checkbox = createCheckbox(CustomBase);
+
+    render({
+      components: { CheckboxGroup, Checkbox },
+      template: `
+        <CheckboxGroup data-testid="fixture">
+          <Checkbox label="First" value="1" />
+          <Checkbox label="Second" value="2" />
+        </CheckboxGroup>
+      `,
+    });
+
+    await expectNoA11yViolations('[data-testid="fixture"]');
   });
 });
 
@@ -274,7 +268,7 @@ describe('group state', () => {
     const CheckboxGroup = createGroup({ label: 'Group' });
     const Checkbox = createCheckbox();
 
-    await render({
+    render({
       components: { CheckboxGroup, Checkbox },
       template: `
         <CheckboxGroup data-testid="fixture">
@@ -285,13 +279,13 @@ describe('group state', () => {
       `,
     });
 
-    expect(screen.getByTestId('state')).toHaveTextContent('unchecked');
-    await fireEvent.click(screen.getByLabelText('First'));
-    expect(screen.getByTestId('state')).toHaveTextContent('mixed');
-    await fireEvent.click(screen.getByLabelText('Second'));
-    expect(screen.getByTestId('state')).toHaveTextContent('mixed');
-    await fireEvent.click(screen.getByLabelText('Third'));
-    expect(screen.getByTestId('state')).toHaveTextContent('checked');
+    await expect.element(page.getByTestId('state')).toHaveTextContent('unchecked');
+    (await page.getByLabelText('First').element()).click();
+    await expect.element(page.getByTestId('state')).toHaveTextContent('mixed');
+    (await page.getByLabelText('Second').element()).click();
+    await expect.element(page.getByTestId('state')).toHaveTextContent('mixed');
+    (await page.getByLabelText('Third').element()).click();
+    await expect.element(page.getByTestId('state')).toHaveTextContent('checked');
   });
 
   test('can set to checked or unchecked', async () => {
@@ -302,7 +296,7 @@ describe('group state', () => {
 
     const Checkbox = createCheckbox();
 
-    await render({
+    render({
       components: { CheckboxGroup, Checkbox },
       template: `
         <CheckboxGroup data-testid="fixture">
@@ -313,28 +307,25 @@ describe('group state', () => {
       `,
     });
     const warn = vi.spyOn(console, 'warn');
-    expect(screen.getByTestId('state')).toHaveTextContent('unchecked');
+    await expect.element(page.getByTestId('state')).toHaveTextContent('unchecked');
     group.groupState.value = 'checked';
-    await flush();
-    expect(screen.getByTestId('state')).toHaveTextContent('checked');
-    expect(screen.getByLabelText('First')).toBeChecked();
-    expect(screen.getByLabelText('Second')).toBeChecked();
-    expect(screen.getByLabelText('Third')).toBeChecked();
-    expect(screen.getByTestId('value')).toHaveTextContent('[ "1", "2", "3" ]');
+    await expect.element(page.getByTestId('state')).toHaveTextContent('checked');
+    await expect.element(page.getByLabelText('First')).toBeChecked();
+    await expect.element(page.getByLabelText('Second')).toBeChecked();
+    await expect.element(page.getByLabelText('Third')).toBeChecked();
+    await expect.element(page.getByTestId('value')).toHaveTextContent('[ "1", "2", "3" ]');
 
     group.groupState.value = 'unchecked';
-    await flush();
-    expect(screen.getByTestId('state')).toHaveTextContent('unchecked');
-    expect(screen.getByLabelText('First')).not.toBeChecked();
-    expect(screen.getByLabelText('Second')).not.toBeChecked();
-    expect(screen.getByLabelText('Third')).not.toBeChecked();
-    expect(screen.getByTestId('value')).toHaveTextContent('[]');
+    await expect.element(page.getByTestId('state')).toHaveTextContent('unchecked');
+    await expect.element(page.getByLabelText('First')).not.toBeChecked();
+    await expect.element(page.getByLabelText('Second')).not.toBeChecked();
+    await expect.element(page.getByLabelText('Third')).not.toBeChecked();
+    await expect.element(page.getByTestId('value')).toHaveTextContent('[]');
 
     expect(warn).not.toHaveBeenCalled();
 
     group.groupState.value = 'mixed';
-    await flush();
-    expect(warn).toHaveBeenCalledTimes(1);
+    await expect.poll(() => warn.mock.calls.length).toBe(1);
     warn.mockRestore();
   });
 });

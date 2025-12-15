@@ -1,15 +1,16 @@
-import { render, screen } from '@testing-library/vue';
-import { axe } from 'vitest-axe';
+import { render } from '@testing-library/vue';
 import { useCustomField } from './useCustomField';
 import { flush } from '@test-utils/flush';
-import { describe, expect, test, vi } from 'vitest';
+import { describe, expect, test } from 'vitest';
 import { StandardSchema } from '../types';
 import { renderSetup } from '../../../test-utils/src';
+import { expectNoA11yViolations } from '@test-utils/index';
+import { page } from 'vitest/browser';
 
 describe('useCustomField', () => {
   describe('accessibility', () => {
     test('with label and custom input', async () => {
-      await render({
+      render({
         setup() {
           const label = 'Custom Field';
           const description = 'A custom field description';
@@ -36,13 +37,11 @@ describe('useCustomField', () => {
       });
 
       await flush();
-      vi.useRealTimers();
-      expect(await axe(screen.getByTestId('fixture'))).toHaveNoViolations();
-      vi.useFakeTimers();
+      await expectNoA11yViolations('[data-testid="fixture"]');
     });
 
     test('with error message', async () => {
-      await render({
+      render({
         setup() {
           const label = 'Custom Field';
           const { controlProps, labelProps, errorMessageProps } = useCustomField({
@@ -66,9 +65,7 @@ describe('useCustomField', () => {
       });
 
       await flush();
-      vi.useRealTimers();
-      expect(await axe(screen.getByTestId('fixture'))).toHaveNoViolations();
-      vi.useFakeTimers();
+      await expectNoA11yViolations('[data-testid="fixture"]');
     });
   });
 
@@ -77,7 +74,7 @@ describe('useCustomField', () => {
       const initialValue = 'test value';
       let value;
 
-      await render({
+      render({
         setup() {
           const { controlProps, fieldValue } = useCustomField({
             label: 'Custom Field',
@@ -98,7 +95,7 @@ describe('useCustomField', () => {
       const initialValue = 'test value';
       let value;
 
-      await render({
+      render({
         setup() {
           const { controlProps, fieldValue } = useCustomField({
             label: 'Custom Field',
@@ -118,7 +115,7 @@ describe('useCustomField', () => {
 
   describe('disabled state', () => {
     test('applies disabled state when prop is true', async () => {
-      await render({
+      render({
         setup() {
           const { controlProps } = useCustomField({
             label: 'Custom Field',
@@ -131,13 +128,13 @@ describe('useCustomField', () => {
       });
 
       await flush();
-      expect(screen.getByTestId('custom-input')).toHaveAttribute('aria-disabled', 'true');
+      await expect.element(page.getByTestId('custom-input')).toHaveAttribute('aria-disabled', 'true');
     });
   });
 
   describe('readonly state', () => {
     test('applies readonly attribute when prop is true', async () => {
-      await render({
+      render({
         setup() {
           const { controlProps } = useCustomField({
             label: 'Custom Field',
@@ -150,13 +147,13 @@ describe('useCustomField', () => {
       });
 
       await flush();
-      expect(screen.getByTestId('custom-input')).toHaveAttribute('aria-readonly', 'true');
+      await expect.element(page.getByTestId('custom-input')).toHaveAttribute('aria-readonly', 'true');
     });
   });
 
   describe('form integration', () => {
     test('uses provided name attribute', async () => {
-      await render({
+      render({
         setup() {
           const { controlProps } = useCustomField({
             label: 'Custom Field',
@@ -169,7 +166,7 @@ describe('useCustomField', () => {
       });
 
       await flush();
-      expect(screen.getByTestId('custom-input')).toHaveAttribute('name', 'custom-field-name');
+      await expect.element(page.getByTestId('custom-input')).toHaveAttribute('name', 'custom-field-name');
     });
   });
 
@@ -194,7 +191,7 @@ describe('useCustomField', () => {
     };
 
     test('validates the field and updates the error message', async () => {
-      const { validate, errorMessage } = await renderSetup(() => {
+      const { validate, errorMessage } = renderSetup(() => {
         const { validate, errorMessage } = useCustomField({ label: 'Custom Field', schema });
 
         return { validate, errorMessage };

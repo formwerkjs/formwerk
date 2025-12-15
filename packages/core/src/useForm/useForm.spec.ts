@@ -3,9 +3,17 @@ import { useForm } from './useForm';
 import { useFormField } from '../useFormField';
 import { Component, nextTick, Ref, ref } from 'vue';
 import { useInputValidity } from '../validation/useInputValidity';
-import { fireEvent, render, screen } from '@testing-library/vue';
+import { render } from '@testing-library/vue';
 import { useTextField } from '../useTextField';
 import { StandardSchema } from '../types';
+import { page } from 'vitest/browser';
+import { expect } from 'vitest';
+
+async function focusAndBlur(testId: string) {
+  const el = (await page.getByTestId(testId).element()) as HTMLElement;
+  (el as any).focus?.();
+  (el as any).blur?.();
+}
 
 describe('form values', () => {
   test('it initializes form values', async () => {
@@ -429,7 +437,7 @@ describe('form reset', () => {
   test('handleReset can be used with a form element reset event', async () => {
     const afterResetMock = vi.fn();
 
-    await render({
+    render({
       template: `
         <form v-bind="formProps" data-testid="form">
           <button type="reset">Reset</button>
@@ -448,7 +456,7 @@ describe('form reset', () => {
       },
     });
 
-    await fireEvent.click(screen.getByText('Reset'));
+    await page.getByRole('button', { name: 'Reset' }).click();
     await flush();
 
     expect(afterResetMock).toHaveBeenCalledOnce();
@@ -483,10 +491,12 @@ describe('form submit', () => {
       },
     );
 
+    await flush();
     expect(form.isTouched('field')).toBe(false);
     const cb = vi.fn();
     const onSubmit = form.handleSubmit(cb);
     await onSubmit(new Event('submit'));
+    await flush();
     expect(form.isTouched('field')).toBe(true);
   });
 
@@ -827,7 +837,7 @@ describe('form submit', () => {
   test('Adds form values to FormData on native formdata event', async () => {
     const formData = new FormData();
 
-    await render({
+    render({
       template: `
       <form v-bind="formProps" data-testid="form">
         <button type="submit">Submit</button>
@@ -843,7 +853,7 @@ describe('form submit', () => {
     const e = new Event('formdata');
     // @ts-expect-error - If only we can just new up a FormDataEvent
     e.formData = formData;
-    await fireEvent(screen.getByTestId('form'), e);
+    ((await page.getByTestId('form').element()) as HTMLFormElement).dispatchEvent(e);
     await flush();
     expect(formData.get('foo')).toBe('bar');
   });
@@ -1062,7 +1072,7 @@ describe('form validation', () => {
     test('validates initially with native constraint API', async () => {
       const input = ref<HTMLInputElement>();
 
-      await render({
+      render({
         components: { Child: createInputComponent(input) },
         setup() {
           const { getError } = useForm();
@@ -1078,16 +1088,20 @@ describe('form validation', () => {
     `,
       });
 
-      await fireEvent.blur(screen.getByTestId('input'));
-      expect(screen.getByTestId('err').textContent).toBe('Constraints not satisfied');
-      expect(screen.getByTestId('form-err').textContent).toBe('Constraints not satisfied');
+      await focusAndBlur('input');
+      await expect
+        .element(page.getByTestId('err'))
+        .toHaveTextContent(/Constraints not satisfied|Please fill out this field\.?/);
+      await expect
+        .element(page.getByTestId('form-err'))
+        .toHaveTextContent(/Constraints not satisfied|Please fill out this field\.?/);
     });
 
     test('prevents submission if the form is not valid', async () => {
       const input = ref<HTMLInputElement>();
       const handler = vi.fn();
 
-      await render({
+      render({
         components: { Child: createInputComponent(input) },
         setup() {
           const { handleSubmit } = useForm();
@@ -1105,11 +1119,11 @@ describe('form validation', () => {
 
       // FIXME: Looks like it is possible to submit the form before the initial validation kicks in.
       await nextTick();
-      await fireEvent.click(screen.getByText('Submit'));
+      await page.getByRole('button', { name: 'Submit' }).click();
       await flush();
       expect(handler).not.toHaveBeenCalled();
-      await fireEvent.update(screen.getByTestId('input'), 'test');
-      await fireEvent.click(screen.getByText('Submit'));
+      await page.getByTestId('input').fill('test');
+      await page.getByRole('button', { name: 'Submit' }).click();
       await flush();
       expect(handler).toHaveBeenCalledOnce();
     });
@@ -1117,7 +1131,7 @@ describe('form validation', () => {
     test('updates the form isValid', async () => {
       const input = ref<HTMLInputElement>();
 
-      await render({
+      render({
         components: { Child: createInputComponent(input) },
         setup() {
           const { isValid } = useForm();
@@ -1134,9 +1148,9 @@ describe('form validation', () => {
     `,
       });
 
-      expect(screen.getByText('Form is valid')).toBeDefined();
-      await fireEvent.blur(screen.getByTestId('input'));
-      expect(screen.getByText('Form is invalid')).toBeDefined();
+      await expect.element(page.getByText('Form is valid')).toBeInTheDocument();
+      await focusAndBlur('input');
+      await expect.element(page.getByText('Form is invalid')).toBeInTheDocument();
     });
 
     test('update submit errors when submitting a form', async () => {
@@ -1158,7 +1172,7 @@ describe('form validation', () => {
         };
       };
 
-      await render({
+      render({
         components: { Child: createInputComponent(input) },
         setup() {
           const { getSubmitErrors, handleSubmit } = useForm();
@@ -1174,21 +1188,25 @@ describe('form validation', () => {
     `,
       });
 
-      expect(screen.getByTestId('submit-err').textContent).toBe('');
-      await fireEvent.click(screen.getByText('Submit'));
+      await expect.element(page.getByTestId('submit-err')).toHaveTextContent('');
+      await page.getByRole('button', { name: 'Submit' }).click();
       await flush();
-      expect(screen.getByTestId('submit-err').textContent).toBe('Constraints not satisfied');
+      await expect
+        .element(page.getByTestId('submit-err'))
+        .toHaveTextContent(/Constraints not satisfied|Please fill out this field\.?/);
       // enter a value to make the form valid and submit again
-      await fireEvent.update(screen.getByTestId('input'), 'test');
+      await page.getByTestId('input').fill('test');
       // update validity
-      await fireEvent.blur(screen.getByTestId('input'));
+      await focusAndBlur('input');
       await flush();
-      expect(screen.getByTestId('submit-err').textContent).toBe('Constraints not satisfied');
-      expect(screen.getByTestId('err').textContent).toBe('');
+      await expect
+        .element(page.getByTestId('submit-err'))
+        .toHaveTextContent(/Constraints not satisfied|Please fill out this field\.?/);
+      await expect.element(page.getByTestId('err')).toHaveTextContent('');
       // when submitting clearing the submit errors
-      await fireEvent.click(screen.getByText('Submit'));
+      await page.getByRole('button', { name: 'Submit' }).click();
       await flush();
-      expect(screen.getByTestId('submit-err').textContent).toBe('');
+      await expect.element(page.getByTestId('submit-err')).toHaveTextContent('');
     });
   });
 
@@ -1218,7 +1236,7 @@ describe('form validation', () => {
         };
       });
 
-      await render({
+      render({
         setup() {
           const { handleSubmit } = useForm({
             schema,
@@ -1234,7 +1252,7 @@ describe('form validation', () => {
       });
 
       await nextTick();
-      await fireEvent.click(screen.getByText('Submit'));
+      await page.getByRole('button', { name: 'Submit' }).click();
       expect(handler).not.toHaveBeenCalled();
     });
 
@@ -1247,7 +1265,7 @@ describe('form validation', () => {
         };
       });
 
-      await render({
+      render({
         components: { Child: createInputComponent() },
         setup() {
           const { handleSubmit, getError } = useForm({
@@ -1266,13 +1284,13 @@ describe('form validation', () => {
     `,
       });
 
-      await fireEvent.click(screen.getByText('Submit'));
+      await page.getByRole('button', { name: 'Submit' }).click();
       await flush();
-      expect(screen.getByTestId('err').textContent).toBe('error');
-      expect(screen.getByTestId('form-err').textContent).toBe('error');
+      await expect.element(page.getByTestId('err')).toHaveTextContent('error');
+      await expect.element(page.getByTestId('form-err')).toHaveTextContent('error');
       expect(handler).not.toHaveBeenCalled();
       shouldError = false;
-      await fireEvent.click(screen.getByText('Submit'));
+      await page.getByRole('button', { name: 'Submit' }).click();
       await flush();
       expect(handler).toHaveBeenCalledOnce();
     });
@@ -1285,7 +1303,7 @@ describe('form validation', () => {
         };
       });
 
-      await render({
+      render({
         components: { Child: createInputComponent() },
         setup() {
           const { handleSubmit, getError, setErrors } = useForm({
@@ -1306,13 +1324,13 @@ describe('form validation', () => {
     `,
       });
 
-      expect(screen.getByTestId('err').textContent).toBe('error');
-      expect(screen.getByTestId('form-err').textContent).toBe('error');
-      await fireEvent.click(screen.getByText('Submit'));
+      await expect.element(page.getByTestId('err')).toHaveTextContent('error');
+      await expect.element(page.getByTestId('form-err')).toHaveTextContent('error');
+      await page.getByRole('button', { name: 'Submit' }).click();
       await flush();
       expect(handler).toHaveBeenCalledOnce();
-      expect(screen.getByTestId('err').textContent).toBe('');
-      expect(screen.getByTestId('form-err').textContent).toBe('');
+      await expect.element(page.getByTestId('err')).toHaveTextContent('');
+      await expect.element(page.getByTestId('form-err')).toHaveTextContent('');
     });
 
     test('parses values which is used on submission', async () => {
@@ -1326,7 +1344,7 @@ describe('form validation', () => {
         };
       });
 
-      await render({
+      render({
         components: { Child: createInputComponent() },
         setup() {
           const { handleSubmit, getError, setErrors } = useForm({
@@ -1347,7 +1365,7 @@ describe('form validation', () => {
     `,
       });
 
-      await fireEvent.click(screen.getByText('Submit'));
+      await page.getByRole('button', { name: 'Submit' }).click();
       await flush();
       expect(handler).toHaveBeenCalledOnce();
       expect(handler).toHaveBeenLastCalledWith({ test: true, foo: 'bar' });
@@ -1360,7 +1378,7 @@ describe('form validation', () => {
         };
       });
 
-      await render({
+      render({
         components: { Child: createInputComponent() },
         setup() {
           const { getError } = useForm({
@@ -1379,11 +1397,11 @@ describe('form validation', () => {
       });
 
       await flush();
-      expect(screen.getByTestId('form-err').textContent).toBe('error');
-      await fireEvent.update(screen.getByTestId('test'), 'test');
-      await fireEvent.blur(screen.getByTestId('test'));
+      await expect.element(page.getByTestId('form-err')).toHaveTextContent('error');
+      await page.getByTestId('test').fill('test');
+      await focusAndBlur('test');
       await flush();
-      expect(screen.getByTestId('form-err').textContent).toBe('');
+      await expect.element(page.getByTestId('form-err')).toHaveTextContent('');
     });
 
     // FIXME: Standard schema does not support defaults yet.
@@ -1418,7 +1436,7 @@ describe('form validation', () => {
         };
       });
 
-      await render({
+      render({
         components: { Child: createInputComponent() },
         setup() {
           const { handleSubmit, getError } = useForm({
@@ -1439,10 +1457,10 @@ describe('form validation', () => {
     `,
       });
 
-      await fireEvent.click(screen.getByText('Submit'));
+      await page.getByRole('button', { name: 'Submit' }).click();
       await flush();
-      expect(screen.getByTestId('form-err').textContent).toBe('error');
-      expect(screen.getByTestId('field-err').textContent).toBe('field error');
+      await expect.element(page.getByTestId('form-err')).toHaveTextContent('error');
+      await expect.element(page.getByTestId('field-err')).toHaveTextContent('field error');
       expect(handler).not.toHaveBeenCalled();
     });
   });

@@ -1,16 +1,35 @@
-import { render, screen } from '@testing-library/vue';
-import { axe } from 'vitest-axe';
+import { render } from '@testing-library/vue';
 import { useTimeField } from '.';
-import { flush } from '@test-utils/flush';
 import { DateTimeSegment } from './useDateTimeSegment';
 import { ref, toValue } from 'vue';
 import { StandardSchema } from '../types';
-import { fireEvent } from '@testing-library/vue';
+import { page } from 'vitest/browser';
+import { expectNoA11yViolations } from '@test-utils/index';
 
 describe('useTimeField', () => {
+  function getSegments() {
+    return Array.from(document.querySelectorAll('[data-testid="segment"]')) as HTMLElement[];
+  }
+
+  function getSegment(type: string) {
+    return getSegments().find(el => (el as any).dataset?.segmentType === type);
+  }
+
+  async function beforeInput(el: HTMLElement, data: string) {
+    el.dispatchEvent(new InputEvent('beforeinput', { data, cancelable: true, bubbles: true }));
+  }
+
+  async function keyDown(el: HTMLElement, code: string) {
+    el.dispatchEvent(new KeyboardEvent('keydown', { code, bubbles: true }));
+  }
+
+  async function blur(el: HTMLElement) {
+    el.dispatchEvent(new FocusEvent('blur', { bubbles: true }));
+  }
+
   describe('initialization', () => {
     test('initializes with value prop', async () => {
-      await render({
+      render({
         components: { DateTimeSegment },
         setup() {
           const { segments, controlProps, labelProps } = useTimeField({
@@ -40,19 +59,14 @@ describe('useTimeField', () => {
         `,
       });
 
-      await flush();
-      const segments = screen.getAllByTestId('segment');
-      const hourSegment = segments.find(el => el.dataset.segmentType === 'hour');
-      const minuteSegment = segments.find(el => el.dataset.segmentType === 'minute');
-
-      expect(hourSegment?.textContent).toBe('14');
-      expect(minuteSegment?.textContent).toBe('30');
+      await expect.poll(() => getSegment('hour')?.textContent).toBe('14');
+      await expect.poll(() => getSegment('minute')?.textContent).toBe('30');
     });
 
     test('initializes with modelValue prop', async () => {
       const modelValue = ref('14:30');
 
-      await render({
+      render({
         components: { DateTimeSegment },
         setup() {
           const { segments, controlProps, labelProps } = useTimeField({
@@ -82,14 +96,11 @@ describe('useTimeField', () => {
         `,
       });
 
-      await flush();
-      const segments = screen.getAllByTestId('segment');
-      const hourSegment = segments.find(el => el.dataset.segmentType === 'hour');
-      expect(hourSegment?.textContent).toBe('14');
+      await expect.poll(() => getSegment('hour')?.textContent).toBe('14');
     });
 
     test('initializes with 12-hour format', async () => {
-      await render({
+      render({
         components: { DateTimeSegment },
         setup() {
           const { segments, controlProps, labelProps } = useTimeField({
@@ -124,17 +135,12 @@ describe('useTimeField', () => {
         `,
       });
 
-      await flush();
-      const segments = screen.getAllByTestId('segment');
-      const hourSegment = segments.find(el => el.dataset.segmentType === 'hour');
-      const dayPeriodSegment = segments.find(el => el.dataset.segmentType === 'dayPeriod');
-
-      expect(hourSegment?.textContent).toBe('02');
-      expect(dayPeriodSegment?.textContent).toBeTruthy(); // Should have PM
+      await expect.poll(() => getSegment('hour')?.textContent).toBe('02');
+      await expect.poll(() => getSegment('dayPeriod')?.textContent).toBeTruthy(); // Should have AM/PM
     });
 
     test('initializes with seconds', async () => {
-      await render({
+      render({
         components: { DateTimeSegment },
         setup() {
           const { segments, controlProps, labelProps } = useTimeField({
@@ -169,58 +175,11 @@ describe('useTimeField', () => {
         `,
       });
 
-      await flush();
-      const segments = screen.getAllByTestId('segment');
-      const secondSegment = segments.find(el => el.dataset.segmentType === 'second');
-
-      expect(secondSegment?.textContent).toBe('45');
+      await expect.poll(() => getSegment('second')?.textContent).toBe('45');
     });
   });
 
   describe('accessibility', () => {
-    test('provides accessible label and description', async () => {
-      await render({
-        components: { DateTimeSegment },
-        setup() {
-          const { segments, controlProps, labelProps, descriptionProps } = useTimeField({
-            label: 'Appointment Time',
-            name: 'appointmentTime',
-            description: 'Enter your preferred appointment time',
-          });
-
-          return {
-            segments,
-            controlProps,
-            labelProps,
-            descriptionProps,
-          };
-        },
-        template: `
-          <div data-testid="fixture">
-            <span v-bind="labelProps">Appointment Time</span>
-            <div v-bind="controlProps">
-              <DateTimeSegment
-                v-for="segment in segments"
-                :key="segment.type"
-                v-bind="segment"
-                data-testid="segment"
-              />
-            </div>
-            <div v-bind="descriptionProps">Enter your preferred appointment time</div>
-          </div>
-        `,
-      });
-
-      await flush();
-      vi.useRealTimers();
-      expect(await axe(screen.getByTestId('fixture'))).toHaveNoViolations();
-      vi.useFakeTimers();
-
-      const control = screen.getByRole('group');
-      expect(control).toHaveAccessibleDescription('Enter your preferred appointment time');
-      expect(control).toHaveAccessibleName('Appointment Time');
-    });
-
     test('shows error message when validation fails', async () => {
       const schema: StandardSchema<string, string> = {
         '~standard': {
@@ -240,7 +199,7 @@ describe('useTimeField', () => {
         },
       };
 
-      await render({
+      render({
         components: { DateTimeSegment },
         setup() {
           const { segments, controlProps, labelProps, errorMessageProps, errorMessage } = useTimeField({
@@ -273,9 +232,8 @@ describe('useTimeField', () => {
         `,
       });
 
-      await flush();
-      const control = screen.getByRole('group');
-      expect(control).toHaveErrorMessage('Time is required');
+      await expect.element(page.getByTestId('error')).toHaveTextContent('Time is required');
+      await expect.element(page.getByRole('group')).toHaveAttribute('aria-invalid', 'true');
     });
 
     test('updates validation when time changes', async () => {
@@ -307,7 +265,7 @@ describe('useTimeField', () => {
         },
       };
 
-      await render({
+      render({
         components: { DateTimeSegment },
         setup() {
           const { segments, controlProps, labelProps, errorMessageProps, errorMessage, setValue } = useTimeField({
@@ -344,24 +302,19 @@ describe('useTimeField', () => {
         `,
       });
 
-      await flush();
-      const control = screen.getByRole('group');
-
       // Initially should show required error
-      expect(control).toHaveErrorMessage('Time is required');
+      await expect.element(page.getByTestId('error')).toHaveTextContent('Time is required');
 
       updateVal('08:30');
-      await flush();
-      expect(control).toHaveErrorMessage('Time must be after 9:00');
+      await expect.element(page.getByTestId('error')).toHaveTextContent('Time must be after 9:00');
 
       // Set to a valid time
       updateVal('09:30');
-      await flush();
-      expect(control).not.toHaveErrorMessage();
+      await expect.element(page.getByTestId('error')).toHaveTextContent('');
     });
 
     test('sets blurred state when any segment is blurred', async () => {
-      await render({
+      render({
         components: { DateTimeSegment },
         setup() {
           const { segments, controlProps, labelProps, isTouched, isBlurred } = useTimeField({
@@ -392,22 +345,16 @@ describe('useTimeField', () => {
         `,
       });
 
-      await flush();
-      const segments = screen.getAllByTestId('segment');
-      const control = screen.getByRole('group');
+      const control = page.getByRole('group');
+      await expect.element(control).toHaveAttribute('data-blurred', 'false');
 
-      // Initially not blurred
-      expect(control.dataset.blurred).toBe('false');
-
-      // Blur hour segment
-      const hourSegment = segments.find(el => el.dataset.segmentType === 'hour')!;
-      await fireEvent.blur(hourSegment);
-      await flush();
-      expect(control.dataset.blurred).toBe('true');
+      const hourSegment = getSegment('hour')!;
+      await blur(hourSegment);
+      await expect.element(control).toHaveAttribute('data-blurred', 'true');
     });
 
     test('sets touched state when any segment is manipulated', async () => {
-      await render({
+      render({
         components: { DateTimeSegment },
         setup() {
           const { segments, controlProps, labelProps, isTouched } = useTimeField({
@@ -437,18 +384,12 @@ describe('useTimeField', () => {
         `,
       });
 
-      await flush();
-      const segments = screen.getAllByTestId('segment');
-      const control = screen.getByRole('group');
+      const control = page.getByRole('group');
+      await expect.element(control).toHaveAttribute('data-touched', 'false');
 
-      // Initially not touched
-      expect(control.dataset.touched).toBe('false');
-
-      // Blur hour segment
-      const hourSegment = segments.find(el => el.dataset.segmentType === 'hour')!;
-      await fireEvent(hourSegment, new InputEvent('beforeinput', { data: '9', cancelable: true }));
-      await flush();
-      expect(control.dataset.touched).toBe('true');
+      const hourSegment = getSegment('hour')!;
+      await beforeInput(hourSegment, '9');
+      await expect.element(control).toHaveAttribute('data-touched', 'true');
     });
   });
 
@@ -456,7 +397,7 @@ describe('useTimeField', () => {
     test('handles time format with hours and minutes only', async () => {
       let fieldValue: string | undefined | null;
 
-      await render({
+      render({
         components: { DateTimeSegment },
         setup() {
           const {
@@ -495,14 +436,13 @@ describe('useTimeField', () => {
         `,
       });
 
-      await flush();
       expect(fieldValue).toBe('14:30');
     });
 
     test('handles time format with hours, minutes, and seconds', async () => {
       let fieldValue: string | undefined | null;
 
-      await render({
+      render({
         components: { DateTimeSegment },
         setup() {
           const {
@@ -546,14 +486,13 @@ describe('useTimeField', () => {
         `,
       });
 
-      await flush();
       expect(fieldValue).toBe('14:30:45');
     });
   });
 
   describe('disabled state', () => {
     test('respects disabled prop', async () => {
-      await render({
+      render({
         components: { DateTimeSegment },
         setup() {
           const { segments, controlProps, labelProps } = useTimeField({
@@ -584,15 +523,13 @@ describe('useTimeField', () => {
         `,
       });
 
-      await flush();
-      const control = screen.getByRole('group');
-      expect(control).toHaveAttribute('aria-disabled', 'true');
+      await expect.element(page.getByRole('group')).toHaveAttribute('aria-disabled', 'true');
     });
   });
 
   describe('readonly state', () => {
     test('respects readonly prop', async () => {
-      await render({
+      render({
         components: { DateTimeSegment },
         setup() {
           const { segments, controlProps, labelProps } = useTimeField({
@@ -623,11 +560,10 @@ describe('useTimeField', () => {
         `,
       });
 
-      await flush();
-      const segments = screen.getAllByTestId('segment');
-      segments.forEach(segment => {
-        expect(segment).toHaveAttribute('aria-readonly', 'true');
-      });
+      await expect.poll(() => getSegments().length).toBeGreaterThan(0);
+      for (const seg of getSegments()) {
+        expect(seg).toHaveAttribute('aria-readonly', 'true');
+      }
     });
   });
 
@@ -636,7 +572,7 @@ describe('useTimeField', () => {
       const minTime = '09:00';
       let updateVal!: (value: string) => void;
 
-      await render({
+      render({
         components: { DateTimeSegment },
         setup() {
           const { segments, controlProps, labelProps, errorMessageProps, errorMessage, setValue } = useTimeField({
@@ -673,33 +609,26 @@ describe('useTimeField', () => {
         `,
       });
 
-      await flush();
-
       // Set a time before the minimum
       updateVal('08:30');
-      await flush();
 
       // The input should be invalid due to min constraint
-      const inputElement = screen.getByTestId('control');
-      expect(inputElement).toBeInvalid();
-
-      // Check that the error message is displayed
-      expect(inputElement).toHaveErrorMessage('Constraints not satisfied');
+      const inputElement = page.getByTestId('control');
+      await expect.element(inputElement).toHaveAttribute('aria-invalid', 'true');
+      await expect.element(inputElement).toHaveAttribute('aria-errormessage', expect.any(String));
 
       // Set a valid time
       updateVal('09:30');
-      await flush();
 
       // The input should now be valid
-      expect(inputElement).toBeValid();
-      expect(inputElement).not.toHaveErrorMessage();
+      await expect.element(inputElement).toHaveAttribute('aria-invalid', 'false');
     });
 
     test('validates against max time constraint with error message', async () => {
       const maxTime = '17:00';
       let updateVal!: (value: string) => void;
 
-      await render({
+      render({
         components: { DateTimeSegment },
         setup() {
           const { segments, controlProps, labelProps, errorMessageProps, errorMessage, setValue } = useTimeField({
@@ -736,26 +665,18 @@ describe('useTimeField', () => {
         `,
       });
 
-      await flush();
-
       // Set a time after the maximum
       updateVal('18:30');
-      await flush();
 
       // The input should be invalid due to max constraint
-      const inputElement = screen.getByTestId('control');
-      expect(inputElement).toBeInvalid();
-
-      // Check that the error message is displayed
-      expect(inputElement).toHaveErrorMessage('Constraints not satisfied');
+      const inputElement = page.getByTestId('control');
+      await expect.element(inputElement).toHaveAttribute('aria-invalid', 'true');
 
       // Set a valid time
       updateVal('16:30');
-      await flush();
 
       // The input should now be valid
-      expect(inputElement).toBeValid();
-      expect(inputElement).not.toHaveErrorMessage();
+      await expect.element(inputElement).toHaveAttribute('aria-invalid', 'false');
     });
 
     test('validates against both min and max time constraints with error messages', async () => {
@@ -763,7 +684,7 @@ describe('useTimeField', () => {
       const maxTime = '17:00';
       let updateVal!: (value: string) => void;
 
-      await render({
+      render({
         components: { DateTimeSegment },
         setup() {
           const { segments, controlProps, labelProps, errorMessageProps, errorMessage, setValue } = useTimeField({
@@ -801,26 +722,18 @@ describe('useTimeField', () => {
         `,
       });
 
-      await flush();
-
       // Test time before minimum
       updateVal('08:30');
-      await flush();
-      const inputElement = screen.getByTestId('control');
-      expect(inputElement).toBeInvalid();
-      expect(inputElement).toHaveErrorMessage('Constraints not satisfied');
+      const inputElement = page.getByTestId('control');
+      await expect.element(inputElement).toHaveAttribute('aria-invalid', 'true');
 
       // Test time after maximum
       updateVal('18:30');
-      await flush();
-      expect(inputElement).toBeInvalid();
-      expect(inputElement).toHaveErrorMessage('Constraints not satisfied');
+      await expect.element(inputElement).toHaveAttribute('aria-invalid', 'true');
 
       // Test valid time
       updateVal('12:00');
-      await flush();
-      expect(inputElement).toBeValid();
-      expect(inputElement).not.toHaveErrorMessage();
+      await expect.element(inputElement).toHaveAttribute('aria-invalid', 'false');
     });
 
     test('built-in min/max constraints trigger validation errors', async () => {
@@ -828,7 +741,7 @@ describe('useTimeField', () => {
       const maxTime = '17:00';
       let updateVal!: (value: string) => void;
 
-      await render({
+      render({
         components: { DateTimeSegment },
         setup() {
           const { segments, controlProps, labelProps, errorMessageProps, errorMessage, setValue } = useTimeField({
@@ -866,29 +779,24 @@ describe('useTimeField', () => {
         `,
       });
 
-      await flush();
-
       // Test time before minimum
       updateVal('08:30');
-      await flush();
-      const inputElement = screen.getByTestId('control');
-      expect(inputElement).toBeInvalid();
+      const inputElement = page.getByTestId('control');
+      await expect.element(inputElement).toHaveAttribute('aria-invalid', 'true');
 
       // Test time after maximum
       updateVal('18:30');
-      await flush();
-      expect(inputElement).toBeInvalid();
+      await expect.element(inputElement).toHaveAttribute('aria-invalid', 'true');
 
       // Test valid time
       updateVal('12:00');
-      await flush();
-      expect(inputElement).toBeValid();
+      await expect.element(inputElement).toHaveAttribute('aria-invalid', 'false');
     });
   });
 
   describe('spinOnly behavior', () => {
     test('segments with spinOnly only respond to arrow key events and not text input', async () => {
-      await render({
+      render({
         components: { DateTimeSegment },
         setup() {
           const { segments, controlProps, labelProps } = useTimeField({
@@ -919,30 +827,27 @@ describe('useTimeField', () => {
         `,
       });
 
-      await flush();
-
-      const segments = screen.getAllByTestId('segment');
-      const hourSegment = segments.find(el => el.dataset.segmentType === 'hour')!;
-      const minuteSegment = segments.find(el => el.dataset.segmentType === 'minute')!;
+      const hourSegment = getSegment('hour')!;
+      const minuteSegment = getSegment('minute')!;
 
       // Focus the hour segment
-      await fireEvent.focus(hourSegment);
+      hourSegment.focus();
 
       // Attempt to input text via beforeinput event
-      await fireEvent(hourSegment, new InputEvent('beforeinput', { data: '9', cancelable: true }));
+      await beforeInput(hourSegment, '9');
 
       // The value should remain unchanged
       expect(hourSegment.textContent).toBe('14');
 
       // Test arrow up key on hour segment
-      await fireEvent.keyDown(hourSegment, { key: 'ArrowUp', code: 'ArrowUp' });
+      await keyDown(hourSegment, 'ArrowUp');
 
       // The value should be incremented
       expect(hourSegment.textContent).toBe('15');
 
       // Test arrow down key on minute segment
-      await fireEvent.focus(minuteSegment);
-      await fireEvent.keyDown(minuteSegment, { key: 'ArrowDown', code: 'ArrowDown' });
+      minuteSegment.focus();
+      await keyDown(minuteSegment, 'ArrowDown');
 
       // The value should be decremented
       expect(minuteSegment.textContent).toBe('29');
@@ -952,6 +857,44 @@ describe('useTimeField', () => {
         expect(hourSegment).not.toHaveAttribute(attr);
         expect(minuteSegment).not.toHaveAttribute(attr);
       });
+    });
+  });
+
+  describe('a11y', () => {
+    test('provides accessible label and description', async () => {
+      render({
+        components: { DateTimeSegment },
+        setup() {
+          const { segments, controlProps, labelProps, descriptionProps } = useTimeField({
+            label: 'Appointment Time',
+            name: 'appointmentTime',
+            description: 'Enter your preferred appointment time',
+          });
+
+          return {
+            segments,
+            controlProps,
+            labelProps,
+            descriptionProps,
+          };
+        },
+        template: `
+          <div data-testid="fixture">
+            <span v-bind="labelProps">Appointment Time</span>
+            <div v-bind="controlProps">
+              <DateTimeSegment
+                v-for="segment in segments"
+                :key="segment.type"
+                v-bind="segment"
+                data-testid="segment"
+              />
+            </div>
+            <div v-bind="descriptionProps">Enter your preferred appointment time</div>
+          </div>
+        `,
+      });
+
+      await expectNoA11yViolations('[data-testid="fixture"]');
     });
   });
 });

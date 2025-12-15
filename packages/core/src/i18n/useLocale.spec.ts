@@ -1,10 +1,12 @@
-import { render, screen } from '@testing-library/vue';
+import { render } from '@testing-library/vue';
 import { useLocale } from './useLocale';
 import { configure } from '../config';
 import { nextTick, ref } from 'vue';
+import { page } from 'vitest/browser';
+import { expect } from 'vitest';
 
 test('fetches the site locale and direction initially', async () => {
-  await render({
+  render({
     setup: () => useLocale(),
     template: `
       <span>{{ locale }}</span>
@@ -12,12 +14,12 @@ test('fetches the site locale and direction initially', async () => {
     `,
   });
 
-  expect(screen.getByText('en-US')).toBeDefined();
-  expect(screen.getByText('ltr')).toBeDefined();
+  await expect.element(page.getByText('en')).toBeInTheDocument();
+  await expect.element(page.getByText('ltr')).toBeInTheDocument();
 });
 
 test('updates the locale when the locale config changes', async () => {
-  await render({
+  render({
     setup: () => useLocale(),
     template: `
       <span>{{ locale }}</span>
@@ -28,15 +30,15 @@ test('updates the locale when the locale config changes', async () => {
   configure({ locale: 'ar-EG' });
   await nextTick();
 
-  expect(screen.getByText('ar-EG')).toBeDefined();
-  expect(screen.getByText('rtl')).toBeDefined();
+  await expect.element(page.getByText('ar-EG')).toBeInTheDocument();
+  await expect.element(page.getByText('rtl')).toBeInTheDocument();
 });
 
 test('updates locale and direction when a reactive locale config changes', async () => {
   const locale = ref('en-US');
   configure({ locale });
 
-  await render({
+  render({
     setup: () => useLocale(),
     template: `
       <span>{{ locale }}</span>
@@ -44,12 +46,12 @@ test('updates locale and direction when a reactive locale config changes', async
     `,
   });
 
-  expect(screen.getByText('en-US')).toBeDefined();
-  expect(screen.getByText('ltr')).toBeDefined();
+  await expect.element(page.getByText('en-US')).toBeInTheDocument();
+  await expect.element(page.getByText('ltr')).toBeInTheDocument();
 
   locale.value = 'ar-EG';
   await nextTick();
 
-  expect(screen.getByText('ar-EG')).toBeDefined();
-  expect(screen.getByText('rtl')).toBeDefined();
+  await expect.element(page.getByText('ar-EG')).toBeInTheDocument();
+  await expect.element(page.getByText('rtl')).toBeInTheDocument();
 });

@@ -14,7 +14,7 @@ export async function renderSetup<TReturns extends object, TChildReturns extends
     component.components = { Child };
   }
 
-  await render(component);
+  render(component);
 
   return {
     ...((su.result || {}) as TReturns),

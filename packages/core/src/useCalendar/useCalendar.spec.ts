@@ -1,52 +1,30 @@
-import { fireEvent, render, screen } from '@testing-library/vue';
-import { axe } from 'vitest-axe';
+import { render } from '@testing-library/vue';
 import { useCalendar, CalendarCell } from './index';
-import { flush } from '@test-utils/flush';
 import { createCalendar, fromDate } from '@internationalized/date';
+import { page } from 'vitest/browser';
+import { expectNoA11yViolations } from '@test-utils/index';
+
+async function click(target: ReturnType<typeof page.getByText> | ReturnType<typeof page.getByTestId>) {
+  (await target.element()).click();
+}
+
+async function keyDown(target: ReturnType<typeof page.getByTestId>, code: string) {
+  (await target.element()).dispatchEvent(new KeyboardEvent('keydown', { bubbles: true, code }));
+}
+
+async function keyDownEl(
+  target: ReturnType<typeof page.getByText> | ReturnType<typeof page.getByTestId>,
+  code: string,
+) {
+  (await target.element()).dispatchEvent(new KeyboardEvent('keydown', { bubbles: true, code }));
+}
 
 describe('useCalendar', () => {
-  describe('a11y', () => {
-    test('calendar should not have accessibility violations', async () => {
-      await render({
-        setup() {
-          const { calendarProps, gridProps, gridLabelProps, nextButtonProps, previousButtonProps } = useCalendar({
-            label: 'Calendar',
-          });
-
-          return {
-            calendarProps,
-            gridProps,
-            gridLabelProps,
-            nextButtonProps,
-            previousButtonProps,
-          };
-        },
-        template: `
-          <div data-testid="fixture">
-            <div v-bind="calendarProps">
-              <div v-bind="gridLabelProps">Month Year</div>
-              <button v-bind="previousButtonProps">Previous</button>
-              <button v-bind="nextButtonProps">Next</button>
-              <div v-bind="gridProps">
-                <!-- Calendar grid content would go here -->
-              </div>
-            </div>
-          </div>
-        `,
-      });
-
-      await flush();
-      vi.useRealTimers();
-      expect(await axe(screen.getByTestId('fixture'))).toHaveNoViolations();
-      vi.useFakeTimers();
-    });
-  });
-
   describe('date selection', () => {
     test('calls onUpdateModelValue when a date is selected', async () => {
       const currentDate = fromDate(new Date(2025, 2, 11), 'UTC');
 
-      const vm = await render({
+      const vm = render({
         components: {
           CalendarCell,
         },
@@ -71,16 +49,14 @@ describe('useCalendar', () => {
         `,
       });
 
-      await flush();
-      await fireEvent.click(screen.getByText('Select Date'));
-      await flush();
-      expect(vm.emitted('update:modelValue')[0]).toEqual([currentDate.toDate()]);
+      await click(page.getByText('Select Date'));
+      await expect.poll(() => vm.emitted('update:modelValue')?.[0]).toEqual([currentDate.toDate()]);
     });
 
     test('uses provided calendar type', async () => {
       const calendar = createCalendar('islamic-umalqura');
 
-      await render({
+      render({
         setup() {
           const { selectedDate } = useCalendar({
             label: 'Calendar',
@@ -98,14 +74,13 @@ describe('useCalendar', () => {
         `,
       });
 
-      await flush();
-      expect(screen.getByText('islamic-umalqura')).toBeInTheDocument();
+      await expect.element(page.getByText('islamic-umalqura')).toBeInTheDocument();
     });
 
     test('handles Enter key on calendar cell', async () => {
       const currentDate = fromDate(new Date(2025, 2, 11), 'UTC');
 
-      const vm = await render({
+      const vm = render({
         components: {
           CalendarCell,
         },
@@ -137,18 +112,15 @@ describe('useCalendar', () => {
         `,
       });
 
-      await flush();
-      const cell = screen.getByTestId('calendar-cell');
-
       // Test Enter key selects the date
-      await fireEvent.keyDown(cell, { code: 'Enter' });
-      expect(vm.emitted('update:modelValue')[0]).toEqual([currentDate.toDate()]);
+      await keyDownEl(page.getByTestId('calendar-cell'), 'Enter');
+      await expect.poll(() => vm.emitted('update:modelValue')?.[0]).toEqual([currentDate.toDate()]);
     });
 
     test('handles Enter key in different panels', async () => {
       const currentDate = fromDate(new Date(2025, 2, 11), 'UTC');
 
-      const vm = await render({
+      const vm = render({
         setup() {
           const { calendarProps, focusedDate, gridLabelProps, currentView } = useCalendar({
             label: 'Calendar',
@@ -173,31 +145,30 @@ describe('useCalendar', () => {
         `,
       });
 
-      await flush();
-      const calendar = screen.getByTestId('calendar');
-      const panelLabel = screen.getByTestId('panel-label');
-      await fireEvent.keyDown(calendar, { code: 'Escape' });
+      const calendar = page.getByTestId('calendar');
+      const panelLabel = page.getByTestId('panel-label');
+      await keyDown(calendar, 'Escape');
 
       // Test Enter in day panel
-      await fireEvent.keyDown(calendar, { code: 'Enter' });
-      expect(vm.emitted('update:modelValue')[0]).toEqual([currentDate.toDate()]);
+      await keyDown(calendar, 'Enter');
+      await expect.poll(() => vm.emitted('update:modelValue')?.[0]).toEqual([currentDate.toDate()]);
 
       // Switch to month panel
-      await fireEvent.click(panelLabel);
-      await fireEvent.keyDown(calendar, { code: 'Enter' });
-      expect(screen.getByTestId('panel-label')).toHaveTextContent('weeks'); // Should switch back to day panel
+      await click(panelLabel);
+      await keyDown(calendar, 'Enter');
+      await expect.element(page.getByTestId('panel-label')).toHaveTextContent('weeks'); // Should switch back to day panel
 
       // Switch to year panel
-      await fireEvent.click(panelLabel);
-      await fireEvent.click(panelLabel);
-      await fireEvent.keyDown(calendar, { code: 'Enter' });
-      expect(screen.getByTestId('panel-label')).toHaveTextContent('months'); // Should switch back to month panel
+      await click(panelLabel);
+      await click(panelLabel);
+      await keyDown(calendar, 'Enter');
+      await expect.element(page.getByTestId('panel-label')).toHaveTextContent('months'); // Should switch back to month panel
     });
   });
 
   describe('panel navigation', () => {
     test('switches between day, month, and year panels', async () => {
-      await render({
+      render({
         setup() {
           const { gridLabelProps, currentView } = useCalendar({ label: 'Calendar' });
 
@@ -213,19 +184,18 @@ describe('useCalendar', () => {
         `,
       });
 
-      await flush();
-      const panelLabel = screen.getByTestId('panel-label');
-      expect(panelLabel).toHaveTextContent('weeks');
+      const panelLabel = page.getByTestId('panel-label');
+      await expect.element(panelLabel).toHaveTextContent('weeks');
 
-      await fireEvent.click(panelLabel);
-      expect(panelLabel).toHaveTextContent('months');
+      await click(panelLabel);
+      await expect.element(panelLabel).toHaveTextContent('months');
 
-      await fireEvent.click(panelLabel);
-      expect(panelLabel).toHaveTextContent('years');
+      await click(panelLabel);
+      await expect.element(panelLabel).toHaveTextContent('years');
     });
 
     test('navigates to next/previous panels', async () => {
-      await render({
+      render({
         setup() {
           const { nextButtonProps, previousButtonProps, currentView } = useCalendar({
             label: 'Calendar',
@@ -246,18 +216,17 @@ describe('useCalendar', () => {
         `,
       });
 
-      await flush();
-      expect(screen.getByTestId('panel-type')).toHaveTextContent('weeks');
+      await expect.element(page.getByTestId('panel-type')).toHaveTextContent('weeks');
 
       // Test navigation buttons
-      await fireEvent.click(screen.getByText('Next'));
-      await fireEvent.click(screen.getByText('Previous'));
+      await click(page.getByText('Next'));
+      await click(page.getByText('Previous'));
     });
 
     test('navigates months using next/previous buttons in month panel', async () => {
       const currentDate = fromDate(new Date(2025, 2, 11), 'UTC');
 
-      await render({
+      render({
         setup() {
           const { nextButtonProps, previousButtonProps, gridLabelProps, focusedDate, calendarProps } = useCalendar({
             label: 'Calendar',
@@ -285,33 +254,32 @@ describe('useCalendar', () => {
         `,
       });
 
-      await flush();
-      const panelLabel = screen.getByTestId('panel-label');
+      const panelLabel = page.getByTestId('panel-label');
 
       // Switch to month panel
-      await fireEvent.click(panelLabel);
+      await click(panelLabel);
 
       // Test next button (next year in month panel)
-      await fireEvent.click(screen.getByText('Next'));
-      expect(screen.getByText(currentDate.add({ years: 1 }).toString())).toBeInTheDocument();
+      await click(page.getByText('Next'));
+      await expect.element(page.getByText(currentDate.add({ years: 1 }).toString())).toBeInTheDocument();
 
       // Test previous button (previous year in month panel)
-      await fireEvent.click(screen.getByText('Previous'));
-      expect(screen.getByText(currentDate.toString())).toBeInTheDocument();
+      await click(page.getByText('Previous'));
+      await expect.element(page.getByText(currentDate.toString())).toBeInTheDocument();
 
       // Test multiple clicks
-      await fireEvent.click(screen.getByText('Previous'));
-      await fireEvent.click(screen.getByText('Previous'));
-      expect(screen.getByText(currentDate.subtract({ years: 2 }).toString())).toBeInTheDocument();
+      await click(page.getByText('Previous'));
+      await click(page.getByText('Previous'));
+      await expect.element(page.getByText(currentDate.subtract({ years: 2 }).toString())).toBeInTheDocument();
 
-      await fireEvent.click(screen.getByText('Next'));
-      expect(screen.getByText(currentDate.subtract({ years: 1 }).toString())).toBeInTheDocument();
+      await click(page.getByText('Next'));
+      await expect.element(page.getByText(currentDate.subtract({ years: 1 }).toString())).toBeInTheDocument();
     });
 
     test('navigates years using next/previous buttons in year panel', async () => {
       const currentDate = fromDate(new Date(2025, 2, 11), 'UTC');
 
-      await render({
+      render({
         setup() {
           const { nextButtonProps, previousButtonProps, gridLabelProps, focusedDate, calendarProps } = useCalendar({
             label: 'Calendar',
@@ -339,56 +307,63 @@ describe('useCalendar', () => {
         `,
       });
 
-      await flush();
-      const panelLabel = screen.getByTestId('panel-label');
+      const panelLabel = page.getByTestId('panel-label');
 
       // Switch to month panel then year panel
-      await fireEvent.click(panelLabel);
-      await fireEvent.click(panelLabel);
+      await click(panelLabel);
+      await click(panelLabel);
 
       // Test next button (next set of years)
-      await fireEvent.click(screen.getByText('Next'));
-      expect(
-        screen.getByText(
-          currentDate
-            .add({ years: 9 })
-            .set({ month: 1, day: 1, hour: 0, minute: 0, second: 0, millisecond: 0 })
-            .toString(),
-        ),
-      ).toBeInTheDocument();
+      await click(page.getByText('Next'));
+      await expect
+        .element(
+          page.getByText(
+            currentDate
+              .add({ years: 9 })
+              .set({ month: 1, day: 1, hour: 0, minute: 0, second: 0, millisecond: 0 })
+              .toString(),
+          ),
+        )
+        .toBeInTheDocument();
 
       // Test previous button (previous set of years)
-      await fireEvent.click(screen.getByText('Previous'));
-      expect(
-        screen.getByText(
-          currentDate
-            .add({ years: 8 })
-            .set({ month: 1, day: 1, hour: 0, minute: 0, second: 0, millisecond: 0 })
-            .toString(),
-        ),
-      ).toBeInTheDocument();
+      await click(page.getByText('Previous'));
+      await expect
+        .element(
+          page.getByText(
+            currentDate
+              .add({ years: 8 })
+              .set({ month: 1, day: 1, hour: 0, minute: 0, second: 0, millisecond: 0 })
+              .toString(),
+          ),
+        )
+        .toBeInTheDocument();
 
       // Test multiple clicks
-      await fireEvent.click(screen.getByText('Previous'));
-      await fireEvent.click(screen.getByText('Previous'));
-      expect(
-        screen.getByText(
-          currentDate
-            .subtract({ years: 10 })
-            .set({ month: 1, day: 1, hour: 0, minute: 0, second: 0, millisecond: 0 })
-            .toString(),
-        ),
-      ).toBeInTheDocument();
+      await click(page.getByText('Previous'));
+      await click(page.getByText('Previous'));
+      await expect
+        .element(
+          page.getByText(
+            currentDate
+              .subtract({ years: 10 })
+              .set({ month: 1, day: 1, hour: 0, minute: 0, second: 0, millisecond: 0 })
+              .toString(),
+          ),
+        )
+        .toBeInTheDocument();
 
-      await fireEvent.click(screen.getByText('Next'));
-      expect(
-        screen.getByText(
-          currentDate
-            .subtract({ years: 9 })
-            .set({ month: 1, day: 1, hour: 0, minute: 0, second: 0, millisecond: 0 })
-            .toString(),
-        ),
-      ).toBeInTheDocument();
+      await click(page.getByText('Next'));
+      await expect
+        .element(
+          page.getByText(
+            currentDate
+              .subtract({ years: 9 })
+              .set({ month: 1, day: 1, hour: 0, minute: 0, second: 0, millisecond: 0 })
+              .toString(),
+          ),
+        )
+        .toBeInTheDocument();
     });
   });
 
@@ -396,7 +371,7 @@ describe('useCalendar', () => {
     test('handles arrow key navigation in day panel', async () => {
       const currentDate = fromDate(new Date(2025, 2, 11), 'UTC');
 
-      await render({
+      render({
         setup() {
           const { calendarProps, selectedDate, focusedDate } = useCalendar({
             label: 'Calendar',
@@ -419,48 +394,47 @@ describe('useCalendar', () => {
         `,
       });
 
-      await flush();
-      const calendar = screen.getByTestId('calendar');
+      const calendar = page.getByTestId('calendar');
 
       // Test right arrow (next day)
-      await fireEvent.keyDown(calendar, { code: 'ArrowRight' });
-      expect(screen.getByText(currentDate.add({ days: 1 }).toString())).toBeInTheDocument();
+      await keyDown(calendar, 'ArrowRight');
+      await expect.element(page.getByText(currentDate.add({ days: 1 }).toString())).toBeInTheDocument();
 
       // Test left arrow (previous day)
-      await fireEvent.keyDown(calendar, { code: 'ArrowLeft' });
-      expect(screen.getByText(currentDate.toString())).toBeInTheDocument();
+      await keyDown(calendar, 'ArrowLeft');
+      await expect.element(page.getByText(currentDate.toString())).toBeInTheDocument();
 
       // Test down arrow (next week)
-      await fireEvent.keyDown(calendar, { code: 'ArrowDown' });
-      expect(screen.getByText(currentDate.add({ weeks: 1 }).toString())).toBeInTheDocument();
+      await keyDown(calendar, 'ArrowDown');
+      await expect.element(page.getByText(currentDate.add({ weeks: 1 }).toString())).toBeInTheDocument();
 
       // Test up arrow (previous week)
-      await fireEvent.keyDown(calendar, { code: 'ArrowUp' });
-      expect(screen.getByText(currentDate.toString())).toBeInTheDocument();
+      await keyDown(calendar, 'ArrowUp');
+      await expect.element(page.getByText(currentDate.toString())).toBeInTheDocument();
 
       // Test PageUp (previous month)
-      await fireEvent.keyDown(calendar, { code: 'PageUp' });
-      expect(screen.getByText(currentDate.subtract({ months: 1 }).toString())).toBeInTheDocument();
+      await keyDown(calendar, 'PageUp');
+      await expect.element(page.getByText(currentDate.subtract({ months: 1 }).toString())).toBeInTheDocument();
 
       // Test PageDown (next month)
-      await fireEvent.keyDown(calendar, { code: 'PageDown' });
-      expect(screen.getByText(currentDate.toString())).toBeInTheDocument();
+      await keyDown(calendar, 'PageDown');
+      await expect.element(page.getByText(currentDate.toString())).toBeInTheDocument();
 
       // Test Home (start of month)
-      await fireEvent.keyDown(calendar, { code: 'Home' });
-      expect(screen.getByText(currentDate.set({ day: 1 }).toString())).toBeInTheDocument();
+      await keyDown(calendar, 'Home');
+      await expect.element(page.getByText(currentDate.set({ day: 1 }).toString())).toBeInTheDocument();
 
       // Test End (end of month)
-      await fireEvent.keyDown(calendar, { code: 'End' });
-      expect(
-        screen.getByText(currentDate.set({ day: currentDate.calendar.getDaysInMonth(currentDate) }).toString()),
-      ).toBeInTheDocument();
+      await keyDown(calendar, 'End');
+      await expect
+        .element(page.getByText(currentDate.set({ day: currentDate.calendar.getDaysInMonth(currentDate) }).toString()))
+        .toBeInTheDocument();
     });
 
     test('handles arrow key navigation in month panel', async () => {
       const currentDate = fromDate(new Date(2025, 2, 11), 'UTC');
 
-      await render({
+      render({
         setup() {
           const { calendarProps, selectedDate, focusedDate, gridLabelProps } = useCalendar({
             label: 'Calendar',
@@ -485,52 +459,53 @@ describe('useCalendar', () => {
         `,
       });
 
-      await flush();
-      const calendar = screen.getByTestId('calendar');
-      const panelLabel = screen.getByTestId('panel-label');
+      const calendar = page.getByTestId('calendar');
+      const panelLabel = page.getByTestId('panel-label');
 
       // Switch to month panel
-      await fireEvent.click(panelLabel);
+      await click(panelLabel);
 
       // Test right arrow (next month)
-      await fireEvent.keyDown(calendar, { code: 'ArrowRight' });
-      expect(screen.getByText(currentDate.add({ months: 1 }).toString())).toBeInTheDocument();
+      await keyDown(calendar, 'ArrowRight');
+      await expect.element(page.getByText(currentDate.add({ months: 1 }).toString())).toBeInTheDocument();
 
       // Test left arrow (previous month)
-      await fireEvent.keyDown(calendar, { code: 'ArrowLeft' });
-      expect(screen.getByText(currentDate.toString())).toBeInTheDocument();
+      await keyDown(calendar, 'ArrowLeft');
+      await expect.element(page.getByText(currentDate.toString())).toBeInTheDocument();
 
       // Test down arrow (3 months forward)
-      await fireEvent.keyDown(calendar, { code: 'ArrowDown' });
-      expect(screen.getByText(currentDate.add({ months: 3 }).toString())).toBeInTheDocument();
+      await keyDown(calendar, 'ArrowDown');
+      await expect.element(page.getByText(currentDate.add({ months: 3 }).toString())).toBeInTheDocument();
 
       // Test up arrow (3 months back)
-      await fireEvent.keyDown(calendar, { code: 'ArrowUp' });
-      expect(screen.getByText(currentDate.toString())).toBeInTheDocument();
+      await keyDown(calendar, 'ArrowUp');
+      await expect.element(page.getByText(currentDate.toString())).toBeInTheDocument();
 
       // Test PageUp (previous year)
-      await fireEvent.keyDown(calendar, { code: 'PageUp' });
-      expect(screen.getByText(currentDate.subtract({ years: 1 }).toString())).toBeInTheDocument();
+      await keyDown(calendar, 'PageUp');
+      await expect.element(page.getByText(currentDate.subtract({ years: 1 }).toString())).toBeInTheDocument();
 
       // Test PageDown (next year)
-      await fireEvent.keyDown(calendar, { code: 'PageDown' });
-      expect(screen.getByText(currentDate.toString())).toBeInTheDocument();
+      await keyDown(calendar, 'PageDown');
+      await expect.element(page.getByText(currentDate.toString())).toBeInTheDocument();
 
       // Test Home (start of year)
-      await fireEvent.keyDown(calendar, { code: 'Home' });
-      expect(screen.getByText(currentDate.set({ month: 1 }).toString())).toBeInTheDocument();
+      await keyDown(calendar, 'Home');
+      await expect.element(page.getByText(currentDate.set({ month: 1 }).toString())).toBeInTheDocument();
 
       // Test End (end of year)
-      await fireEvent.keyDown(calendar, { code: 'End' });
-      expect(
-        screen.getByText(currentDate.set({ month: currentDate.calendar.getMonthsInYear(currentDate) }).toString()),
-      ).toBeInTheDocument();
+      await keyDown(calendar, 'End');
+      await expect
+        .element(
+          page.getByText(currentDate.set({ month: currentDate.calendar.getMonthsInYear(currentDate) }).toString()),
+        )
+        .toBeInTheDocument();
     });
 
     test('handles arrow key navigation in year panel', async () => {
       const currentDate = fromDate(new Date(2025, 2, 11), 'UTC');
 
-      await render({
+      render({
         setup() {
           const { calendarProps, selectedDate, focusedDate, gridLabelProps } = useCalendar({
             label: 'Calendar',
@@ -555,45 +530,44 @@ describe('useCalendar', () => {
         `,
       });
 
-      await flush();
-      const calendar = screen.getByTestId('calendar');
-      const panelLabel = screen.getByTestId('panel-label');
+      const calendar = page.getByTestId('calendar');
+      const panelLabel = page.getByTestId('panel-label');
 
       // Switch to month panel then year panel
-      await fireEvent.click(panelLabel);
-      await fireEvent.click(panelLabel);
+      await click(panelLabel);
+      await click(panelLabel);
 
       // Test right arrow (next year)
-      await fireEvent.keyDown(calendar, { code: 'ArrowRight' });
-      expect(screen.getByText(currentDate.add({ years: 1 }).toString())).toBeInTheDocument();
+      await keyDown(calendar, 'ArrowRight');
+      await expect.element(page.getByText(currentDate.add({ years: 1 }).toString())).toBeInTheDocument();
 
       // Test left arrow (previous year)
-      await fireEvent.keyDown(calendar, { code: 'ArrowLeft' });
-      expect(screen.getByText(currentDate.toString())).toBeInTheDocument();
+      await keyDown(calendar, 'ArrowLeft');
+      await expect.element(page.getByText(currentDate.toString())).toBeInTheDocument();
 
       // Test down arrow (3 years forward)
-      await fireEvent.keyDown(calendar, { code: 'ArrowDown' });
-      expect(screen.getByText(currentDate.add({ years: 3 }).toString())).toBeInTheDocument();
+      await keyDown(calendar, 'ArrowDown');
+      await expect.element(page.getByText(currentDate.add({ years: 3 }).toString())).toBeInTheDocument();
 
       // Test up arrow (3 years back)
-      await fireEvent.keyDown(calendar, { code: 'ArrowUp' });
-      expect(screen.getByText(currentDate.toString())).toBeInTheDocument();
+      await keyDown(calendar, 'ArrowUp');
+      await expect.element(page.getByText(currentDate.toString())).toBeInTheDocument();
 
       // Test PageUp (previous set of years)
-      await fireEvent.keyDown(calendar, { code: 'PageUp' });
-      expect(screen.getByText(currentDate.subtract({ years: 9 }).toString())).toBeInTheDocument();
+      await keyDown(calendar, 'PageUp');
+      await expect.element(page.getByText(currentDate.subtract({ years: 9 }).toString())).toBeInTheDocument();
 
       // Test PageDown (next set of years)
-      await fireEvent.keyDown(calendar, { code: 'PageDown' });
-      expect(screen.getByText(currentDate.toString())).toBeInTheDocument();
+      await keyDown(calendar, 'PageDown');
+      await expect.element(page.getByText(currentDate.toString())).toBeInTheDocument();
 
       // Test Home (start of year set)
-      await fireEvent.keyDown(calendar, { code: 'Home' });
-      expect(screen.getByText(currentDate.subtract({ years: 9 }).toString())).toBeInTheDocument();
+      await keyDown(calendar, 'Home');
+      await expect.element(page.getByText(currentDate.subtract({ years: 9 }).toString())).toBeInTheDocument();
 
       // Test End (end of year set)
-      await fireEvent.keyDown(calendar, { code: 'End' });
-      expect(screen.getByText(currentDate.toString())).toBeInTheDocument();
+      await keyDown(calendar, 'End');
+      await expect.element(page.getByText(currentDate.toString())).toBeInTheDocument();
     });
 
     test('respects min and max date boundaries', async () => {
@@ -601,7 +575,7 @@ describe('useCalendar', () => {
       const minDate = currentDate.subtract({ days: 1 });
       const maxDate = currentDate.add({ days: 1 });
 
-      await render({
+      render({
         setup() {
           const { calendarProps, selectedDate, focusedDate } = useCalendar({
             label: 'Calendar',
@@ -626,17 +600,16 @@ describe('useCalendar', () => {
         `,
       });
 
-      await flush();
-      const calendar = screen.getByTestId('calendar');
+      const calendar = page.getByTestId('calendar');
 
       // Try to go before min date
-      await fireEvent.keyDown(calendar, { code: 'ArrowLeft' });
-      expect(screen.getByText(minDate.toString())).toBeInTheDocument();
+      await keyDown(calendar, 'ArrowLeft');
+      await expect.element(page.getByText(minDate.toString())).toBeInTheDocument();
 
       // Try to go after max date
-      await fireEvent.keyDown(calendar, { code: 'ArrowRight' });
-      await fireEvent.keyDown(calendar, { code: 'ArrowRight' });
-      expect(screen.getByText(maxDate.toString())).toBeInTheDocument();
+      await keyDown(calendar, 'ArrowRight');
+      await keyDown(calendar, 'ArrowRight');
+      await expect.element(page.getByText(maxDate.toString())).toBeInTheDocument();
     });
   });
 
@@ -644,7 +617,7 @@ describe('useCalendar', () => {
     test('prevents all interactions when disabled', async () => {
       const currentDate = fromDate(new Date(2025, 2, 11), 'UTC');
 
-      await render({
+      render({
         components: {
           CalendarCell,
         },
@@ -685,38 +658,36 @@ describe('useCalendar', () => {
         `,
       });
 
-      await flush();
-
       // Verify navigation buttons are disabled
-      expect(screen.getByText('Previous')).toBeDisabled();
-      expect(screen.getByText('Next')).toBeDisabled();
+      await expect.element(page.getByText('Previous')).toBeDisabled();
+      await expect.element(page.getByText('Next')).toBeDisabled();
 
       // Try to click navigation buttons
-      await fireEvent.click(screen.getByText('Previous'));
-      await fireEvent.click(screen.getByText('Next'));
-      expect(screen.getByText(currentDate.toString())).toBeInTheDocument();
+      await click(page.getByText('Previous'));
+      await click(page.getByText('Next'));
+      await expect.element(page.getByText(currentDate.toString())).toBeInTheDocument();
 
       // Try to change panel view
-      await fireEvent.click(screen.getByTestId('panel-label'));
-      expect(screen.getByTestId('panel-label')).toHaveTextContent('weeks');
+      await click(page.getByTestId('panel-label'));
+      await expect.element(page.getByTestId('panel-label')).toHaveTextContent('weeks');
 
       // Try keyboard navigation
-      const calendar = screen.getByTestId('calendar');
-      await fireEvent.keyDown(calendar, { code: 'ArrowRight' });
-      await fireEvent.keyDown(calendar, { code: 'ArrowLeft' });
-      await fireEvent.keyDown(calendar, { code: 'ArrowUp' });
-      await fireEvent.keyDown(calendar, { code: 'ArrowDown' });
-      await fireEvent.keyDown(calendar, { code: 'PageUp' });
-      await fireEvent.keyDown(calendar, { code: 'PageDown' });
-      await fireEvent.keyDown(calendar, { code: 'Home' });
-      await fireEvent.keyDown(calendar, { code: 'End' });
-      expect(screen.getByText(currentDate.toString())).toBeInTheDocument();
+      const calendar = page.getByTestId('calendar');
+      await keyDown(calendar, 'ArrowRight');
+      await keyDown(calendar, 'ArrowLeft');
+      await keyDown(calendar, 'ArrowUp');
+      await keyDown(calendar, 'ArrowDown');
+      await keyDown(calendar, 'PageUp');
+      await keyDown(calendar, 'PageDown');
+      await keyDown(calendar, 'Home');
+      await keyDown(calendar, 'End');
+      await expect.element(page.getByText(currentDate.toString())).toBeInTheDocument();
 
       // Try to select a date
-      const cell = screen.getByTestId('calendar-cell');
-      await fireEvent.click(cell);
-      await fireEvent.keyDown(cell, { code: 'Enter' });
-      expect(screen.getByText(currentDate.toString())).toBeInTheDocument();
+      const cell = page.getByTestId('calendar-cell');
+      await click(cell);
+      await keyDownEl(cell, 'Enter');
+      await expect.element(page.getByText(currentDate.toString())).toBeInTheDocument();
     });
   });
 
@@ -724,7 +695,7 @@ describe('useCalendar', () => {
     test('prevents all interactions when readonly', async () => {
       const currentDate = fromDate(new Date(2025, 2, 11), 'UTC');
 
-      await render({
+      render({
         components: {
           CalendarCell,
         },
@@ -765,38 +736,70 @@ describe('useCalendar', () => {
         `,
       });
 
-      await flush();
-
       // Verify navigation buttons are disabled
-      expect(screen.getByText('Previous')).toBeDisabled();
-      expect(screen.getByText('Next')).toBeDisabled();
+      await expect.element(page.getByText('Previous')).toBeDisabled();
+      await expect.element(page.getByText('Next')).toBeDisabled();
 
       // Try to click navigation buttons
-      await fireEvent.click(screen.getByText('Previous'));
-      await fireEvent.click(screen.getByText('Next'));
-      expect(screen.getByText(currentDate.toString())).toBeInTheDocument();
+      await click(page.getByText('Previous'));
+      await click(page.getByText('Next'));
+      await expect.element(page.getByText(currentDate.toString())).toBeInTheDocument();
 
       // Try to change panel view
-      await fireEvent.click(screen.getByTestId('panel-label'));
-      expect(screen.getByTestId('panel-label')).toHaveTextContent('weeks');
+      await click(page.getByTestId('panel-label'));
+      await expect.element(page.getByTestId('panel-label')).toHaveTextContent('weeks');
 
       // Try keyboard navigation
-      const calendar = screen.getByTestId('calendar');
-      await fireEvent.keyDown(calendar, { code: 'ArrowRight' });
-      await fireEvent.keyDown(calendar, { code: 'ArrowLeft' });
-      await fireEvent.keyDown(calendar, { code: 'ArrowUp' });
-      await fireEvent.keyDown(calendar, { code: 'ArrowDown' });
-      await fireEvent.keyDown(calendar, { code: 'PageUp' });
-      await fireEvent.keyDown(calendar, { code: 'PageDown' });
-      await fireEvent.keyDown(calendar, { code: 'Home' });
-      await fireEvent.keyDown(calendar, { code: 'End' });
-      expect(screen.getByText(currentDate.toString())).toBeInTheDocument();
+      const calendar = page.getByTestId('calendar');
+      await keyDown(calendar, 'ArrowRight');
+      await keyDown(calendar, 'ArrowLeft');
+      await keyDown(calendar, 'ArrowUp');
+      await keyDown(calendar, 'ArrowDown');
+      await keyDown(calendar, 'PageUp');
+      await keyDown(calendar, 'PageDown');
+      await keyDown(calendar, 'Home');
+      await keyDown(calendar, 'End');
+      await expect.element(page.getByText(currentDate.toString())).toBeInTheDocument();
 
       // Try to select a date
-      const cell = screen.getByTestId('calendar-cell');
-      await fireEvent.click(cell);
-      await fireEvent.keyDown(cell, { code: 'Enter' });
-      expect(screen.getByText(currentDate.toString())).toBeInTheDocument();
+      const cell = page.getByTestId('calendar-cell');
+      await click(cell);
+      await keyDownEl(cell, 'Enter');
+      await expect.element(page.getByText(currentDate.toString())).toBeInTheDocument();
+    });
+  });
+
+  describe('a11y', () => {
+    test('calendar should not have accessibility violations', async () => {
+      render({
+        setup() {
+          const { calendarProps, gridProps, gridLabelProps, nextButtonProps, previousButtonProps } = useCalendar({
+            label: 'Calendar',
+          });
+
+          return {
+            calendarProps,
+            gridProps,
+            gridLabelProps,
+            nextButtonProps,
+            previousButtonProps,
+          };
+        },
+        template: `
+          <div data-testid="fixture">
+            <div v-bind="calendarProps">
+              <div v-bind="gridLabelProps">Month Year</div>
+              <button v-bind="previousButtonProps">Previous</button>
+              <button v-bind="nextButtonProps">Next</button>
+              <div v-bind="gridProps">
+                <!-- Calendar grid content would go here -->
+              </div>
+            </div>
+          </div>
+        `,
+      });
+
+      await expectNoA11yViolations('[data-testid="fixture"]');
     });
   });
 });

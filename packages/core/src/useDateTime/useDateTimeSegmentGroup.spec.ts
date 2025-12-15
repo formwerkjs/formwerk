@@ -1,8 +1,7 @@
 import { DateFormatter, fromDate } from '@internationalized/date';
 import { useDateTimeSegmentGroup } from './useDateTimeSegmentGroup';
 import { Ref, ref, shallowRef } from 'vue';
-import { fireEvent, render, screen } from '@testing-library/vue';
-import { flush } from '@test-utils/flush';
+import { render } from '@testing-library/vue';
 import { DateTimeSegment } from './useDateTimeSegment';
 import { createTemporalPartial, isTemporalPartial } from './temporalPartial';
 import { TemporalPartial } from './types';
@@ -25,13 +24,39 @@ describe('useDateTimeSegmentGroup', () => {
     });
   }
 
+  async function settle() {
+    await Promise.resolve();
+    await new Promise<void>(r => setTimeout(r, 0));
+    await Promise.resolve();
+  }
+
+  function allRenderedSegments() {
+    return Array.from(document.querySelectorAll('[data-testid="segment"]')) as HTMLElement[];
+  }
+
+  function renderedSegmentsWithoutLiterals() {
+    return allRenderedSegments().filter(el => (el as any).dataset?.segmentType !== 'literal');
+  }
+
+  function segmentByType(type: string) {
+    return allRenderedSegments().find(el => (el as any).dataset?.segmentType === type);
+  }
+
+  function dispatchKey(el: HTMLElement, code: string) {
+    el.dispatchEvent(new KeyboardEvent('keydown', { code, bubbles: true }));
+  }
+
+  function dispatchBeforeInput(el: HTMLElement, data: string) {
+    return el.dispatchEvent(new InputEvent('beforeinput', { data, cancelable: true, bubbles: true }));
+  }
+
   describe('segment registration', () => {
     test('registers and unregisters segments', async () => {
       const formatter = ref(createFormatter());
       const controlEl = shallowRef<HTMLElement>();
       const onValueChange = vi.fn();
 
-      await render({
+      render({
         setup() {
           const { segments, useDateSegmentRegistration } = useDateTimeSegmentGroup({
             formatter,
@@ -68,7 +93,7 @@ describe('useDateTimeSegmentGroup', () => {
         `,
       });
 
-      await flush();
+      await settle();
       expect(onValueChange).not.toHaveBeenCalled();
     });
   });
@@ -79,7 +104,7 @@ describe('useDateTimeSegmentGroup', () => {
       const controlEl = shallowRef<HTMLElement>();
       const onValueChange = vi.fn();
 
-      await render({
+      render({
         components: {
           DateTimeSegment,
         },
@@ -114,16 +139,16 @@ describe('useDateTimeSegmentGroup', () => {
         `,
       });
 
-      await flush();
-      const segments = screen.getAllByTestId('segment').filter(el => el.dataset.segmentType !== 'literal');
+      await settle();
+      const segments = renderedSegmentsWithoutLiterals();
       segments[0].focus();
 
       // Test right arrow navigation
-      await fireEvent.keyDown(segments[0], { code: 'ArrowRight' });
+      dispatchKey(segments[0], 'ArrowRight');
       expect(document.activeElement).toBe(segments[1]);
 
       // Test left arrow navigation
-      await fireEvent.keyDown(segments[1], { code: 'ArrowLeft' });
+      dispatchKey(segments[1], 'ArrowLeft');
       expect(document.activeElement).toBe(segments[0]);
     });
 
@@ -132,7 +157,7 @@ describe('useDateTimeSegmentGroup', () => {
       const controlEl = shallowRef<HTMLElement>();
       const onValueChange = vi.fn();
 
-      await render({
+      render({
         components: {
           DateTimeSegment,
         },
@@ -168,16 +193,16 @@ describe('useDateTimeSegmentGroup', () => {
         `,
       });
 
-      await flush();
-      const segments = screen.getAllByTestId('segment').filter(el => el.dataset.segmentType !== 'literal');
+      await settle();
+      const segments = renderedSegmentsWithoutLiterals();
       segments[0].focus();
 
       // Test right arrow navigation (should go left in RTL)
-      await fireEvent.keyDown(segments[1], { code: 'ArrowRight' });
+      dispatchKey(segments[1], 'ArrowRight');
       expect(document.activeElement).toBe(segments[0]);
 
       // Test left arrow navigation (should go right in RTL)
-      await fireEvent.keyDown(segments[0], { code: 'ArrowLeft' });
+      dispatchKey(segments[0], 'ArrowLeft');
       expect(document.activeElement).toBe(segments[1]);
     });
   });
@@ -189,7 +214,7 @@ describe('useDateTimeSegmentGroup', () => {
       const onValueChange = vi.fn();
       let monthRegistration!: ReturnType<ReturnType<typeof useDateTimeSegmentGroup>['useDateSegmentRegistration']>;
 
-      await render({
+      render({
         setup() {
           const { useDateSegmentRegistration } = useDateTimeSegmentGroup({
             formatter,
@@ -226,7 +251,7 @@ describe('useDateTimeSegmentGroup', () => {
       const onValueChange = vi.fn();
       let monthRegistration!: ReturnType<ReturnType<typeof useDateTimeSegmentGroup>['useDateSegmentRegistration']>;
 
-      await render({
+      render({
         setup() {
           const { useDateSegmentRegistration } = useDateTimeSegmentGroup({
             formatter,
@@ -263,7 +288,7 @@ describe('useDateTimeSegmentGroup', () => {
       const onValueChange = vi.fn();
       let monthRegistration!: ReturnType<ReturnType<typeof useDateTimeSegmentGroup>['useDateSegmentRegistration']>;
 
-      await render({
+      render({
         setup() {
           const { useDateSegmentRegistration } = useDateTimeSegmentGroup({
             formatter,
@@ -300,7 +325,7 @@ describe('useDateTimeSegmentGroup', () => {
       const onValueChange = vi.fn();
       let monthRegistration!: ReturnType<ReturnType<typeof useDateTimeSegmentGroup>['useDateSegmentRegistration']>;
 
-      await render({
+      render({
         setup() {
           const { useDateSegmentRegistration } = useDateTimeSegmentGroup({
             formatter,
@@ -339,7 +364,7 @@ describe('useDateTimeSegmentGroup', () => {
       const controlEl = shallowRef<HTMLElement>();
       const onValueChange = vi.fn();
 
-      await render({
+      render({
         setup() {
           const { segments } = useDateTimeSegmentGroup({
             formatter,
@@ -366,7 +391,7 @@ describe('useDateTimeSegmentGroup', () => {
         `,
       });
 
-      await flush();
+      await settle();
       const monthSegment = document.querySelector('[data-testid="month"]');
       expect(monthSegment?.textContent?.trim()).toBe(currentDate.month.toString());
     });
@@ -378,7 +403,7 @@ describe('useDateTimeSegmentGroup', () => {
       const controlEl = shallowRef<HTMLElement>();
       const onValueChange = vi.fn();
 
-      await render({
+      render({
         components: {
           DateTimeSegment,
         },
@@ -413,26 +438,22 @@ describe('useDateTimeSegmentGroup', () => {
         `,
       });
 
-      await flush();
-      const segments = screen.getAllByTestId('segment');
-      const monthSegment = segments.find(el => el.dataset.segmentType === 'month')!;
-      fireEvent.focus(monthSegment);
+      await settle();
+      const monthSegment = segmentByType('month')!;
+      monthSegment.focus();
 
       // Test valid numeric input
-      const inputEvent = new InputEvent('beforeinput', { data: '1', cancelable: true });
-      fireEvent(monthSegment, inputEvent);
-      expect(monthSegment.textContent).toBe('1');
+      dispatchBeforeInput(monthSegment, '1');
+      await expect.poll(() => monthSegment.textContent).toBe('1');
 
       // Test input completion on max length
-      const secondInputEvent = new InputEvent('beforeinput', { data: '2', cancelable: true });
-      fireEvent(monthSegment, secondInputEvent);
-      expect(monthSegment.textContent).toBe('12');
+      dispatchBeforeInput(monthSegment, '2');
+      await expect.poll(() => monthSegment.textContent).toBe('12');
       expect(document.activeElement).not.toBe(monthSegment); // Should move to next segment
 
       // Test invalid input (out of range)
-      fireEvent.focus(monthSegment);
-      const invalidInputEvent = new InputEvent('beforeinput', { data: '13', cancelable: true });
-      fireEvent(monthSegment, invalidInputEvent);
+      monthSegment.focus();
+      dispatchBeforeInput(monthSegment, '13');
       expect(monthSegment.textContent).not.toBe('13');
     });
 
@@ -441,7 +462,7 @@ describe('useDateTimeSegmentGroup', () => {
       const controlEl = shallowRef<HTMLElement>();
       const onValueChange = vi.fn();
 
-      await render({
+      render({
         components: {
           DateTimeSegment,
         },
@@ -476,36 +497,33 @@ describe('useDateTimeSegmentGroup', () => {
         `,
       });
 
-      await flush();
-      const segments = screen.getAllByTestId('segment');
-      const yearSegment = segments.find(el => el.dataset.segmentType === 'year')!;
-      fireEvent.focus(yearSegment);
+      await settle();
+      const yearSegment = segmentByType('year')!;
+      yearSegment.focus();
 
       // Test backspace single digit removal when inputting
-      const inputEvent = new InputEvent('beforeinput', { data: '2', cancelable: true });
-      fireEvent(yearSegment, inputEvent);
-      const secondInputEvent = new InputEvent('beforeinput', { data: '0', cancelable: true });
-      fireEvent(yearSegment, secondInputEvent);
+      dispatchBeforeInput(yearSegment, '2');
+      dispatchBeforeInput(yearSegment, '0');
       expect(yearSegment.textContent).toBe('20');
 
-      await fireEvent.keyDown(yearSegment, { code: 'Backspace' });
+      dispatchKey(yearSegment, 'Backspace');
       expect(yearSegment.textContent).toBe('2');
       expect(onValueChange).not.toHaveBeenCalled();
 
-      await fireEvent.keyDown(yearSegment, { code: 'Backspace' });
+      dispatchKey(yearSegment, 'Backspace');
       expect(yearSegment.textContent).toBe(getSegmentTypePlaceholder('year'));
       expect(onValueChange).toBeCalled();
       let lastCall = onValueChange.mock.lastCall?.[0];
       expect(lastCall['~fw_temporal_partial'].year).toBe(false);
 
       // Test backspace clear removal after focussing
-      await fireEvent(yearSegment, new InputEvent('beforeinput', { data: '2024', cancelable: true }));
-      fireEvent.blur(yearSegment);
-      await flush();
+      dispatchBeforeInput(yearSegment, '2024');
+      yearSegment.dispatchEvent(new FocusEvent('blur', { bubbles: true }));
+      await settle();
       expect(onValueChange).toBeCalled();
 
-      fireEvent.focus(yearSegment);
-      await fireEvent.keyDown(yearSegment, { code: 'Backspace' });
+      yearSegment.focus();
+      dispatchKey(yearSegment, 'Backspace');
       expect(yearSegment.textContent).toBe(getSegmentTypePlaceholder('year'));
       expect(onValueChange).toBeCalled();
       lastCall = onValueChange.mock.lastCall?.[0];
@@ -517,7 +535,7 @@ describe('useDateTimeSegmentGroup', () => {
       const controlEl = shallowRef<HTMLElement>();
       const onValueChange = vi.fn();
 
-      await render({
+      render({
         components: {
           DateTimeSegment,
         },
@@ -552,26 +570,25 @@ describe('useDateTimeSegmentGroup', () => {
         `,
       });
 
-      await flush();
-      const segments = screen.getAllByTestId('segment');
-      const monthSegment = segments.find(el => el.dataset.segmentType === 'month')!;
-      monthSegment.focus();
+      await settle();
+      const monthSegment = segmentByType('month')!;
+      monthSegment!.focus();
 
       // Test increment with arrow up
-      await fireEvent.keyDown(monthSegment, { code: 'ArrowUp' });
+      dispatchKey(monthSegment!, 'ArrowUp');
       expect(onValueChange).toHaveBeenCalledWith(currentDate.add({ months: 1 }));
 
       // Test decrement with arrow down
-      await fireEvent.keyDown(monthSegment, { code: 'ArrowDown' });
+      dispatchKey(monthSegment!, 'ArrowDown');
       expect(onValueChange).toHaveBeenCalledWith(currentDate.subtract({ months: 1 }));
 
       // Test clearing with backspace
-      await fireEvent.keyDown(monthSegment, { code: 'Backspace' });
+      dispatchKey(monthSegment!, 'Backspace');
       const lastCall = onValueChange.mock.lastCall?.[0];
       expect(lastCall['~fw_temporal_partial'].month).toBe(false);
 
       // Test clearing with delete
-      await fireEvent.keyDown(monthSegment, { code: 'Delete' });
+      dispatchKey(monthSegment!, 'Delete');
       const finalCall = onValueChange.mock.lastCall?.[0];
       expect(finalCall['~fw_temporal_partial'].month).toBe(false);
     });
@@ -581,7 +598,7 @@ describe('useDateTimeSegmentGroup', () => {
       const controlEl = shallowRef<HTMLElement>();
       const onValueChange = vi.fn();
 
-      await render({
+      render({
         components: {
           DateTimeSegment,
         },
@@ -616,16 +633,15 @@ describe('useDateTimeSegmentGroup', () => {
         `,
       });
 
-      await flush();
-      const segments = screen.getAllByTestId('segment');
-      const monthSegment = segments.find(el => el.dataset.segmentType === 'month')!;
-      monthSegment.focus();
+      await settle();
+      const monthSegment = segmentByType('month')!;
+      monthSegment!.focus();
 
       // Test non-numeric input
-      const nonNumericEvent = new InputEvent('beforeinput', { data: 'a', cancelable: true });
-      fireEvent(monthSegment, nonNumericEvent);
+      const nonNumericEvent = new InputEvent('beforeinput', { data: 'a', cancelable: true, bubbles: true });
+      monthSegment!.dispatchEvent(nonNumericEvent);
       expect(nonNumericEvent.defaultPrevented).toBe(true);
-      expect(monthSegment.textContent).not.toBe('a');
+      expect(monthSegment!.textContent).not.toBe('a');
     });
 
     test('handles non-numeric segments (dayPeriod)', async () => {
@@ -639,7 +655,7 @@ describe('useDateTimeSegmentGroup', () => {
       const controlEl = shallowRef<HTMLElement>();
       const onValueChange = vi.fn();
 
-      await render({
+      render({
         components: {
           DateTimeSegment,
         },
@@ -674,32 +690,31 @@ describe('useDateTimeSegmentGroup', () => {
         `,
       });
 
-      await flush();
-      const segments = screen.getAllByTestId('segment');
-      const dayPeriodSegment = segments.find(el => el.dataset.segmentType === 'dayPeriod')!;
-      dayPeriodSegment.focus();
+      await settle();
+      const dayPeriodSegment = segmentByType('dayPeriod')!;
+      dayPeriodSegment!.focus();
 
       // Test numeric input is blocked
-      const inputEvent = new InputEvent('beforeinput', { data: '1', cancelable: true });
-      fireEvent(dayPeriodSegment, inputEvent);
+      const inputEvent = new InputEvent('beforeinput', { data: '1', cancelable: true, bubbles: true });
+      dayPeriodSegment!.dispatchEvent(inputEvent);
       expect(inputEvent.defaultPrevented).toBe(true);
-      expect(dayPeriodSegment.textContent).not.toBe('1');
+      expect(dayPeriodSegment!.textContent).not.toBe('1');
 
       // Test arrow up changes period (AM -> PM)
-      await fireEvent.keyDown(dayPeriodSegment, { code: 'ArrowUp' });
+      dispatchKey(dayPeriodSegment!, 'ArrowUp');
       expect(onValueChange).toHaveBeenCalledWith(currentDate.add({ hours: 12 }).set({ day: currentDate.day }));
 
       // Test arrow down changes period (PM -> AM)
-      await fireEvent.keyDown(dayPeriodSegment, { code: 'ArrowDown' });
+      dispatchKey(dayPeriodSegment!, 'ArrowDown');
       expect(onValueChange).toHaveBeenCalledWith(currentDate.subtract({ hours: 12 }).set({ day: currentDate.day }));
 
       // Test clearing with backspace
-      await fireEvent.keyDown(dayPeriodSegment, { code: 'Backspace' });
+      dispatchKey(dayPeriodSegment!, 'Backspace');
       const lastCall = onValueChange.mock.lastCall?.[0];
       expect(lastCall['~fw_temporal_partial'].dayPeriod).toBe(false);
 
       // Test clearing with delete
-      await fireEvent.keyDown(dayPeriodSegment, { code: 'Delete' });
+      dispatchKey(dayPeriodSegment!, 'Delete');
       const finalCall = onValueChange.mock.lastCall?.[0];
       expect(finalCall['~fw_temporal_partial'].dayPeriod).toBe(false);
     });
@@ -710,7 +725,7 @@ describe('useDateTimeSegmentGroup', () => {
       const onValueChange = vi.fn();
       const initialDate = currentDate.set({ year: 2024, month: 1, day: 1 });
 
-      await render({
+      render({
         components: {
           DateTimeSegment,
         },
@@ -749,16 +764,15 @@ describe('useDateTimeSegmentGroup', () => {
         `,
       });
 
-      await flush();
-      const segments = screen.getAllByTestId('segment');
+      await settle();
+      const segments = allRenderedSegments();
 
       // Fill in month segment
       const monthSegment = segments.find(el => el.dataset.segmentType === 'month')!;
-      fireEvent.focus(monthSegment);
-      const monthInput = new InputEvent('beforeinput', { data: '3', cancelable: true });
-      fireEvent(monthSegment, monthInput);
-      fireEvent.blur(monthSegment);
-      await flush();
+      monthSegment.focus();
+      dispatchBeforeInput(monthSegment, '3');
+      monthSegment.dispatchEvent(new FocusEvent('blur', { bubbles: true }));
+      await settle();
       expect(onValueChange).toHaveBeenLastCalledWith(
         expect.objectContaining({
           '~fw_temporal_partial': {
@@ -769,9 +783,9 @@ describe('useDateTimeSegmentGroup', () => {
 
       // Fill in day segment
       const daySegment = segments.find(el => el.dataset.segmentType === 'day')!;
-      fireEvent.focus(daySegment);
-      fireEvent.keyDown(daySegment, { code: 'ArrowUp' });
-      await flush();
+      daySegment.focus();
+      dispatchKey(daySegment, 'ArrowUp');
+      await settle();
       expect(onValueChange).toHaveBeenLastCalledWith(
         expect.objectContaining({
           '~fw_temporal_partial': {
@@ -783,11 +797,10 @@ describe('useDateTimeSegmentGroup', () => {
 
       // Fill in year segment
       const yearSegment = segments.find(el => el.dataset.segmentType === 'year')!;
-      fireEvent.focus(yearSegment);
-      const yearInput = new InputEvent('beforeinput', { data: '2024', cancelable: true });
-      fireEvent(yearSegment, yearInput);
-      fireEvent.blur(yearSegment);
-      await flush();
+      yearSegment.focus();
+      dispatchBeforeInput(yearSegment, '2024');
+      yearSegment.dispatchEvent(new FocusEvent('blur', { bubbles: true }));
+      await settle();
       expect(onValueChange).toHaveBeenLastCalledWith(
         expect.objectContaining({
           '~fw_temporal_partial': {
@@ -814,7 +827,7 @@ describe('useDateTimeSegmentGroup', () => {
         temporalValue.value = v;
       });
 
-      await render({
+      render({
         components: {
           DateTimeSegment,
         },
@@ -853,19 +866,17 @@ describe('useDateTimeSegmentGroup', () => {
         `,
       });
 
-      await flush();
-      const segments = screen.getAllByTestId('segment');
+      await settle();
+      const segments = allRenderedSegments();
 
       // Fill in only month and day segments
       const monthSegment = segments.find(el => el.dataset.segmentType === 'month')!;
       monthSegment.focus();
-      const monthInput = new InputEvent('beforeinput', { data: '3', cancelable: true });
-      monthSegment.dispatchEvent(monthInput);
+      dispatchBeforeInput(monthSegment, '3');
 
       const daySegment = segments.find(el => el.dataset.segmentType === 'day')!;
       daySegment.focus();
-      const dayInput = new InputEvent('beforeinput', { data: '5', cancelable: true });
-      daySegment.dispatchEvent(dayInput);
+      dispatchBeforeInput(daySegment, '5');
 
       // Verify the value is still a partial since year is not set
       const lastCall = onValueChange.mock.lastCall?.[0];

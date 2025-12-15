@@ -1,10 +1,54 @@
 import { type Component, onMounted } from 'vue';
 import { SliderThumbProps, useSliderThumb } from './useSliderThumb';
 import { SliderProps, useSlider } from './useSlider';
-import { fireEvent, render, screen } from '@testing-library/vue';
-import { flush } from '@test-utils/flush';
-import { axe } from 'vitest-axe';
 import { describe } from 'vitest';
+import { page } from 'vitest/browser';
+import { expectNoA11yViolations } from '@test-utils/index';
+
+async function keyDown(target: ReturnType<typeof page.getByRole>, code: string) {
+  (await target.element()).dispatchEvent(new KeyboardEvent('keydown', { bubbles: true, code }));
+}
+
+async function mouseDown(
+  target: ReturnType<typeof page.getByRole> | ReturnType<typeof page.getByTestId>,
+  init: MouseEventInit = {},
+) {
+  (await target.element()).dispatchEvent(new MouseEvent('mousedown', { bubbles: true, ...init }));
+}
+
+async function mouseMove(target: ReturnType<typeof page.getByRole>, init: MouseEventInit = {}) {
+  (await target.element()).dispatchEvent(new MouseEvent('mousemove', { bubbles: true, ...init }));
+}
+
+async function mouseUp(target: ReturnType<typeof page.getByRole>) {
+  (await target.element()).dispatchEvent(new MouseEvent('mouseup', { bubbles: true }));
+}
+
+function makeTouchEvent(type: string, touches: Array<{ clientX: number; clientY: number }>) {
+  const e = new Event(type, { bubbles: true, cancelable: true }) as unknown as {
+    touches: Array<{ clientX: number; clientY: number }>;
+  };
+  Object.defineProperty(e, 'touches', { value: touches });
+  return e as unknown as Event;
+}
+
+async function touchStart(
+  target: ReturnType<typeof page.getByRole>,
+  touches: Array<{ clientX: number; clientY: number }>,
+) {
+  (await target.element()).dispatchEvent(makeTouchEvent('touchstart', touches));
+}
+
+async function touchMove(
+  target: ReturnType<typeof page.getByRole>,
+  touches: Array<{ clientX: number; clientY: number }>,
+) {
+  (await target.element()).dispatchEvent(makeTouchEvent('touchmove', touches));
+}
+
+async function touchEnd(target: ReturnType<typeof page.getByRole>) {
+  (await target.element()).dispatchEvent(makeTouchEvent('touchend', []));
+}
 
 function createThumbComponent(props: SliderThumbProps): Component {
   return {
@@ -67,50 +111,6 @@ function setUpRect(el: HTMLElement | undefined) {
   }));
 }
 
-describe('should not have a11y errors', () => {
-  const Thumb = createThumbComponent({});
-  const Slider = createSliderComponent({
-    label: 'Slider',
-  });
-
-  test('with single thumb set up', async () => {
-    await render({
-      components: { Thumb, Slider },
-      template: `
-      <div data-testid="fixture">
-        <Slider>
-          <Thumb />
-        </Slider>
-      </div>
-    `,
-    });
-
-    await flush();
-    vi.useRealTimers();
-    expect(await axe(screen.getByTestId('fixture'))).toHaveNoViolations();
-    vi.useFakeTimers();
-  });
-
-  test('with multiple thumb set up', async () => {
-    await render({
-      components: { Thumb, Slider },
-      template: `
-      <div data-testid="fixture">
-        <Slider>
-          <Thumb />
-          <Thumb />
-        </Slider>
-      </div>
-    `,
-    });
-
-    await flush();
-    vi.useRealTimers();
-    expect(await axe(screen.getByTestId('fixture'))).toHaveNoViolations();
-    vi.useFakeTimers();
-  });
-});
-
 describe('thumb behavior with mouse', () => {
   const Thumb = createThumbComponent({});
   const Slider = createSliderComponent({
@@ -118,7 +118,7 @@ describe('thumb behavior with mouse', () => {
   });
 
   test('can be dragged to set value', async () => {
-    await render({
+    page.render({
       components: { Thumb, Slider },
       template: `
         <Slider>
@@ -127,12 +127,13 @@ describe('thumb behavior with mouse', () => {
     `,
     });
 
-    await fireEvent.mouseDown(screen.getByRole('slider'), { clientX: 0, clientY: 0 });
-    await fireEvent.mouseMove(screen.getByRole('slider'), { clientX: 83, clientY: 0 });
-    await fireEvent.mouseUp(screen.getByRole('slider'));
+    const slider = page.getByRole('slider');
+    await mouseDown(slider, { clientX: 0, clientY: 0, button: 0 });
+    await mouseMove(slider, { clientX: 83, clientY: 0 });
+    await mouseUp(slider);
 
-    expect(screen.getByRole('slider')).toHaveAttribute('aria-valuenow', '83');
-    expect(screen.getByTestId('slider-value')).toHaveTextContent('83');
+    await expect.element(slider).toHaveAttribute('aria-valuenow', '83');
+    await expect.element(page.getByTestId('slider-value')).toHaveTextContent('83');
   });
 
   test('can be dragged to set value in RTL', async () => {
@@ -141,7 +142,7 @@ describe('thumb behavior with mouse', () => {
       dir: 'rtl',
     });
 
-    await render({
+    page.render({
       components: { Thumb, RtlSlider },
       template: `
         <RtlSlider>
@@ -150,16 +151,17 @@ describe('thumb behavior with mouse', () => {
     `,
     });
 
-    await fireEvent.mouseDown(screen.getByRole('slider'), { clientX: 0, clientY: 0 });
-    await fireEvent.mouseMove(screen.getByRole('slider'), { clientX: 17, clientY: 0 });
-    await fireEvent.mouseUp(screen.getByRole('slider'));
+    const slider = page.getByRole('slider');
+    await mouseDown(slider, { clientX: 0, clientY: 0, button: 0 });
+    await mouseMove(slider, { clientX: 17, clientY: 0 });
+    await mouseUp(slider);
 
-    expect(screen.getByRole('slider')).toHaveAttribute('aria-valuenow', '83');
-    expect(screen.getByTestId('slider-value')).toHaveTextContent('83');
+    await expect.element(slider).toHaveAttribute('aria-valuenow', '83');
+    await expect.element(page.getByTestId('slider-value')).toHaveTextContent('83');
   });
 
   test('does not respond to right clicks', async () => {
-    await render({
+    page.render({
       components: { Thumb, Slider },
       template: `
         <Slider>
@@ -168,12 +170,13 @@ describe('thumb behavior with mouse', () => {
     `,
     });
 
-    await fireEvent.mouseDown(screen.getByRole('slider'), { button: 1, clientX: 0, clientY: 0 });
-    await fireEvent.mouseMove(screen.getByRole('slider'), { clientX: 50, clientY: 0 });
-    await fireEvent.mouseUp(screen.getByRole('slider'));
+    const slider = page.getByRole('slider');
+    await mouseDown(slider, { button: 1, clientX: 0, clientY: 0 });
+    await mouseMove(slider, { clientX: 50, clientY: 0 });
+    await mouseUp(slider);
 
-    expect(screen.getByTestId('slider-value')).toHaveTextContent('');
-    expect(screen.getByRole('slider')).toHaveAttribute('aria-valuenow', '0');
+    await expect.element(page.getByTestId('slider-value')).toHaveTextContent('');
+    await expect.element(slider).toHaveAttribute('aria-valuenow', '0');
   });
 
   test('does not respond if slider is disabled', async () => {
@@ -182,7 +185,7 @@ describe('thumb behavior with mouse', () => {
       disabled: true,
     });
 
-    await render({
+    page.render({
       components: { Thumb, DisabledSlider },
       template: `
         <DisabledSlider>
@@ -191,12 +194,13 @@ describe('thumb behavior with mouse', () => {
     `,
     });
 
-    await fireEvent.mouseDown(screen.getByRole('slider'), { button: 1, clientX: 0, clientY: 0 });
-    await fireEvent.mouseMove(screen.getByRole('slider'), { clientX: 50, clientY: 0 });
-    await fireEvent.mouseUp(screen.getByRole('slider'));
+    const slider = page.getByRole('slider');
+    await mouseDown(slider, { button: 1, clientX: 0, clientY: 0 });
+    await mouseMove(slider, { clientX: 50, clientY: 0 });
+    await mouseUp(slider);
 
-    expect(screen.getByTestId('slider-value')).toHaveTextContent('');
-    expect(screen.getByRole('slider')).toHaveAttribute('aria-valuenow', '0');
+    await expect.element(page.getByTestId('slider-value')).toHaveTextContent('');
+    await expect.element(slider).toHaveAttribute('aria-valuenow', '0');
   });
 });
 
@@ -207,7 +211,7 @@ describe('thumb behavior with touch', () => {
   });
 
   test('can be dragged to set value', async () => {
-    await render({
+    page.render({
       components: { Thumb, Slider },
       template: `
         <Slider>
@@ -216,12 +220,13 @@ describe('thumb behavior with touch', () => {
     `,
     });
 
-    await fireEvent.touchStart(screen.getByRole('slider'), { touches: [{ clientX: 0, clientY: 0 }] });
-    await fireEvent.touchMove(screen.getByRole('slider'), { touches: [{ clientX: 83, clientY: 0 }] });
-    await fireEvent.touchEnd(screen.getByRole('slider'));
+    const slider = page.getByRole('slider');
+    await touchStart(slider, [{ clientX: 0, clientY: 0 }]);
+    await touchMove(slider, [{ clientX: 83, clientY: 0 }]);
+    await touchEnd(slider);
 
-    expect(screen.getByRole('slider')).toHaveAttribute('aria-valuenow', '83');
-    expect(screen.getByTestId('slider-value')).toHaveTextContent('83');
+    await expect.element(slider).toHaveAttribute('aria-valuenow', '83');
+    await expect.element(page.getByTestId('slider-value')).toHaveTextContent('83');
   });
 
   test('can be dragged to set value in RTL', async () => {
@@ -230,7 +235,7 @@ describe('thumb behavior with touch', () => {
       dir: 'rtl',
     });
 
-    await render({
+    page.render({
       components: { Thumb, RtlSlider },
       template: `
         <RtlSlider>
@@ -239,16 +244,17 @@ describe('thumb behavior with touch', () => {
     `,
     });
 
-    await fireEvent.touchStart(screen.getByRole('slider'), { touches: [{ clientX: 0, clientY: 0 }] });
-    await fireEvent.touchMove(screen.getByRole('slider'), { touches: [{ clientX: 17, clientY: 0 }] });
-    await fireEvent.touchEnd(screen.getByRole('slider'));
+    const slider = page.getByRole('slider');
+    await touchStart(slider, [{ clientX: 0, clientY: 0 }]);
+    await touchMove(slider, [{ clientX: 17, clientY: 0 }]);
+    await touchEnd(slider);
 
-    expect(screen.getByRole('slider')).toHaveAttribute('aria-valuenow', '83');
-    expect(screen.getByTestId('slider-value')).toHaveTextContent('83');
+    await expect.element(slider).toHaveAttribute('aria-valuenow', '83');
+    await expect.element(page.getByTestId('slider-value')).toHaveTextContent('83');
   });
 
   test('does not respond to multi-touch', async () => {
-    await render({
+    page.render({
       components: { Thumb, Slider },
       template: `
         <Slider>
@@ -257,22 +263,19 @@ describe('thumb behavior with touch', () => {
     `,
     });
 
-    await fireEvent.touchStart(screen.getByRole('slider'), {
-      touches: [
-        { clientX: 0, clientY: 0 },
-        { clientX: 10, clientY: 0 },
-      ],
-    });
-    await fireEvent.touchMove(screen.getByRole('slider'), {
-      touches: [
-        { clientX: 50, clientY: 0 },
-        { clientX: 60, clientY: 0 },
-      ],
-    });
-    await fireEvent.touchEnd(screen.getByRole('slider'));
+    const slider = page.getByRole('slider');
+    await touchStart(slider, [
+      { clientX: 0, clientY: 0 },
+      { clientX: 10, clientY: 0 },
+    ]);
+    await touchMove(slider, [
+      { clientX: 50, clientY: 0 },
+      { clientX: 60, clientY: 0 },
+    ]);
+    await touchEnd(slider);
 
-    expect(screen.getByTestId('slider-value')).toHaveTextContent('');
-    expect(screen.getByRole('slider')).toHaveAttribute('aria-valuenow', '0');
+    await expect.element(page.getByTestId('slider-value')).toHaveTextContent('');
+    await expect.element(slider).toHaveAttribute('aria-valuenow', '0');
   });
 
   test('does not respond if slider is disabled', async () => {
@@ -281,7 +284,7 @@ describe('thumb behavior with touch', () => {
       disabled: true,
     });
 
-    await render({
+    page.render({
       components: { Thumb, DisabledSlider },
       template: `
         <DisabledSlider>
@@ -290,12 +293,13 @@ describe('thumb behavior with touch', () => {
     `,
     });
 
-    await fireEvent.touchStart(screen.getByRole('slider'), { touches: [{ clientX: 0, clientY: 0 }] });
-    await fireEvent.touchMove(screen.getByRole('slider'), { touches: [{ clientX: 50, clientY: 0 }] });
-    await fireEvent.touchEnd(screen.getByRole('slider'));
+    const slider = page.getByRole('slider');
+    await touchStart(slider, [{ clientX: 0, clientY: 0 }]);
+    await touchMove(slider, [{ clientX: 50, clientY: 0 }]);
+    await touchEnd(slider);
 
-    expect(screen.getByTestId('slider-value')).toHaveTextContent('');
-    expect(screen.getByRole('slider')).toHaveAttribute('aria-valuenow', '0');
+    await expect.element(page.getByTestId('slider-value')).toHaveTextContent('');
+    await expect.element(slider).toHaveAttribute('aria-valuenow', '0');
   });
 });
 
@@ -318,7 +322,7 @@ describe('keyboard behavior', () => {
 
   describe('Left/Right Arrows', () => {
     test('Decrases/Increases the value in LTR', async () => {
-      await render({
+      page.render({
         components: { Thumb, Slider },
         template: `
         <Slider>
@@ -327,18 +331,19 @@ describe('keyboard behavior', () => {
     `,
       });
 
-      expect(screen.getByTestId('slider-value')).toHaveTextContent('');
-      expect(screen.getByRole('slider')).toHaveAttribute('aria-valuenow', '0');
-      await fireEvent.keyDown(screen.getByRole('slider'), { code: 'ArrowRight' });
-      expect(screen.getByTestId('slider-value')).toHaveTextContent('2');
-      expect(screen.getByRole('slider')).toHaveAttribute('aria-valuenow', '2');
-      await fireEvent.keyDown(screen.getByRole('slider'), { code: 'ArrowLeft' });
-      expect(screen.getByTestId('slider-value')).toHaveTextContent('0');
-      expect(screen.getByRole('slider')).toHaveAttribute('aria-valuenow', '0');
+      const slider = page.getByRole('slider');
+      await expect.element(page.getByTestId('slider-value')).toHaveTextContent('');
+      await expect.element(slider).toHaveAttribute('aria-valuenow', '0');
+      await keyDown(slider, 'ArrowRight');
+      await expect.element(page.getByTestId('slider-value')).toHaveTextContent('2');
+      await expect.element(slider).toHaveAttribute('aria-valuenow', '2');
+      await keyDown(slider, 'ArrowLeft');
+      await expect.element(page.getByTestId('slider-value')).toHaveTextContent('0');
+      await expect.element(slider).toHaveAttribute('aria-valuenow', '0');
     });
 
     test('Increases/Decreases the value in RTL', async () => {
-      await render({
+      page.render({
         components: { Thumb, RtlSlider },
         template: `
         <RtlSlider>
@@ -347,14 +352,15 @@ describe('keyboard behavior', () => {
     `,
       });
 
-      expect(screen.getByTestId('slider-value')).toHaveTextContent('');
-      expect(screen.getByRole('slider')).toHaveAttribute('aria-valuenow', '0');
-      await fireEvent.keyDown(screen.getByRole('slider'), { code: 'ArrowLeft' });
-      expect(screen.getByTestId('slider-value')).toHaveTextContent('2');
-      expect(screen.getByRole('slider')).toHaveAttribute('aria-valuenow', '2');
-      await fireEvent.keyDown(screen.getByRole('slider'), { code: 'ArrowRight' });
-      expect(screen.getByTestId('slider-value')).toHaveTextContent('0');
-      expect(screen.getByRole('slider')).toHaveAttribute('aria-valuenow', '0');
+      const slider = page.getByRole('slider');
+      await expect.element(page.getByTestId('slider-value')).toHaveTextContent('');
+      await expect.element(slider).toHaveAttribute('aria-valuenow', '0');
+      await keyDown(slider, 'ArrowLeft');
+      await expect.element(page.getByTestId('slider-value')).toHaveTextContent('2');
+      await expect.element(slider).toHaveAttribute('aria-valuenow', '2');
+      await keyDown(slider, 'ArrowRight');
+      await expect.element(page.getByTestId('slider-value')).toHaveTextContent('0');
+      await expect.element(slider).toHaveAttribute('aria-valuenow', '0');
     });
 
     test('does not respond if slider is disabled', async () => {
@@ -363,7 +369,7 @@ describe('keyboard behavior', () => {
         disabled: true,
       });
 
-      await render({
+      page.render({
         components: { Thumb, DisabledSlider },
         template: `
         <DisabledSlider>
@@ -372,17 +378,18 @@ describe('keyboard behavior', () => {
     `,
       });
 
-      expect(screen.getByTestId('slider-value')).toHaveTextContent('');
-      expect(screen.getByRole('slider')).toHaveAttribute('aria-valuenow', '0');
-      await fireEvent.keyDown(screen.getByRole('slider'), { code: 'ArrowRight' });
-      expect(screen.getByTestId('slider-value')).toHaveTextContent('');
-      expect(screen.getByRole('slider')).toHaveAttribute('aria-valuenow', '0');
+      const slider = page.getByRole('slider');
+      await expect.element(page.getByTestId('slider-value')).toHaveTextContent('');
+      await expect.element(slider).toHaveAttribute('aria-valuenow', '0');
+      await keyDown(slider, 'ArrowRight');
+      await expect.element(page.getByTestId('slider-value')).toHaveTextContent('');
+      await expect.element(slider).toHaveAttribute('aria-valuenow', '0');
     });
   });
 
   describe('Up/Down Arrows', () => {
     test('Decrases/Increases the value horizontally', async () => {
-      await render({
+      page.render({
         components: { Thumb, Slider },
         template: `
         <Slider>
@@ -391,18 +398,19 @@ describe('keyboard behavior', () => {
     `,
       });
 
-      expect(screen.getByTestId('slider-value')).toHaveTextContent('');
-      expect(screen.getByRole('slider')).toHaveAttribute('aria-valuenow', '0');
-      await fireEvent.keyDown(screen.getByRole('slider'), { code: 'ArrowUp' });
-      expect(screen.getByTestId('slider-value')).toHaveTextContent('2');
-      expect(screen.getByRole('slider')).toHaveAttribute('aria-valuenow', '2');
-      await fireEvent.keyDown(screen.getByRole('slider'), { code: 'ArrowDown' });
-      expect(screen.getByTestId('slider-value')).toHaveTextContent('0');
-      expect(screen.getByRole('slider')).toHaveAttribute('aria-valuenow', '0');
+      const slider = page.getByRole('slider');
+      await expect.element(page.getByTestId('slider-value')).toHaveTextContent('');
+      await expect.element(slider).toHaveAttribute('aria-valuenow', '0');
+      await keyDown(slider, 'ArrowUp');
+      await expect.element(page.getByTestId('slider-value')).toHaveTextContent('2');
+      await expect.element(slider).toHaveAttribute('aria-valuenow', '2');
+      await keyDown(slider, 'ArrowDown');
+      await expect.element(page.getByTestId('slider-value')).toHaveTextContent('0');
+      await expect.element(slider).toHaveAttribute('aria-valuenow', '0');
     });
 
     test('Decreases/Increases the value vertically', async () => {
-      await render({
+      page.render({
         components: { Thumb, VerticalSlider },
         template: `
         <VerticalSlider>
@@ -411,14 +419,15 @@ describe('keyboard behavior', () => {
     `,
       });
 
-      expect(screen.getByTestId('slider-value')).toHaveTextContent('');
-      expect(screen.getByRole('slider')).toHaveAttribute('aria-valuenow', '0');
-      await fireEvent.keyDown(screen.getByRole('slider'), { code: 'ArrowUp' });
-      expect(screen.getByTestId('slider-value')).toHaveTextContent('2');
-      expect(screen.getByRole('slider')).toHaveAttribute('aria-valuenow', '2');
-      await fireEvent.keyDown(screen.getByRole('slider'), { code: 'ArrowDown' });
-      expect(screen.getByTestId('slider-value')).toHaveTextContent('0');
-      expect(screen.getByRole('slider')).toHaveAttribute('aria-valuenow', '0');
+      const slider = page.getByRole('slider');
+      await expect.element(page.getByTestId('slider-value')).toHaveTextContent('');
+      await expect.element(slider).toHaveAttribute('aria-valuenow', '0');
+      await keyDown(slider, 'ArrowUp');
+      await expect.element(page.getByTestId('slider-value')).toHaveTextContent('2');
+      await expect.element(slider).toHaveAttribute('aria-valuenow', '2');
+      await keyDown(slider, 'ArrowDown');
+      await expect.element(page.getByTestId('slider-value')).toHaveTextContent('0');
+      await expect.element(slider).toHaveAttribute('aria-valuenow', '0');
     });
 
     test('does not respond if slider is disabled', async () => {
@@ -427,7 +436,7 @@ describe('keyboard behavior', () => {
         disabled: true,
       });
 
-      await render({
+      page.render({
         components: { Thumb, DisabledSlider },
         template: `
         <DisabledSlider>
@@ -436,17 +445,18 @@ describe('keyboard behavior', () => {
     `,
       });
 
-      expect(screen.getByTestId('slider-value')).toHaveTextContent('');
-      expect(screen.getByRole('slider')).toHaveAttribute('aria-valuenow', '0');
-      await fireEvent.keyDown(screen.getByRole('slider'), { code: 'ArrowUp' });
-      expect(screen.getByTestId('slider-value')).toHaveTextContent('');
-      expect(screen.getByRole('slider')).toHaveAttribute('aria-valuenow', '0');
+      const slider = page.getByRole('slider');
+      await expect.element(page.getByTestId('slider-value')).toHaveTextContent('');
+      await expect.element(slider).toHaveAttribute('aria-valuenow', '0');
+      await keyDown(slider, 'ArrowUp');
+      await expect.element(page.getByTestId('slider-value')).toHaveTextContent('');
+      await expect.element(slider).toHaveAttribute('aria-valuenow', '0');
     });
   });
 
   describe('Page Up/Down Keys', () => {
     test('Increases/Decreases the value', async () => {
-      await render({
+      page.render({
         components: { Thumb, Slider },
         template: `
         <Slider>
@@ -455,20 +465,21 @@ describe('keyboard behavior', () => {
     `,
       });
 
-      expect(screen.getByTestId('slider-value')).toHaveTextContent('');
-      expect(screen.getByRole('slider')).toHaveAttribute('aria-valuenow', '0');
-      await fireEvent.keyDown(screen.getByRole('slider'), { code: 'PageUp' });
-      expect(screen.getByTestId('slider-value')).toHaveTextContent('100');
-      expect(screen.getByRole('slider')).toHaveAttribute('aria-valuenow', '100');
-      await fireEvent.keyDown(screen.getByRole('slider'), { code: 'PageDown' });
-      expect(screen.getByTestId('slider-value')).toHaveTextContent('0');
-      expect(screen.getByRole('slider')).toHaveAttribute('aria-valuenow', '0');
+      const slider = page.getByRole('slider');
+      await expect.element(page.getByTestId('slider-value')).toHaveTextContent('');
+      await expect.element(slider).toHaveAttribute('aria-valuenow', '0');
+      await keyDown(slider, 'PageUp');
+      await expect.element(page.getByTestId('slider-value')).toHaveTextContent('100');
+      await expect.element(slider).toHaveAttribute('aria-valuenow', '100');
+      await keyDown(slider, 'PageDown');
+      await expect.element(page.getByTestId('slider-value')).toHaveTextContent('0');
+      await expect.element(slider).toHaveAttribute('aria-valuenow', '0');
     });
   });
 
   describe('Home/End Keys', () => {
     test('Increases/Decreases the value', async () => {
-      await render({
+      page.render({
         components: { Thumb, Slider },
         template: `
         <Slider>
@@ -477,14 +488,15 @@ describe('keyboard behavior', () => {
     `,
       });
 
-      expect(screen.getByTestId('slider-value')).toHaveTextContent('');
-      expect(screen.getByRole('slider')).toHaveAttribute('aria-valuenow', '0');
-      await fireEvent.keyDown(screen.getByRole('slider'), { code: 'Home' });
-      expect(screen.getByTestId('slider-value')).toHaveTextContent('100');
-      expect(screen.getByRole('slider')).toHaveAttribute('aria-valuenow', '100');
-      await fireEvent.keyDown(screen.getByRole('slider'), { code: 'End' });
-      expect(screen.getByTestId('slider-value')).toHaveTextContent('0');
-      expect(screen.getByRole('slider')).toHaveAttribute('aria-valuenow', '0');
+      const slider = page.getByRole('slider');
+      await expect.element(page.getByTestId('slider-value')).toHaveTextContent('');
+      await expect.element(slider).toHaveAttribute('aria-valuenow', '0');
+      await keyDown(slider, 'Home');
+      await expect.element(page.getByTestId('slider-value')).toHaveTextContent('100');
+      await expect.element(slider).toHaveAttribute('aria-valuenow', '100');
+      await keyDown(slider, 'End');
+      await expect.element(page.getByTestId('slider-value')).toHaveTextContent('0');
+      await expect.element(slider).toHaveAttribute('aria-valuenow', '0');
     });
   });
 });
@@ -496,7 +508,7 @@ describe('track behavior', () => {
   });
 
   test('clicking the track sets the thumb position and value', async () => {
-    await render({
+    page.render({
       components: { Thumb, Slider },
       template: `
         <Slider>
@@ -505,9 +517,9 @@ describe('track behavior', () => {
     `,
     });
 
-    await fireEvent.mouseDown(screen.getByTestId('track'), { clientX: 50, clientY: 1 });
-    expect(screen.getByTestId('slider-value')).toHaveTextContent('50');
-    expect(screen.getByRole('slider')).toHaveAttribute('aria-valuenow', '50');
+    await mouseDown(page.getByTestId('track'), { clientX: 50, clientY: 1, button: 0 });
+    await expect.element(page.getByTestId('slider-value')).toHaveTextContent('50');
+    await expect.element(page.getByRole('slider')).toHaveAttribute('aria-valuenow', '50');
   });
 
   test('clicking the track sets the nearest thumb position for multi thumb sliders', async () => {
@@ -516,7 +528,7 @@ describe('track behavior', () => {
       modelValue: [0, 50],
     });
 
-    await render({
+    page.render({
       components: { Thumb, MultiSlider },
       template: `
         <MultiSlider>
@@ -526,14 +538,14 @@ describe('track behavior', () => {
     `,
     });
 
-    await fireEvent.mouseDown(screen.getByTestId('track'), { clientX: 80, clientY: 1 });
-    expect(screen.getByTestId('slider-value')).toHaveTextContent('[ 0, 80 ]');
-    const sliders = screen.getAllByRole('slider');
-    expect(sliders[0]).toHaveAttribute('aria-valuenow', '0');
-    expect(sliders[1]).toHaveAttribute('aria-valuenow', '80');
-    await fireEvent.mouseDown(screen.getByTestId('track'), { clientX: 10, clientY: 1 });
-    expect(sliders[0]).toHaveAttribute('aria-valuenow', '10');
-    expect(sliders[1]).toHaveAttribute('aria-valuenow', '80');
+    const sliders = page.getByRole('slider');
+    await mouseDown(page.getByTestId('track'), { clientX: 80, clientY: 1, button: 0 });
+    await expect.element(page.getByTestId('slider-value')).toHaveTextContent('[ 0, 80 ]');
+    await expect.element(sliders.nth(0)).toHaveAttribute('aria-valuenow', '0');
+    await expect.element(sliders.nth(1)).toHaveAttribute('aria-valuenow', '80');
+    await mouseDown(page.getByTestId('track'), { clientX: 10, clientY: 1, button: 0 });
+    await expect.element(sliders.nth(0)).toHaveAttribute('aria-valuenow', '10');
+    await expect.element(sliders.nth(1)).toHaveAttribute('aria-valuenow', '80');
   });
 
   test('does not respond if slider is disabled', async () => {
@@ -542,7 +554,7 @@ describe('track behavior', () => {
       disabled: true,
     });
 
-    await render({
+    page.render({
       components: { Thumb, DisabledSlider },
       template: `
         <DisabledSlider>
@@ -551,9 +563,9 @@ describe('track behavior', () => {
     `,
     });
 
-    await fireEvent.mouseDown(screen.getByTestId('track'), { clientX: 50, clientY: 1 });
-    expect(screen.getByTestId('slider-value')).toHaveTextContent('');
-    expect(screen.getByRole('slider')).toHaveAttribute('aria-valuenow', '0');
+    await mouseDown(page.getByTestId('track'), { clientX: 50, clientY: 1, button: 0 });
+    await expect.element(page.getByTestId('slider-value')).toHaveTextContent('');
+    await expect.element(page.getByRole('slider')).toHaveAttribute('aria-valuenow', '0');
   });
 });
 
@@ -569,7 +581,7 @@ describe('decimal steps', () => {
       modelValue: 0,
     });
 
-    await render({
+    page.render({
       components: { Thumb, DecimalSlider },
       template: `
         <DecimalSlider>
@@ -578,20 +590,21 @@ describe('decimal steps', () => {
       `,
     });
 
-    expect(screen.getByTestId('slider-value')).toHaveTextContent('0');
-    expect(screen.getByRole('slider')).toHaveAttribute('aria-valuenow', '0');
+    const slider = page.getByRole('slider');
+    await expect.element(page.getByTestId('slider-value')).toHaveTextContent('0');
+    await expect.element(slider).toHaveAttribute('aria-valuenow', '0');
 
-    await fireEvent.keyDown(screen.getByRole('slider'), { code: 'ArrowUp' });
-    expect(screen.getByTestId('slider-value')).toHaveTextContent('0.1');
-    expect(screen.getByRole('slider')).toHaveAttribute('aria-valuenow', '0.1');
+    await keyDown(slider, 'ArrowUp');
+    await expect.element(page.getByTestId('slider-value')).toHaveTextContent('0.1');
+    await expect.element(slider).toHaveAttribute('aria-valuenow', '0.1');
 
-    await fireEvent.keyDown(screen.getByRole('slider'), { code: 'ArrowUp' });
-    expect(screen.getByTestId('slider-value')).toHaveTextContent('0.2');
-    expect(screen.getByRole('slider')).toHaveAttribute('aria-valuenow', '0.2');
+    await keyDown(slider, 'ArrowUp');
+    await expect.element(page.getByTestId('slider-value')).toHaveTextContent('0.2');
+    await expect.element(slider).toHaveAttribute('aria-valuenow', '0.2');
 
-    await fireEvent.keyDown(screen.getByRole('slider'), { code: 'ArrowDown' });
-    expect(screen.getByTestId('slider-value')).toHaveTextContent('0.1');
-    expect(screen.getByRole('slider')).toHaveAttribute('aria-valuenow', '0.1');
+    await keyDown(slider, 'ArrowDown');
+    await expect.element(page.getByTestId('slider-value')).toHaveTextContent('0.1');
+    await expect.element(slider).toHaveAttribute('aria-valuenow', '0.1');
   });
 
   test('handles step 1.5 increments correctly', async () => {
@@ -603,7 +616,7 @@ describe('decimal steps', () => {
       modelValue: 0,
     });
 
-    await render({
+    page.render({
       components: { Thumb, DecimalSlider },
       template: `
         <DecimalSlider>
@@ -612,15 +625,16 @@ describe('decimal steps', () => {
       `,
     });
 
-    expect(screen.getByTestId('slider-value')).toHaveTextContent('0');
+    const slider = page.getByRole('slider');
+    await expect.element(page.getByTestId('slider-value')).toHaveTextContent('0');
 
-    await fireEvent.keyDown(screen.getByRole('slider'), { code: 'ArrowUp' });
-    expect(screen.getByTestId('slider-value')).toHaveTextContent('1.5');
-    expect(screen.getByRole('slider')).toHaveAttribute('aria-valuenow', '1.5');
+    await keyDown(slider, 'ArrowUp');
+    await expect.element(page.getByTestId('slider-value')).toHaveTextContent('1.5');
+    await expect.element(slider).toHaveAttribute('aria-valuenow', '1.5');
 
-    await fireEvent.keyDown(screen.getByRole('slider'), { code: 'ArrowUp' });
-    expect(screen.getByTestId('slider-value')).toHaveTextContent('3');
-    expect(screen.getByRole('slider')).toHaveAttribute('aria-valuenow', '3');
+    await keyDown(slider, 'ArrowUp');
+    await expect.element(page.getByTestId('slider-value')).toHaveTextContent('3');
+    await expect.element(slider).toHaveAttribute('aria-valuenow', '3');
   });
 });
 
@@ -634,7 +648,7 @@ describe('discrete steps', () => {
       modelValue: 'low',
     });
 
-    await render({
+    page.render({
       components: { Thumb, DiscreteSlider },
       template: `
         <DiscreteSlider>
@@ -643,16 +657,17 @@ describe('discrete steps', () => {
       `,
     });
 
-    expect(screen.getByTestId('slider-value')).toHaveTextContent('low');
-    expect(screen.getByRole('slider')).toHaveAttribute('aria-valuenow', '0');
+    const slider = page.getByRole('slider');
+    await expect.element(page.getByTestId('slider-value')).toHaveTextContent('low');
+    await expect.element(slider).toHaveAttribute('aria-valuenow', '0');
 
-    await fireEvent.mouseDown(screen.getByTestId('track'), { clientX: 50, clientY: 1 });
-    expect(screen.getByTestId('slider-value')).toHaveTextContent('medium');
-    expect(screen.getByRole('slider')).toHaveAttribute('aria-valuenow', '1');
+    await mouseDown(page.getByTestId('track'), { clientX: 50, clientY: 1, button: 0 });
+    await expect.element(page.getByTestId('slider-value')).toHaveTextContent('medium');
+    await expect.element(slider).toHaveAttribute('aria-valuenow', '1');
 
-    await fireEvent.mouseDown(screen.getByTestId('track'), { clientX: 90, clientY: 1 });
-    expect(screen.getByTestId('slider-value')).toHaveTextContent('high');
-    expect(screen.getByRole('slider')).toHaveAttribute('aria-valuenow', '2');
+    await mouseDown(page.getByTestId('track'), { clientX: 90, clientY: 1, button: 0 });
+    await expect.element(page.getByTestId('slider-value')).toHaveTextContent('high');
+    await expect.element(slider).toHaveAttribute('aria-valuenow', '2');
   });
 
   test('works with multiple thumbs', async () => {
@@ -662,7 +677,7 @@ describe('discrete steps', () => {
       modelValue: ['low', 'high'],
     });
 
-    await render({
+    page.render({
       components: { Thumb, DiscreteMultiSlider },
       template: `
         <DiscreteMultiSlider>
@@ -672,20 +687,20 @@ describe('discrete steps', () => {
       `,
     });
 
-    expect(screen.getByTestId('slider-value')).toHaveTextContent('[ "low", "high" ]');
-    const sliders = screen.getAllByRole('slider');
-    expect(sliders[0]).toHaveAttribute('aria-valuenow', '0');
-    expect(sliders[1]).toHaveAttribute('aria-valuenow', '2');
+    const sliders = page.getByRole('slider');
+    await expect.element(page.getByTestId('slider-value')).toHaveTextContent('[ "low", "high" ]');
+    await expect.element(sliders.nth(0)).toHaveAttribute('aria-valuenow', '0');
+    await expect.element(sliders.nth(1)).toHaveAttribute('aria-valuenow', '2');
 
-    await fireEvent.mouseDown(screen.getByTestId('track'), { clientX: 50, clientY: 1 });
-    expect(screen.getByTestId('slider-value')).toHaveTextContent('[ "medium", "high" ]');
-    expect(sliders[0]).toHaveAttribute('aria-valuenow', '1');
-    expect(sliders[1]).toHaveAttribute('aria-valuenow', '2');
+    await mouseDown(page.getByTestId('track'), { clientX: 50, clientY: 1, button: 0 });
+    await expect.element(page.getByTestId('slider-value')).toHaveTextContent('[ "medium", "high" ]');
+    await expect.element(sliders.nth(0)).toHaveAttribute('aria-valuenow', '1');
+    await expect.element(sliders.nth(1)).toHaveAttribute('aria-valuenow', '2');
 
-    await fireEvent.mouseDown(screen.getByTestId('track'), { clientX: 20, clientY: 1 });
-    expect(screen.getByTestId('slider-value')).toHaveTextContent('[ "low", "high" ]');
-    expect(sliders[0]).toHaveAttribute('aria-valuenow', '0');
-    expect(sliders[1]).toHaveAttribute('aria-valuenow', '2');
+    await mouseDown(page.getByTestId('track'), { clientX: 20, clientY: 1, button: 0 });
+    await expect.element(page.getByTestId('slider-value')).toHaveTextContent('[ "low", "high" ]');
+    await expect.element(sliders.nth(0)).toHaveAttribute('aria-valuenow', '0');
+    await expect.element(sliders.nth(1)).toHaveAttribute('aria-valuenow', '2');
   });
 
   test('value text shows option value by default', async () => {
@@ -697,7 +712,7 @@ describe('discrete steps', () => {
       modelValue: 'low',
     });
 
-    await render({
+    page.render({
       components: { Thumb, DiscreteSlider },
       template: `
         <DiscreteSlider>
@@ -706,9 +721,9 @@ describe('discrete steps', () => {
     `,
     });
 
-    await fireEvent.mouseDown(screen.getByTestId('track'), { clientX: 80, clientY: 1 });
-    expect(screen.getByTestId('slider-value')).toHaveTextContent('high');
-    expect(screen.getByRole('slider')).toHaveAttribute('aria-valuetext', 'high');
+    await mouseDown(page.getByTestId('track'), { clientX: 80, clientY: 1, button: 0 });
+    await expect.element(page.getByTestId('slider-value')).toHaveTextContent('high');
+    await expect.element(page.getByRole('slider')).toHaveAttribute('aria-valuetext', 'high');
   });
 
   test('value text shows formatted value if provided', async () => {
@@ -722,7 +737,7 @@ describe('discrete steps', () => {
       modelValue: 'low',
     });
 
-    await render({
+    page.render({
       components: { Thumb, DiscreteSlider },
       template: `
         <DiscreteSlider>
@@ -731,8 +746,46 @@ describe('discrete steps', () => {
     `,
     });
 
-    await fireEvent.mouseDown(screen.getByTestId('track'), { clientX: 80, clientY: 1 });
-    expect(screen.getByTestId('slider-value')).toHaveTextContent('high');
-    expect(screen.getByRole('slider')).toHaveAttribute('aria-valuetext', 'Priority high');
+    await mouseDown(page.getByTestId('track'), { clientX: 80, clientY: 1, button: 0 });
+    await expect.element(page.getByTestId('slider-value')).toHaveTextContent('high');
+    await expect.element(page.getByRole('slider')).toHaveAttribute('aria-valuetext', 'Priority high');
+  });
+});
+
+describe('a11y', () => {
+  const Thumb = createThumbComponent({});
+  const Slider = createSliderComponent({
+    label: 'Slider',
+  });
+
+  test('with single thumb set up', async () => {
+    page.render({
+      components: { Thumb, Slider },
+      template: `
+        <div data-testid="fixture">
+          <Slider>
+            <Thumb />
+          </Slider>
+        </div>
+      `,
+    });
+
+    await expectNoA11yViolations('[data-testid="fixture"]');
+  });
+
+  test('with multiple thumb set up', async () => {
+    page.render({
+      components: { Thumb, Slider },
+      template: `
+        <div data-testid="fixture">
+          <Slider>
+            <Thumb />
+            <Thumb />
+          </Slider>
+        </div>
+      `,
+    });
+
+    await expectNoA11yViolations('[data-testid="fixture"]');
   });
 });

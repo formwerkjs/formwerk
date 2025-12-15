@@ -1,10 +1,12 @@
-import { fireEvent, render, screen } from '@testing-library/vue';
+import { render } from '@testing-library/vue';
 import { usePopoverController } from './usePopoverController';
 import { nextTick, shallowRef } from 'vue';
+import { page } from 'vitest/browser';
+import { expect } from 'vitest';
 
 // The matches query doesn't seem to be supported
 test.skip('opens/closes the popover when `isOpen` changes', async () => {
-  await render({
+  render({
     setup() {
       const popoverRef = shallowRef<HTMLElement>();
       const { isOpen } = usePopoverController(popoverRef);
@@ -17,11 +19,7 @@ test.skip('opens/closes the popover when `isOpen` changes', async () => {
     template: `<div ref="popoverRef" data-testid="popover" popover>visible</div> <button @click="isOpen = !isOpen">Toggle</button`,
   });
 
-  expect(screen.getByTestId('popover').matches(':popover-open')).toBe(false);
-  await fireEvent.click(screen.getByText('Toggle'));
-  expect(screen.getByTestId('popover').matches(':popover-open')).toBe(true);
-  await fireEvent.click(screen.getByText('Toggle'));
-  expect(screen.getByTestId('popover').matches(':popover-open')).toBe(false);
+  // TODO: migrate this test once :popover-open can be asserted reliably in browser mode.
 });
 
 const createEvent = (state: boolean) => {
@@ -32,7 +30,7 @@ const createEvent = (state: boolean) => {
 };
 
 test('Syncs isOpen when the toggle event is fired', async () => {
-  await render({
+  render({
     setup() {
       const popoverRef = shallowRef<HTMLElement>();
       const { isOpen } = usePopoverController(popoverRef);
@@ -48,17 +46,17 @@ test('Syncs isOpen when the toggle event is fired', async () => {
     `,
   });
 
-  expect(screen.getByTestId('state')).toHaveTextContent('false');
-  await fireEvent(screen.getByTestId('popover'), createEvent(true));
+  await expect.element(page.getByTestId('state')).toHaveTextContent('false');
+  ((await page.getByTestId('popover').element()) as HTMLElement).dispatchEvent(createEvent(true));
   await nextTick();
-  expect(screen.getByTestId('state')).toHaveTextContent('true');
-  await fireEvent(screen.getByTestId('popover'), createEvent(false));
+  await expect.element(page.getByTestId('state')).toHaveTextContent('true');
+  ((await page.getByTestId('popover').element()) as HTMLElement).dispatchEvent(createEvent(false));
   await nextTick();
-  expect(screen.getByTestId('state')).toHaveTextContent('false');
+  await expect.element(page.getByTestId('state')).toHaveTextContent('false');
 });
 
 test('No ops if state match', async () => {
-  await render({
+  render({
     setup() {
       const popoverRef = shallowRef<HTMLElement>();
       const { isOpen } = usePopoverController(popoverRef);
@@ -74,8 +72,8 @@ test('No ops if state match', async () => {
     `,
   });
 
-  expect(screen.getByTestId('state')).toHaveTextContent('false');
-  await fireEvent(screen.getByTestId('popover'), createEvent(false));
+  await expect.element(page.getByTestId('state')).toHaveTextContent('false');
+  ((await page.getByTestId('popover').element()) as HTMLElement).dispatchEvent(createEvent(false));
   await nextTick();
-  expect(screen.getByTestId('state')).toHaveTextContent('false');
+  await expect.element(page.getByTestId('state')).toHaveTextContent('false');
 });

@@ -18,7 +18,7 @@
       "@test-utils/*": ["packages/test-utils/src/*"],
       "@devtools/*": ["packages/devtools/src/*"]
     },
-    "types": ["vitest/globals"],
+    "types": ["vitest/globals", "vitest-browser-vue"],
     "typeRoots": ["node_modules/@types", "node_modules"]
   },
   "include": [

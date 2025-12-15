@@ -1,4 +1,5 @@
 import { defineConfig, configDefaults } from 'vitest/config';
+import { playwright } from '@vitest/browser-playwright';
 import tsconfigPaths from 'vite-tsconfig-paths';
 
 export default defineConfig({
@@ -8,10 +9,14 @@ export default defineConfig({
     }),
   ],
   test: {
-    setupFiles: ['./vitest.setup.ts'],
-    environment: 'jsdom',
+    browser: {
+      enabled: true,
+      provider: playwright(),
+      instances: [{ browser: 'chromium' }],
+    },
+    setupFiles: ['./vitest.setup.browser.ts'],
     globals: true,
-    exclude: ['docs/*', ...configDefaults.exclude],
+    exclude: ['**/*.node.spec.ts', 'docs/*', ...configDefaults.exclude],
     coverage: {
       provider: 'v8',
       reporter: ['html', 'json'],
@@ -33,5 +38,8 @@ export default defineConfig({
   define: {
     __DEV__: JSON.stringify(true),
     __VERSION__: JSON.stringify('1.0.0'),
+    __VUE_OPTIONS_API__: JSON.stringify(true),
+    __VUE_PROD_DEVTOOLS__: JSON.stringify(false),
+    __VUE_PROD_HYDRATION_MISMATCH_DETAILS__: JSON.stringify(false),
   },
 });

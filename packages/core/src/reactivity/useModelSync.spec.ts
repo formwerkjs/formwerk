@@ -5,7 +5,7 @@ import { nextTick, ref } from 'vue';
 test('emits model update event when model changes', async () => {
   const model = ref('value');
 
-  const result = await render({
+  const result = render({
     template: `<div></div>`,
     setup() {
       useSyncModel({
@@ -37,7 +37,7 @@ test('calls model callback when prop changes', async () => {
     },
   };
 
-  await render({
+  render({
     setup() {
       return {
         model,

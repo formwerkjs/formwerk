@@ -1,10 +1,33 @@
 import { defineComponent, Ref } from 'vue';
 import { useSelect } from './useSelect';
 import { useOption } from '../useOption';
-import { fireEvent, render, screen } from '@testing-library/vue';
-import { axe } from 'vitest-axe';
-import { flush } from '@test-utils/index';
 import { useOptionGroup } from '../useOptionGroup';
+import { page } from 'vitest/browser';
+import { isMac } from '../utils/platform';
+import { expectNoA11yViolations } from '@test-utils/index';
+
+const sleep = (ms: number) => new Promise<void>(resolve => setTimeout(resolve, ms));
+
+function windowKeyDown(init: KeyboardEventInit & { code?: string }) {
+  window.dispatchEvent(new KeyboardEvent('keydown', init));
+}
+
+function windowKeyUp(init: KeyboardEventInit & { code?: string }) {
+  window.dispatchEvent(new KeyboardEvent('keyup', init));
+}
+
+async function keyDown(target: ReturnType<typeof page.getByRole>, init: KeyboardEventInit & { code?: string }) {
+  (await target.element()).dispatchEvent(new KeyboardEvent('keydown', { bubbles: true, ...init }));
+}
+
+async function click(target: ReturnType<typeof page.getByRole>, init?: MouseEventInit) {
+  if (init) {
+    (await target.element()).dispatchEvent(new MouseEvent('click', { bubbles: true, ...init }));
+    return;
+  }
+
+  (await target.element()).click();
+}
 
 function createSelect() {
   const Option = defineComponent({
@@ -143,12 +166,410 @@ function createSelect() {
 }
 
 function getSelect() {
-  return screen.getByRole('combobox');
+  return page.getByRole('combobox');
 }
 
-describe('should not have a11y errors', () => {
+describe('keyboard features for a single select', () => {
+  async function renderSelect(opts?: { label: string; disabled?: boolean }[]) {
+    page.render({
+      components: {
+        MySelect: createSelect(),
+      },
+      setup() {
+        const options = opts || [{ label: 'One' }, { label: 'Two' }, { label: 'Three' }];
+
+        return { options };
+      },
+      template: `
+        <div data-testid="fixture">
+          <MySelect label="Field" :options="options" />
+        </div>
+      `,
+    });
+
+    return {
+      async open() {
+        await keyDown(getSelect(), { code: 'Space' });
+        await expect.element(getSelect()).toHaveAttribute('aria-expanded', 'true');
+      },
+    };
+  }
+
+  test('Pressing space should open the listbox and have focus on first option', async () => {
+    renderSelect();
+
+    await keyDown(getSelect(), { code: 'Space' });
+    await expect.element(getSelect()).toHaveAttribute('aria-expanded', 'true');
+    await expect.element(page.getByRole('option').nth(0)).toHaveFocus();
+  });
+
+  test('Pressing Enter should open the listbox and have focus on first option', async () => {
+    renderSelect();
+
+    await keyDown(getSelect(), { code: 'Enter' });
+    await expect.element(getSelect()).toHaveAttribute('aria-expanded', 'true');
+    await expect.element(page.getByRole('option').nth(0)).toHaveFocus();
+  });
+
+  test('Clicking the trigger should open the listbox and have focus on first option', async () => {
+    renderSelect();
+
+    await click(getSelect());
+    await expect.element(getSelect()).toHaveAttribute('aria-expanded', 'true');
+    await expect.element(page.getByRole('option').nth(0)).toHaveFocus();
+  });
+
+  test('Pressing ArrowDown should Move focus through the options and stays at the bottom', async () => {
+    (await renderSelect()).open();
+
+    const listbox = page.getByRole('listbox');
+    await keyDown(listbox, { code: 'ArrowDown' });
+    await expect.element(page.getByRole('option').nth(1)).toHaveFocus();
+    await keyDown(listbox, { code: 'ArrowDown' });
+    await expect.element(page.getByRole('option').nth(2)).toHaveFocus();
+    await keyDown(listbox, { code: 'ArrowDown' });
+    await expect.element(page.getByRole('option').nth(2)).toHaveFocus();
+  });
+
+  test('Pressing End should Move focus to the last option', async () => {
+    (await renderSelect()).open();
+    const listbox = page.getByRole('listbox');
+
+    await keyDown(listbox, { code: 'End' });
+    await expect.element(page.getByRole('option').nth(2)).toHaveFocus();
+  });
+
+  test('Pressing Home should Move focus to the first option', async () => {
+    (await renderSelect()).open();
+    const listbox = page.getByRole('listbox');
+
+    await keyDown(listbox, { code: 'End' });
+    await expect.element(page.getByRole('option').nth(2)).toHaveFocus();
+    await keyDown(listbox, { code: 'Home' });
+    await expect.element(page.getByRole('option').nth(0)).toHaveFocus();
+  });
+
+  test('Pressing PageUp should Move focus to the first option', async () => {
+    (await renderSelect()).open();
+    const listbox = page.getByRole('listbox');
+
+    await keyDown(listbox, { code: 'End' });
+    await expect.element(page.getByRole('option').nth(2)).toHaveFocus();
+    await keyDown(listbox, { code: 'PageUp' });
+    await expect.element(page.getByRole('option').nth(0)).toHaveFocus();
+  });
+
+  test('Pressing PageDown should Move focus to the first option', async () => {
+    (await renderSelect()).open();
+    const listbox = page.getByRole('listbox');
+
+    await keyDown(listbox, { code: 'PageDown' });
+    await expect.element(page.getByRole('option').nth(2)).toHaveFocus();
+  });
+
+  test('Pressing ArrowUp should Move focus through the options backwards and stays at the top', async () => {
+    (await renderSelect()).open();
+    const listbox = page.getByRole('listbox');
+
+    await keyDown(listbox, { code: 'End' });
+    await expect.element(page.getByRole('option').nth(2)).toHaveFocus();
+    await keyDown(listbox, { code: 'ArrowUp' });
+    await expect.element(page.getByRole('option').nth(1)).toHaveFocus();
+    await keyDown(listbox, { code: 'ArrowUp' });
+    await expect.element(page.getByRole('option').nth(0)).toHaveFocus();
+    await keyDown(listbox, { code: 'ArrowUp' });
+    await expect.element(page.getByRole('option').nth(0)).toHaveFocus();
+  });
+
+  test('tabbing should close the listbox', async () => {
+    (await renderSelect()).open();
+    const listbox = page.getByRole('listbox');
+
+    await expect.element(getSelect()).toHaveAttribute('aria-expanded', 'true');
+    await keyDown(listbox, { code: 'Tab' });
+    await expect.element(getSelect()).toHaveAttribute('aria-expanded', 'false');
+  });
+
+  test('Finds most suitable option when typing', async () => {
+    const renderedSelect = renderSelect([{ label: 'Egypt' }, { label: 'Estonia' }, { label: 'Ethiopia' }]);
+    renderedSelect.open();
+
+    const listbox = page.getByRole('listbox');
+    await keyDown(listbox, { key: 'E' });
+    await keyDown(listbox, { key: 'T' });
+    await expect.element(page.getByRole('option').nth(2)).toHaveFocus();
+    await sleep(1000);
+    await keyDown(listbox, { key: 'E' });
+    await keyDown(listbox, { key: 'S' });
+    await expect.element(page.getByRole('option').nth(1)).toHaveFocus();
+  });
+
+  test('Pressing Space should select the focused option', async () => {
+    (await renderSelect()).open();
+
+    const option = page.getByRole('option').nth(1);
+    await keyDown(option, { code: 'Space' });
+    await expect.element(getSelect()).toHaveTextContent('Two');
+  });
+
+  test('Pressing Space on a disabled option should not select it', async () => {
+    await renderSelect([{ label: 'One' }, { label: 'Two', disabled: true }, { label: 'Three' }]).open();
+
+    const option = page.getByRole('option').nth(1);
+    await keyDown(option, { code: 'Space' });
+    await expect.element(getSelect()).toHaveTextContent('Select here');
+  });
+
+  test('Pressing Enter should select the focused option', async () => {
+    (await renderSelect()).open();
+
+    const option = page.getByRole('option').nth(1);
+    await keyDown(option, { code: 'Enter' });
+    await expect.element(getSelect()).toHaveTextContent('Two');
+  });
+
+  test('Pressing Enter on a disabled option should not select it', async () => {
+    await renderSelect([{ label: 'One' }, { label: 'Two', disabled: true }, { label: 'Three' }]).open();
+
+    const option = page.getByRole('option').nth(1);
+    await keyDown(option, { code: 'Enter' });
+    await expect.element(getSelect()).toHaveTextContent('Select here');
+  });
+
+  test('Clicking should select the clicked option', async () => {
+    (await renderSelect()).open();
+
+    const option = page.getByRole('option').nth(2);
+    await click(option);
+    await expect.element(getSelect()).toHaveTextContent('Three');
+  });
+
+  test('Clicking a disabled option should not select the clicked option', async () => {
+    await renderSelect([{ label: 'One' }, { label: 'Two', disabled: true }, { label: 'Three' }]).open();
+
+    const option = page.getByRole('option').nth(1);
+    await click(option);
+    await expect.element(getSelect()).toHaveTextContent('Select here');
+  });
+});
+
+describe('keyboard features for a multi select', () => {
+  async function renderSelect(opts?: { label: string; disabled?: boolean }[]) {
+    page.render({
+      components: {
+        MySelect: createSelect(),
+      },
+      setup() {
+        const options = opts || [{ label: 'One' }, { label: 'Two' }, { label: 'Three' }];
+
+        return { options };
+      },
+      template: `
+        <div data-testid="fixture">
+          <MySelect label="Field" :multiple="true" :options="options" />
+        </div>
+      `,
+    });
+
+    return {
+      async open() {
+        await keyDown(getSelect(), { code: 'Space' });
+        await expect.element(getSelect()).toHaveAttribute('aria-expanded', 'true');
+      },
+    };
+  }
+
+  test('Shift + ArrowDown should select the next option', async () => {
+    (await renderSelect()).open();
+
+    const listbox = page.getByRole('listbox');
+    windowKeyDown({ code: 'ShiftLeft' });
+    await keyDown(listbox, { code: 'ArrowDown', shiftKey: true });
+    await expect.element(page.getByRole('option').nth(0)).toHaveAttribute('aria-checked', 'true');
+    await expect.element(page.getByRole('option').nth(1)).toHaveAttribute('aria-checked', 'true');
+    windowKeyUp({ code: 'ShiftLeft' });
+  });
+
+  test('Shift + ArrowUp should select the previous option', async () => {
+    (await renderSelect()).open();
+
+    const listbox = page.getByRole('listbox');
+    await keyDown(listbox, { code: 'End' });
+    windowKeyDown({ code: 'ShiftLeft' });
+    await keyDown(listbox, { code: 'ArrowUp', shiftKey: true });
+    await expect.element(page.getByRole('option').nth(1)).toHaveAttribute('aria-checked', 'true');
+    await expect.element(page.getByRole('option').nth(2)).toHaveAttribute('aria-checked', 'false');
+    windowKeyUp({ code: 'ShiftLeft' });
+  });
+
+  test('Shift + Home should select all options from the first to the toggled option', async () => {
+    (await renderSelect()).open();
+
+    const listbox = page.getByRole('listbox');
+    await keyDown(listbox, { code: 'ArrowDown' });
+    windowKeyDown({ code: 'ShiftLeft' });
+    await keyDown(listbox, { code: 'Home' });
+    await expect.element(page.getByRole('option').nth(0)).toHaveAttribute('aria-checked', 'true');
+    await expect.element(page.getByRole('option').nth(1)).toHaveAttribute('aria-checked', 'true');
+    windowKeyUp({ code: 'ShiftLeft' });
+  });
+
+  test('Shift + PageUp should select all options from the first to the toggled option', async () => {
+    (await renderSelect()).open();
+
+    const listbox = page.getByRole('listbox');
+    await keyDown(listbox, { code: 'ArrowDown' });
+    windowKeyDown({ code: 'ShiftLeft' });
+    await keyDown(listbox, { code: 'PageUp' });
+    await expect.element(page.getByRole('option').nth(0)).toHaveAttribute('aria-checked', 'true');
+    await expect.element(page.getByRole('option').nth(1)).toHaveAttribute('aria-checked', 'true');
+    windowKeyUp({ code: 'ShiftLeft' });
+  });
+
+  test('Shift + End should select all options from the first to the toggled option', async () => {
+    (await renderSelect()).open();
+
+    const listbox = page.getByRole('listbox');
+    await keyDown(listbox, { code: 'ArrowDown' });
+    windowKeyDown({ code: 'ShiftLeft' });
+    await keyDown(listbox, { code: 'End' });
+    await expect.element(page.getByRole('option').nth(1)).toHaveAttribute('aria-checked', 'true');
+    await expect.element(page.getByRole('option').nth(2)).toHaveAttribute('aria-checked', 'true');
+    windowKeyUp({ code: 'ShiftLeft' });
+  });
+
+  test('Shift + PageDown should select all options from the first to the toggled option', async () => {
+    (await renderSelect()).open();
+
+    const listbox = page.getByRole('listbox');
+    await keyDown(listbox, { code: 'ArrowDown' });
+    windowKeyDown({ code: 'ShiftLeft' });
+    await keyDown(listbox, { code: 'PageDown' });
+    await expect.element(page.getByRole('option').nth(1)).toHaveAttribute('aria-checked', 'true');
+    await expect.element(page.getByRole('option').nth(2)).toHaveAttribute('aria-checked', 'true');
+    windowKeyUp({ code: 'ShiftLeft' });
+  });
+
+  test('Control + A should select all options', async () => {
+    (await renderSelect()).open();
+
+    const listbox = page.getByRole('listbox');
+    const modifier = isMac() ? 'MetaLeft' : 'ControlLeft';
+    windowKeyDown({ code: modifier });
+    await keyDown(listbox, { code: 'KeyA' });
+    await expect.element(page.getByRole('option').nth(0)).toHaveAttribute('aria-checked', 'true');
+    await expect.element(page.getByRole('option').nth(1)).toHaveAttribute('aria-checked', 'true');
+    await expect.element(page.getByRole('option').nth(2)).toHaveAttribute('aria-checked', 'true');
+
+    await keyDown(listbox, { code: 'KeyA' });
+    await expect.element(page.getByRole('option').nth(0)).toHaveAttribute('aria-checked', 'false');
+    await expect.element(page.getByRole('option').nth(1)).toHaveAttribute('aria-checked', 'false');
+    await expect.element(page.getByRole('option').nth(2)).toHaveAttribute('aria-checked', 'false');
+    windowKeyUp({ code: modifier });
+  });
+
+  test('Click + Shift should do a contiguous selection', async () => {
+    await renderSelect([
+      { label: 'One' },
+      { label: 'Two' },
+      { label: 'Three' },
+      { label: 'Four' },
+      { label: 'Five' },
+    ]).open();
+
+    const option2 = page.getByRole('option').nth(2);
+    const option4 = page.getByRole('option').nth(4);
+
+    await click(option2);
+    windowKeyDown({ code: 'ShiftLeft' });
+    await click(option4);
+
+    await expect.element(page.getByRole('option').nth(0)).toHaveAttribute('aria-checked', 'false');
+    await expect.element(page.getByRole('option').nth(1)).toHaveAttribute('aria-checked', 'false');
+    await expect.element(page.getByRole('option').nth(2)).toHaveAttribute('aria-checked', 'true');
+    await expect.element(page.getByRole('option').nth(3)).toHaveAttribute('aria-checked', 'true');
+    await expect.element(page.getByRole('option').nth(4)).toHaveAttribute('aria-checked', 'true');
+    windowKeyUp({ code: 'ShiftLeft' });
+  });
+});
+
+describe('selection state', () => {
+  async function renderSelect(select: any, opts?: { label: string; disabled?: boolean }[]) {
+    page.render({
+      components: {
+        MySelect: select,
+      },
+      setup() {
+        const options = opts || [{ label: 'One' }, { label: 'Two' }, { label: 'Three' }];
+
+        return { options };
+      },
+      template: `
+        <div data-testid="fixture">
+          <MySelect label="Field" :multiple="true" :options="options" />
+        </div>
+      `,
+    });
+
+    return {
+      async open() {
+        await keyDown(getSelect(), { code: 'Space' });
+        await expect.element(getSelect()).toHaveAttribute('aria-expanded', 'true');
+      },
+      async select(index: number) {
+        await click(page.getByRole('option').nth(index));
+      },
+    };
+  }
+
+  test('selectedOption should reflect the currently selected option in single select', async () => {
+    const MySelect = createSelect();
+    const options = [{ label: 'One' }, { label: 'Two' }, { label: 'Three' }];
+
+    const sl = renderSelect(MySelect, options);
+    await sl.open();
+    await sl.select(1);
+
+    await expect
+      .poll(() => MySelect.getExposedState().selectedOption)
+      .toEqual({
+        id: expect.any(String),
+        label: 'Two',
+        value: { label: 'Two' },
+      });
+  });
+
+  test('selectedOptions should reflect all selected options in multi select', async () => {
+    const MySelect = createSelect();
+    const options = [{ label: 'One' }, { label: 'Two' }, { label: 'Three' }];
+
+    const sl = renderSelect(MySelect, options);
+
+    // Select first and third options
+    await sl.open();
+    await sl.select(0);
+    await sl.select(2);
+
+    await expect
+      .poll(() => MySelect.getExposedState().selectedOptions)
+      .toEqual([
+        {
+          id: expect.any(String),
+          label: 'One',
+          value: { label: 'One' },
+        },
+        {
+          id: expect.any(String),
+          label: 'Three',
+          value: { label: 'Three' },
+        },
+      ]);
+  });
+});
+
+describe('a11y', () => {
   test('with options', async () => {
-    await render({
+    page.render({
       components: {
         MySelect: createSelect(),
       },
@@ -164,14 +585,11 @@ describe('should not have a11y errors', () => {
       `,
     });
 
-    await flush();
-    vi.useRealTimers();
-    expect(await axe(screen.getByTestId('fixture'))).toHaveNoViolations();
-    vi.useFakeTimers();
+    await expectNoA11yViolations('[data-testid="fixture"]');
   });
 
   test('with groups', async () => {
-    await render({
+    page.render({
       components: {
         MySelect: createSelect(),
       },
@@ -193,423 +611,9 @@ describe('should not have a11y errors', () => {
         <div data-testid="fixture">
           <MySelect label="Field" :groups="groups" />
         </div>
-        `,
-    });
-
-    await flush();
-    vi.useRealTimers();
-    expect(await axe(screen.getByTestId('fixture'))).toHaveNoViolations();
-    vi.useFakeTimers();
-  });
-});
-
-describe('keyboard features for a single select', () => {
-  async function renderSelect(opts?: { label: string; disabled?: boolean }[]) {
-    await render({
-      components: {
-        MySelect: createSelect(),
-      },
-      setup() {
-        const options = opts || [{ label: 'One' }, { label: 'Two' }, { label: 'Three' }];
-
-        return { options };
-      },
-      template: `
-        <div data-testid="fixture">
-          <MySelect label="Field" :options="options" />
-        </div>
       `,
     });
 
-    return {
-      async open() {
-        await fireEvent.keyDown(getSelect(), { code: 'Space' });
-        await flush();
-      },
-    };
-  }
-
-  test('Pressing space should open the listbox and have focus on first option', async () => {
-    await renderSelect();
-
-    await fireEvent.keyDown(getSelect(), { code: 'Space' });
-    await flush();
-    expect(getSelect()).toHaveAttribute('aria-expanded', 'true');
-    expect(screen.getAllByRole('option')[0]).toHaveFocus();
-  });
-
-  test('Pressing Enter should open the listbox and have focus on first option', async () => {
-    await renderSelect();
-
-    await fireEvent.keyDown(getSelect(), { code: 'Enter' });
-    await flush();
-    expect(getSelect()).toHaveAttribute('aria-expanded', 'true');
-    expect(screen.getAllByRole('option')[0]).toHaveFocus();
-  });
-
-  test('Clicking the trigger should open the listbox and have focus on first option', async () => {
-    await renderSelect();
-
-    await fireEvent.click(getSelect());
-    await flush();
-    expect(getSelect()).toHaveAttribute('aria-expanded', 'true');
-    expect(screen.getAllByRole('option')[0]).toHaveFocus();
-  });
-
-  test('Pressing ArrowDown should Move focus through the options and stays at the bottom', async () => {
-    await (await renderSelect()).open();
-
-    const listbox = screen.getByRole('listbox');
-    await fireEvent.keyDown(listbox, { code: 'ArrowDown' });
-    await flush();
-    expect(screen.getAllByRole('option')[1]).toHaveFocus();
-    await fireEvent.keyDown(listbox, { code: 'ArrowDown' });
-    await flush();
-    expect(screen.getAllByRole('option')[2]).toHaveFocus();
-    await fireEvent.keyDown(listbox, { code: 'ArrowDown' });
-    await flush();
-    expect(screen.getAllByRole('option')[2]).toHaveFocus();
-  });
-
-  test('Pressing End should Move focus to the last option', async () => {
-    await (await renderSelect()).open();
-    const listbox = screen.getByRole('listbox');
-
-    await fireEvent.keyDown(listbox, { code: 'End' });
-    await flush();
-    expect(screen.getAllByRole('option')[2]).toHaveFocus();
-  });
-
-  test('Pressing Home should Move focus to the first option', async () => {
-    await (await renderSelect()).open();
-    const listbox = screen.getByRole('listbox');
-
-    await fireEvent.keyDown(listbox, { code: 'End' });
-    await flush();
-    expect(screen.getAllByRole('option')[2]).toHaveFocus();
-    await fireEvent.keyDown(listbox, { code: 'Home' });
-    await flush();
-    expect(screen.getAllByRole('option')[0]).toHaveFocus();
-  });
-
-  test('Pressing PageUp should Move focus to the first option', async () => {
-    await (await renderSelect()).open();
-    const listbox = screen.getByRole('listbox');
-
-    await fireEvent.keyDown(listbox, { code: 'End' });
-    await flush();
-    expect(screen.getAllByRole('option')[2]).toHaveFocus();
-    await fireEvent.keyDown(listbox, { code: 'PageUp' });
-    await flush();
-    expect(screen.getAllByRole('option')[0]).toHaveFocus();
-  });
-
-  test('Pressing PageDown should Move focus to the first option', async () => {
-    await (await renderSelect()).open();
-    const listbox = screen.getByRole('listbox');
-
-    await fireEvent.keyDown(listbox, { code: 'PageDown' });
-    await flush();
-    expect(screen.getAllByRole('option')[2]).toHaveFocus();
-  });
-
-  test('Pressing ArrowUp should Move focus through the options backwards and stays at the top', async () => {
-    await (await renderSelect()).open();
-    const listbox = screen.getByRole('listbox');
-
-    await fireEvent.keyDown(listbox, { code: 'End' });
-    await flush();
-    await fireEvent.keyDown(listbox, { code: 'ArrowUp' });
-    await flush();
-    expect(screen.getAllByRole('option')[1]).toHaveFocus();
-    await fireEvent.keyDown(listbox, { code: 'ArrowUp' });
-    await flush();
-    expect(screen.getAllByRole('option')[0]).toHaveFocus();
-    await fireEvent.keyDown(listbox, { code: 'ArrowUp' });
-    await flush();
-    expect(screen.getAllByRole('option')[0]).toHaveFocus();
-  });
-
-  test('tabbing should close the listbox', async () => {
-    await (await renderSelect()).open();
-    const listbox = screen.getByRole('listbox');
-
-    expect(getSelect()).toHaveAttribute('aria-expanded', 'true');
-    await fireEvent.keyDown(listbox, { code: 'Tab' });
-    await flush();
-    expect(getSelect()).toHaveAttribute('aria-expanded', 'false');
-  });
-
-  test('Finds most suitable option when typing', async () => {
-    const renderedSelect = await renderSelect([{ label: 'Egypt' }, { label: 'Estonia' }, { label: 'Ethiopia' }]);
-    await renderedSelect.open();
-
-    const listbox = screen.getByRole('listbox');
-    await fireEvent.keyDown(listbox, { key: 'E' });
-    await fireEvent.keyDown(listbox, { key: 'T' });
-    await flush();
-    expect(screen.getAllByRole('option')[2]).toHaveFocus();
-    await vi.advanceTimersByTime(1000);
-    await fireEvent.keyDown(listbox, { key: 'E' });
-    await fireEvent.keyDown(listbox, { key: 'S' });
-    expect(screen.getAllByRole('option')[1]).toHaveFocus();
-  });
-
-  test('Pressing Space should select the focused option', async () => {
-    await (await renderSelect()).open();
-
-    await fireEvent.keyDown(screen.getAllByRole('option')[1], { code: 'Space' });
-    await flush();
-    expect(screen.getAllByRole('option')[1]).toHaveAttribute('aria-selected', 'true');
-  });
-
-  test('Pressing Space on a disabled option should not select it', async () => {
-    await (await renderSelect([{ label: 'One' }, { label: 'Two', disabled: true }, { label: 'Three' }])).open();
-
-    await fireEvent.keyDown(screen.getAllByRole('option')[1], { code: 'Space' });
-    await flush();
-    expect(screen.getAllByRole('option')[1]).toHaveAttribute('aria-selected', 'false');
-  });
-
-  test('Pressing Enter should select the focused option', async () => {
-    await (await renderSelect()).open();
-
-    await fireEvent.keyDown(screen.getAllByRole('option')[1], { code: 'Enter' });
-    await flush();
-    expect(screen.getAllByRole('option')[1]).toHaveAttribute('aria-selected', 'true');
-  });
-
-  test('Pressing Enter on a disabled option should not select it', async () => {
-    await (await renderSelect([{ label: 'One' }, { label: 'Two', disabled: true }, { label: 'Three' }])).open();
-
-    await fireEvent.keyDown(screen.getAllByRole('option')[1], { code: 'Enter' });
-    await flush();
-    expect(screen.getAllByRole('option')[1]).toHaveAttribute('aria-selected', 'false');
-  });
-
-  test('Clicking should select the clicked option', async () => {
-    await (await renderSelect()).open();
-
-    await fireEvent.click(screen.getAllByRole('option')[2]);
-    await flush();
-    expect(screen.getAllByRole('option')[2]).toHaveAttribute('aria-selected', 'true');
-  });
-
-  test('Clicking a disabled option should not select the clicked option', async () => {
-    await (await renderSelect([{ label: 'One' }, { label: 'Two', disabled: true }, { label: 'Three' }])).open();
-
-    await fireEvent.click(screen.getAllByRole('option')[1]);
-    await flush();
-    expect(screen.getAllByRole('option')[1]).toHaveAttribute('aria-selected', 'false');
-  });
-});
-
-describe('keyboard features for a multi select', () => {
-  async function renderSelect(opts?: { label: string; disabled?: boolean }[]) {
-    await render({
-      components: {
-        MySelect: createSelect(),
-      },
-      setup() {
-        const options = opts || [{ label: 'One' }, { label: 'Two' }, { label: 'Three' }];
-
-        return { options };
-      },
-      template: `
-        <div data-testid="fixture">
-          <MySelect label="Field" :multiple="true" :options="options" />
-        </div>
-      `,
-    });
-
-    return {
-      async open() {
-        await fireEvent.keyDown(getSelect(), { code: 'Space' });
-        await flush();
-      },
-    };
-  }
-
-  test('Shift + ArrowDown should select the next option', async () => {
-    await (await renderSelect()).open();
-
-    const listbox = screen.getByRole('listbox');
-    await fireEvent.keyDown(listbox, { code: 'ShiftLeft' });
-    await fireEvent.keyDown(listbox, { code: 'ArrowDown', shiftKey: true });
-    await flush();
-    expect(screen.getAllByRole('option')[0]).toBeChecked();
-    expect(screen.getAllByRole('option')[1]).toBeChecked();
-  });
-
-  test('Shift + ArrowUp should select the previous option', async () => {
-    await (await renderSelect()).open();
-
-    const listbox = screen.getByRole('listbox');
-    await fireEvent.keyDown(listbox, { code: 'End' });
-    await fireEvent.keyDown(listbox, { code: 'ShiftLeft' });
-    await fireEvent.keyDown(listbox, { code: 'ArrowUp' });
-    await flush();
-    expect(screen.getAllByRole('option')[1]).toBeChecked();
-    expect(screen.getAllByRole('option')[2]).not.toBeChecked();
-  });
-
-  test('Shift + Home should select all options from the first to the toggled option', async () => {
-    await (await renderSelect()).open();
-
-    const listbox = screen.getByRole('listbox');
-    await fireEvent.keyDown(listbox, { code: 'ArrowDown' });
-    await fireEvent.keyDown(listbox, { code: 'ShiftLeft' });
-    await fireEvent.keyDown(listbox, { code: 'Home' });
-    await flush();
-    expect(screen.getAllByRole('option')[0]).toBeChecked();
-    expect(screen.getAllByRole('option')[1]).toBeChecked();
-  });
-
-  test('Shift + PageUp should select all options from the first to the toggled option', async () => {
-    await (await renderSelect()).open();
-
-    const listbox = screen.getByRole('listbox');
-    await fireEvent.keyDown(listbox, { code: 'ArrowDown' });
-    await fireEvent.keyDown(listbox, { code: 'ShiftLeft' });
-    await fireEvent.keyDown(listbox, { code: 'PageUp' });
-    await flush();
-    expect(screen.getAllByRole('option')[0]).toBeChecked();
-    expect(screen.getAllByRole('option')[1]).toBeChecked();
-  });
-
-  test('Shift + End should select all options from the first to the toggled option', async () => {
-    await (await renderSelect()).open();
-
-    const listbox = screen.getByRole('listbox');
-    await fireEvent.keyDown(listbox, { code: 'ArrowDown' });
-    await fireEvent.keyDown(listbox, { code: 'ShiftLeft' });
-    await fireEvent.keyDown(listbox, { code: 'End' });
-    await flush();
-    expect(screen.getAllByRole('option')[1]).toBeChecked();
-    expect(screen.getAllByRole('option')[2]).toBeChecked();
-  });
-
-  test('Shift + PageDown should select all options from the first to the toggled option', async () => {
-    await (await renderSelect()).open();
-
-    const listbox = screen.getByRole('listbox');
-    await fireEvent.keyDown(listbox, { code: 'ArrowDown' });
-    await fireEvent.keyDown(listbox, { code: 'ShiftLeft' });
-    await fireEvent.keyDown(listbox, { code: 'PageDown' });
-    await flush();
-    expect(screen.getAllByRole('option')[1]).toBeChecked();
-    expect(screen.getAllByRole('option')[2]).toBeChecked();
-  });
-
-  test('Control + A should select all options', async () => {
-    await (await renderSelect()).open();
-
-    const options = screen.getAllByRole('option');
-    const listbox = screen.getByRole('listbox');
-    await fireEvent.keyDown(listbox, { code: 'ControlLeft' });
-    await fireEvent.keyDown(listbox, { code: 'KeyA' });
-    await flush();
-    expect(options[0]).toBeChecked();
-    expect(options[1]).toBeChecked();
-    expect(options[2]).toBeChecked();
-
-    await fireEvent.keyDown(listbox, { code: 'KeyA' });
-    await flush();
-    expect(options[0]).not.toBeChecked();
-    expect(options[1]).not.toBeChecked();
-    expect(options[2]).not.toBeChecked();
-  });
-
-  test('Click + Shift should do a contiguous selection', async () => {
-    await (
-      await renderSelect([{ label: 'One' }, { label: 'Two' }, { label: 'Three' }, { label: 'Four' }, { label: 'Five' }])
-    ).open();
-
-    const options = screen.getAllByRole('option');
-    const listbox = screen.getByRole('listbox');
-
-    await fireEvent.click(screen.getAllByRole('option')[2]);
-    await fireEvent.keyDown(listbox, { code: 'ShiftLeft' });
-    await fireEvent.click(screen.getAllByRole('option')[4]);
-    await flush();
-
-    expect(options[0]).not.toBeChecked();
-    expect(options[1]).not.toBeChecked();
-    expect(options[2]).toBeChecked();
-    expect(options[3]).toBeChecked();
-    expect(options[4]).toBeChecked();
-  });
-});
-
-describe('selection state', () => {
-  async function renderSelect(select: any, opts?: { label: string; disabled?: boolean }[]) {
-    await render({
-      components: {
-        MySelect: select,
-      },
-      setup() {
-        const options = opts || [{ label: 'One' }, { label: 'Two' }, { label: 'Three' }];
-
-        return { options };
-      },
-      template: `
-        <div data-testid="fixture">
-          <MySelect label="Field" :multiple="true" :options="options" />
-        </div>
-      `,
-    });
-
-    return {
-      async open() {
-        await fireEvent.keyDown(getSelect(), { code: 'Space' });
-        await flush();
-      },
-      async select(index: number) {
-        await fireEvent.click(screen.getAllByRole('option')[index]);
-        await flush();
-      },
-    };
-  }
-
-  test('selectedOption should reflect the currently selected option in single select', async () => {
-    const MySelect = createSelect();
-    const options = [{ label: 'One' }, { label: 'Two' }, { label: 'Three' }];
-
-    const sl = await renderSelect(MySelect, options);
-    await sl.open();
-    await sl.select(1);
-    await flush();
-
-    expect(MySelect.getExposedState().selectedOption).toEqual({
-      id: expect.any(String),
-      label: 'Two',
-      value: { label: 'Two' },
-    });
-  });
-
-  test('selectedOptions should reflect all selected options in multi select', async () => {
-    const MySelect = createSelect();
-    const options = [{ label: 'One' }, { label: 'Two' }, { label: 'Three' }];
-
-    const sl = await renderSelect(MySelect, options);
-
-    // Select first and third options
-    await sl.open();
-    await sl.select(0);
-    await sl.select(2);
-    await flush();
-
-    expect(MySelect.getExposedState().selectedOptions).toEqual([
-      {
-        id: expect.any(String),
-        label: 'One',
-        value: { label: 'One' },
-      },
-      {
-        id: expect.any(String),
-        label: 'Three',
-        value: { label: 'Three' },
-      },
-    ]);
+    await expectNoA11yViolations('[data-testid="fixture"]');
   });
 });

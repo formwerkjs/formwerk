@@ -1,12 +1,14 @@
 import { defineComponent, watch, ref, onMounted } from 'vue';
-import { fireEvent, render, screen } from '@testing-library/vue';
-import { axe } from 'vitest-axe';
+import { render } from '@testing-library/vue';
 import { StepResolveContext, useStepFormFlow } from '.';
 import { flush } from '@test-utils/flush';
 import { useTextField } from '../useTextField';
 import { FormFlowSegment } from './useFlowSegment';
 import { z } from 'zod';
 import { FormObject } from '../types';
+import { expectNoA11yViolations } from '@test-utils/index';
+import { page } from 'vitest/browser';
+import { expect } from 'vitest';
 
 // Simple TextField component for tests
 const TextField = defineComponent({
@@ -133,7 +135,7 @@ const SteppedFormFlow = defineComponent({
 
 describe('navigation', () => {
   test('should navigate between steps with next and previous buttons and maintain field values', async () => {
-    await render({
+    render({
       components: {
         SteppedFormFlow,
         FormFlowSegment,
@@ -163,51 +165,51 @@ describe('navigation', () => {
     await flush();
 
     // Should start at the first step
-    expect(screen.getByText('Step 1')).toBeVisible();
-    expect(screen.getByTestId('previous-button')).toHaveAttribute('disabled');
-    expect(screen.getByLabelText('Name')).toBeVisible();
-    expect(screen.queryByLabelText('Address')).not.toBeInTheDocument();
+    await expect.element(page.getByText('Step 1')).toBeInTheDocument();
+    expect(((await page.getByTestId('previous-button').element()) as HTMLButtonElement).disabled).toBe(true);
+    await expect.element(page.getByLabelText('Name')).toBeInTheDocument();
+    expect(document.querySelector('input[name="address"]')).toBeNull();
 
     // Fill in the name field
-    await fireEvent.update(screen.getByLabelText('Name'), 'John Doe');
+    await page.getByLabelText('Name').fill('John Doe');
 
     // Go to the next step
-    await fireEvent.click(screen.getByTestId('next-button'));
+    await page.getByTestId('next-button').click();
     await flush();
 
     // Should now be on the second step
-    expect(screen.getByText('Step 2')).toBeVisible();
-    expect(screen.getByTestId('previous-button')).not.toHaveAttribute('disabled');
-    expect(screen.queryByLabelText('Name')).not.toBeInTheDocument();
-    expect(screen.getByLabelText('Address')).toBeVisible();
+    await expect.element(page.getByText('Step 2')).toBeInTheDocument();
+    expect(((await page.getByTestId('previous-button').element()) as HTMLButtonElement).disabled).toBe(false);
+    expect(document.querySelector('input[name="name"]')).toBeNull();
+    await expect.element(page.getByLabelText('Address')).toBeInTheDocument();
 
     // Fill in the address field
-    await fireEvent.update(screen.getByLabelText('Address'), '123 Main St');
+    await page.getByLabelText('Address').fill('123 Main St');
 
     // Go back to the first step
-    await fireEvent.click(screen.getByTestId('previous-button'));
+    await page.getByTestId('previous-button').click();
     await flush();
 
     // Should be back on the first step
-    expect(screen.getByText('Step 1')).toBeVisible();
-    expect(screen.getByTestId('previous-button')).toHaveAttribute('disabled');
-    expect(screen.getByLabelText('Name')).toBeVisible();
-    expect(screen.queryByLabelText('Address')).not.toBeInTheDocument();
+    await expect.element(page.getByText('Step 1')).toBeInTheDocument();
+    expect(((await page.getByTestId('previous-button').element()) as HTMLButtonElement).disabled).toBe(true);
+    await expect.element(page.getByLabelText('Name')).toBeInTheDocument();
+    expect(document.querySelector('input[name="address"]')).toBeNull();
 
     // Check the form values are preserved
-    expect(screen.getByLabelText('Name')).toHaveValue('John Doe');
+    expect(((await page.getByLabelText('Name').element()) as HTMLInputElement).value).toBe('John Doe');
 
     // Go to the next step
-    await fireEvent.click(screen.getByTestId('next-button'));
+    await page.getByTestId('next-button').click();
     await flush();
 
     // Check the form values are preserved
-    expect(screen.getByLabelText('Address')).toHaveValue('123 Main St');
+    expect(((await page.getByLabelText('Address').element()) as HTMLInputElement).value).toBe('123 Main St');
   });
 
   test('should call onDone with all values when submitting the last step', async () => {
     const onDoneMock = vi.fn();
-    await render({
+    render({
       components: {
         SteppedFormFlow,
         FormFlowSegment,
@@ -243,17 +245,17 @@ describe('navigation', () => {
     await flush();
 
     // Fill in the name field
-    await fireEvent.update(screen.getByLabelText('Name'), 'John Doe');
+    await page.getByLabelText('Name').fill('John Doe');
 
     // Go to the next step
-    await fireEvent.click(screen.getByTestId('next-button'));
+    await page.getByTestId('next-button').click();
     await flush();
 
     // Fill in the address field
-    await fireEvent.update(screen.getByLabelText('Address'), '123 Main St');
+    await page.getByLabelText('Address').fill('123 Main St');
 
     // Submit the form
-    await fireEvent.click(screen.getByTestId('next-button'));
+    await page.getByTestId('next-button').click();
     await flush();
 
     expect(onDoneMock).toHaveBeenCalledTimes(1);
@@ -280,7 +282,7 @@ describe('navigation', () => {
 
     const onDone = vi.fn();
 
-    await render({
+    render({
       setup() {
         return {
           step1,
@@ -324,41 +326,43 @@ describe('navigation', () => {
     await flush();
 
     // Should start at the first step
-    expect(screen.getByText('Step 1')).toBeVisible();
-    expect(screen.getByLabelText('Name')).toBeVisible();
+    await expect.element(page.getByText('Step 1')).toBeInTheDocument();
+    await expect.element(page.getByLabelText('Name')).toBeInTheDocument();
 
     // Try to go to step 2 without filling step 1
-    await fireEvent.click(screen.getByTestId('next-button'));
+    await page.getByTestId('next-button').click();
     await flush();
 
     // Should still be on step 1
-    expect(screen.getByText('Step 1')).toBeVisible();
-    expect(screen.getByLabelText('Name')).toBeVisible();
-    expect(screen.queryByLabelText('Address')).not.toBeInTheDocument();
-    expect(screen.getByLabelText('Name')).toHaveErrorMessage();
+    await expect.element(page.getByText('Step 1')).toBeInTheDocument();
+    await expect.element(page.getByLabelText('Name')).toBeInTheDocument();
+    expect(document.querySelector('input[name="address"]')).toBeNull();
+    const nameInput = (await page.getByLabelText('Name').element()) as HTMLInputElement;
+    expect(nameInput.getAttribute('aria-invalid')).toBe('true');
+    expect(nameInput.validationMessage || '').toMatch(/.+/);
 
     // Fill in the name field
-    await fireEvent.update(screen.getByLabelText('Name'), 'John Doe');
+    await page.getByLabelText('Name').fill('John Doe');
 
     // Go to the next step
-    await fireEvent.click(screen.getByTestId('next-button'));
+    await page.getByTestId('next-button').click();
     await flush();
 
     // Fill in the address field
-    expect(screen.getByLabelText('Address')).toBeInTheDocument();
-    expect(screen.queryByLabelText('Name')).not.toBeInTheDocument();
+    await expect.element(page.getByLabelText('Address')).toBeInTheDocument();
+    expect(document.querySelector('input[name="name"]')).toBeNull();
 
-    await fireEvent.update(screen.getByLabelText('Address'), '123 Main St');
-    await fireEvent.click(screen.getByTestId('next-button'));
+    await page.getByLabelText('Address').fill('123 Main St');
+    await page.getByTestId('next-button').click();
     await flush();
 
     // Should now be on step 3 since previous steps are filled
-    expect(screen.getByText('Step 3')).toBeVisible();
-    expect(screen.getByLabelText('Phone')).toBeVisible();
-    expect(screen.queryByLabelText('Address')).not.toBeInTheDocument();
+    await expect.element(page.getByText('Step 3')).toBeInTheDocument();
+    await expect.element(page.getByLabelText('Phone')).toBeInTheDocument();
+    expect(document.querySelector('input[name="address"]')).toBeNull();
 
-    await fireEvent.update(screen.getByLabelText('Phone'), '1234567890');
-    await fireEvent.click(screen.getByTestId('next-button'));
+    await page.getByLabelText('Phone').fill('1234567890');
+    await page.getByTestId('next-button').click();
     await flush();
 
     expect(onDone).toHaveBeenCalledTimes(1);
@@ -384,7 +388,7 @@ describe('navigation', () => {
 
     const onDone = vi.fn();
 
-    await render({
+    render({
       setup() {
         return {
           step1,
@@ -432,75 +436,75 @@ describe('navigation', () => {
     await flush();
 
     // Should start at the first step
-    expect(screen.getByText('Step 1')).toBeVisible();
-    expect(screen.getByLabelText('Name')).toBeVisible();
+    await expect.element(page.getByText('Step 1')).toBeInTheDocument();
+    await expect.element(page.getByLabelText('Name')).toBeInTheDocument();
 
     // Fill in the name field
-    await fireEvent.update(screen.getByLabelText('Name'), 'John Doe');
+    await page.getByLabelText('Name').fill('John Doe');
     await flush();
 
     // Try to go to step 2
-    await fireEvent.click(screen.getByText('Go to Step 2'));
+    await page.getByText('Go to Step 2').click();
     await flush();
 
     // Won't jump to step 2, unless step 1 gets submitted
-    expect(screen.getByText('Step 1')).toBeVisible();
-    expect(screen.getByLabelText('Name')).toBeVisible();
-    expect(screen.queryByLabelText('Address')).not.toBeInTheDocument();
+    await expect.element(page.getByText('Step 1')).toBeInTheDocument();
+    await expect.element(page.getByLabelText('Name')).toBeInTheDocument();
+    expect(document.querySelector('input[name="address"]')).toBeNull();
 
     // Submit step 1
-    await fireEvent.click(screen.getByTestId('next-button'));
+    await page.getByTestId('next-button').click();
     await flush();
 
     // Now we are at step 2
-    expect(screen.getByText('Step 2')).toBeVisible();
-    expect(screen.getByLabelText('Address')).toBeVisible();
+    await expect.element(page.getByText('Step 2')).toBeInTheDocument();
+    await expect.element(page.getByLabelText('Address')).toBeInTheDocument();
 
     // We can go back to step 1
-    await fireEvent.click(screen.getByText('Go to Step 1'));
+    await page.getByText('Go to Step 1').click();
     await flush();
 
-    expect(screen.getByText('Step 1')).toBeVisible();
-    expect(screen.getByLabelText('Name')).toBeVisible();
+    await expect.element(page.getByText('Step 1')).toBeInTheDocument();
+    await expect.element(page.getByLabelText('Name')).toBeInTheDocument();
 
     // Let's go back to step 2
-    await fireEvent.click(screen.getByText('Go to Step 2'));
+    await page.getByText('Go to Step 2').click();
     await flush();
 
-    expect(screen.getByText('Step 2')).toBeVisible();
-    expect(screen.getByLabelText('Address')).toBeVisible();
+    await expect.element(page.getByText('Step 2')).toBeInTheDocument();
+    await expect.element(page.getByLabelText('Address')).toBeInTheDocument();
 
-    await fireEvent.update(screen.getByLabelText('Address'), '123 Main St');
-    await fireEvent.click(screen.getByTestId('next-button'));
+    await page.getByLabelText('Address').fill('123 Main St');
+    await page.getByTestId('next-button').click();
     await flush();
 
     // Should now be on step 3 since previous steps are filled
-    expect(screen.getByText('Step 3')).toBeVisible();
-    expect(screen.getByLabelText('Phone')).toBeVisible();
+    await expect.element(page.getByText('Step 3')).toBeInTheDocument();
+    await expect.element(page.getByLabelText('Phone')).toBeInTheDocument();
 
     // We can go back to step 2
-    await fireEvent.click(screen.getByText('Go to Step 2'));
+    await page.getByText('Go to Step 2').click();
     await flush();
 
-    expect(screen.getByText('Step 2')).toBeVisible();
-    expect(screen.getByLabelText('Address')).toBeVisible();
+    await expect.element(page.getByText('Step 2')).toBeInTheDocument();
+    await expect.element(page.getByLabelText('Address')).toBeInTheDocument();
 
     // We can go back to step 1
-    await fireEvent.click(screen.getByText('Go to Step 1'));
+    await page.getByText('Go to Step 1').click();
     await flush();
 
-    expect(screen.getByText('Step 1')).toBeVisible();
-    expect(screen.getByLabelText('Name')).toBeVisible();
+    await expect.element(page.getByText('Step 1')).toBeInTheDocument();
+    await expect.element(page.getByLabelText('Name')).toBeInTheDocument();
 
     // We can go back to step 3
-    await fireEvent.click(screen.getByText('Go to Step 3'));
+    await page.getByText('Go to Step 3').click();
     await flush();
 
-    expect(screen.getByText('Step 3')).toBeVisible();
+    await expect.element(page.getByText('Step 3')).toBeInTheDocument();
   });
 
   test('can give steps a name and use it to navigate with goToStep', async () => {
-    await render({
+    render({
       components: {
         SteppedFormFlow,
         FormFlowSegment,
@@ -540,75 +544,75 @@ describe('navigation', () => {
     await flush();
 
     // Should start at the first step
-    expect(screen.getByText('Step 1')).toBeVisible();
-    expect(screen.getByLabelText('Name')).toBeVisible();
+    await expect.element(page.getByText('Step 1')).toBeInTheDocument();
+    await expect.element(page.getByLabelText('Name')).toBeInTheDocument();
 
     // Fill in the name field
-    await fireEvent.update(screen.getByLabelText('Name'), 'John Doe');
+    await page.getByLabelText('Name').fill('John Doe');
     await flush();
 
     // Try to go to step 2
-    await fireEvent.click(screen.getByText('Go to Step 2'));
+    await page.getByText('Go to Step 2').click();
     await flush();
 
     // Won't jump to step 2, unless step 1 gets submitted
-    expect(screen.getByText('Step 1')).toBeVisible();
-    expect(screen.getByLabelText('Name')).toBeVisible();
-    expect(screen.queryByLabelText('Address')).not.toBeInTheDocument();
+    await expect.element(page.getByText('Step 1')).toBeInTheDocument();
+    await expect.element(page.getByLabelText('Name')).toBeInTheDocument();
+    expect(document.querySelector('input[name="address"]')).toBeNull();
 
     // Submit step 1
-    await fireEvent.click(screen.getByTestId('next-button'));
+    await page.getByTestId('next-button').click();
     await flush();
 
     // Now we are at step 2
-    expect(screen.getByText('Step 2')).toBeVisible();
-    expect(screen.getByLabelText('Address')).toBeVisible();
+    await expect.element(page.getByText('Step 2')).toBeInTheDocument();
+    await expect.element(page.getByLabelText('Address')).toBeInTheDocument();
 
     // We can go back to step 1
-    await fireEvent.click(screen.getByText('Go to Step 1'));
+    await page.getByText('Go to Step 1').click();
     await flush();
 
-    expect(screen.getByText('Step 1')).toBeVisible();
-    expect(screen.getByLabelText('Name')).toBeVisible();
+    await expect.element(page.getByText('Step 1')).toBeInTheDocument();
+    await expect.element(page.getByLabelText('Name')).toBeInTheDocument();
 
     // Let's go back to step 2
-    await fireEvent.click(screen.getByText('Go to Step 2'));
+    await page.getByText('Go to Step 2').click();
     await flush();
 
-    expect(screen.getByText('Step 2')).toBeVisible();
-    expect(screen.getByLabelText('Address')).toBeVisible();
+    await expect.element(page.getByText('Step 2')).toBeInTheDocument();
+    await expect.element(page.getByLabelText('Address')).toBeInTheDocument();
 
-    await fireEvent.update(screen.getByLabelText('Address'), '123 Main St');
-    await fireEvent.click(screen.getByTestId('next-button'));
+    await page.getByLabelText('Address').fill('123 Main St');
+    await page.getByTestId('next-button').click();
     await flush();
 
     // Should now be on step 3 since previous steps are filled
-    expect(screen.getByText('Step 3')).toBeVisible();
-    expect(screen.getByLabelText('Phone')).toBeVisible();
+    await expect.element(page.getByText('Step 3')).toBeInTheDocument();
+    await expect.element(page.getByLabelText('Phone')).toBeInTheDocument();
 
     // We can go back to step 2
-    await fireEvent.click(screen.getByText('Go to Step 2'));
+    await page.getByText('Go to Step 2').click();
     await flush();
 
-    expect(screen.getByText('Step 2')).toBeVisible();
-    expect(screen.getByLabelText('Address')).toBeVisible();
+    await expect.element(page.getByText('Step 2')).toBeInTheDocument();
+    await expect.element(page.getByLabelText('Address')).toBeInTheDocument();
 
     // We can go back to step 1
-    await fireEvent.click(screen.getByText('Go to Step 1'));
+    await page.getByText('Go to Step 1').click();
     await flush();
 
-    expect(screen.getByText('Step 1')).toBeVisible();
-    expect(screen.getByLabelText('Name')).toBeVisible();
+    await expect.element(page.getByText('Step 1')).toBeInTheDocument();
+    await expect.element(page.getByLabelText('Name')).toBeInTheDocument();
 
     // We can go back to step 3
-    await fireEvent.click(screen.getByText('Go to Step 3'));
+    await page.getByText('Go to Step 3').click();
     await flush();
 
-    expect(screen.getByText('Step 3')).toBeVisible();
+    await expect.element(page.getByText('Step 3')).toBeInTheDocument();
   });
 
   test('going to the same step again is a NO-OP', async () => {
-    await render({
+    render({
       components: {
         SteppedFormFlow,
         FormFlowSegment,
@@ -640,23 +644,23 @@ describe('navigation', () => {
     await flush();
 
     // Should start at the first step
-    expect(screen.getByText('Step 1')).toBeVisible();
-    expect(screen.getByLabelText('Name')).toBeVisible();
+    await expect.element(page.getByText('Step 1')).toBeInTheDocument();
+    await expect.element(page.getByLabelText('Name')).toBeInTheDocument();
 
     // Fill in the name field
-    await fireEvent.update(screen.getByLabelText('Name'), 'John Doe');
+    await page.getByLabelText('Name').fill('John Doe');
     await flush();
 
     // Try to go to step 2
-    await fireEvent.click(screen.getByText('Go to Step 1'));
+    await page.getByText('Go to Step 1').click();
     await flush();
 
-    expect(screen.getByText('Step 1')).toBeVisible();
-    expect(screen.getByLabelText('Name')).toBeVisible();
+    await expect.element(page.getByText('Step 1')).toBeInTheDocument();
+    await expect.element(page.getByLabelText('Name')).toBeInTheDocument();
   });
 
   test('can use isCurrentStep to conditionally render content', async () => {
-    await render({
+    render({
       components: {
         SteppedFormFlow,
         FormFlowSegment,
@@ -697,32 +701,32 @@ describe('navigation', () => {
     await flush();
 
     // Should start at the first step
-    expect(screen.getByText('Step 1')).toBeVisible();
-    expect(screen.getByLabelText('Name')).toBeVisible();
+    await expect.element(page.getByText('Step 1')).toBeInTheDocument();
+    await expect.element(page.getByLabelText('Name')).toBeInTheDocument();
 
-    expect(screen.getByText('Go to Step 1')).toHaveAttribute('aria-selected', 'true');
-    expect(screen.getByText('Go to Step 2')).toHaveAttribute('aria-selected', 'false');
-    expect(screen.getByText('Go to Step 3')).toHaveAttribute('aria-selected', 'false');
+    await expect.element(page.getByText('Go to Step 1')).toHaveAttribute('aria-selected', 'true');
+    await expect.element(page.getByText('Go to Step 2')).toHaveAttribute('aria-selected', 'false');
+    await expect.element(page.getByText('Go to Step 3')).toHaveAttribute('aria-selected', 'false');
 
     // Fill in the name field
-    await fireEvent.update(screen.getByLabelText('Name'), 'John Doe');
+    await page.getByLabelText('Name').fill('John Doe');
     await flush();
 
-    await fireEvent.click(screen.getByTestId('next-button'));
+    await page.getByTestId('next-button').click();
     await flush();
 
-    expect(screen.getByText('Go to Step 1')).toHaveAttribute('aria-selected', 'false');
-    expect(screen.getByText('Go to Step 2')).toHaveAttribute('aria-selected', 'true');
-    expect(screen.getByText('Go to Step 3')).toHaveAttribute('aria-selected', 'false');
+    await expect.element(page.getByText('Go to Step 1')).toHaveAttribute('aria-selected', 'false');
+    await expect.element(page.getByText('Go to Step 2')).toHaveAttribute('aria-selected', 'true');
+    await expect.element(page.getByText('Go to Step 3')).toHaveAttribute('aria-selected', 'false');
 
-    await fireEvent.update(screen.getByLabelText('Address'), '123 Main St');
+    await page.getByLabelText('Address').fill('123 Main St');
 
-    await fireEvent.click(screen.getByTestId('next-button'));
+    await page.getByTestId('next-button').click();
     await flush();
 
-    expect(screen.getByText('Go to Step 1')).toHaveAttribute('aria-selected', 'false');
-    expect(screen.getByText('Go to Step 2')).toHaveAttribute('aria-selected', 'false');
-    expect(screen.getByText('Go to Step 3')).toHaveAttribute('aria-selected', 'true');
+    await expect.element(page.getByText('Go to Step 1')).toHaveAttribute('aria-selected', 'false');
+    await expect.element(page.getByText('Go to Step 2')).toHaveAttribute('aria-selected', 'false');
+    await expect.element(page.getByText('Go to Step 3')).toHaveAttribute('aria-selected', 'true');
   });
 
   test('can force jump to any step even if previous steps are not visited', async () => {
@@ -738,7 +742,7 @@ describe('navigation', () => {
       phone: z.string().min(1),
     });
 
-    await render({
+    render({
       setup() {
         return {
           step1,
@@ -786,34 +790,34 @@ describe('navigation', () => {
     await flush();
 
     // Should start at the first step
-    expect(screen.getByText('Step 1')).toBeVisible();
-    expect(screen.getByLabelText('Name')).toBeVisible();
+    await expect.element(page.getByText('Step 1')).toBeInTheDocument();
+    await expect.element(page.getByLabelText('Name')).toBeInTheDocument();
 
     // Try to go to step 3 without force - should not work since step 1 is not submitted
-    await fireEvent.click(screen.getByText('Go to Step 3'));
+    await page.getByText('Go to Step 3').click();
     await flush();
 
     // Should still be on step 1
-    expect(screen.getByText('Step 1')).toBeVisible();
-    expect(screen.getByLabelText('Name')).toBeVisible();
-    expect(screen.queryByLabelText('Phone')).not.toBeInTheDocument();
+    await expect.element(page.getByText('Step 1')).toBeInTheDocument();
+    await expect.element(page.getByLabelText('Name')).toBeInTheDocument();
+    expect(document.querySelector('input[name="phone"]')).toBeNull();
 
     // Now try with force option - should work
-    await fireEvent.click(screen.getByText('Force Go to Step 3'));
+    await page.getByText('Force Go to Step 3').click();
     await flush();
 
     // Should now be on step 3
-    expect(screen.getByText('Step 3')).toBeVisible();
-    expect(screen.getByLabelText('Phone')).toBeVisible();
-    expect(screen.queryByLabelText('Name')).not.toBeInTheDocument();
+    await expect.element(page.getByText('Step 3')).toBeInTheDocument();
+    await expect.element(page.getByLabelText('Phone')).toBeInTheDocument();
+    expect(document.querySelector('input[name="name"]')).toBeNull();
 
     // Can go back to step 1 with force
-    await fireEvent.click(screen.getByText('Go to Step 1'));
+    await page.getByText('Go to Step 1').click();
     await flush();
 
-    expect(screen.getByText('Step 1')).toBeVisible();
-    expect(screen.getByLabelText('Name')).toBeVisible();
-    expect(screen.queryByLabelText('Phone')).not.toBeInTheDocument();
+    await expect.element(page.getByText('Step 1')).toBeInTheDocument();
+    await expect.element(page.getByLabelText('Name')).toBeInTheDocument();
+    expect(document.querySelector('input[name="phone"]')).toBeNull();
   });
 
   test('should use custom step resolver to determine next step', async () => {
@@ -831,7 +835,7 @@ describe('navigation', () => {
 
     const onDone = vi.fn();
 
-    await render({
+    render({
       setup() {
         // Custom step resolver that skips step 2 if name is "skip"
         const resolver = (ctx: StepResolveContext<FormObject>) => {
@@ -885,28 +889,28 @@ describe('navigation', () => {
     await flush();
 
     // Should start at the first step
-    expect(screen.getByText('Step 1')).toBeVisible();
-    expect(screen.getByLabelText('Name')).toBeVisible();
+    await expect.element(page.getByText('Step 1')).toBeInTheDocument();
+    await expect.element(page.getByLabelText('Name')).toBeInTheDocument();
 
     // Fill in the name field with "skip" to trigger custom resolver
-    await fireEvent.update(screen.getByLabelText('Name'), 'skip');
+    await page.getByLabelText('Name').fill('skip');
     await flush();
 
     // Go to next step
-    await fireEvent.click(screen.getByTestId('next-button'));
+    await page.getByTestId('next-button').click();
     await flush();
 
     // Should skip step 2 and go directly to step 3
-    expect(screen.getByText('Step 3')).toBeVisible();
-    expect(screen.getByLabelText('Phone')).toBeVisible();
-    expect(screen.queryByLabelText('Address')).not.toBeInTheDocument();
+    await expect.element(page.getByText('Step 3')).toBeInTheDocument();
+    await expect.element(page.getByLabelText('Phone')).toBeInTheDocument();
+    expect(document.querySelector('input[name="address"]')).toBeNull();
 
     // Fill in the phone field
-    await fireEvent.update(screen.getByLabelText('Phone'), '1234567890');
+    await page.getByLabelText('Phone').fill('1234567890');
     await flush();
 
     // Submit the form
-    await fireEvent.click(screen.getByTestId('next-button'));
+    await page.getByTestId('next-button').click();
     await flush();
 
     // Verify onDone was called with the correct values
@@ -919,7 +923,7 @@ describe('navigation', () => {
   test('can use custom step resolver to signal done at any step', async () => {
     const onDone = vi.fn();
 
-    await render({
+    render({
       setup() {
         // Custom step resolver that skips step 2 if name is "skip"
         const resolver = (ctx: StepResolveContext<FormObject>) => {
@@ -970,13 +974,13 @@ describe('navigation', () => {
     await flush();
 
     // Should start at the first step
-    expect(screen.getByText('Step 1')).toBeVisible();
-    expect(screen.getByLabelText('Name')).toBeVisible();
+    await expect.element(page.getByText('Step 1')).toBeInTheDocument();
+    await expect.element(page.getByLabelText('Name')).toBeInTheDocument();
 
     // Fill in the name field with "skip" to trigger custom resolver
-    await fireEvent.update(screen.getByLabelText('Name'), 'skip');
+    await page.getByLabelText('Name').fill('skip');
     await flush();
-    await fireEvent.click(screen.getByTestId('next-button'));
+    await page.getByTestId('next-button').click();
     await flush();
 
     // Verify onDone was called with the correct values
@@ -988,7 +992,7 @@ describe('navigation', () => {
 
 describe('state', () => {
   test('can get step values by index', async () => {
-    await render({
+    render({
       components: {
         SteppedFormFlow,
         FormFlowSegment,
@@ -1019,31 +1023,31 @@ describe('state', () => {
 
     await flush();
 
-    expect(screen.getByTestId('step-1-values')).toHaveTextContent('{}');
-    expect(screen.getByTestId('step-2-values')).toHaveTextContent('{}');
+    await expect.element(page.getByTestId('step-1-values')).toHaveTextContent('{}');
+    await expect.element(page.getByTestId('step-2-values')).toHaveTextContent('{}');
 
     // Fill in the name field
-    await fireEvent.update(screen.getByLabelText('Name'), 'John Doe');
+    await page.getByLabelText('Name').fill('John Doe');
     await flush();
 
-    await fireEvent.click(screen.getByTestId('next-button'));
+    await page.getByTestId('next-button').click();
     await flush();
 
-    expect(screen.getByTestId('step-1-values')).toHaveTextContent('{ "name": "John Doe" }');
-    expect(screen.getByTestId('step-2-values')).toHaveTextContent('{}');
+    await expect.element(page.getByTestId('step-1-values')).toHaveTextContent('{ "name": "John Doe" }');
+    await expect.element(page.getByTestId('step-2-values')).toHaveTextContent('{}');
 
-    await fireEvent.update(screen.getByLabelText('Address'), '123 Main St');
-    await fireEvent.click(screen.getByTestId('next-button'));
+    await page.getByLabelText('Address').fill('123 Main St');
+    await page.getByTestId('next-button').click();
     await flush();
 
-    expect(screen.getByTestId('step-1-values')).toHaveTextContent('{ "name": "John Doe" }');
-    expect(screen.getByTestId('step-2-values')).toHaveTextContent('{ "address": "123 Main St" }');
+    await expect.element(page.getByTestId('step-1-values')).toHaveTextContent('{ "name": "John Doe" }');
+    await expect.element(page.getByTestId('step-2-values')).toHaveTextContent('{ "address": "123 Main St" }');
   });
 });
 
 describe('a11y', () => {
   test('stepped form should not have a11y violations', async () => {
-    await render({
+    render({
       components: {
         SteppedFormFlow,
         FormFlowSegment,
@@ -1068,14 +1072,12 @@ describe('a11y', () => {
     });
 
     await flush();
-    vi.useRealTimers();
-    expect(await axe(screen.getByTestId('fixture'))).toHaveNoViolations();
-    vi.useFakeTimers();
+    await expectNoA11yViolations('[data-testid="fixture"]');
   });
 
   describe('button accessibility', () => {
     test('next and previous buttons should have proper attributes', async () => {
-      await render({
+      render({
         components: {
           SteppedFormFlow,
           FormFlowSegment,
@@ -1095,26 +1097,26 @@ describe('a11y', () => {
       await flush();
 
       // Check that buttons have accessible attributes
-      const nextButton = screen.getByTestId('next-button');
-      const prevButton = screen.getByTestId('previous-button');
+      const nextButton = page.getByTestId('next-button');
+      const prevButton = page.getByTestId('previous-button');
 
       // Next button should have type="submit" for form submission
-      expect(nextButton).toHaveAttribute('type', 'submit');
+      await expect.element(nextButton).toHaveAttribute('type', 'submit');
 
       // Prev button should be disabled on the first step
-      expect(prevButton).toHaveAttribute('disabled');
-      expect(prevButton).toHaveAttribute('tabindex', '0');
+      expect(((await prevButton.element()) as HTMLButtonElement).disabled).toBe(true);
+      await expect.element(prevButton).toHaveAttribute('tabindex', '0');
 
       // Go to next step
-      await fireEvent.click(nextButton);
+      await nextButton.click();
       await flush();
 
       // Prev button should now be enabled
-      expect(screen.getByTestId('previous-button')).not.toHaveAttribute('disabled');
+      expect(((await page.getByTestId('previous-button').element()) as HTMLButtonElement).disabled).toBe(false);
     });
 
     test('next button should show Submit text on last step', async () => {
-      await render({
+      render({
         components: {
           SteppedFormFlow,
           FormFlowSegment,
@@ -1134,14 +1136,14 @@ describe('a11y', () => {
       await flush();
 
       // Next button should say "Next" on first step
-      expect(screen.getByTestId('next-button')).toHaveTextContent('Next');
+      await expect.element(page.getByTestId('next-button')).toHaveTextContent('Next');
 
       // Go to next step
-      await fireEvent.click(screen.getByTestId('next-button'));
+      await page.getByTestId('next-button').click();
       await flush();
 
       // Next button should say "Submit" on last step
-      expect(screen.getByTestId('next-button')).toHaveTextContent('Submit');
+      await expect.element(page.getByTestId('next-button')).toHaveTextContent('Submit');
     });
   });
 });
@@ -1160,7 +1162,7 @@ describe('warnings', () => {
   test('should warn when custom step resolver returns invalid step identifier', async () => {
     const onDone = vi.fn();
 
-    await render({
+    render({
       setup() {
         // Custom step resolver that returns an invalid step identifier
         const resolver = (ctx: StepResolveContext<FormObject>) => {
@@ -1203,11 +1205,11 @@ describe('warnings', () => {
     await flush();
 
     // Fill in the name field with "invalid" to trigger invalid step identifier
-    await fireEvent.update(screen.getByLabelText('Name'), 'invalid');
+    await page.getByLabelText('Name').fill('invalid');
     await flush();
 
     // Try to go to next step
-    await fireEvent.click(screen.getByTestId('next-button'));
+    await page.getByTestId('next-button').click();
     await flush();
 
     // Should warn about invalid step identifier
@@ -1216,14 +1218,14 @@ describe('warnings', () => {
     );
 
     // Should still be on step 1 since the step change was skipped
-    expect(screen.getByText('Step 1')).toBeVisible();
-    expect(screen.getByLabelText('Name')).toBeVisible();
+    await expect.element(page.getByText('Step 1')).toBeInTheDocument();
+    await expect.element(page.getByLabelText('Name')).toBeInTheDocument();
   });
 
   test('should warn when custom step resolver returns null and execute default resolver', async () => {
     const onDone = vi.fn();
 
-    await render({
+    render({
       setup() {
         // Custom step resolver that returns null
         const resolver = (ctx: StepResolveContext<FormObject>) => {
@@ -1266,11 +1268,11 @@ describe('warnings', () => {
     await flush();
 
     // Fill in the name field with "null" to trigger null return
-    await fireEvent.update(screen.getByLabelText('Name'), 'null');
+    await page.getByLabelText('Name').fill('null');
     await flush();
 
     // Try to go to next step
-    await fireEvent.click(screen.getByTestId('next-button'));
+    await page.getByTestId('next-button').click();
     await flush();
 
     // Should warn about empty step identifier
@@ -1279,14 +1281,14 @@ describe('warnings', () => {
     );
 
     // Should execute default next resolver and move to step 2
-    expect(screen.getByText('Step 2')).toBeVisible();
-    expect(screen.getByLabelText('Address')).toBeVisible();
+    await expect.element(page.getByText('Step 2')).toBeInTheDocument();
+    await expect.element(page.getByLabelText('Address')).toBeInTheDocument();
   });
 
   test('should warn when custom step resolver returns undefined and execute default resolver', async () => {
     const onDone = vi.fn();
 
-    await render({
+    render({
       setup() {
         // Custom step resolver that returns undefined
         const resolver = (ctx: StepResolveContext<FormObject>) => {
@@ -1329,11 +1331,11 @@ describe('warnings', () => {
     await flush();
 
     // Fill in the name field with "undefined" to trigger undefined return
-    await fireEvent.update(screen.getByLabelText('Name'), 'undefined');
+    await page.getByLabelText('Name').fill('undefined');
     await flush();
 
     // Try to go to next step
-    await fireEvent.click(screen.getByTestId('next-button'));
+    await page.getByTestId('next-button').click();
     await flush();
 
     // Should warn about empty step identifier
@@ -1342,8 +1344,8 @@ describe('warnings', () => {
     );
 
     // Should execute default next resolver and move to step 2
-    expect(screen.getByText('Step 2')).toBeVisible();
-    expect(screen.getByLabelText('Address')).toBeVisible();
+    await expect.element(page.getByText('Step 2')).toBeInTheDocument();
+    await expect.element(page.getByLabelText('Address')).toBeInTheDocument();
   });
 
   test('should warn when trying to resolve step before first step is resolved', async () => {
@@ -1351,7 +1353,7 @@ describe('warnings', () => {
     // when there's no current step resolved
     const onDone = vi.fn();
 
-    await render({
+    render({
       setup() {
         // Custom step resolver that might be called before steps are properly initialized
         const resolver = (ctx: StepResolveContext<FormObject>) => {
@@ -1392,7 +1394,7 @@ describe('warnings', () => {
   test('should warn when form flow has no steps and resolver is triggered', async () => {
     const onDone = vi.fn();
 
-    await render({
+    render({
       setup() {
         // Custom step resolver that will be called even with no steps
         const resolver = (ctx: StepResolveContext<FormObject>) => {
@@ -1422,7 +1424,7 @@ describe('warnings', () => {
 
     // Try to trigger the next action which should call the resolver
     // and trigger the warning about no current step
-    await fireEvent.click(screen.getByTestId('next-button'));
+    await page.getByTestId('next-button').click();
     await flush();
 
     // Should warn about no current step resolved
@@ -1436,7 +1438,7 @@ describe('warnings', () => {
 
 describe('single-step forms', () => {
   test('should correctly identify isLastStep as true for single-step form', async () => {
-    await render({
+    render({
       components: {
         SteppedFormFlow,
         FormFlowSegment,
@@ -1455,13 +1457,13 @@ describe('single-step forms', () => {
     await flush();
 
     // With only one step, the next button should say "Submit" not "Next"
-    expect(screen.getByTestId('next-button')).toHaveTextContent('Submit');
+    await expect.element(page.getByTestId('next-button')).toHaveTextContent('Submit');
   });
 
   test('should trigger onDone when submitting single-step form', async () => {
     const onDone = vi.fn();
 
-    await render({
+    render({
       setup() {
         return { onDone };
       },
@@ -1482,11 +1484,11 @@ describe('single-step forms', () => {
     await flush();
 
     // Fill in the field
-    await fireEvent.update(screen.getByLabelText('Name'), 'John Doe');
+    await page.getByLabelText('Name').fill('John Doe');
     await flush();
 
     // Click next/submit button
-    await fireEvent.click(screen.getByTestId('next-button'));
+    await page.getByTestId('next-button').click();
     await flush();
 
     // Should have triggered onDone, not moved to another step
@@ -1500,7 +1502,7 @@ describe('single-step forms', () => {
     // by checking that isLastStep doesn't prematurely return true during registration
     let buttonTexts: string[] = [];
 
-    await render({
+    render({
       setup() {
         const { isLastStep } = useStepFormFlow();
 
@@ -1542,11 +1544,11 @@ describe('single-step forms', () => {
     expect(buttonTexts[0]).toBe('Next');
 
     // After all segments register and stabilize, should still be "Next" (we're on step 1 of 3)
-    expect(screen.getByRole('button')).toHaveTextContent('Next');
+    await expect.element(page.getByRole('button')).toHaveTextContent('Next');
   });
 
   test('single-step form isLastStep should become true after segments stabilize', async () => {
-    await render({
+    render({
       components: {
         SteppedFormFlow,
         FormFlowSegment,
@@ -1568,13 +1570,13 @@ describe('single-step forms', () => {
     await flush();
 
     // After segments stabilize, single-step form should show "Submit"
-    expect(screen.getByTestId('next-button')).toHaveTextContent('Submit');
+    await expect.element(page.getByTestId('next-button')).toHaveTextContent('Submit');
   });
 });
 
 describe('conditional rendering with v-if', () => {
   test('should handle first step not being rendered initially and activate it when it appears on mount', async () => {
-    await render({
+    render({
       setup() {
         const showFirstStep = ref(false);
 
@@ -1610,8 +1612,8 @@ describe('conditional rendering with v-if', () => {
     await flush();
 
     // After showFirstStep becomes true, step 1 should appear and be active
-    expect(screen.getByText('Step 1')).toBeVisible();
-    expect(screen.getByTestId('current-segment')).toHaveTextContent('Current: step1');
+    await expect.element(page.getByText('Step 1')).toBeInTheDocument();
+    await expect.element(page.getByTestId('current-segment')).toHaveTextContent('Current: step1');
   });
 
   test('should activate first available step when first step is conditionally hidden', async () => {
@@ -1650,12 +1652,12 @@ describe('conditional rendering with v-if', () => {
     // However, step 1 was registered first, so currentSegmentId points to step1
     // but step1 is not in the DOM, causing a mismatch
     // The current segment should show step2 content (first available in DOM)
-    expect(screen.queryByText('Step 2')).toBeVisible();
-    expect(screen.queryByText('Step 3')).toBeNull();
+    expect(document.body.textContent).toContain('Step 2');
+    expect(document.body.textContent).not.toContain('Step 3');
   });
 
   test('should reset to first available step on mount when initial step is not rendered', async () => {
-    await render({
+    render({
       setup() {
         const showFirstStep = ref(false);
 
@@ -1687,21 +1689,18 @@ describe('conditional rendering with v-if', () => {
     await flush();
 
     // With the fix, step 2 (first available) should be active and visible
-    const step2 = screen.queryByText('Step 2');
-    expect(step2).toBeVisible();
-
-    const step3 = screen.queryByText('Step 3');
-    expect(step3).toBeNull();
+    expect(document.body.textContent).toContain('Step 2');
+    expect(document.body.textContent).not.toContain('Step 3');
 
     // Current step name should be 'step2'
-    expect(screen.getByTestId('current-segment')).toHaveTextContent('Current: step2');
+    await expect.element(page.getByTestId('current-segment')).toHaveTextContent('Current: step2');
   });
 
   test('should not override user navigation if they manually change step', async () => {
     const showFirstStep = ref(false);
     const goToStepFn = ref<((step: string | number, opts?: { force?: true }) => void) | null>(null);
 
-    await render({
+    render({
       setup() {
         const { goToStep, currentStep } = useStepFormFlow();
         goToStepFn.value = goToStep;
@@ -1740,9 +1739,9 @@ describe('conditional rendering with v-if', () => {
     await flush();
 
     // Should be on step 3 and not step 1, meaning the correction did not happen
-    expect(screen.getByText('Step 3')).toBeVisible();
-    expect(screen.queryByText('Step 1')).toBeNull();
-    expect(screen.queryByText('Step 2')).toBeNull();
-    expect(screen.getByTestId('current-step')).toHaveTextContent('Current: step3');
+    await expect.element(page.getByText('Step 3')).toBeInTheDocument();
+    expect(document.body.textContent).not.toContain('Step 1');
+    expect(document.body.textContent).not.toContain('Step 2');
+    await expect.element(page.getByTestId('current-step')).toHaveTextContent('Current: step3');
   });
 });
