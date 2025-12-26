@@ -42,7 +42,13 @@ export default defineConfig({
       configNames: ['tsconfig.node.json'],
     }),
   ],
+  resolve: {
+    alias: {
+      vue: 'vue/dist/vue.esm-bundler.js',
+    },
+  },
   test: {
+    testTimeout: 5000,
     browser: {
       enabled: true,
       provider: playwright(),
