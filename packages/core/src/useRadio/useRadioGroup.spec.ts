@@ -2,7 +2,7 @@ import { RadioGroupProps, useRadioGroup } from './useRadioGroup';
 import { type Component, defineComponent } from 'vue';
 import { RadioProps, useRadio } from './useRadio';
 import { describe } from 'vitest';
-import { defineStandardSchema, expectNoA11yViolations } from '@test-utils/index';
+import { defineStandardSchema, expectNoA11yViolations, appRender } from '@test-utils/index';
 import { page } from 'vitest/browser';
 
 const createGroup = (
@@ -67,7 +67,7 @@ describe('click behavior', () => {
     const RadioGroup = createGroup({ label: 'Group' });
     const RadioInput = createRadio();
 
-    page.render({
+    appRender({
       components: { RadioGroup, RadioInput },
       template: `
         <RadioGroup data-testid="fixture">
@@ -87,7 +87,7 @@ describe('click behavior', () => {
     const RadioGroup = createGroup({ label: 'Group' });
     const RadioInput = createRadio(CustomBase);
 
-    page.render({
+    appRender({
       components: { RadioGroup, RadioInput },
       template: `
         <RadioGroup data-testid="fixture">
@@ -109,7 +109,7 @@ describe('Space key selects the radio', () => {
     const RadioGroup = createGroup({ label: 'Group' });
     const RadioInput = createRadio();
 
-    page.render({
+    appRender({
       components: { RadioGroup, RadioInput },
       template: `
         <RadioGroup data-testid="fixture">
@@ -129,7 +129,7 @@ describe('Space key selects the radio', () => {
     const RadioGroup = createGroup({ label: 'Group' });
     const RadioInput = createRadio(CustomBase);
 
-    page.render({
+    appRender({
       components: { RadioGroup, RadioInput },
       template: `
         <RadioGroup data-testid="fixture">
@@ -149,7 +149,7 @@ describe('Space key selects the radio', () => {
     const RadioGroup = createGroup({ label: 'Group' });
     const RadioInput = createRadio();
 
-    page.render({
+    appRender({
       components: { RadioGroup, RadioInput },
       template: `
         <RadioGroup data-testid="fixture">
@@ -172,7 +172,7 @@ describe('Arrow keys behavior', () => {
       const RadioGroup = createGroup({ label: 'Group' });
       const RadioInput = createRadio();
 
-      page.render({
+      appRender({
         components: { RadioGroup, RadioInput },
         template: `
         <RadioGroup data-testid="fixture">
@@ -238,7 +238,7 @@ describe('Arrow keys behavior', () => {
       const RadioGroup = createGroup({ label: 'Group', dir: 'rtl' });
       const RadioInput = createRadio();
 
-      page.render({
+      appRender({
         components: { RadioGroup, RadioInput },
         template: `
         <RadioGroup data-testid="fixture">
@@ -303,7 +303,7 @@ describe('Arrow keys behavior', () => {
     const RadioGroup = createGroup({ label: 'Group' });
     const RadioInput = createRadio();
 
-    page.render({
+    appRender({
       components: { RadioGroup, RadioInput },
       template: `
         <RadioGroup data-testid="fixture">
@@ -327,7 +327,7 @@ describe('Arrow keys behavior', () => {
     const RadioGroup = createGroup({ label: 'Group' });
     const RadioInput = createRadio();
 
-    page.render({
+    appRender({
       components: { RadioGroup, RadioInput },
       template: `
         <RadioGroup data-testid="fixture">
@@ -351,7 +351,7 @@ describe('Arrow keys behavior', () => {
     const RadioGroup = createGroup({ label: 'Group', disabled: true });
     const RadioInput = createRadio();
 
-    page.render({
+    appRender({
       components: { RadioGroup, RadioInput },
       template: `
         <RadioGroup data-testid="fixture">
@@ -373,7 +373,7 @@ describe('Arrow keys behavior', () => {
     const RadioGroup = createGroup({ label: 'Group', readonly: true });
     const RadioInput = createRadio();
 
-    page.render({
+    appRender({
       components: { RadioGroup, RadioInput },
       template: `
         <RadioGroup data-testid="fixture">
@@ -406,7 +406,7 @@ describe('validation', () => {
     });
     const RadioInput = createRadio(CustomBase);
 
-    page.render({
+    appRender({
       components: { RadioGroup, RadioInput },
       template: `
         <RadioGroup data-testid="fixture">
@@ -438,7 +438,7 @@ describe('validation', () => {
     });
     const RadioInput = createRadio(CustomBase);
 
-    page.render({
+    appRender({
       components: { RadioGroup, RadioInput },
       template: `
         <RadioGroup data-testid="fixture">
@@ -461,7 +461,7 @@ describe('a11y', () => {
     const RadioGroup = createGroup({ label: 'Group' });
     const RadioInput = createRadio();
 
-    page.render({
+    appRender({
       components: { RadioGroup, RadioInput },
       template: `
         <RadioGroup data-testid="fixture">
@@ -478,7 +478,7 @@ describe('a11y', () => {
     const RadioGroup = createGroup({ label: 'Group' });
     const RadioInput = createRadio(CustomBase);
 
-    page.render({
+    appRender({
       components: { RadioGroup, RadioInput },
       template: `
         <RadioGroup data-testid="fixture">
@@ -495,7 +495,7 @@ describe('a11y', () => {
     const RadioGroup = createGroup({ label: 'Group', required: true });
     const RadioInput = createRadio();
 
-    page.render({
+    appRender({
       components: { RadioGroup, RadioInput },
       template: `
         <RadioGroup data-testid="fixture">

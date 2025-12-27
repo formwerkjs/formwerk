@@ -2,7 +2,7 @@ import { useOptionGroup } from './useOptionGroup';
 import { useOption } from '../useOption';
 import { defineComponent } from 'vue';
 import { page } from 'vitest/browser';
-import { expectNoA11yViolations } from '@test-utils/index';
+import { expectNoA11yViolations, appRender } from '@test-utils/index';
 
 test('disabling a group disables all options', async () => {
   const Option = defineComponent({
@@ -20,7 +20,7 @@ test('disabling a group disables all options', async () => {
     `,
   });
 
-  page.render({
+  appRender({
     components: {
       Option,
     },
@@ -54,7 +54,7 @@ test('disabling a group disables all options', async () => {
 });
 
 test('useOptionGroup should not have a11y errors', async () => {
-  page.render({
+  appRender({
     setup() {
       const label = 'Field';
       const { groupProps, labelProps } = useOptionGroup({

@@ -4,7 +4,7 @@ import { useOption } from '../useOption';
 import { useDefaultFilter } from '../collections';
 import { useForm } from '../useForm';
 import { page, userEvent } from 'vitest/browser';
-import { dispatchEvent, expectNoA11yViolations } from '@test-utils/index';
+import { dispatchEvent, expectNoA11yViolations, appRender } from '@test-utils/index';
 
 function createComboBox(fixedProps: Partial<ComboBoxProps<any, any>> = {}) {
   const Option = defineComponent({
@@ -118,7 +118,7 @@ describe('reset', () => {
     const MyComboBox = createComboBox();
     const options = [{ label: 'One' }, { label: 'Two' }, { label: 'Three' }];
 
-    page.render({
+    appRender({
       components: { MyComboBox },
       setup() {
         const { reset, formProps } = useForm();
@@ -145,7 +145,7 @@ describe('reset', () => {
 
 describe('keyboard features', () => {
   async function renderComboBox(opts?: { label: string; disabled?: boolean }[], props?: { readonly?: boolean }) {
-    page.render({
+    appRender({
       components: {
         MyComboBox: createComboBox(),
       },
@@ -373,7 +373,7 @@ describe('keyboard features', () => {
   });
 
   test('Should open menu when focused if openOnFocus is true', async () => {
-    page.render({
+    appRender({
       components: {
         MyComboBox: createComboBox({ openOnFocus: true }),
       },
@@ -399,7 +399,7 @@ describe('keyboard features', () => {
 
 describe('filtering', () => {
   test('should filter options based on input value', async () => {
-    page.render({
+    appRender({
       components: {
         MyComboBox: createComboBox(),
       },
@@ -438,7 +438,7 @@ describe('selection state', () => {
     const MyComboBox = createComboBox();
     const options = [{ label: 'One' }, { label: 'Two' }, { label: 'Three' }];
 
-    page.render({
+    appRender({
       components: { MyComboBox },
       setup() {
         return { options };
@@ -465,7 +465,7 @@ describe('selection state', () => {
 
 describe('a11y', () => {
   test('with options', async () => {
-    page.render({
+    appRender({
       components: {
         MyComboBox: createComboBox(),
       },
@@ -491,7 +491,7 @@ test('Should use onNewValue handler instead of reverting when provided', async (
     value: value + '!',
   }));
 
-  page.render({
+  appRender({
     components: {
       MyComboBox: createComboBox({ onNewValue: onNewValueSpy }),
     },
@@ -529,7 +529,7 @@ test('Should use onNewValue handler instead of reverting when provided', async (
 test('Can reject new values if onNewValue returns undefined', async () => {
   const onNewValueSpy = vi.fn(() => undefined);
 
-  page.render({
+  appRender({
     components: {
       MyComboBox: createComboBox({ onNewValue: onNewValueSpy }),
     },
@@ -566,7 +566,7 @@ test('Can reject new values if onNewValue returns undefined', async () => {
 
 test('Should not accept new value on Enter when readonly', async () => {
   const MyComboBox = createComboBox();
-  page.render({
+  appRender({
     components: { MyComboBox },
     setup() {
       const options = [{ label: 'One' }, { label: 'Two' }, { label: 'Three' }];

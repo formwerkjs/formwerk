@@ -1,6 +1,6 @@
 import { useSyncModel } from './useModelSync';
 import { nextTick, ref } from 'vue';
-import { page } from 'vitest/browser';
+import { appRender } from '@test-utils/index';
 
 test('emits model update event when model changes', async () => {
   const model = ref('value');
@@ -21,7 +21,7 @@ test('emits model update event when model changes', async () => {
   };
 
   // Parent captures emitted events
-  page.render({
+  appRender({
     components: { Child },
     setup() {
       return {
@@ -53,7 +53,7 @@ test('calls model callback when prop changes', async () => {
     },
   };
 
-  page.render({
+  appRender({
     setup() {
       return {
         model,

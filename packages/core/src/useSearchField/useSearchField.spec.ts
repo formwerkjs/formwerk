@@ -1,6 +1,6 @@
 import { useSearchField } from './useSearchField';
 import { page } from 'vitest/browser';
-import { expectNoA11yViolations } from '@test-utils/index';
+import { expectNoA11yViolations, appRender } from '@test-utils/index';
 
 async function changeValue(target: ReturnType<typeof page.getByLabelText>, value: string) {
   const el = (await target.element()) as HTMLInputElement;
@@ -16,7 +16,7 @@ test('Enter key submit the value using the onSubmit prop', async () => {
   const label = 'Search';
   const onSubmit = vi.fn();
 
-  page.render({
+  appRender({
     setup() {
       const description = 'Search for the thing';
       const { inputProps, descriptionProps, labelProps } = useSearchField({
@@ -53,7 +53,7 @@ test('Enter key submit the value using the onSubmit prop', async () => {
 test('blur sets touched to true', async () => {
   const label = 'Search';
 
-  page.render({
+  appRender({
     setup() {
       const description = 'Search for the thing';
       const { inputProps, descriptionProps, labelProps, isTouched } = useSearchField({
@@ -91,7 +91,7 @@ describe('Escape key', async () => {
   const value = 'Best keyboard';
 
   test('clears the value', async () => {
-    page.render({
+    appRender({
       setup() {
         const description = 'Search for the thing';
         const { inputProps, descriptionProps, labelProps } = useSearchField({
@@ -124,7 +124,7 @@ describe('Escape key', async () => {
   });
 
   test('ignored when disabled', async () => {
-    page.render({
+    appRender({
       setup() {
         const description = 'Search for the thing';
         const { inputProps, descriptionProps, labelProps } = useSearchField({
@@ -158,7 +158,7 @@ describe('Escape key', async () => {
   });
 
   test('ignored when readonly', async () => {
-    page.render({
+    appRender({
       setup() {
         const description = 'Search for the thing';
         const { inputProps, descriptionProps, labelProps } = useSearchField({
@@ -197,7 +197,7 @@ describe('Clear button', () => {
   const value = 'Best keyboard';
 
   test('clears the value', async () => {
-    page.render({
+    appRender({
       setup() {
         const description = 'Search for the thing';
         const { inputProps, descriptionProps, labelProps, clearBtnProps } = useSearchField({
@@ -232,7 +232,7 @@ describe('Clear button', () => {
   });
 
   test('ignored when disabled', async () => {
-    page.render({
+    appRender({
       setup() {
         const description = 'Search for the thing';
         const { inputProps, descriptionProps, labelProps, clearBtnProps } = useSearchField({
@@ -268,7 +268,7 @@ describe('Clear button', () => {
   });
 
   test('ignored when readonly', async () => {
-    page.render({
+    appRender({
       setup() {
         const description = 'Search for the thing';
         const { inputProps, descriptionProps, labelProps, clearBtnProps } = useSearchField({
@@ -307,7 +307,7 @@ describe('Clear button', () => {
 test('change event updates the value', async () => {
   const label = 'Search';
 
-  page.render({
+  appRender({
     setup() {
       const description = 'Search for the thing';
       const { inputProps, descriptionProps, labelProps } = useSearchField({
@@ -343,7 +343,7 @@ test('change event updates the value', async () => {
 test('value prop sets the initial value', async () => {
   const label = 'Field';
 
-  page.render({
+  appRender({
     setup() {
       const { inputProps, labelProps } = useSearchField({
         label,
@@ -370,7 +370,7 @@ test('value prop sets the initial value', async () => {
 test('modelValue prop sets the initial value', async () => {
   const label = 'Field';
 
-  page.render({
+  appRender({
     setup() {
       const { inputProps, labelProps } = useSearchField({
         label,
@@ -396,7 +396,7 @@ test('modelValue prop sets the initial value', async () => {
 
 describe('a11y', () => {
   test('useSearchField should not have a11y errors with labels or descriptions', async () => {
-    page.render({
+    appRender({
       setup() {
         const label = 'Search';
         const description = 'Search for the thing';
@@ -428,7 +428,7 @@ describe('a11y', () => {
   test('useSearchField picks up native error messages', async () => {
     const label = 'Search';
 
-    page.render({
+    appRender({
       setup() {
         const description = 'Search for the thing';
         const { inputProps, descriptionProps, labelProps } = useSearchField({

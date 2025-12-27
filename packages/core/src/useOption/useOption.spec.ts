@@ -1,6 +1,5 @@
-import { renderSetup, expectNoA11yViolations } from '@test-utils/index';
+import { renderSetup, expectNoA11yViolations, appRender } from '@test-utils/index';
 import { useOption } from './useOption';
-import { page } from 'vitest/browser';
 
 test('warns if no ListBox Context is provided', async () => {
   const warn = vi.spyOn(console, 'warn');
@@ -16,7 +15,7 @@ test('warns if no ListBox Context is provided', async () => {
 });
 
 test('useOption should not have a11y errors', async () => {
-  page.render({
+  appRender({
     setup() {
       const label = 'Field';
       const { optionProps } = useOption({ label, value: '' });

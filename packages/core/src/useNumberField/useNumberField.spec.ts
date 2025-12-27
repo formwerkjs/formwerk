@@ -1,6 +1,6 @@
 import { NumberFieldProps, useNumberField } from './useNumberField';
 import { type Component } from 'vue';
-import { defineStandardSchema, expectNoA11yViolations } from '@test-utils/index';
+import { defineStandardSchema, expectNoA11yViolations, appRender } from '@test-utils/index';
 import { SetOptional } from 'type-fest';
 import { page } from 'vitest/browser';
 
@@ -74,7 +74,7 @@ const makeTest = (props?: SetOptional<NumberFieldProps, 'label'>): Component => 
 });
 
 test('blur sets blurred to true', async () => {
-  page.render(makeTest());
+  appRender(makeTest());
   const fixture = page.getByTestId('fixture');
   const input = page.getByLabelText(label);
 
@@ -84,7 +84,7 @@ test('blur sets blurred to true', async () => {
 });
 
 test('input sets touched to true', async () => {
-  page.render(makeTest());
+  appRender(makeTest());
   const fixture = page.getByTestId('fixture');
   const input = page.getByLabelText(label);
 
@@ -94,7 +94,7 @@ test('input sets touched to true', async () => {
 });
 
 test('change event updates the value and parses it as a number', async () => {
-  page.render(makeTest());
+  appRender(makeTest());
   const value = '123';
   const input = page.getByLabelText(label);
   await changeValue(input, value);
@@ -103,7 +103,7 @@ test('change event updates the value and parses it as a number', async () => {
 });
 
 test('arrow up and down should increment and decrement the value', async () => {
-  page.render(makeTest());
+  appRender(makeTest());
   const input = page.getByLabelText(label);
   await keyDown(input, { code: 'ArrowUp' });
   await expect.element(input).toHaveValue('1');
@@ -112,7 +112,7 @@ test('arrow up and down should increment and decrement the value', async () => {
 });
 
 test('increment and decrement buttons should update the value', async () => {
-  page.render(makeTest());
+  appRender(makeTest());
   const input = page.getByLabelText(label);
   await mouseDown(page.getByLabelText('Increment'));
   await expect.element(input).toHaveValue('1');
@@ -121,26 +121,26 @@ test('increment and decrement buttons should update the value', async () => {
 });
 
 test('Tries out different locales to match the value', async () => {
-  page.render(makeTest());
+  appRender(makeTest());
   const value = '١٠';
   await changeValue(page.getByLabelText(label), value);
   await expect.element(page.getByTestId('value')).toHaveTextContent('10');
 });
 
 test('Prevents invalid numeric input', async () => {
-  page.render(makeTest());
+  appRender(makeTest());
   const value = 'test';
   await changeValue(page.getByLabelText(label), value);
   await expect.element(page.getByTestId('value')).toHaveTextContent('null');
 });
 
 test('Applies decimal inputmode if the step contains decimals', async () => {
-  page.render(makeTest({ step: 1.5 }));
+  appRender(makeTest({ step: 1.5 }));
   await expect.element(page.getByLabelText(label)).toHaveAttribute('inputmode', 'decimal');
 });
 
 test('Increments and decrements correctly with decimal steps', async () => {
-  page.render(makeTest({ step: 0.1, value: 0 }));
+  appRender(makeTest({ step: 0.1, value: 0 }));
   const input = page.getByLabelText(label);
 
   // Test increment
@@ -169,7 +169,7 @@ test('Increments and decrements correctly with decimal steps', async () => {
 });
 
 test('Increments and decrements correctly with step 1.5', async () => {
-  page.render(makeTest({ step: 1.5, value: 0 }));
+  appRender(makeTest({ step: 1.5, value: 0 }));
   const input = page.getByLabelText(label);
 
   // Test increment
@@ -195,7 +195,7 @@ describe('validation', () => {
         : { issues: [{ message: 'Value must be greater than 1', path: [] }] };
     });
 
-    page.render(makeTest({ schema }));
+    appRender(makeTest({ schema }));
     const error = page.getByTestId('error-message');
     const input = page.getByLabelText(label);
     await expect.element(error).toHaveTextContent('');
@@ -215,7 +215,7 @@ describe('validation', () => {
         : { issues: [{ message: 'Value must be greater than 1', path: [] }] };
     });
 
-    page.render(makeTest({ schema }));
+    appRender(makeTest({ schema }));
     const error = page.getByTestId('error-message');
     const input = page.getByLabelText(label);
     await keyDown(input, { code: 'ArrowUp' });
@@ -230,7 +230,7 @@ describe('sets initial value', () => {
   test('with value prop', async () => {
     const label = 'Field';
 
-    page.render({
+    appRender({
       setup() {
         const { inputProps, labelProps } = useNumberField({
           label,
@@ -257,7 +257,7 @@ describe('sets initial value', () => {
   test('with modelValue prop', async () => {
     const label = 'Field';
 
-    page.render({
+    appRender({
       setup() {
         const { inputProps, labelProps } = useNumberField({
           label,
@@ -284,7 +284,7 @@ describe('sets initial value', () => {
 
 describe('mouse wheel', () => {
   test('should increment and decrement the value', async () => {
-    page.render(makeTest());
+    appRender(makeTest());
     const input = page.getByLabelText(label);
     await wheel(input, 100);
     await wheel(input, 100);
@@ -295,7 +295,7 @@ describe('mouse wheel', () => {
   });
 
   test('should be disabled when disableMouseWheel is true', async () => {
-    page.render(makeTest({ disableWheel: true, value: 0 }));
+    appRender(makeTest({ disableWheel: true, value: 0 }));
     const input = page.getByLabelText(label);
     await wheel(input, 100);
     await wheel(input, 100);
@@ -308,12 +308,12 @@ describe('mouse wheel', () => {
 
 describe('a11y', () => {
   test('useNumberField should not have a11y errors with labels or descriptions', async () => {
-    page.render(makeTest());
+    appRender(makeTest());
     await expectNoA11yViolations('[data-testid="fixture"]');
   });
 
   test('useNumberField picks up native error messages', async () => {
-    page.render(makeTest({ required: true }));
+    appRender(makeTest({ required: true }));
 
     const input = page.getByLabelText(label);
     (await input.element()).dispatchEvent(new Event('invalid', { bubbles: true }));

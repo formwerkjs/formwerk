@@ -4,7 +4,7 @@ import { useOption } from '../useOption';
 import { useOptionGroup } from '../useOptionGroup';
 import { page } from 'vitest/browser';
 import { isMac } from '../utils/platform';
-import { expectNoA11yViolations } from '@test-utils/index';
+import { expectNoA11yViolations, appRender } from '@test-utils/index';
 
 const sleep = (ms: number) => new Promise<void>(resolve => setTimeout(resolve, ms));
 
@@ -171,7 +171,7 @@ function getSelect() {
 
 describe('keyboard features for a single select', () => {
   function renderSelect(opts?: { label: string; disabled?: boolean }[]) {
-    page.render({
+    appRender({
       components: {
         MySelect: createSelect(),
       },
@@ -354,7 +354,7 @@ describe('keyboard features for a single select', () => {
 
 describe('keyboard features for a multi select', () => {
   function renderSelect(opts?: { label: string; disabled?: boolean }[]) {
-    page.render({
+    appRender({
       components: {
         MySelect: createSelect(),
       },
@@ -494,7 +494,7 @@ describe('keyboard features for a multi select', () => {
 
 describe('selection state', () => {
   function renderSelect(select: any, opts?: { label: string; disabled?: boolean }[]) {
-    page.render({
+    appRender({
       components: {
         MySelect: select,
       },
@@ -568,7 +568,7 @@ describe('selection state', () => {
 
 describe('a11y', () => {
   test('with options', async () => {
-    page.render({
+    appRender({
       components: {
         MySelect: createSelect(),
       },
@@ -588,7 +588,7 @@ describe('a11y', () => {
   });
 
   test('with groups', async () => {
-    page.render({
+    appRender({
       components: {
         MySelect: createSelect(),
       },

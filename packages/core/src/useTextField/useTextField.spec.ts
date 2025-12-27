@@ -2,12 +2,12 @@ import { page } from 'vitest/browser';
 import { useTextField } from './useTextField';
 import { describe } from 'vitest';
 import { defineComponent, ref } from 'vue';
-import { expectNoA11yViolations } from '@test-utils/index';
+import { expectNoA11yViolations, appRender } from '@test-utils/index';
 
 test('blur sets touched and blurred to true', async () => {
   const label = 'Field';
 
-  page.render({
+  appRender({
     setup() {
       const description = 'A friendly field';
       const { inputProps, descriptionProps, labelProps, isTouched, isBlurred } = useTextField({
@@ -49,7 +49,7 @@ test('blur sets touched and blurred to true', async () => {
 test('input sets touched to true and updates value', async () => {
   const label = 'Field';
 
-  page.render({
+  appRender({
     setup() {
       const description = 'A friendly field';
       const { inputProps, descriptionProps, labelProps, isTouched, fieldValue } = useTextField({
@@ -92,7 +92,7 @@ test('input sets touched to true and updates value', async () => {
 test('picks up native error messages', async () => {
   const label = 'Field';
 
-  page.render({
+  appRender({
     setup() {
       const description = 'A friendly field';
       const { inputProps, descriptionProps, labelProps, errorMessageProps, errorMessage } = useTextField({
@@ -152,7 +152,7 @@ test('supports v-model', async () => {
     `,
   });
 
-  page.render({
+  appRender({
     setup() {
       return {
         model,
@@ -179,7 +179,7 @@ describe('sets initial value', () => {
   test('with value prop', async () => {
     const label = 'Field';
 
-    page.render({
+    appRender({
       setup() {
         const { inputProps, labelProps } = useTextField({
           label,
@@ -206,7 +206,7 @@ describe('sets initial value', () => {
   test('with modelValue prop', async () => {
     const label = 'Field';
 
-    page.render({
+    appRender({
       setup() {
         const { inputProps, labelProps } = useTextField({
           label,
@@ -233,7 +233,7 @@ describe('sets initial value', () => {
   test('for textarea', async () => {
     const label = 'Field';
 
-    page.render({
+    appRender({
       setup() {
         const { inputProps, labelProps } = useTextField({
           label,
@@ -260,7 +260,7 @@ describe('sets initial value', () => {
 
 describe('a11y', () => {
   test('with label and input combo', async () => {
-    page.render({
+    appRender({
       setup() {
         const label = 'Field';
         const description = 'A friendly field';
@@ -290,7 +290,7 @@ describe('a11y', () => {
   });
 
   test('with custom label and input combo', async () => {
-    page.render({
+    appRender({
       setup() {
         const label = 'Field';
         const description = 'A friendly field';
@@ -320,7 +320,7 @@ describe('a11y', () => {
   });
 
   test('with no label element', async () => {
-    page.render({
+    appRender({
       setup() {
         const label = 'Field';
         const description = 'A friendly field';

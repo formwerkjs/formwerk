@@ -2,10 +2,11 @@ import { usePopoverController } from './usePopoverController';
 import { shallowRef } from 'vue';
 import { page } from 'vitest/browser';
 import { expect } from 'vitest';
+import { appRender } from '@test-utils/index';
 
 // The matches query doesn't seem to be supported
 test('opens/closes the popover when `isOpen` changes', async () => {
-  page.render({
+  appRender({
     setup() {
       const popoverRef = shallowRef<HTMLElement>();
       const { isOpen } = usePopoverController(popoverRef);
@@ -33,7 +34,7 @@ const createEvent = (state: boolean) => {
 };
 
 test('Syncs isOpen when the toggle event is fired', async () => {
-  page.render({
+  appRender({
     setup() {
       const popoverRef = shallowRef<HTMLElement>();
       const { isOpen } = usePopoverController(popoverRef);
@@ -57,7 +58,7 @@ test('Syncs isOpen when the toggle event is fired', async () => {
 });
 
 test('No ops if state match', async () => {
-  page.render({
+  appRender({
     setup() {
       const popoverRef = shallowRef<HTMLElement>();
       const { isOpen } = usePopoverController(popoverRef);

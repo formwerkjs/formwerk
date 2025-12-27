@@ -1,7 +1,7 @@
 import { OtpFieldProps, useOtpField, OtpSlot } from '.';
 import { DEFAULT_MASK, isValueAccepted } from './utils';
 import { Component, defineComponent } from 'vue';
-import { renderSetup, expectNoA11yViolations } from '@test-utils/index';
+import { renderSetup, expectNoA11yViolations, appRender } from '@test-utils/index';
 import { page } from 'vitest/browser';
 
 const InputBase: string = `
@@ -66,7 +66,7 @@ describe('useOtpField', () => {
     test('with basic configuration', async () => {
       const OtpField = createOtpField({ label: 'OTP Code', length: 4 });
 
-      page.render({
+      appRender({
         components: { OtpField },
         template: `
           <div data-testid="fixture">
@@ -171,7 +171,7 @@ describe('useOtpField', () => {
     test('sets blurred state to true when a slot is blurred', async () => {
       const OtpField = createOtpField({ label: 'OTP Code', length: 4 });
 
-      page.render({
+      appRender({
         components: { OtpField },
         template: `<OtpField />`,
       });
@@ -189,7 +189,7 @@ describe('useOtpField', () => {
     test('sets touched state to true when a slot is manipulated', async () => {
       const OtpField = createOtpField({ label: 'OTP Code', length: 4 });
 
-      page.render({
+      appRender({
         components: { OtpField },
         template: `<OtpField />`,
       });
@@ -204,7 +204,7 @@ describe('useOtpField', () => {
     test('handles paste event', async () => {
       const OtpField = createOtpField({ label: 'OTP Code', length: 4 });
 
-      page.render({
+      appRender({
         components: { OtpField },
         template: `<OtpField />`,
       });
@@ -229,7 +229,7 @@ describe('useOtpField', () => {
         length: 6,
       });
 
-      page.render({
+      appRender({
         components: { OtpField },
         template: `<OtpField />`,
       });
@@ -265,7 +265,7 @@ describe('useOtpField', () => {
     test('validates required field', async () => {
       const OtpField = createOtpField({ label: 'OTP Code', length: 4, required: true });
 
-      page.render({
+      appRender({
         components: { OtpField },
         template: `<OtpField />`,
       });
@@ -287,7 +287,7 @@ describe('useOtpField', () => {
         onCompleted,
       });
 
-      page.render({
+      appRender({
         components: { OtpField },
         template: `<OtpField />`,
       });
@@ -310,7 +310,7 @@ describe('useOtpField', () => {
       // in the return value, but we can verify the component renders correctly
       const OtpField = createOtpField({ label: 'OTP Code', length: 4 });
 
-      page.render({
+      appRender({
         components: { OtpField },
         template: `<OtpField />`,
       });
@@ -329,7 +329,7 @@ describe('useOtpField', () => {
         'input',
       );
 
-      page.render({
+      appRender({
         components: { OtpField },
         template: `<OtpField />`,
       });
@@ -362,7 +362,7 @@ describe('useOtpField', () => {
         length: 4,
       });
 
-      page.render({
+      appRender({
         components: { OtpField },
         template: `<OtpField />`,
       });
@@ -407,7 +407,7 @@ describe('useOtpField', () => {
         length: 4,
       });
 
-      page.render({
+      appRender({
         components: { OtpField },
         template: `<OtpField />`,
       });
@@ -451,7 +451,7 @@ describe('useOtpField', () => {
         length: 4,
       });
 
-      page.render({
+      appRender({
         components: { OtpField },
         template: `<OtpField />`,
       });
@@ -487,7 +487,7 @@ describe('useOtpField', () => {
         'input',
       );
 
-      page.render({
+      appRender({
         components: { OtpField },
         template: `<OtpField />`,
       });
@@ -511,7 +511,7 @@ describe('useOtpField', () => {
         'input',
       );
 
-      page.render({
+      appRender({
         components: { OtpField },
         template: `<OtpField />`,
       });
@@ -536,7 +536,7 @@ describe('useOtpField', () => {
         'input',
       );
 
-      page.render({
+      appRender({
         components: { OtpField },
         template: `<OtpField />`,
       });
@@ -564,7 +564,7 @@ describe('useOtpField', () => {
         'span',
       );
 
-      page.render({
+      appRender({
         components: { OtpField },
         template: `<OtpField />`,
       });
@@ -599,7 +599,7 @@ describe('useOtpField', () => {
         accept: 'numeric',
       });
 
-      page.render({
+      appRender({
         components: { OtpField },
         template: `<OtpField />`,
       });
@@ -642,7 +642,7 @@ describe('useOtpField', () => {
         readonly: true,
       });
 
-      page.render({
+      appRender({
         components: { OtpField },
         template: `<OtpField />`,
       });
@@ -674,7 +674,7 @@ describe('useOtpField', () => {
         disabled: true,
       });
 
-      page.render({
+      appRender({
         components: { OtpField },
         template: `<OtpField />`,
       });
@@ -706,7 +706,7 @@ describe('useOtpField', () => {
         readonly: true,
       });
 
-      page.render({
+      appRender({
         components: { OtpField },
         template: `<OtpField />`,
       });
@@ -732,7 +732,7 @@ describe('useOtpField', () => {
         disabled: true,
       });
 
-      page.render({
+      appRender({
         components: { OtpField },
         template: `<OtpField />`,
       });
@@ -762,7 +762,7 @@ describe('useOtpField', () => {
         'input',
       );
 
-      page.render({
+      appRender({
         components: { OtpField },
         template: `<OtpField />`,
       });
@@ -793,7 +793,7 @@ describe('useOtpField', () => {
         'input',
       );
 
-      page.render({
+      appRender({
         components: { OtpField },
         template: `<OtpField />`,
       });
@@ -826,7 +826,7 @@ describe('useOtpField', () => {
         'span',
       );
 
-      page.render({
+      appRender({
         components: { OtpField },
         template: `<OtpField />`,
       });
@@ -851,7 +851,7 @@ describe('useOtpField', () => {
         'span',
       );
 
-      page.render({
+      appRender({
         components: { OtpField },
         template: `<OtpField />`,
       });

@@ -1,3 +1,6 @@
+import { afterEach } from 'vitest';
+import { cleanupAppRender } from '@test-utils/index';
+
 if (typeof window !== 'undefined') {
   // Provide a minimal shim for browser mode.
   if (!('process' in globalThis)) {
@@ -5,3 +8,8 @@ if (typeof window !== 'undefined') {
     globalThis.process = { env: { NODE_ENV: 'test' } };
   }
 }
+
+// Global cleanup after each test
+afterEach(() => {
+  cleanupAppRender();
+});

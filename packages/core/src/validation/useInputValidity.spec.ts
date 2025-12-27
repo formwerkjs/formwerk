@@ -4,11 +4,12 @@ import { FieldState, useFormField } from '../useFormField';
 import { EventExpression } from '../helpers/useEventListener';
 import { page, userEvent } from 'vitest/browser';
 import { expect } from 'vitest';
+import { appRender } from '@test-utils/index';
 
 test('updates the validity state on blur events', async () => {
   const input = ref<HTMLInputElement>();
 
-  page.render({
+  appRender({
     setup: () => {
       const field = useFormField().state;
       useInputValidity({ inputEl: input, field });
@@ -34,7 +35,7 @@ test('updates the validity state on blur events', async () => {
 test('updates the validity state on change events', async () => {
   const input = ref<HTMLInputElement>();
 
-  page.render({
+  appRender({
     setup: () => {
       const field = useFormField().state;
       useInputValidity({ inputEl: input, field });
@@ -64,7 +65,7 @@ test('updates the validity state on change events', async () => {
 test('updates the validity on specified events', async () => {
   const input = ref<HTMLInputElement>();
 
-  page.render({
+  appRender({
     setup: () => {
       const field = useFormField().state;
       useInputValidity({ inputEl: input, field, events: ['input'] });
@@ -93,7 +94,7 @@ test('updates the validity on specified events', async () => {
 test('updates the input native validity with custom validity errors', async () => {
   const input = ref<HTMLInputElement>();
   let field!: FieldState<any>;
-  page.render({
+  appRender({
     setup: () => {
       field = useFormField().state;
       useInputValidity({ inputEl: input, field, events: ['input'] });
@@ -117,7 +118,7 @@ test('events can be reactive', async () => {
   const input = ref<HTMLInputElement>();
   const events = ref<EventExpression[]>(['test']);
 
-  page.render({
+  appRender({
     setup: () => {
       const field = useFormField().state;
       useInputValidity({ inputEl: input, field, events });
@@ -152,7 +153,7 @@ describe('isValidated tracking', () => {
     const input = ref<HTMLInputElement>();
     let field!: FieldState<any>;
 
-    page.render({
+    appRender({
       setup: () => {
         field = useFormField().state;
         useInputValidity({ inputEl: input, field });
@@ -209,7 +210,7 @@ describe('isValidated tracking', () => {
     const input = ref<HTMLInputElement>();
     let field!: FieldState<any>;
 
-    page.render({
+    appRender({
       setup: () => {
         field = useFormField().state;
         useInputValidity({ inputEl: input, field });
@@ -233,7 +234,7 @@ describe('isValidated tracking', () => {
     const input = ref<HTMLInputElement>();
     let field!: FieldState<any>;
 
-    page.render({
+    appRender({
       setup: () => {
         field = useFormField().state;
         useInputValidity({ inputEl: input, field });
@@ -264,7 +265,7 @@ describe('isValidated tracking', () => {
     const input = ref<HTMLInputElement>();
     let field!: FieldState<any>;
 
-    page.render({
+    appRender({
       setup: () => {
         field = useFormField().state;
         useInputValidity({ inputEl: input, field });
@@ -301,7 +302,7 @@ describe('isValidated tracking', () => {
     const input = ref<HTMLInputElement>();
     let field!: FieldState<any>;
 
-    page.render({
+    appRender({
       setup: () => {
         field = useFormField().state;
         useInputValidity({ inputEl: input, field });
@@ -349,7 +350,7 @@ describe('isValidated tracking', () => {
     const input = ref<HTMLInputElement>();
     let field!: FieldState<any>;
 
-    page.render({
+    appRender({
       setup: () => {
         field = useFormField().state;
         useInputValidity({ inputEl: input, field, events: ['blur'] });

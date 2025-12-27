@@ -3,6 +3,7 @@ import { useFormRepeater, FormRepeaterProps } from './useFormRepeater';
 import { useForm } from '../useForm';
 import { useTextField } from '../useTextField';
 import { page } from 'vitest/browser';
+import { appRender } from '@test-utils/index';
 
 function renderTest(props: FormRepeaterProps) {
   const repeaterReturns = ref<ReturnType<typeof useFormRepeater<any>> | null>(null);
@@ -38,7 +39,7 @@ function renderTest(props: FormRepeaterProps) {
     `,
   });
 
-  page.render(TestComponent);
+  appRender(TestComponent);
 
   return {
     get swap() {
@@ -288,7 +289,7 @@ test('renders Iteration component with correct props', async () => {
     `,
   });
 
-  page.render(TestComponent);
+  appRender(TestComponent);
 
   await expect.element(page.getByTestId('iteration-content')).toBeInTheDocument();
 
@@ -324,7 +325,7 @@ test('renders Iteration component with correct props with custom element', async
     `,
   });
 
-  page.render(TestComponent);
+  appRender(TestComponent);
 
   await expect.element(page.getByTestId('repeater-item')).toBeInTheDocument();
 });
@@ -481,7 +482,7 @@ describe('form repeater with form context', () => {
       template: `<RepeaterChild :form="form" />`,
     });
 
-    page.render(TestComponent);
+    appRender(TestComponent);
 
     // Verify initial state - 3 users with all data
     expect(formReturns.value!.values.users).toHaveLength(3);
@@ -582,7 +583,7 @@ describe('form repeater with form context', () => {
       template: `<RepeaterChild />`,
     });
 
-    page.render(TestComponent);
+    appRender(TestComponent);
 
     // Verify initial state
     expect(formReturns.value!.values.users).toHaveLength(3);
@@ -664,7 +665,7 @@ describe('form repeater with form context', () => {
       template: `<RepeaterChild />`,
     });
 
-    page.render(TestComponent);
+    appRender(TestComponent);
 
     // Verify initial state
     await expect.poll(() => formReturns.value!.values.users).toHaveLength(3);
@@ -747,7 +748,7 @@ describe('form repeater with form context', () => {
       template: `<RepeaterChild />`,
     });
 
-    page.render(TestComponent);
+    appRender(TestComponent);
 
     // Verify initial state
     await expect.poll(() => formReturns.value!.values.users).toHaveLength(3);
@@ -830,7 +831,7 @@ describe('form repeater with form context', () => {
       template: `<RepeaterChild />`,
     });
 
-    page.render(TestComponent);
+    appRender(TestComponent);
 
     // Verify initial state
     await expect.poll(() => formReturns.value!.values.users).toHaveLength(3);
@@ -912,7 +913,7 @@ describe('form repeater with form context', () => {
       `,
     });
 
-    page.render(TestComponent);
+    appRender(TestComponent);
 
     // Verify initial state
     expect(formReturns.value!.values.users).toHaveLength(3);

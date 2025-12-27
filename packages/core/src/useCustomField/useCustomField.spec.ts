@@ -2,13 +2,13 @@ import { useCustomField } from './useCustomField';
 import { describe, expect, test } from 'vitest';
 import { StandardSchema } from '../types';
 import { renderSetup } from '../../../test-utils/src';
-import { expectNoA11yViolations } from '@test-utils/index';
+import { expectNoA11yViolations, appRender } from '@test-utils/index';
 import { page } from 'vitest/browser';
 
 describe('useCustomField', () => {
   describe('accessibility', () => {
     test('with label and custom input', async () => {
-      page.render({
+      appRender({
         setup() {
           const label = 'Custom Field';
           const description = 'A custom field description';
@@ -38,7 +38,7 @@ describe('useCustomField', () => {
     });
 
     test('with error message', async () => {
-      page.render({
+      appRender({
         setup() {
           const label = 'Custom Field';
           const { controlProps, labelProps, errorMessageProps } = useCustomField({
@@ -70,7 +70,7 @@ describe('useCustomField', () => {
       const initialValue = 'test value';
       let value;
 
-      page.render({
+      appRender({
         setup() {
           const { controlProps, fieldValue } = useCustomField({
             label: 'Custom Field',
@@ -90,7 +90,7 @@ describe('useCustomField', () => {
       const initialValue = 'test value';
       let value;
 
-      page.render({
+      appRender({
         setup() {
           const { controlProps, fieldValue } = useCustomField({
             label: 'Custom Field',
@@ -109,7 +109,7 @@ describe('useCustomField', () => {
 
   describe('disabled state', () => {
     test('applies disabled state when prop is true', async () => {
-      page.render({
+      appRender({
         setup() {
           const { controlProps } = useCustomField({
             label: 'Custom Field',
@@ -127,7 +127,7 @@ describe('useCustomField', () => {
 
   describe('readonly state', () => {
     test('applies readonly attribute when prop is true', async () => {
-      page.render({
+      appRender({
         setup() {
           const { controlProps } = useCustomField({
             label: 'Custom Field',
@@ -145,7 +145,7 @@ describe('useCustomField', () => {
 
   describe('form integration', () => {
     test('uses provided name attribute', async () => {
-      page.render({
+      appRender({
         setup() {
           const { controlProps } = useCustomField({
             label: 'Custom Field',

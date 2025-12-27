@@ -3,7 +3,7 @@ import { SliderThumbProps, useSliderThumb } from './useSliderThumb';
 import { SliderProps, useSlider } from './useSlider';
 import { describe } from 'vitest';
 import { page } from 'vitest/browser';
-import { expectNoA11yViolations } from '@test-utils/index';
+import { expectNoA11yViolations, appRender } from '@test-utils/index';
 
 async function keyDown(target: ReturnType<typeof page.getByRole>, code: string) {
   (await target.element()).dispatchEvent(new KeyboardEvent('keydown', { bubbles: true, code }));
@@ -118,7 +118,7 @@ describe('thumb behavior with mouse', () => {
   });
 
   test('can be dragged to set value', async () => {
-    page.render({
+    appRender({
       components: { Thumb, Slider },
       template: `
         <Slider>
@@ -142,7 +142,7 @@ describe('thumb behavior with mouse', () => {
       dir: 'rtl',
     });
 
-    page.render({
+    appRender({
       components: { Thumb, RtlSlider },
       template: `
         <RtlSlider>
@@ -161,7 +161,7 @@ describe('thumb behavior with mouse', () => {
   });
 
   test('does not respond to right clicks', async () => {
-    page.render({
+    appRender({
       components: { Thumb, Slider },
       template: `
         <Slider>
@@ -185,7 +185,7 @@ describe('thumb behavior with mouse', () => {
       disabled: true,
     });
 
-    page.render({
+    appRender({
       components: { Thumb, DisabledSlider },
       template: `
         <DisabledSlider>
@@ -211,7 +211,7 @@ describe('thumb behavior with touch', () => {
   });
 
   test('can be dragged to set value', async () => {
-    page.render({
+    appRender({
       components: { Thumb, Slider },
       template: `
         <Slider>
@@ -235,7 +235,7 @@ describe('thumb behavior with touch', () => {
       dir: 'rtl',
     });
 
-    page.render({
+    appRender({
       components: { Thumb, RtlSlider },
       template: `
         <RtlSlider>
@@ -254,7 +254,7 @@ describe('thumb behavior with touch', () => {
   });
 
   test('does not respond to multi-touch', async () => {
-    page.render({
+    appRender({
       components: { Thumb, Slider },
       template: `
         <Slider>
@@ -284,7 +284,7 @@ describe('thumb behavior with touch', () => {
       disabled: true,
     });
 
-    page.render({
+    appRender({
       components: { Thumb, DisabledSlider },
       template: `
         <DisabledSlider>
@@ -322,7 +322,7 @@ describe('keyboard behavior', () => {
 
   describe('Left/Right Arrows', () => {
     test('Decrases/Increases the value in LTR', async () => {
-      page.render({
+      appRender({
         components: { Thumb, Slider },
         template: `
         <Slider>
@@ -343,7 +343,7 @@ describe('keyboard behavior', () => {
     });
 
     test('Increases/Decreases the value in RTL', async () => {
-      page.render({
+      appRender({
         components: { Thumb, RtlSlider },
         template: `
         <RtlSlider>
@@ -369,7 +369,7 @@ describe('keyboard behavior', () => {
         disabled: true,
       });
 
-      page.render({
+      appRender({
         components: { Thumb, DisabledSlider },
         template: `
         <DisabledSlider>
@@ -389,7 +389,7 @@ describe('keyboard behavior', () => {
 
   describe('Up/Down Arrows', () => {
     test('Decrases/Increases the value horizontally', async () => {
-      page.render({
+      appRender({
         components: { Thumb, Slider },
         template: `
         <Slider>
@@ -410,7 +410,7 @@ describe('keyboard behavior', () => {
     });
 
     test('Decreases/Increases the value vertically', async () => {
-      page.render({
+      appRender({
         components: { Thumb, VerticalSlider },
         template: `
         <VerticalSlider>
@@ -436,7 +436,7 @@ describe('keyboard behavior', () => {
         disabled: true,
       });
 
-      page.render({
+      appRender({
         components: { Thumb, DisabledSlider },
         template: `
         <DisabledSlider>
@@ -456,7 +456,7 @@ describe('keyboard behavior', () => {
 
   describe('Page Up/Down Keys', () => {
     test('Increases/Decreases the value', async () => {
-      page.render({
+      appRender({
         components: { Thumb, Slider },
         template: `
         <Slider>
@@ -479,7 +479,7 @@ describe('keyboard behavior', () => {
 
   describe('Home/End Keys', () => {
     test('Increases/Decreases the value', async () => {
-      page.render({
+      appRender({
         components: { Thumb, Slider },
         template: `
         <Slider>
@@ -508,7 +508,7 @@ describe('track behavior', () => {
   });
 
   test('clicking the track sets the thumb position and value', async () => {
-    page.render({
+    appRender({
       components: { Thumb, Slider },
       template: `
         <Slider>
@@ -528,7 +528,7 @@ describe('track behavior', () => {
       modelValue: [0, 50],
     });
 
-    page.render({
+    appRender({
       components: { Thumb, MultiSlider },
       template: `
         <MultiSlider>
@@ -554,7 +554,7 @@ describe('track behavior', () => {
       disabled: true,
     });
 
-    page.render({
+    appRender({
       components: { Thumb, DisabledSlider },
       template: `
         <DisabledSlider>
@@ -581,7 +581,7 @@ describe('decimal steps', () => {
       modelValue: 0,
     });
 
-    page.render({
+    appRender({
       components: { Thumb, DecimalSlider },
       template: `
         <DecimalSlider>
@@ -616,7 +616,7 @@ describe('decimal steps', () => {
       modelValue: 0,
     });
 
-    page.render({
+    appRender({
       components: { Thumb, DecimalSlider },
       template: `
         <DecimalSlider>
@@ -648,7 +648,7 @@ describe('discrete steps', () => {
       modelValue: 'low',
     });
 
-    page.render({
+    appRender({
       components: { Thumb, DiscreteSlider },
       template: `
         <DiscreteSlider>
@@ -677,7 +677,7 @@ describe('discrete steps', () => {
       modelValue: ['low', 'high'],
     });
 
-    page.render({
+    appRender({
       components: { Thumb, DiscreteMultiSlider },
       template: `
         <DiscreteMultiSlider>
@@ -712,7 +712,7 @@ describe('discrete steps', () => {
       modelValue: 'low',
     });
 
-    page.render({
+    appRender({
       components: { Thumb, DiscreteSlider },
       template: `
         <DiscreteSlider>
@@ -737,7 +737,7 @@ describe('discrete steps', () => {
       modelValue: 'low',
     });
 
-    page.render({
+    appRender({
       components: { Thumb, DiscreteSlider },
       template: `
         <DiscreteSlider>
@@ -759,7 +759,7 @@ describe('a11y', () => {
   });
 
   test('with single thumb set up', async () => {
-    page.render({
+    appRender({
       components: { Thumb, Slider },
       template: `
         <div data-testid="fixture">
@@ -774,7 +774,7 @@ describe('a11y', () => {
   });
 
   test('with multiple thumb set up', async () => {
-    page.render({
+    appRender({
       components: { Thumb, Slider },
       template: `
         <div data-testid="fixture">

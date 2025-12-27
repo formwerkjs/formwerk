@@ -3,10 +3,11 @@ import { useForm } from '../useForm';
 import { describe, expect, test, vi } from 'vitest';
 import { ref } from 'vue';
 import { page } from 'vitest/browser';
+import { appRender } from '@test-utils/index';
 
 describe('HiddenField component', () => {
   test('should not render anything', async () => {
-    page.render({
+    appRender({
       components: { HiddenField },
       setup() {
         const { formProps } = useForm();
@@ -21,7 +22,7 @@ describe('HiddenField component', () => {
 
   test('should set the value on the form', async () => {
     let getValues!: () => ReturnType<typeof useForm>['values'];
-    page.render({
+    appRender({
       components: { HiddenField },
       setup() {
         const { formProps, values } = useForm();
@@ -40,7 +41,7 @@ describe('HiddenField component', () => {
   test('should update the value on the form when it changes', async () => {
     const val = ref('test-value');
     let getValues!: () => ReturnType<typeof useForm>['values'];
-    page.render({
+    appRender({
       components: { HiddenField },
       setup() {
         const { formProps, values } = useForm();
@@ -62,7 +63,7 @@ describe('HiddenField component', () => {
   test('should not submit value when disabled', async () => {
     const onSubmit = vi.fn();
 
-    page.render({
+    appRender({
       components: { HiddenField },
       setup() {
         const { formProps, handleSubmit } = useForm();

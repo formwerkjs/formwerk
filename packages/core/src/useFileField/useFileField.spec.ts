@@ -3,7 +3,7 @@ import { type Component } from 'vue';
 import { SetOptional } from 'type-fest';
 import { Arrayable } from '../types';
 import { page } from 'vitest/browser';
-import { dispatchEvent, expectNoA11yViolations, waitForTimeout } from '@test-utils/index';
+import { dispatchEvent, expectNoA11yViolations, waitForTimeout, appRender } from '@test-utils/index';
 
 const label = 'Upload File';
 
@@ -91,7 +91,7 @@ async function dragEvent(dropzone: ReturnType<typeof page.getByTestId>, type: 'd
 }
 
 test('blur sets blurred to true', async () => {
-  page.render(makeTest());
+  appRender(makeTest());
   const fixture = page.getByTestId('fixture');
   const input = page.getByTestId('input');
 
@@ -101,7 +101,7 @@ test('blur sets blurred to true', async () => {
 });
 
 test('selecting a file sets touched to true', async () => {
-  page.render(makeTest());
+  appRender(makeTest());
 
   const fixture = page.getByTestId('fixture');
   const input = page.getByTestId('input');
@@ -114,7 +114,7 @@ test('selecting a file sets touched to true', async () => {
 });
 
 test('clicking the trigger button opens the file picker', async () => {
-  page.render(makeTest());
+  appRender(makeTest());
   const showPickerMock = vi.fn();
   const input = page.getByTestId('input');
   const inputEl = (await input.element()) as HTMLInputElement;
@@ -125,7 +125,7 @@ test('clicking the trigger button opens the file picker', async () => {
 });
 
 test('disabled state prevents file picker from opening', async () => {
-  page.render(makeTest({ disabled: true }));
+  appRender(makeTest({ disabled: true }));
   const showPickerMock = vi.fn();
   const input = page.getByTestId('input');
   const inputEl = (await input.element()) as HTMLInputElement;
@@ -136,7 +136,7 @@ test('disabled state prevents file picker from opening', async () => {
 });
 
 test('selecting a file adds it to entries and updates value', async () => {
-  page.render(makeTest());
+  appRender(makeTest());
 
   const input = page.getByTestId('input');
   const file = new File(['test content'], 'test.txt', { type: 'text/plain' });
@@ -147,7 +147,7 @@ test('selecting a file adds it to entries and updates value', async () => {
 });
 
 test('multiple files can be selected when multiple is true', async () => {
-  page.render(makeTest({ multiple: true }));
+  appRender(makeTest({ multiple: true }));
 
   const input = page.getByTestId('input');
   const file1 = new File(['test content 1'], 'test1.txt', { type: 'text/plain' });
@@ -158,7 +158,7 @@ test('multiple files can be selected when multiple is true', async () => {
 });
 
 test('only one file is kept when multiple is false', async () => {
-  page.render(makeTest({ multiple: false }));
+  appRender(makeTest({ multiple: false }));
 
   const input = page.getByTestId('input');
   const file1 = new File(['test content 1'], 'test1.txt', { type: 'text/plain' });
@@ -169,7 +169,7 @@ test('only one file is kept when multiple is false', async () => {
 });
 
 test('drag and drop adds files (multiple=true)', async () => {
-  page.render(makeTest({ multiple: true }));
+  appRender(makeTest({ multiple: true }));
 
   const dropzone = page.getByTestId('dropzone');
   const file1 = new File(['test content 1'], 'test1.txt', { type: 'text/plain' });
@@ -180,12 +180,12 @@ test('drag and drop adds files (multiple=true)', async () => {
 });
 
 test('should not have a11y errors', async () => {
-  page.render(makeTest());
+  appRender(makeTest());
   await expectNoA11yViolations('[data-testid="fixture"]');
 });
 
 test('clear method removes all entries', async () => {
-  page.render({
+  appRender({
     setup() {
       const { inputProps, entries, clear, fieldValue } = useFileField({
         label,
@@ -223,7 +223,7 @@ test('clear method removes all entries', async () => {
 });
 
 test('remove removes a specific entry', async () => {
-  page.render({
+  appRender({
     setup() {
       const { inputProps, entries, remove, fieldValue } = useFileField({
         label,
@@ -263,7 +263,7 @@ test('remove removes a specific entry', async () => {
 });
 
 test('remove removes the last entry when no key is provided', async () => {
-  page.render({
+  appRender({
     setup() {
       const { inputProps, entries, remove, fieldValue } = useFileField({
         label,
@@ -301,7 +301,7 @@ test('remove removes the last entry when no key is provided', async () => {
 });
 
 test('drag and drop functionality updates isDragging state', async () => {
-  page.render(makeTest());
+  appRender(makeTest());
 
   const fixture = page.getByTestId('fixture');
   const dropzone = page.getByTestId('dropzone');
@@ -316,7 +316,7 @@ test('drag and drop functionality updates isDragging state', async () => {
 });
 
 test('isDragging state resets to false after drop event', async () => {
-  page.render(makeTest({ multiple: true }));
+  appRender(makeTest({ multiple: true }));
 
   const dropzone = page.getByTestId('dropzone');
   const fixture = page.getByTestId('fixture');
@@ -336,7 +336,7 @@ test('isDragging state resets to false after drop event', async () => {
 });
 
 test('isDragging state transitions correctly during drag sequence', async () => {
-  page.render(makeTest({ multiple: true }));
+  appRender(makeTest({ multiple: true }));
 
   const dropzone = page.getByTestId('dropzone');
   const fixture = page.getByTestId('fixture');
@@ -373,7 +373,7 @@ test('aborting an upload when removing an entry', async () => {
     return uploadPromise;
   });
 
-  page.render({
+  appRender({
     setup() {
       const { inputProps, entries, remove, fieldValue } = useFileField({
         label,
@@ -430,7 +430,7 @@ test('aborting all uploads when clearing entries', async () => {
     return new Promise<string>(() => {});
   });
 
-  page.render({
+  appRender({
     setup() {
       const { inputProps, entries, clear, fieldValue } = useFileField({
         label,
@@ -479,7 +479,7 @@ test('onUpload callback is called when provided', async () => {
     return Promise.resolve(`uploaded-${(file as File).name}`);
   });
 
-  page.render(makeTest({ onUpload: onUploadMock }));
+  appRender(makeTest({ onUpload: onUploadMock }));
 
   const input = page.getByTestId('input');
   const file = new File(['test content'], 'test.txt', { type: 'text/plain' });
@@ -491,7 +491,7 @@ test('onUpload callback is called when provided', async () => {
 });
 
 test('validation works with required attribute', async () => {
-  page.render(makeTest({ required: true }));
+  appRender(makeTest({ required: true }));
 
   const input = page.getByTestId('input');
   await dispatchEvent(input, 'invalid');
@@ -502,7 +502,7 @@ test('validation works with required attribute', async () => {
 test('nested FileEntry components can access the FileEntryCollection', async () => {
   const { FileEntry } = await import('./useFileEntry');
 
-  page.render({
+  appRender({
     components: { FileEntry },
     setup() {
       const { inputProps, entries, fieldValue } = useFileField({
@@ -572,7 +572,7 @@ test('FileEntry components can display upload status', async () => {
     });
   });
 
-  page.render({
+  appRender({
     components: { FileEntry },
     setup() {
       const { inputProps, entries, fieldValue } = useFileField({
@@ -638,7 +638,7 @@ test('FileEntry components create and revoke object URLs for previews', async ()
   const createSpy = vi.spyOn(URL, 'createObjectURL');
   const revokeSpy = vi.spyOn(URL, 'revokeObjectURL');
 
-  const { unmount } = page.render({
+  const { unmount } = appRender({
     components: { FileEntry },
     setup() {
       const { inputProps, entries } = useFileField({

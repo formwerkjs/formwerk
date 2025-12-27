@@ -1,4 +1,4 @@
-import { renderSetup, defineStandardSchema } from '@test-utils/index';
+import { renderSetup, defineStandardSchema, appRender } from '@test-utils/index';
 import { useForm } from './useForm';
 import { useFormField } from '../useFormField';
 import { Component, Ref, ref } from 'vue';
@@ -436,7 +436,7 @@ describe('form reset', () => {
   test('handleReset can be used with a form element reset event', async () => {
     const afterResetMock = vi.fn();
 
-    page.render({
+    appRender({
       template: `
         <form v-bind="formProps" data-testid="form">
           <button type="reset">Reset</button>
@@ -836,7 +836,7 @@ describe('form submit', () => {
   test('Adds form values to FormData on native formdata event', async () => {
     const formData = new FormData();
 
-    page.render({
+    appRender({
       template: `
       <form v-bind="formProps" data-testid="form">
         <button type="submit">Submit</button>
@@ -1070,7 +1070,7 @@ describe('form validation', () => {
     test('validates initially with native constraint API', async () => {
       const input = ref<HTMLInputElement>();
 
-      page.render({
+      appRender({
         components: { Child: createInputComponent(input) },
         setup() {
           const { getError } = useForm();
@@ -1099,7 +1099,7 @@ describe('form validation', () => {
       const input = ref<HTMLInputElement>();
       const handler = vi.fn();
 
-      page.render({
+      appRender({
         components: { Child: createInputComponent(input) },
         setup() {
           const { handleSubmit } = useForm();
@@ -1130,7 +1130,7 @@ describe('form validation', () => {
     test('updates the form isValid', async () => {
       const input = ref<HTMLInputElement>();
 
-      page.render({
+      appRender({
         components: { Child: createInputComponent(input) },
         setup() {
           const { isValid } = useForm();
@@ -1171,7 +1171,7 @@ describe('form validation', () => {
         };
       };
 
-      page.render({
+      appRender({
         components: { Child: createInputComponent(input) },
         setup() {
           const { getSubmitErrors, handleSubmit } = useForm();
@@ -1232,7 +1232,7 @@ describe('form validation', () => {
         };
       });
 
-      page.render({
+      appRender({
         setup() {
           const { handleSubmit } = useForm({
             schema,
@@ -1260,7 +1260,7 @@ describe('form validation', () => {
         };
       });
 
-      page.render({
+      appRender({
         components: { Child: createInputComponent() },
         setup() {
           const { handleSubmit, getError } = useForm({
@@ -1296,7 +1296,7 @@ describe('form validation', () => {
         };
       });
 
-      page.render({
+      appRender({
         components: { Child: createInputComponent() },
         setup() {
           const { handleSubmit, getError, setErrors } = useForm({
@@ -1336,7 +1336,7 @@ describe('form validation', () => {
         };
       });
 
-      page.render({
+      appRender({
         components: { Child: createInputComponent() },
         setup() {
           const { handleSubmit, getError, setErrors } = useForm({
@@ -1369,7 +1369,7 @@ describe('form validation', () => {
         };
       });
 
-      page.render({
+      appRender({
         components: { Child: createInputComponent() },
         setup() {
           const { getError } = useForm({
@@ -1425,7 +1425,7 @@ describe('form validation', () => {
         };
       });
 
-      page.render({
+      appRender({
         components: { Child: createInputComponent() },
         setup() {
           const { handleSubmit, getError } = useForm({

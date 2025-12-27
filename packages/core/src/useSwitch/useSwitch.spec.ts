@@ -1,7 +1,7 @@
 import { SwitchProps, useSwitch } from './useSwitch';
 import { describe } from 'vitest';
 import { page } from 'vitest/browser';
-import { dispatchEvent, expectNoA11yViolations } from '@test-utils/index';
+import { dispatchEvent, expectNoA11yViolations, appRender } from '@test-utils/index';
 
 async function keyDown(target: ReturnType<typeof page.getByLabelText>, code: string) {
   await dispatchEvent.keyboard(target, code);
@@ -11,7 +11,7 @@ describe('with input as base element', () => {
   const label = 'Subscribe to our newsletter';
 
   async function renderSwitch(props: Partial<SwitchProps<any>> = {}) {
-    page.render({
+    appRender({
       setup() {
         const { inputProps, labelProps, isPressed, errorMessageProps, errorMessage, fieldValue } = useSwitch({
           label,
@@ -129,7 +129,7 @@ describe('with custom base element', () => {
   const label = 'Subscribe to our newsletter';
 
   async function renderSwitch(props: Partial<SwitchProps> = {}) {
-    page.render({
+    appRender({
       setup() {
         const { inputProps, labelProps, isPressed, fieldValue } = useSwitch({
           label,
@@ -227,7 +227,7 @@ describe('a11y', () => {
     const label = 'Subscribe to our newsletter';
 
     async function renderSwitch(props: Partial<SwitchProps<any>> = {}) {
-      page.render({
+      appRender({
         setup() {
           const { inputProps, labelProps, errorMessageProps, errorMessage, fieldValue } = useSwitch({
             label,
@@ -276,7 +276,7 @@ describe('a11y', () => {
     const label = 'Subscribe to our newsletter';
 
     async function renderSwitch(props: Partial<SwitchProps> = {}) {
-      page.render({
+      appRender({
         setup() {
           const { inputProps, labelProps, fieldValue } = useSwitch({
             label,

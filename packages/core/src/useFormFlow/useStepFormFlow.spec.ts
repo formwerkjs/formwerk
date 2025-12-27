@@ -4,7 +4,7 @@ import { useTextField } from '../useTextField';
 import { FormFlowSegment } from './useFlowSegment';
 import { z } from 'zod';
 import { FormObject } from '../types';
-import { dispatchEvent, expectNoA11yViolations } from '@test-utils/index';
+import { dispatchEvent, expectNoA11yViolations, appRender } from '@test-utils/index';
 import { page } from 'vitest/browser';
 import { expect } from 'vitest';
 
@@ -133,7 +133,7 @@ const SteppedFormFlow = defineComponent({
 
 describe('navigation', () => {
   test('should navigate between steps with next and previous buttons and maintain field values', async () => {
-    page.render({
+    appRender({
       components: {
         SteppedFormFlow,
         FormFlowSegment,
@@ -202,7 +202,7 @@ describe('navigation', () => {
 
   test('should call onDone with all values when submitting the last step', async () => {
     const onDoneMock = vi.fn();
-    page.render({
+    appRender({
       components: {
         SteppedFormFlow,
         FormFlowSegment,
@@ -271,7 +271,7 @@ describe('navigation', () => {
 
     const onDone = vi.fn();
 
-    page.render({
+    appRender({
       setup() {
         return {
           step1,
@@ -383,7 +383,7 @@ describe('navigation', () => {
 
     const onDone = vi.fn();
 
-    page.render({
+    appRender({
       setup() {
         return {
           step1,
@@ -499,7 +499,7 @@ describe('navigation', () => {
   });
 
   test('can give steps a name and use it to navigate with goToStep', async () => {
-    page.render({
+    appRender({
       components: {
         SteppedFormFlow,
         FormFlowSegment,
@@ -596,7 +596,7 @@ describe('navigation', () => {
   });
 
   test('going to the same step again is a NO-OP', async () => {
-    page.render({
+    appRender({
       components: {
         SteppedFormFlow,
         FormFlowSegment,
@@ -640,7 +640,7 @@ describe('navigation', () => {
   });
 
   test('can use isCurrentStep to conditionally render content', async () => {
-    page.render({
+    appRender({
       components: {
         SteppedFormFlow,
         FormFlowSegment,
@@ -717,7 +717,7 @@ describe('navigation', () => {
       phone: z.string().min(1),
     });
 
-    page.render({
+    appRender({
       setup() {
         return {
           step1,
@@ -807,7 +807,7 @@ describe('navigation', () => {
 
     const onDone = vi.fn();
 
-    page.render({
+    appRender({
       setup() {
         // Custom step resolver that skips step 2 if name is "skip"
         const resolver = (ctx: StepResolveContext<FormObject>) => {
@@ -897,7 +897,7 @@ describe('navigation', () => {
   test('can use custom step resolver to signal done at any step', async () => {
     const onDone = vi.fn();
 
-    page.render({
+    appRender({
       setup() {
         // Custom step resolver that skips step 2 if name is "skip"
         const resolver = (ctx: StepResolveContext<FormObject>) => {
@@ -962,7 +962,7 @@ describe('navigation', () => {
 
 describe('state', () => {
   test('can get step values by index', async () => {
-    page.render({
+    appRender({
       components: {
         SteppedFormFlow,
         FormFlowSegment,
@@ -1012,7 +1012,7 @@ describe('state', () => {
 
 describe('a11y', () => {
   test('stepped form should not have a11y violations', async () => {
-    page.render({
+    appRender({
       components: {
         SteppedFormFlow,
         FormFlowSegment,
@@ -1041,7 +1041,7 @@ describe('a11y', () => {
 
   describe('button accessibility', () => {
     test('next and previous buttons should have proper attributes', async () => {
-      page.render({
+      appRender({
         components: {
           SteppedFormFlow,
           FormFlowSegment,
@@ -1077,7 +1077,7 @@ describe('a11y', () => {
     });
 
     test('next button should show Submit text on last step', async () => {
-      page.render({
+      appRender({
         components: {
           SteppedFormFlow,
           FormFlowSegment,
@@ -1120,7 +1120,7 @@ describe('warnings', () => {
   test('should warn when custom step resolver returns invalid step identifier', async () => {
     const onDone = vi.fn();
 
-    page.render({
+    appRender({
       setup() {
         // Custom step resolver that returns an invalid step identifier
         const resolver = (ctx: StepResolveContext<FormObject>) => {
@@ -1179,7 +1179,7 @@ describe('warnings', () => {
   test('should warn when custom step resolver returns null and execute default resolver', async () => {
     const onDone = vi.fn();
 
-    page.render({
+    appRender({
       setup() {
         // Custom step resolver that returns null
         const resolver = (ctx: StepResolveContext<FormObject>) => {
@@ -1238,7 +1238,7 @@ describe('warnings', () => {
   test('should warn when custom step resolver returns undefined and execute default resolver', async () => {
     const onDone = vi.fn();
 
-    page.render({
+    appRender({
       setup() {
         // Custom step resolver that returns undefined
         const resolver = (ctx: StepResolveContext<FormObject>) => {
@@ -1299,7 +1299,7 @@ describe('warnings', () => {
     // when there's no current step resolved
     const onDone = vi.fn();
 
-    page.render({
+    appRender({
       setup() {
         // Custom step resolver that might be called before steps are properly initialized
         const resolver = (ctx: StepResolveContext<FormObject>) => {
@@ -1338,7 +1338,7 @@ describe('warnings', () => {
   test('should warn when form flow has no steps and resolver is triggered', async () => {
     const onDone = vi.fn();
 
-    page.render({
+    appRender({
       setup() {
         // Custom step resolver that will be called even with no steps
         const resolver = (ctx: StepResolveContext<FormObject>) => {
@@ -1379,7 +1379,7 @@ describe('warnings', () => {
 
 describe('single-step forms', () => {
   test('should correctly identify isLastStep as true for single-step form', async () => {
-    page.render({
+    appRender({
       components: {
         SteppedFormFlow,
         FormFlowSegment,
@@ -1402,7 +1402,7 @@ describe('single-step forms', () => {
   test('should trigger onDone when submitting single-step form', async () => {
     const onDone = vi.fn();
 
-    page.render({
+    appRender({
       setup() {
         return { onDone };
       },
@@ -1437,7 +1437,7 @@ describe('single-step forms', () => {
     // by checking that isLastStep doesn't prematurely return true during registration
     let buttonTexts: string[] = [];
 
-    page.render({
+    appRender({
       setup() {
         const { isLastStep } = useStepFormFlow();
 
@@ -1481,7 +1481,7 @@ describe('single-step forms', () => {
   });
 
   test('single-step form isLastStep should become true after segments stabilize', async () => {
-    page.render({
+    appRender({
       components: {
         SteppedFormFlow,
         FormFlowSegment,
@@ -1506,7 +1506,7 @@ describe('single-step forms', () => {
 
 describe('conditional rendering with v-if', () => {
   test('should handle first step not being rendered initially and activate it when it appears on mount', async () => {
-    page.render({
+    appRender({
       setup() {
         const showFirstStep = ref(false);
 
@@ -1545,7 +1545,7 @@ describe('conditional rendering with v-if', () => {
   });
 
   test('should activate first available step when first step is conditionally hidden', async () => {
-    page.render({
+    appRender({
       setup() {
         const showFirstStep = ref(false);
 
@@ -1583,7 +1583,7 @@ describe('conditional rendering with v-if', () => {
   });
 
   test('should reset to first available step on mount when initial step is not rendered', async () => {
-    page.render({
+    appRender({
       setup() {
         const showFirstStep = ref(false);
 
@@ -1624,7 +1624,7 @@ describe('conditional rendering with v-if', () => {
     const showFirstStep = ref(false);
     const goToStepFn = ref<((step: string | number, opts?: { force?: true }) => void) | null>(null);
 
-    page.render({
+    appRender({
       setup() {
         const { goToStep, currentStep } = useStepFormFlow();
         goToStepFn.value = goToStep;

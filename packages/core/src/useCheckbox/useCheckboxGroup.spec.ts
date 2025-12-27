@@ -2,7 +2,7 @@ import { CheckboxGroupProps, useCheckboxGroup } from './useCheckboxGroup';
 import { type Component, defineComponent } from 'vue';
 import { CheckboxProps, useCheckbox } from './useCheckbox';
 import { describe } from 'vitest';
-import { renderSetup, defineStandardSchema, expectNoA11yViolations } from '@test-utils/index';
+import { renderSetup, defineStandardSchema, expectNoA11yViolations, appRender } from '@test-utils/index';
 import { page } from 'vitest/browser';
 
 const createGroup = (
@@ -68,7 +68,7 @@ describe('click toggles the values', () => {
     const CheckboxGroup = createGroup({ label: 'Group' });
     const Checkbox = createCheckbox();
 
-    page.render({
+    appRender({
       components: { CheckboxGroup, Checkbox },
       template: `
         <CheckboxGroup data-testid="fixture">
@@ -90,7 +90,7 @@ describe('click toggles the values', () => {
     const CheckboxGroup = createGroup({ label: 'Group' });
     const Checkbox = createCheckbox(CustomBase);
 
-    page.render({
+    appRender({
       components: { CheckboxGroup, Checkbox },
       template: `
         <CheckboxGroup data-testid="fixture">
@@ -114,7 +114,7 @@ describe('Space key toggles the values', () => {
     const CheckboxGroup = createGroup({ label: 'Group' });
     const Checkbox = createCheckbox();
 
-    page.render({
+    appRender({
       components: { CheckboxGroup, Checkbox },
       template: `
         <CheckboxGroup data-testid="fixture">
@@ -136,7 +136,7 @@ describe('Space key toggles the values', () => {
     const CheckboxGroup = createGroup({ label: 'Group' });
     const Checkbox = createCheckbox(CustomBase);
 
-    page.render({
+    appRender({
       components: { CheckboxGroup, Checkbox },
       template: `
         <CheckboxGroup data-testid="fixture">
@@ -160,7 +160,7 @@ describe('validation', () => {
     const CheckboxGroup = createGroup({ label: 'Group', required: true });
     const Checkbox = createCheckbox();
 
-    page.render({
+    appRender({
       components: { CheckboxGroup, Checkbox },
       template: `
         <CheckboxGroup data-testid="fixture">
@@ -192,7 +192,7 @@ describe('validation', () => {
     });
     const Checkbox = createCheckbox(CustomBase);
 
-    page.render({
+    appRender({
       components: { CheckboxGroup, Checkbox },
       template: `
         <CheckboxGroup data-testid="fixture">
@@ -230,7 +230,7 @@ describe('a11y', () => {
     const CheckboxGroup = createGroup({ label: 'Group' });
     const Checkbox = createCheckbox();
 
-    page.render({
+    appRender({
       components: { CheckboxGroup, Checkbox },
       template: `
         <CheckboxGroup data-testid="fixture">
@@ -247,7 +247,7 @@ describe('a11y', () => {
     const CheckboxGroup = createGroup({ label: 'Group' });
     const Checkbox = createCheckbox(CustomBase);
 
-    page.render({
+    appRender({
       components: { CheckboxGroup, Checkbox },
       template: `
         <CheckboxGroup data-testid="fixture">
@@ -266,7 +266,7 @@ describe('group state', () => {
     const CheckboxGroup = createGroup({ label: 'Group' });
     const Checkbox = createCheckbox();
 
-    page.render({
+    appRender({
       components: { CheckboxGroup, Checkbox },
       template: `
         <CheckboxGroup data-testid="fixture">
@@ -294,7 +294,7 @@ describe('group state', () => {
 
     const Checkbox = createCheckbox();
 
-    page.render({
+    appRender({
       components: { CheckboxGroup, Checkbox },
       template: `
         <CheckboxGroup data-testid="fixture">

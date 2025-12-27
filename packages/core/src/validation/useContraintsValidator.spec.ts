@@ -1,6 +1,6 @@
 import { ref, shallowRef } from 'vue';
 import { dateToString, useConstraintsValidator } from './useConstraintsValidator';
-import { renderSetup } from '@test-utils/index';
+import { renderSetup, appRender } from '@test-utils/index';
 import { page } from 'vitest/browser';
 
 describe('useConstraintsValidator', () => {
@@ -218,7 +218,7 @@ describe('useConstraintsValidator', () => {
       const dispatchedEvents: string[] = [];
       let constraintElement: ReturnType<typeof useConstraintsValidator>['element'];
 
-      page.render({
+      appRender({
         setup: () => {
           const { element } = useConstraintsValidator({
             type: 'text',

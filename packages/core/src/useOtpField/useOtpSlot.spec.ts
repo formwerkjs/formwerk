@@ -1,13 +1,13 @@
 import { OtpSlot } from '.';
 import { describe, expect, test, vi } from 'vitest';
-import { page } from 'vitest/browser';
+import { appRender } from '@test-utils/index';
 
 describe('useOtpSlot', () => {
   describe('when used without OtpField context', () => {
     test('should warn when rendered without OtpField context', async () => {
       const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
       // Render OtpSlot without a parent OtpField
-      page.render({
+      appRender({
         components: { OtpSlot },
         template: `<OtpSlot value="" />`,
       });

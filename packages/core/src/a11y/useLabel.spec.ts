@@ -1,13 +1,14 @@
 import { useLabel } from './useLabel';
 import { defineComponent, shallowRef } from 'vue';
 import { page } from 'vitest/browser';
+import { appRender } from '@test-utils/index';
 
 describe('label element', () => {
   test('should render label with `for` attribute', async () => {
     const label = 'label';
     const labelFor = 'input';
 
-    page.render({
+    appRender({
       setup: () => {
         const inputRef = shallowRef<HTMLElement>();
 
@@ -33,7 +34,7 @@ describe('label element', () => {
     const label = 'label';
     const labelFor = 'input';
 
-    page.render({
+    appRender({
       setup: () =>
         useLabel({
           for: labelFor,
@@ -52,7 +53,7 @@ describe('label target (labelledBy)', () => {
   test('should have aria-label if there is no target element or label element', async () => {
     const label = 'label';
     const labelFor = 'input';
-    page.render({
+    appRender({
       setup: () =>
         useLabel({
           label: label,
@@ -72,7 +73,7 @@ describe('label target (labelledBy)', () => {
     const labelFor = 'input';
     const targetRef = shallowRef<HTMLElement>();
 
-    page.render({
+    appRender({
       setup: () => {
         return {
           ...useLabel({
@@ -108,7 +109,7 @@ describe('label component', () => {
       `,
     });
 
-    page.render({
+    appRender({
       components: { LabelComp },
       setup: () => {
         return {

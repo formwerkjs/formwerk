@@ -1,4 +1,4 @@
-import { page } from 'vitest/browser';
+import { appRender } from './appRender';
 
 export function renderSetup<TReturns extends object, TChildReturns extends object | undefined>(
   setup: () => TReturns,
@@ -14,7 +14,7 @@ export function renderSetup<TReturns extends object, TChildReturns extends objec
     component.components = { Child };
   }
 
-  page.render(component);
+  appRender(component);
 
   return {
     ...((su.result || {}) as TReturns),
