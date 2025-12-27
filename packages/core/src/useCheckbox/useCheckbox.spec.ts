@@ -16,7 +16,7 @@ const InputBase: string = `
 
 const CustomBase: string = `
   <div>
-    <div v-bind="inputProps"></div>
+    <div v-bind="inputProps" style="width: 100px; height: 100px;"></div>
     <div v-bind="labelProps" >{{ label }}</div>
     <span v-bind="errorMessageProps">{{ errorMessage }}</span>
     <span data-testid="value">{{ fieldValue }}</span>
@@ -50,9 +50,9 @@ describe('value toggling on click', () => {
     });
 
     await expect.element(page.getByTestId('value')).toHaveTextContent('');
-    (await page.getByLabelText('First').element()).click();
+    await page.getByLabelText('First').click();
     await expect.element(page.getByTestId('value')).toHaveTextContent('true');
-    (await page.getByLabelText('First').element()).click();
+    await page.getByLabelText('First').click();
     await expect.element(page.getByTestId('value')).toHaveTextContent('false');
   });
 
@@ -67,9 +67,9 @@ describe('value toggling on click', () => {
     });
 
     await expect.element(page.getByTestId('value')).toHaveTextContent('');
-    (await page.getByLabelText('First').element()).click();
+    await page.getByLabelText('First').click();
     await expect.element(page.getByTestId('value')).toHaveTextContent('true');
-    (await page.getByLabelText('First').element()).click();
+    await page.getByLabelText('First').click();
     await expect.element(page.getByTestId('value')).toHaveTextContent('false');
   });
 });
@@ -122,9 +122,9 @@ describe('value toggling with custom true and false values', () => {
     });
 
     await expect.element(page.getByTestId('value')).toHaveTextContent('');
-    (await page.getByLabelText('First').element()).click();
+    await page.getByLabelText('First').click();
     await expect.element(page.getByTestId('value')).toHaveTextContent('1');
-    (await page.getByLabelText('First').element()).click();
+    await page.getByLabelText('First').click();
     await expect.element(page.getByTestId('value')).toHaveTextContent('2');
   });
 
@@ -139,9 +139,9 @@ describe('value toggling with custom true and false values', () => {
     });
 
     await expect.element(page.getByTestId('value')).toHaveTextContent('');
-    (await page.getByLabelText('First').element()).click();
+    await page.getByLabelText('First').click();
     await expect.element(page.getByTestId('value')).toHaveTextContent('1');
-    (await page.getByLabelText('First').element()).click();
+    await page.getByLabelText('First').click();
     await expect.element(page.getByTestId('value')).toHaveTextContent('2');
   });
 });

@@ -42,7 +42,7 @@ const InputBase: string = `
 
 const CustomBase: string = `
   <div>
-    <div v-bind="inputProps"></div>
+    <div v-bind="inputProps" style="width: 100px; height: 100px;"></div>
     <div v-bind="labelProps" >{{ label }}</div>
   </div>
 `;
@@ -78,11 +78,11 @@ describe('click toggles the values', () => {
       `,
     });
 
-    (await page.getByLabelText('First').element()).click();
+    await page.getByLabelText('First').click();
     await expect.element(page.getByTestId('value')).toHaveTextContent('[ "1" ]');
-    (await page.getByLabelText('Second').element()).click();
+    await page.getByLabelText('Second').click();
     await expect.element(page.getByTestId('value')).toHaveTextContent('[ "1", "2" ]');
-    (await page.getByLabelText('Second').element()).click();
+    await page.getByLabelText('Second').click();
     await expect.element(page.getByTestId('value')).toHaveTextContent('[ "1" ]');
   });
 
@@ -100,11 +100,11 @@ describe('click toggles the values', () => {
       `,
     });
 
-    (await page.getByLabelText('First').element()).click();
+    await page.getByLabelText('First').click();
     await expect.element(page.getByTestId('value')).toHaveTextContent('[ "1" ]');
-    (await page.getByLabelText('Second').element()).click();
+    await page.getByLabelText('Second').click();
     await expect.element(page.getByTestId('value')).toHaveTextContent('[ "1", "2" ]');
-    (await page.getByLabelText('Second').element()).click();
+    await page.getByLabelText('Second').click();
     await expect.element(page.getByTestId('value')).toHaveTextContent('[ "1" ]');
   });
 });
@@ -203,9 +203,9 @@ describe('validation', () => {
       `,
     });
 
-    (await page.getByLabelText('First').element()).click();
+    await page.getByLabelText('First').click();
     await expect.poll(() => group.errorMessage.value).toBe('You must select two or more options');
-    (await page.getByLabelText('Second').element()).click();
+    await page.getByLabelText('Second').click();
     await expect.poll(() => group.errorMessage.value).toBe('');
   });
 
@@ -278,11 +278,11 @@ describe('group state', () => {
     });
 
     await expect.element(page.getByTestId('state')).toHaveTextContent('unchecked');
-    (await page.getByLabelText('First').element()).click();
+    await page.getByLabelText('First').click();
     await expect.element(page.getByTestId('state')).toHaveTextContent('mixed');
-    (await page.getByLabelText('Second').element()).click();
+    await page.getByLabelText('Second').click();
     await expect.element(page.getByTestId('state')).toHaveTextContent('mixed');
-    (await page.getByLabelText('Third').element()).click();
+    await page.getByLabelText('Third').click();
     await expect.element(page.getByTestId('state')).toHaveTextContent('checked');
   });
 

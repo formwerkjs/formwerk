@@ -227,7 +227,7 @@ describe('Clear button', () => {
     const input = page.getByLabelText(label, { exact: true });
     await changeValue(input, value);
     await expect.element(input).toHaveValue(value);
-    (await page.getByLabelText('Clear search', { exact: true }).element()).click();
+    await page.getByLabelText('Clear search', { exact: true }).click();
     await expect.element(input).toHaveValue('');
   });
 
@@ -263,7 +263,7 @@ describe('Clear button', () => {
 
     const input = page.getByLabelText(label, { exact: true });
     await expect.element(input).toHaveValue(value);
-    (await page.getByLabelText('Clear search', { exact: true }).element()).click();
+    await page.getByLabelText('Clear search', { exact: true }).click();
     await expect.element(input).toHaveValue(value);
   });
 
@@ -299,7 +299,7 @@ describe('Clear button', () => {
 
     const input = page.getByLabelText(label, { exact: true });
     await expect.element(input).toHaveValue(value);
-    (await page.getByLabelText('Clear search', { exact: true }).element()).click();
+    await page.getByLabelText('Clear search', { exact: true }).click();
     await expect.element(input).toHaveValue(value);
   });
 });

@@ -7,7 +7,7 @@ import { page } from 'vitest/browser';
 
 const createGroup = (
   props: RadioGroupProps,
-  onSetup?: (group: ReturnType<typeof useRadioGroup>) => void,
+  onSetup?: (group: ReturnType<typeof useRadioGroup<string>>) => void,
 ): Component => {
   return defineComponent({
     setup() {
@@ -41,7 +41,7 @@ const InputBase: string = `
 
 const CustomBase: string = `
   <div>
-    <div v-bind="inputProps"></div>
+    <div v-bind="inputProps" style="width: 100px; height: 100px;"></div>
     <div v-bind="labelProps" >{{ label }}</div>
   </div>
 `;
@@ -77,9 +77,9 @@ describe('click behavior', () => {
       `,
     });
 
-    (await page.getByLabelText('First').element()).click();
+    await page.getByLabelText('First').click();
     await expect.element(page.getByTestId('value')).toHaveTextContent('1');
-    (await page.getByLabelText('Second').element()).click();
+    await page.getByLabelText('Second').click();
     await expect.element(page.getByTestId('value')).toHaveTextContent('2');
   });
 
@@ -97,9 +97,9 @@ describe('click behavior', () => {
       `,
     });
 
-    (await page.getByLabelText('First').element()).click();
+    await page.getByLabelText('First').click();
     await expect.element(page.getByTestId('value')).toHaveTextContent('1');
-    (await page.getByLabelText('Second').element()).click();
+    await page.getByLabelText('Second').click();
     await expect.element(page.getByTestId('value')).toHaveTextContent('2');
   });
 });
@@ -394,7 +394,7 @@ describe('Arrow keys behavior', () => {
 
 describe('validation', () => {
   test('should revalidate when value changes via arrow keys', async () => {
-    let group!: ReturnType<typeof useRadioGroup>;
+    let group!: ReturnType<typeof useRadioGroup<string>>;
     const schema = defineStandardSchema<any, any>(value => {
       return Number(value) > 2
         ? { value: String(value) }
@@ -417,7 +417,7 @@ describe('validation', () => {
       `,
     });
 
-    (await page.getByLabelText('Second').element()).click();
+    await page.getByLabelText('Second').click();
     await expect.poll(() => group.errorMessage.value).toBe('Value must be greater than 2');
     (await page.getByRole('radiogroup').element()).dispatchEvent(
       new KeyboardEvent('keydown', { code: 'ArrowDown', bubbles: true }),
@@ -426,7 +426,7 @@ describe('validation', () => {
   });
 
   test('should revalidate when value changes via clicks', async () => {
-    let group!: ReturnType<typeof useRadioGroup>;
+    let group!: ReturnType<typeof useRadioGroup<string>>;
     const schema = defineStandardSchema<any, any>(value => {
       return Number(value) > 2
         ? { value: String(value) }
@@ -449,9 +449,9 @@ describe('validation', () => {
       `,
     });
 
-    (await page.getByLabelText('First').element()).click();
+    await page.getByLabelText('First').click();
     await expect.poll(() => group.errorMessage.value).toBe('Value must be greater than 2');
-    (await page.getByLabelText('Third').element()).click();
+    await page.getByLabelText('Third').click();
     await expect.poll(() => group.errorMessage.value).toBe('');
   });
 });

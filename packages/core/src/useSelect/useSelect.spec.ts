@@ -26,7 +26,7 @@ async function click(target: ReturnType<typeof page.getByRole>, init?: MouseEven
     return;
   }
 
-  (await target.element()).click();
+  await target.click({ force: true });
 }
 
 function createSelect() {
