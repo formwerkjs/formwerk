@@ -864,9 +864,14 @@ describe('navigation', () => {
 
     // Fill in the name field with "skip" to trigger custom resolver
     await page.getByLabelText('Name').fill('skip');
+    await dispatchEvent(page.getByLabelText('Name'), 'blur');
+    await expect.element(page.getByLabelText('Name')).toHaveAttribute('aria-invalid', 'false');
 
     // Go to next step
     await page.getByTestId('next-button').click();
+
+    // Wait for navigation by polling for the Phone field (step 3)
+    await expect.poll(() => document.querySelector('input[name="phone"]')).not.toBeNull();
 
     // Should skip step 2 and go directly to step 3
     await expect.element(page.getByText('Step 3')).toBeInTheDocument();
@@ -875,17 +880,18 @@ describe('navigation', () => {
 
     // Fill in the phone field
     await page.getByLabelText('Phone').fill('1234567890');
+    await dispatchEvent(page.getByLabelText('Phone'), 'blur');
+    await expect.element(page.getByLabelText('Phone')).toHaveAttribute('aria-invalid', 'false');
 
     // Submit the form
     await page.getByTestId('next-button').click();
 
     // Verify onDone was called with the correct values
-    await expect
-      .poll(() => onDone)
-      .toHaveBeenCalledWith({
-        name: 'skip',
-        phone: '1234567890',
-      });
+    await expect.poll(() => onDone.mock.calls.length).toBe(1);
+    expect(onDone).toHaveBeenCalledWith({
+      name: 'skip',
+      phone: '1234567890',
+    });
   });
 
   test('can use custom step resolver to signal done at any step', async () => {
