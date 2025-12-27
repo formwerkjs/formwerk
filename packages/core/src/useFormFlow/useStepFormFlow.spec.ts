@@ -869,9 +869,9 @@ describe('navigation', () => {
     await page.getByTestId('next-button').click();
 
     // Should skip step 2 and go directly to step 3
-    await expect.element(page.getByText('Step 3', { exact: true })).toBeInTheDocument();
+    await expect.element(page.getByText('Step 3')).toBeInTheDocument();
     await expect.element(page.getByLabelText('Phone')).toBeInTheDocument();
-    expect(document.querySelector('input[name="address"]')).toBeNull();
+    await expect.element(page.getByLabelText('Address')).not.toBeInTheDocument();
 
     // Fill in the phone field
     await page.getByLabelText('Phone').fill('1234567890');
@@ -880,10 +880,12 @@ describe('navigation', () => {
     await page.getByTestId('next-button').click();
 
     // Verify onDone was called with the correct values
-    expect(onDone).toHaveBeenCalledWith({
-      name: 'skip',
-      phone: '1234567890',
-    });
+    await expect
+      .poll(() => onDone)
+      .toHaveBeenCalledWith({
+        name: 'skip',
+        phone: '1234567890',
+      });
   });
 
   test('can use custom step resolver to signal done at any step', async () => {

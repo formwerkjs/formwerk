@@ -489,9 +489,7 @@ describe('disabling HTML validation', () => {
 
     const errors = page.getByTestId('err');
     // Wait for validation to complete by polling for error message
-    await expect
-      .poll(async () => ((await errors.nth(0).element()) as HTMLElement).textContent)
-      .toMatch(/Constraints not satisfied|Please fill out this field\.?/);
+    await expect.element(errors.nth(0)).toHaveTextContent(/Constraints not satisfied|Please fill out this field\.?/);
     await expect.element(errors.nth(1)).toHaveTextContent('');
     await expect.element(errors.nth(2)).toHaveTextContent('');
   });
