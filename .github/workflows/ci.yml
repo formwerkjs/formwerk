@@ -12,7 +12,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 24
-          cache: 'pnpm'
+          cache: "pnpm"
       - name: Install dependencies
         run: pnpm install
       - name: Build
@@ -29,7 +29,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 24
-          cache: 'pnpm'
+          cache: "pnpm"
       - name: Install dependencies
         run: pnpm install
       - name: Build
@@ -46,10 +46,12 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 24
-          cache: 'pnpm'
+          cache: "pnpm"
       - name: Install dependencies
         run: pnpm install
       - name: Build
         run: pnpm build
+      - name: Install Playwright Browsers
+        run: pnpx playwright install
       - name: Test
-        run: pnpm test
+        run: pnpm test:ci

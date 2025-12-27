@@ -9,6 +9,7 @@
   "repository": "https://github.com/formwerkjs/formwerk",
   "scripts": {
     "test": "vitest",
+    "test:ci": "vitest run --coverage --browser.headless",
     "cover": "vitest run --coverage",
     "lint": "oxlint",
     "format": "prettier \"./**/*.ts\" --write",
