@@ -13,6 +13,7 @@
     "cover": "vitest run --coverage",
     "lint": "oxlint",
     "format": "prettier \"./**/*.ts\" --write",
+    "format:check": "prettier \"./**/*.ts\" --check",
     "build": "tsx scripts/build.ts",
     "build:watch": "tsx scripts/watch.ts",
     "typecheck": "pnpm typecheck:lib && pnpm typecheck:node",
