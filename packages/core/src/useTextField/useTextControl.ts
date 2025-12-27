@@ -26,11 +26,7 @@ export interface TextInputDOMAttributes extends TextInputBaseAttributes {
 }
 
 export interface TextInputDOMProps
-  extends TextInputDOMAttributes,
-    AriaLabelableProps,
-    AriaDescribableProps,
-    AriaValidatableProps,
-    InputEvents {
+  extends TextInputDOMAttributes, AriaLabelableProps, AriaDescribableProps, AriaValidatableProps, InputEvents {
   id: string;
 }
 

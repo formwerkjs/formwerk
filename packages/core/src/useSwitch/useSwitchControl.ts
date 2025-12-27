@@ -19,11 +19,7 @@ import { getSwitchValue } from './utils';
 import { useFieldControllerContext } from '../useFormField/useFieldController';
 
 export interface SwitchDomInputProps
-  extends InputBaseAttributes,
-    AriaLabelableProps,
-    InputBaseAttributes,
-    AriaDescribableProps,
-    InputEvents {
+  extends InputBaseAttributes, AriaLabelableProps, InputBaseAttributes, AriaDescribableProps, InputEvents {
   type: 'checkbox';
   role: 'switch';
 }

@@ -33,11 +33,7 @@ export interface NumberInputDOMAttributes {
 }
 
 export interface NumberInputDOMProps
-  extends NumberInputDOMAttributes,
-    AriaLabelableProps,
-    AriaDescribableProps,
-    AriaValidatableProps,
-    InputEvents {
+  extends NumberInputDOMAttributes, AriaLabelableProps, AriaDescribableProps, AriaValidatableProps, InputEvents {
   id: string;
 }
 

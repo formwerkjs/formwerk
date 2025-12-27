@@ -10,4 +10,3 @@ export async function expectNoA11yViolations(scopeSelector: string = 'body') {
   const violations = await commands.axeCheck(scopeSelector);
   expect(violations).toEqual([]);
 }
-

@@ -16,11 +16,7 @@ export interface SearchInputDOMAttributes extends TextInputBaseAttributes {
 }
 
 export interface SearchInputDOMProps
-  extends SearchInputDOMAttributes,
-    AriaLabelableProps,
-    AriaDescribableProps,
-    AriaValidatableProps,
-    InputEvents {
+  extends SearchInputDOMAttributes, AriaLabelableProps, AriaDescribableProps, AriaValidatableProps, InputEvents {
   id: string;
 }
 
