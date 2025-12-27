@@ -9,6 +9,7 @@
   "repository": "https://github.com/formwerkjs/formwerk",
   "scripts": {
     "test": "vitest",
+    "test:ci": "vitest run --coverage --browser.headless",
     "cover": "vitest run --coverage",
     "lint": "oxlint",
     "format": "prettier \"./**/*.ts\" --write",
@@ -29,15 +30,17 @@
     "ci:changelog": "pnpx changelogithub"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.10.2",
     "@changesets/cli": "^2.29.8",
     "@commitlint/cli": "^20.2.0",
     "@commitlint/config-conventional": "^20.2.0",
-    "@testing-library/vue": "^8.1.0",
     "@types/fs-extra": "^11.0.4",
     "@types/node": "^24.6.2",
-    "@vitest/coverage-v8": "^4.0.15",
-    "@vitest/ui": "^4.0.15",
+    "@vitest/browser-playwright": "^4.0.16",
+    "@vitest/coverage-v8": "^4.0.16",
+    "@vitest/ui": "^4.0.16",
     "@vue/server-renderer": "3.5.13",
+    "axe-core": "^4.11.0",
     "concurrently": "^9.2.1",
     "consola": "^3.4.2",
     "filesize": "^11.0.13",
@@ -46,7 +49,6 @@
     "globals": "^16.5.0",
     "gzip-size": "^7.0.0",
     "husky": "^9.1.7",
-    "jsdom": "^26.1.0",
     "lint-staged": "^16.2.7",
     "oxlint": "^1.32.0",
     "pkg-pr-new": "^0.0.62",
@@ -57,9 +59,8 @@
     "tsx": "^4.21.0",
     "typescript": "5.9.3",
     "vite-tsconfig-paths": "^5.1.4",
-    "vitest": "^4.0.15",
-    "vitest-axe": "1.0.0-pre.3",
-    "vitest-dom": "^0.1.1",
+    "vitest": "^4.0.16",
+    "vitest-browser-vue": "^2.0.1",
     "vue": "^3.5.13",
     "zod": "4.1.13"
   },
@@ -67,11 +68,11 @@
     "*.ts": [
       "oxlint",
       "prettier --write",
-      "vitest run related --passWithNoTests"
+      "vitest run related --passWithNoTests --browser.headless"
     ],
     "*.js": [
       "oxlint",
-      "vitest run related --passWithNoTests"
+      "vitest run related --passWithNoTests --browser.headless"
     ]
   },
   "keywords": [],

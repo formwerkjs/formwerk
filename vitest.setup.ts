@@ -1,14 +1,7 @@
-import 'vitest-axe/extend-expect';
-import 'vitest-dom/extend-expect';
-
 if (typeof window !== 'undefined') {
-  Element.prototype.scrollIntoView = vi.fn();
-  HTMLElement.prototype.scrollIntoView = vi.fn();
+  // Provide a minimal shim for browser mode.
+  if (!('process' in globalThis)) {
+    // @ts-expect-error - intentional global shim for tests
+    globalThis.process = { env: { NODE_ENV: 'test' } };
+  }
 }
-beforeEach(() => {
-  vi.useFakeTimers();
-});
-
-afterEach(() => {
-  vi.useRealTimers();
-});

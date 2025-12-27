@@ -1,9 +1,8 @@
 import { OtpFieldProps, useOtpField, OtpSlot } from '.';
 import { DEFAULT_MASK, isValueAccepted } from './utils';
-import { fireEvent, render, screen } from '@testing-library/vue';
-import { axe } from 'vitest-axe';
 import { Component, defineComponent } from 'vue';
-import { flush, renderSetup } from '@test-utils/index';
+import { renderSetup, expectNoA11yViolations } from '@test-utils/index';
+import { page } from 'vitest/browser';
 
 const InputBase: string = `
   <div>
@@ -12,12 +11,38 @@ const InputBase: string = `
     </div>
 
     <label v-bind="labelProps">{{ label }}</label>
-    <span v-bind="errorMessageProps">{{ errorMessage }}</span>
+    <span data-testid="error-message" v-bind="errorMessageProps">{{ errorMessage }}</span>
     <span data-testid="value">{{ fieldValue }}</span>
     <span data-testid="touched">{{ isTouched }}</span>
     <span data-testid="blurred">{{ isBlurred }}</span>
   </div>
 `;
+
+async function el(locator: any) {
+  return (await locator.element()) as HTMLElement;
+}
+
+async function focus(locator: any) {
+  (await el(locator)).focus();
+}
+
+async function blur(locator: any) {
+  (await el(locator)).dispatchEvent(new FocusEvent('blur', { bubbles: true }));
+}
+
+async function keyDown(locator: any, code: string) {
+  (await el(locator)).dispatchEvent(new KeyboardEvent('keydown', { bubbles: true, code, key: code }));
+}
+
+async function beforeInput(locator: any, data: string) {
+  (await el(locator)).dispatchEvent(new InputEvent('beforeinput', { data, cancelable: true, bubbles: true }));
+}
+
+async function paste(locator: any, text: string) {
+  const e = new Event('paste', { bubbles: true, cancelable: true }) as any;
+  e.clipboardData = { getData: () => text };
+  (await el(locator)).dispatchEvent(e);
+}
 
 function createOtpField(props: OtpFieldProps, template = InputBase, slotType = 'span'): Component {
   return defineComponent({
@@ -37,11 +62,11 @@ function createOtpField(props: OtpFieldProps, template = InputBase, slotType = '
 }
 
 describe('useOtpField', () => {
-  describe('has no a11y violations', () => {
+  describe('a11y', () => {
     test('with basic configuration', async () => {
       const OtpField = createOtpField({ label: 'OTP Code', length: 4 });
 
-      await render({
+      page.render({
         components: { OtpField },
         template: `
           <div data-testid="fixture">
@@ -50,15 +75,13 @@ describe('useOtpField', () => {
         `,
       });
 
-      vi.useRealTimers();
-      expect(await axe(screen.getByTestId('fixture'))).toHaveNoViolations();
-      vi.useFakeTimers();
+      await expectNoA11yViolations('[data-testid="fixture"]');
     });
   });
 
   describe('initialization', () => {
     test('initializes with empty value by default', async () => {
-      const { fieldValue } = await renderSetup(() => {
+      const { fieldValue } = renderSetup(() => {
         return useOtpField({ label: 'OTP Code', length: 4 });
       });
 
@@ -66,7 +89,7 @@ describe('useOtpField', () => {
     });
 
     test('initializes with provided modelValue', async () => {
-      const { fieldValue } = await renderSetup(() => {
+      const { fieldValue } = renderSetup(() => {
         return useOtpField({ label: 'OTP Code', length: 4, modelValue: '1234' });
       });
 
@@ -74,7 +97,7 @@ describe('useOtpField', () => {
     });
 
     test('initializes with provided value', async () => {
-      const { fieldValue } = await renderSetup(() => {
+      const { fieldValue } = renderSetup(() => {
         return useOtpField({ label: 'OTP Code', length: 4, value: '5678' });
       });
 
@@ -82,7 +105,7 @@ describe('useOtpField', () => {
     });
 
     test('initializes with prefix if provided', async () => {
-      const { fieldValue } = await renderSetup(() => {
+      const { fieldValue } = renderSetup(() => {
         return useOtpField({ label: 'OTP Code', length: 4, prefix: 'G-', value: '1234' });
       });
 
@@ -90,7 +113,7 @@ describe('useOtpField', () => {
     });
 
     test('adds prefix to value if not already present', async () => {
-      const { fieldValue } = await renderSetup(() => {
+      const { fieldValue } = renderSetup(() => {
         return useOtpField({ label: 'OTP Code', length: 4, prefix: 'G-', value: '1234' });
       });
 
@@ -98,7 +121,7 @@ describe('useOtpField', () => {
     });
 
     test('does not duplicate prefix if already present in value', async () => {
-      const { fieldValue } = await renderSetup(() => {
+      const { fieldValue } = renderSetup(() => {
         return useOtpField({ label: 'OTP Code', length: 4, prefix: 'G-', value: 'G-1234' });
       });
 
@@ -108,7 +131,7 @@ describe('useOtpField', () => {
 
   describe('field slots', () => {
     test('creates correct number of slots based on length', async () => {
-      const { fieldSlots } = await renderSetup(() => {
+      const { fieldSlots } = renderSetup(() => {
         return useOtpField({ label: 'OTP Code', length: 4 });
       });
 
@@ -116,7 +139,7 @@ describe('useOtpField', () => {
     });
 
     test('creates correct number of slots with prefix', async () => {
-      const { fieldSlots } = await renderSetup(() => {
+      const { fieldSlots } = renderSetup(() => {
         return useOtpField({ label: 'OTP Code', length: 4, prefix: 'G-' });
       });
 
@@ -124,7 +147,7 @@ describe('useOtpField', () => {
     });
 
     test('prefix slots are disabled', async () => {
-      const { fieldSlots } = await renderSetup(() => {
+      const { fieldSlots } = renderSetup(() => {
         return useOtpField({ label: 'OTP Code', length: 4, prefix: 'G-' });
       });
 
@@ -134,7 +157,7 @@ describe('useOtpField', () => {
     });
 
     test('prefix slots are not masked', async () => {
-      const { fieldSlots } = await renderSetup(() => {
+      const { fieldSlots } = renderSetup(() => {
         return useOtpField({ label: 'OTP Code', length: 4, prefix: 'G-', mask: true });
       });
 
@@ -148,17 +171,17 @@ describe('useOtpField', () => {
     test('sets blurred state to true when a slot is blurred', async () => {
       const OtpField = createOtpField({ label: 'OTP Code', length: 4 });
 
-      await render({
+      page.render({
         components: { OtpField },
         template: `<OtpField />`,
       });
 
       // Find the first slot and trigger blur
-      const slot = screen.getAllByTestId('slot')[0];
-      await fireEvent.blur(slot);
+      const slot = page.getByTestId('slot').nth(0);
+      await blur(slot);
 
       // Verify that the slot has the blurred state by checking its aria attributes
-      expect(screen.getByTestId('blurred')).toHaveTextContent('true');
+      await expect.element(page.getByTestId('blurred')).toHaveTextContent('true');
     });
   });
 
@@ -166,16 +189,14 @@ describe('useOtpField', () => {
     test('sets touched state to true when a slot is manipulated', async () => {
       const OtpField = createOtpField({ label: 'OTP Code', length: 4 });
 
-      await render({
+      page.render({
         components: { OtpField },
         template: `<OtpField />`,
       });
 
-      const slot = screen.getAllByTestId('slot')[0];
-      await fireEvent(slot, new InputEvent('beforeinput', { data: '1', cancelable: true }));
-      await flush();
-
-      expect(screen.getByTestId('touched')).toHaveTextContent('true');
+      const slot = page.getByTestId('slot').nth(0);
+      await beforeInput(slot, '1');
+      await expect.element(page.getByTestId('touched')).toHaveTextContent('true');
     });
   });
 
@@ -183,21 +204,14 @@ describe('useOtpField', () => {
     test('handles paste event', async () => {
       const OtpField = createOtpField({ label: 'OTP Code', length: 4 });
 
-      await render({
+      page.render({
         components: { OtpField },
         template: `<OtpField />`,
       });
 
-      const slots = screen.getAllByTestId('slot');
-      const pasteEvent = new Event('paste');
-      (pasteEvent as any).clipboardData = {
-        getData: () => '1234',
-      };
-
-      await fireEvent(slots[0], pasteEvent);
-      await flush();
-
-      expect(screen.getByTestId('value')).toHaveTextContent('1234');
+      const slot0 = page.getByTestId('slot').nth(0);
+      await paste(slot0, '1234');
+      await expect.element(page.getByTestId('value')).toHaveTextContent('1234');
     });
 
     test('respects accept type for paste', async () => {
@@ -215,43 +229,35 @@ describe('useOtpField', () => {
         length: 6,
       });
 
-      await render({
+      page.render({
         components: { OtpField },
         template: `<OtpField />`,
       });
 
-      const slots = screen.getAllByTestId('slot');
+      const slots = page.getByTestId('slot');
 
       // Fill the first two slots manually
-      await fireEvent.focus(slots[0]);
-      await fireEvent(slots[0], new InputEvent('beforeinput', { data: '1', cancelable: true }));
-      await fireEvent(slots[1], new InputEvent('beforeinput', { data: '2', cancelable: true }));
-      await flush();
+      await focus(slots.nth(0));
+      await beforeInput(slots.nth(0), '1');
+      await beforeInput(slots.nth(1), '2');
 
       // Focus should now be on the third slot
-      expect(document.activeElement).toBe(slots[2]);
+      await expect.element(slots.nth(2)).toHaveFocus();
 
       // Create a paste event with a partial value
-      const partialPasteEvent = new Event('paste');
-      (partialPasteEvent as any).clipboardData = {
-        getData: () => '345', // 3 digits to paste into slots 2, 3, and 4
-      };
-
-      await fireEvent(slots[2], partialPasteEvent);
-      await flush();
+      await paste(slots.nth(2), '345'); // 3 digits to paste into slots 2, 3, and 4
 
       // Verify that the first 5 slots are filled (2 manual + 3 pasted)
-      expect(screen.getByTestId('value').textContent).toBe('12345');
+      await expect.element(page.getByTestId('value')).toHaveTextContent('12345');
 
       // Focus should move to the sixth slot (after the pasted content)
-      expect(document.activeElement).toBe(slots[5]);
+      await expect.element(slots.nth(5)).toHaveFocus();
 
       // Fill the last slot
-      await fireEvent(slots[5], new InputEvent('beforeinput', { data: '6', cancelable: true }));
-      await flush();
+      await beforeInput(slots.nth(5), '6');
 
       // Now all slots should be filled
-      expect(screen.getByTestId('value').textContent).toBe('123456');
+      await expect.element(page.getByTestId('value')).toHaveTextContent('123456');
     });
   });
 
@@ -259,15 +265,16 @@ describe('useOtpField', () => {
     test('validates required field', async () => {
       const OtpField = createOtpField({ label: 'OTP Code', length: 4, required: true });
 
-      await render({
+      page.render({
         components: { OtpField },
         template: `<OtpField />`,
       });
 
-      await fireEvent.invalid(screen.getAllByTestId('slot')[0]);
-      await flush();
-
-      expect(screen.getByTestId('control')).toHaveErrorMessage('Constraints not satisfied');
+      (await page.getByTestId('slot').nth(0).element()).dispatchEvent(new Event('invalid', { bubbles: true }));
+      // Native HTML validation messages vary across environments/locales.
+      await expect
+        .element(page.getByTestId('error-message'))
+        .toHaveTextContent(/Constraints not satisfied|Please fill out this field\./);
     });
   });
 
@@ -280,21 +287,20 @@ describe('useOtpField', () => {
         onCompleted,
       });
 
-      await render({
+      page.render({
         components: { OtpField },
         template: `<OtpField />`,
       });
 
-      const slots = screen.getAllByTestId('slot');
+      const slots = page.getByTestId('slot');
 
       // somehow it doesn't work for the first slot
-      for (let i = 0; i < slots.length; i++) {
-        await fireEvent.focus(slots[i]);
-        await fireEvent(slots[i], new InputEvent('beforeinput', { data: `${i + 1}`, cancelable: true }));
-        await flush();
+      for (let i = 0; i < 4; i++) {
+        await focus(slots.nth(i));
+        await beforeInput(slots.nth(i), `${i + 1}`);
       }
 
-      expect(onCompleted).toHaveBeenCalledWith('1234');
+      await expect.poll(() => onCompleted.mock.calls[0]?.[0]).toBe('1234');
     });
   });
 
@@ -304,14 +310,13 @@ describe('useOtpField', () => {
       // in the return value, but we can verify the component renders correctly
       const OtpField = createOtpField({ label: 'OTP Code', length: 4 });
 
-      await render({
+      page.render({
         components: { OtpField },
         template: `<OtpField />`,
       });
 
       // Verify slots are rendered
-      const slots = screen.getAllByTestId('slot');
-      expect(slots.length).toBe(4);
+      await expect.element(page.getByTestId('slot').nth(3)).toBeInTheDocument();
     });
 
     test('navigates between slots using arrow keys', async () => {
@@ -324,36 +329,31 @@ describe('useOtpField', () => {
         'input',
       );
 
-      await render({
+      page.render({
         components: { OtpField },
         template: `<OtpField />`,
       });
 
-      await flush();
-      const slots = screen.getAllByTestId('slot');
+      const slots = page.getByTestId('slot');
 
       // Focus the first slot
-      await fireEvent.focus(slots[0]);
+      await focus(slots.nth(0));
 
       // Press right arrow key to move to the next slot
-      await fireEvent.keyDown(slots[0], { key: 'ArrowRight', code: 'ArrowRight' });
-      await flush();
-      expect(document.activeElement).toBe(slots[0]);
+      await keyDown(slots.nth(0), 'ArrowRight');
+      await expect.element(slots.nth(1)).toHaveFocus();
 
       // Press right arrow key again to move to the third slot
-      await fireEvent.keyDown(slots[1], { key: 'ArrowRight', code: 'ArrowRight' });
-      await flush();
-      expect(document.activeElement).toBe(slots[1]);
+      await keyDown(slots.nth(1), 'ArrowRight');
+      await expect.element(slots.nth(2)).toHaveFocus();
 
       // Press left arrow key to move back to the second slot
-      await fireEvent.keyDown(slots[2], { key: 'ArrowLeft', code: 'ArrowLeft' });
-      await flush();
-      expect(document.activeElement).toBe(slots[0]);
+      await keyDown(slots.nth(2), 'ArrowLeft');
+      await expect.element(slots.nth(1)).toHaveFocus();
 
       // Press left arrow key again to move back to the first slot
-      await fireEvent.keyDown(slots[1], { key: 'ArrowLeft', code: 'ArrowLeft' });
-      await flush();
-      expect(document.activeElement).toBe(slots[0]);
+      await keyDown(slots.nth(1), 'ArrowLeft');
+      await expect.element(slots.nth(0)).toHaveFocus();
     });
 
     test('automatically moves focus to next slot after input', async () => {
@@ -362,47 +362,43 @@ describe('useOtpField', () => {
         length: 4,
       });
 
-      await render({
+      page.render({
         components: { OtpField },
         template: `<OtpField />`,
       });
 
-      const slots = screen.getAllByTestId('slot');
+      const slots = page.getByTestId('slot');
 
       // Focus the first slot
-      await fireEvent.focus(slots[0]);
+      await focus(slots.nth(0));
 
       // Enter a value in the first slot
-      await fireEvent(slots[0], new InputEvent('beforeinput', { data: '1', cancelable: true }));
-      await fireEvent(slots[0], new InputEvent('beforeinput', { data: '1', cancelable: true }));
-      await flush();
+      await beforeInput(slots.nth(0), '1');
+      await beforeInput(slots.nth(0), '1');
 
       // Focus should automatically move to the next slot
-      expect(document.activeElement).toBe(slots[1]);
+      await expect.element(slots.nth(1)).toHaveFocus();
 
       // Enter a value in the second slot
-      await fireEvent(slots[1], new InputEvent('beforeinput', { data: '2', cancelable: true }));
-      await flush();
+      await beforeInput(slots.nth(1), '2');
 
       // Focus should automatically move to the third slot
-      expect(document.activeElement).toBe(slots[2]);
+      await expect.element(slots.nth(2)).toHaveFocus();
 
       // Enter a value in the third slot
-      await fireEvent(slots[2], new InputEvent('beforeinput', { data: '3', cancelable: true }));
-      await flush();
+      await beforeInput(slots.nth(2), '3');
 
       // Focus should automatically move to the fourth slot
-      expect(document.activeElement).toBe(slots[3]);
+      await expect.element(slots.nth(3)).toHaveFocus();
 
       // Enter a value in the fourth slot
-      await fireEvent(slots[3], new InputEvent('beforeinput', { data: '4', cancelable: true }));
-      await flush();
+      await beforeInput(slots.nth(3), '4');
 
       // Focus should remain on the last slot as there's nowhere else to go
-      expect(document.activeElement).toBe(slots[3]);
+      await expect.element(slots.nth(3)).toHaveFocus();
 
       // Verify the complete value
-      expect(screen.getByTestId('value').textContent).toBe('1234');
+      await expect.element(page.getByTestId('value')).toHaveTextContent('1234');
     });
 
     test('handles backspace key to clear and navigate to previous slot', async () => {
@@ -411,46 +407,42 @@ describe('useOtpField', () => {
         length: 4,
       });
 
-      await render({
+      page.render({
         components: { OtpField },
         template: `<OtpField />`,
       });
 
-      const slots = screen.getAllByTestId('slot');
+      const slots = page.getByTestId('slot');
 
       // Fill all slots
-      await fireEvent.focus(slots[0]);
-      await fireEvent(slots[0], new InputEvent('beforeinput', { data: '1', cancelable: true }));
-      await fireEvent(slots[1], new InputEvent('beforeinput', { data: '2', cancelable: true }));
-      await fireEvent(slots[2], new InputEvent('beforeinput', { data: '3', cancelable: true }));
-      await fireEvent(slots[3], new InputEvent('beforeinput', { data: '4', cancelable: true }));
-      await flush();
+      await focus(slots.nth(0));
+      await beforeInput(slots.nth(0), '1');
+      await beforeInput(slots.nth(1), '2');
+      await beforeInput(slots.nth(2), '3');
+      await beforeInput(slots.nth(3), '4');
 
       // Verify all slots are filled
-      expect(screen.getByTestId('value').textContent).toBe('1234');
+      await expect.element(page.getByTestId('value')).toHaveTextContent('1234');
 
       // Press backspace on the last slot
-      await fireEvent.keyDown(slots[3], { key: 'Backspace', code: 'Backspace' });
-      await flush();
+      await keyDown(slots.nth(3), 'Backspace');
 
       // The last slot should be cleared and focus should remain on it
-      expect(screen.getByTestId('value').textContent).toBe('123');
-      expect(document.activeElement).toBe(slots[2]);
+      await expect.element(page.getByTestId('value')).toHaveTextContent('123');
+      await expect.element(slots.nth(2)).toHaveFocus();
 
       // Press backspace again on the empty last slot
-      await fireEvent.keyDown(slots[2], { key: 'Backspace', code: 'Backspace' });
-      await flush();
+      await keyDown(slots.nth(2), 'Backspace');
 
       // Focus should move to the previous slot
-      expect(document.activeElement).toBe(slots[1]);
+      await expect.element(slots.nth(1)).toHaveFocus();
 
       // Press backspace on the third slot
-      await fireEvent.keyDown(slots[1], { key: 'Backspace', code: 'Backspace' });
-      await flush();
+      await keyDown(slots.nth(1), 'Backspace');
 
       // The third slot should be cleared and focus should remain on it
-      expect(screen.getByTestId('value').textContent).toBe('1');
-      expect(document.activeElement).toBe(slots[0]);
+      await expect.element(page.getByTestId('value')).toHaveTextContent('1');
+      await expect.element(slots.nth(0)).toHaveFocus();
     });
 
     test('handles enter key to move to the next slot', async () => {
@@ -459,29 +451,27 @@ describe('useOtpField', () => {
         length: 4,
       });
 
-      await render({
+      page.render({
         components: { OtpField },
         template: `<OtpField />`,
       });
 
-      const slots = screen.getAllByTestId('slot');
+      const slots = page.getByTestId('slot');
 
       // Focus the first slot
-      await fireEvent.focus(slots[0]);
+      await focus(slots.nth(0));
 
       // Press enter on the first slot
-      await fireEvent.keyDown(slots[0], { key: 'Enter', code: 'Enter' });
-      await flush();
+      await keyDown(slots.nth(0), 'Enter');
 
       // Focus should move to the next slot
-      expect(document.activeElement).toBe(slots[0]);
+      await expect.element(slots.nth(1)).toHaveFocus();
 
       // Press enter on the second slot
-      await fireEvent.keyDown(slots[0], { key: 'Enter', code: 'Enter' });
-      await flush();
+      await keyDown(slots.nth(1), 'Enter');
 
       // Focus should move to the third slot
-      expect(document.activeElement).toBe(slots[1]);
+      await expect.element(slots.nth(2)).toHaveFocus();
     });
   });
 
@@ -497,17 +487,17 @@ describe('useOtpField', () => {
         'input',
       );
 
-      await render({
+      page.render({
         components: { OtpField },
         template: `<OtpField />`,
       });
 
-      const slots = screen.getAllByTestId('slot');
-
       // Verify all slots are rendered as password inputs
-      slots.forEach(slot => {
-        expect(slot).toHaveAttribute('type', 'password');
-      });
+      const slots = page.getByTestId('slot');
+      await expect.element(slots.nth(0)).toHaveAttribute('type', 'password');
+      await expect.element(slots.nth(1)).toHaveAttribute('type', 'password');
+      await expect.element(slots.nth(2)).toHaveAttribute('type', 'password');
+      await expect.element(slots.nth(3)).toHaveAttribute('type', 'password');
     });
 
     test('renders text inputs when masked is false', async () => {
@@ -521,17 +511,17 @@ describe('useOtpField', () => {
         'input',
       );
 
-      await render({
+      page.render({
         components: { OtpField },
         template: `<OtpField />`,
       });
 
-      const slots = screen.getAllByTestId('slot');
-
       // Verify all slots are rendered as text inputs
-      slots.forEach(slot => {
-        expect(slot).toHaveAttribute('type', 'text');
-      });
+      const slots = page.getByTestId('slot');
+      await expect.element(slots.nth(0)).toHaveAttribute('type', 'text');
+      await expect.element(slots.nth(1)).toHaveAttribute('type', 'text');
+      await expect.element(slots.nth(2)).toHaveAttribute('type', 'text');
+      await expect.element(slots.nth(3)).toHaveAttribute('type', 'text');
     });
 
     test('renders mixed input types with prefix and masked', async () => {
@@ -546,22 +536,21 @@ describe('useOtpField', () => {
         'input',
       );
 
-      await render({
+      page.render({
         components: { OtpField },
         template: `<OtpField />`,
       });
 
-      const slots = screen.getAllByTestId('slot');
-
       // Prefix slots should be text type
-      expect(slots[0]).toHaveAttribute('type', 'text');
-      expect(slots[1]).toHaveAttribute('type', 'text');
+      const slots = page.getByTestId('slot');
+      await expect.element(slots.nth(0)).toHaveAttribute('type', 'text');
+      await expect.element(slots.nth(1)).toHaveAttribute('type', 'text');
 
       // Non-prefix slots should be password type
-      expect(slots[2]).toHaveAttribute('type', 'password');
-      expect(slots[3]).toHaveAttribute('type', 'password');
-      expect(slots[4]).toHaveAttribute('type', 'password');
-      expect(slots[5]).toHaveAttribute('type', 'password');
+      await expect.element(slots.nth(2)).toHaveAttribute('type', 'password');
+      await expect.element(slots.nth(3)).toHaveAttribute('type', 'password');
+      await expect.element(slots.nth(4)).toHaveAttribute('type', 'password');
+      await expect.element(slots.nth(5)).toHaveAttribute('type', 'password');
     });
 
     test('masks entered values while maintaining correct underlying value', async () => {
@@ -575,28 +564,27 @@ describe('useOtpField', () => {
         'span',
       );
 
-      await render({
+      page.render({
         components: { OtpField },
         template: `<OtpField />`,
       });
 
-      const slots = screen.getAllByTestId('slot');
+      const slots = page.getByTestId('slot');
 
       // Enter values in the slots
-      await fireEvent(slots[0], new InputEvent('beforeinput', { data: '1', cancelable: true }));
-      await fireEvent(slots[1], new InputEvent('beforeinput', { data: '2', cancelable: true }));
-      await fireEvent(slots[2], new InputEvent('beforeinput', { data: '3', cancelable: true }));
-      await fireEvent(slots[3], new InputEvent('beforeinput', { data: '4', cancelable: true }));
-
-      await flush();
+      await beforeInput(slots.nth(0), '1');
+      await beforeInput(slots.nth(1), '2');
+      await beforeInput(slots.nth(2), '3');
+      await beforeInput(slots.nth(3), '4');
 
       // Verify the underlying field value is correct
-      expect(screen.getByTestId('value').textContent).toBe('1234');
+      await expect.element(page.getByTestId('value')).toHaveTextContent('1234');
 
       // Verify each slot has the correct value attribute but is visually masked
-      slots.forEach(slot => {
-        expect(slot).toHaveTextContent(DEFAULT_MASK);
-      });
+      await expect.element(slots.nth(0)).toHaveTextContent(DEFAULT_MASK);
+      await expect.element(slots.nth(1)).toHaveTextContent(DEFAULT_MASK);
+      await expect.element(slots.nth(2)).toHaveTextContent(DEFAULT_MASK);
+      await expect.element(slots.nth(3)).toHaveTextContent(DEFAULT_MASK);
     });
   });
 
@@ -611,49 +599,34 @@ describe('useOtpField', () => {
         accept: 'numeric',
       });
 
-      await render({
+      page.render({
         components: { OtpField },
         template: `<OtpField />`,
       });
 
-      const slots = screen.getAllByTestId('slot');
-      await fireEvent.focus(slots[0]);
-      await flush();
+      const slots = page.getByTestId('slot');
+      await focus(slots.nth(0));
 
       // Test numeric input (should be accepted)
-      await fireEvent(slots[0], new InputEvent('beforeinput', { data: '1', cancelable: true }));
-      await flush();
+      await beforeInput(slots.nth(0), '1');
 
       // Test non-numeric input (should be rejected)
-      await fireEvent(slots[1], new InputEvent('beforeinput', { data: 'a', cancelable: true }));
-      await flush();
+      await beforeInput(slots.nth(1), 'a');
 
       // Check the field value - should only contain the numeric input
-      expect(screen.getByTestId('value').textContent).toBe('1');
+      await expect.element(page.getByTestId('value')).toHaveTextContent('1');
 
       // Test paste event with mixed content
-      const pasteEvent = new Event('paste');
-      (pasteEvent as any).clipboardData = {
-        getData: () => '12ab',
-      };
-
-      await fireEvent(slots[0], pasteEvent);
-      await flush();
+      await paste(slots.nth(0), '12ab');
 
       // Should not update with mixed content paste
-      expect(screen.getByTestId('value').textContent).toBe('1');
+      await expect.element(page.getByTestId('value')).toHaveTextContent('1');
 
       // Test paste event with numeric content
-      const numericPasteEvent = new Event('paste');
-      (numericPasteEvent as any).clipboardData = {
-        getData: () => '1234',
-      };
-
-      await fireEvent(slots[0], numericPasteEvent);
-      await flush();
+      await paste(slots.nth(0), '1234');
 
       // Should update with numeric content paste
-      expect(screen.getByTestId('value').textContent).toBe('1234');
+      await expect.element(page.getByTestId('value')).toHaveTextContent('1234');
 
       // Restore the spy
       warnSpy.mockRestore();
@@ -669,30 +642,28 @@ describe('useOtpField', () => {
         readonly: true,
       });
 
-      await render({
+      page.render({
         components: { OtpField },
         template: `<OtpField />`,
       });
 
-      const slots = screen.getAllByTestId('slot');
+      const slots = page.getByTestId('slot');
 
       // Verify initial value is set
-      expect(screen.getByTestId('value')).toHaveTextContent('1234');
+      await expect.element(page.getByTestId('value')).toHaveTextContent('1234');
 
       // Focus a slot and try to delete with backspace
-      await fireEvent.focus(slots[2]);
-      await fireEvent.keyDown(slots[2], { key: 'Backspace', code: 'Backspace' });
-      await flush();
+      await focus(slots.nth(2));
+      await keyDown(slots.nth(2), 'Backspace');
 
       // Value should remain unchanged
-      expect(screen.getByTestId('value')).toHaveTextContent('1234');
+      await expect.element(page.getByTestId('value')).toHaveTextContent('1234');
 
       // Try to delete with delete key
-      await fireEvent.keyDown(slots[2], { key: 'Delete', code: 'Delete' });
-      await flush();
+      await keyDown(slots.nth(2), 'Delete');
 
       // Value should still remain unchanged
-      expect(screen.getByTestId('value')).toHaveTextContent('1234');
+      await expect.element(page.getByTestId('value')).toHaveTextContent('1234');
     });
 
     test('prevents character deletion with backspace and delete keys when disabled', async () => {
@@ -703,30 +674,28 @@ describe('useOtpField', () => {
         disabled: true,
       });
 
-      await render({
+      page.render({
         components: { OtpField },
         template: `<OtpField />`,
       });
 
-      const slots = screen.getAllByTestId('slot');
+      const slots = page.getByTestId('slot');
 
       // Verify initial value is set
-      expect(screen.getByTestId('value')).toHaveTextContent('1234');
+      await expect.element(page.getByTestId('value')).toHaveTextContent('1234');
 
       // Focus a slot and try to delete with backspace
-      await fireEvent.focus(slots[2]);
-      await fireEvent.keyDown(slots[2], { key: 'Backspace', code: 'Backspace' });
-      await flush();
+      await focus(slots.nth(2));
+      await keyDown(slots.nth(2), 'Backspace');
 
       // Value should remain unchanged
-      expect(screen.getByTestId('value')).toHaveTextContent('1234');
+      await expect.element(page.getByTestId('value')).toHaveTextContent('1234');
 
       // Try to delete with delete key
-      await fireEvent.keyDown(slots[2], { key: 'Delete', code: 'Delete' });
-      await flush();
+      await keyDown(slots.nth(2), 'Delete');
 
       // Value should still remain unchanged
-      expect(screen.getByTestId('value')).toHaveTextContent('1234');
+      await expect.element(page.getByTestId('value')).toHaveTextContent('1234');
     });
 
     test('prevents character input with beforeinput when readonly', async () => {
@@ -737,23 +706,22 @@ describe('useOtpField', () => {
         readonly: true,
       });
 
-      await render({
+      page.render({
         components: { OtpField },
         template: `<OtpField />`,
       });
 
-      const slots = screen.getAllByTestId('slot');
+      const slots = page.getByTestId('slot');
 
       // Verify initial value is set
-      expect(screen.getByTestId('value')).toHaveTextContent('1234');
+      await expect.element(page.getByTestId('value')).toHaveTextContent('1234');
 
       // Focus a slot and try to input a character
-      await fireEvent.focus(slots[1]);
-      await fireEvent(slots[1], new InputEvent('beforeinput', { data: '9', cancelable: true }));
-      await flush();
+      await focus(slots.nth(1));
+      await beforeInput(slots.nth(1), '9');
 
       // Value should remain unchanged
-      expect(screen.getByTestId('value')).toHaveTextContent('1234');
+      await expect.element(page.getByTestId('value')).toHaveTextContent('1234');
     });
 
     test('prevents character input with beforeinput when disabled', async () => {
@@ -764,23 +732,22 @@ describe('useOtpField', () => {
         disabled: true,
       });
 
-      await render({
+      page.render({
         components: { OtpField },
         template: `<OtpField />`,
       });
 
-      const slots = screen.getAllByTestId('slot');
+      const slots = page.getByTestId('slot');
 
       // Verify initial value is set
-      expect(screen.getByTestId('value')).toHaveTextContent('1234');
+      await expect.element(page.getByTestId('value')).toHaveTextContent('1234');
 
       // Focus a slot and try to input a character
-      await fireEvent.focus(slots[1]);
-      await fireEvent(slots[1], new InputEvent('beforeinput', { data: '9', cancelable: true }));
-      await flush();
+      await focus(slots.nth(1));
+      await beforeInput(slots.nth(1), '9');
 
       // Value should remain unchanged
-      expect(screen.getByTestId('value')).toHaveTextContent('1234');
+      await expect.element(page.getByTestId('value')).toHaveTextContent('1234');
     });
 
     test('allows normal keyboard navigation when readonly', async () => {
@@ -795,28 +762,23 @@ describe('useOtpField', () => {
         'input',
       );
 
-      await render({
+      page.render({
         components: { OtpField },
         template: `<OtpField />`,
       });
 
-      const slots = screen.getAllByTestId('slot');
+      const slots = page.getByTestId('slot');
 
       // Focus the first slot
-      await fireEvent.focus(slots[0]);
+      await focus(slots.nth(0));
 
       // Test that navigation keys work and don't throw errors or change the value
-      await fireEvent.keyDown(slots[0], { key: 'ArrowRight', code: 'ArrowRight' });
-      await flush();
-
-      await fireEvent.keyDown(slots[0], { key: 'ArrowLeft', code: 'ArrowLeft' });
-      await flush();
-
-      await fireEvent.keyDown(slots[0], { key: 'Enter', code: 'Enter' });
-      await flush();
+      await keyDown(slots.nth(0), 'ArrowRight');
+      await keyDown(slots.nth(0), 'ArrowLeft');
+      await keyDown(slots.nth(0), 'Enter');
 
       // Value should remain unchanged throughout navigation
-      expect(screen.getByTestId('value')).toHaveTextContent('1234');
+      await expect.element(page.getByTestId('value')).toHaveTextContent('1234');
     });
 
     test('allows normal keyboard navigation when disabled', async () => {
@@ -831,30 +793,26 @@ describe('useOtpField', () => {
         'input',
       );
 
-      await render({
+      page.render({
         components: { OtpField },
         template: `<OtpField />`,
       });
 
-      const slots = screen.getAllByTestId('slot');
+      const slots = page.getByTestId('slot');
 
       // Note: Disabled slots have tabindex="-1" so they can't be focused normally
       // But we can test that if somehow focused, navigation still works
-      await fireEvent.focus(slots[0]);
+      await focus(slots.nth(0));
 
       // Arrow navigation should still work
-      await fireEvent.keyDown(slots[0], { key: 'ArrowRight', code: 'ArrowRight' });
-      await flush();
-
-      await fireEvent.keyDown(slots[1], { key: 'ArrowLeft', code: 'ArrowLeft' });
-      await flush();
+      await keyDown(slots.nth(0), 'ArrowRight');
+      await keyDown(slots.nth(1), 'ArrowLeft');
 
       // Enter key navigation should still work
-      await fireEvent.keyDown(slots[0], { key: 'Enter', code: 'Enter' });
-      await flush();
+      await keyDown(slots.nth(0), 'Enter');
 
       // Value should remain unchanged throughout navigation
-      expect(screen.getByTestId('value')).toHaveTextContent('1234');
+      await expect.element(page.getByTestId('value')).toHaveTextContent('1234');
     });
 
     test('readonly field correctly sets aria-readonly attribute', async () => {
@@ -868,17 +826,18 @@ describe('useOtpField', () => {
         'span',
       );
 
-      await render({
+      page.render({
         components: { OtpField },
         template: `<OtpField />`,
       });
 
-      const slots = screen.getAllByTestId('slot');
+      const slots = page.getByTestId('slot');
 
       // Verify all slots have aria-readonly="true"
-      slots.forEach(slot => {
-        expect(slot).toHaveAttribute('aria-readonly', 'true');
-      });
+      await expect.element(slots.nth(0)).toHaveAttribute('aria-readonly', 'true');
+      await expect.element(slots.nth(1)).toHaveAttribute('aria-readonly', 'true');
+      await expect.element(slots.nth(2)).toHaveAttribute('aria-readonly', 'true');
+      await expect.element(slots.nth(3)).toHaveAttribute('aria-readonly', 'true');
     });
 
     test('disabled field correctly sets aria-disabled attribute and tabindex', async () => {
@@ -892,18 +851,22 @@ describe('useOtpField', () => {
         'span',
       );
 
-      await render({
+      page.render({
         components: { OtpField },
         template: `<OtpField />`,
       });
 
-      const slots = screen.getAllByTestId('slot');
+      const slots = page.getByTestId('slot');
 
       // Verify all slots have aria-disabled="true" and tabindex="-1"
-      slots.forEach(slot => {
-        expect(slot).toHaveAttribute('aria-disabled', 'true');
-        expect(slot).toHaveAttribute('tabindex', '-1');
-      });
+      await expect.element(slots.nth(0)).toHaveAttribute('aria-disabled', 'true');
+      await expect.element(slots.nth(0)).toHaveAttribute('tabindex', '-1');
+      await expect.element(slots.nth(1)).toHaveAttribute('aria-disabled', 'true');
+      await expect.element(slots.nth(1)).toHaveAttribute('tabindex', '-1');
+      await expect.element(slots.nth(2)).toHaveAttribute('aria-disabled', 'true');
+      await expect.element(slots.nth(2)).toHaveAttribute('tabindex', '-1');
+      await expect.element(slots.nth(3)).toHaveAttribute('aria-disabled', 'true');
+      await expect.element(slots.nth(3)).toHaveAttribute('tabindex', '-1');
     });
   });
 });

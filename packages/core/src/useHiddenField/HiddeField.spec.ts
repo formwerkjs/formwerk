@@ -1,13 +1,12 @@
-import { render, screen } from '@testing-library/vue';
 import { HiddenField } from '.';
 import { useForm } from '../useForm';
-import { flush } from '@test-utils/flush';
 import { describe, expect, test, vi } from 'vitest';
 import { ref } from 'vue';
+import { page } from 'vitest/browser';
 
 describe('HiddenField component', () => {
   test('should not render anything', async () => {
-    await render({
+    page.render({
       components: { HiddenField },
       setup() {
         const { formProps } = useForm();
@@ -18,13 +17,11 @@ describe('HiddenField component', () => {
         <HiddenField name="hidden-field" value="test-value" />
       `,
     });
-
-    await flush();
   });
 
   test('should set the value on the form', async () => {
     let getValues!: () => ReturnType<typeof useForm>['values'];
-    await render({
+    page.render({
       components: { HiddenField },
       setup() {
         const { formProps, values } = useForm();
@@ -37,14 +34,13 @@ describe('HiddenField component', () => {
       `,
     });
 
-    await flush();
-    expect(getValues()).toEqual({ 'hidden-field': 'test-value' });
+    await expect.poll(() => getValues()).toEqual({ 'hidden-field': 'test-value' });
   });
 
   test('should update the value on the form when it changes', async () => {
     const val = ref('test-value');
     let getValues!: () => ReturnType<typeof useForm>['values'];
-    await render({
+    page.render({
       components: { HiddenField },
       setup() {
         const { formProps, values } = useForm();
@@ -57,34 +53,33 @@ describe('HiddenField component', () => {
       `,
     });
 
-    await flush();
-    expect(getValues()).toEqual({ 'hidden-field': 'test-value' });
+    await expect.poll(() => getValues()).toEqual({ 'hidden-field': 'test-value' });
 
     val.value = 'updated-value';
-    await flush();
-    expect(getValues()).toEqual({ 'hidden-field': 'updated-value' });
+    await expect.poll(() => getValues()).toEqual({ 'hidden-field': 'updated-value' });
   });
 
   test('should not submit value when disabled', async () => {
     const onSubmit = vi.fn();
 
-    await render({
+    page.render({
       components: { HiddenField },
       setup() {
-        const { formProps } = useForm();
-        return { formProps, onSubmit };
+        const { formProps, handleSubmit } = useForm();
+        return { formProps, onSubmit: handleSubmit(onSubmit) };
       },
       template: `
-        <form v-bind="formProps" data-testid="form" @submit.prevent="onSubmit">
+        <form v-bind="formProps" data-testid="form">
           <HiddenField name="hidden-field" value="test-value" disabled />
-          <button type="submit">Submit</button>
+          <button type="button" @click="onSubmit">Submit</button>
         </form>
       `,
     });
 
-    const form = screen.getByTestId('form');
-    const formData = new FormData(form as HTMLFormElement);
-    await flush();
-    expect(formData.get('hidden-field')).toBeNull();
+    await expect.poll(() => onSubmit).toHaveBeenCalledTimes(0);
+    await page.getByRole('button', { name: 'Submit' }).click();
+    await expect.poll(() => onSubmit).toHaveBeenCalledTimes(1);
+    const submitted = (onSubmit.mock.calls[0][0] as any).toObject();
+    await expect.poll(() => submitted).not.toHaveProperty('hidden-field');
   });
 });

@@ -4,7 +4,7 @@ import { useForm } from '../useForm/useForm';
 import { ref } from 'vue';
 
 test('it initializes the field value', async () => {
-  const { fieldValue } = await renderSetup(() => {
+  const { fieldValue } = renderSetup(() => {
     return useFormField({ label: 'Field', path: 'field', initialValue: 'bar' }).state;
   });
 
@@ -12,7 +12,7 @@ test('it initializes the field value', async () => {
 });
 
 test('it initializes the field value in a form', async () => {
-  const { form } = await renderSetup(
+  const { form } = renderSetup(
     () => {
       const form = useForm();
 
@@ -25,11 +25,11 @@ test('it initializes the field value in a form', async () => {
     },
   );
 
-  expect(form.values).toEqual({ field: 'bar' });
+  await expect.poll(() => form.values).toEqual({ field: 'bar' });
 });
 
 test('overrides the initial value in the form with its own', async () => {
-  const { form } = await renderSetup(
+  const { form } = renderSetup(
     () => {
       const form = useForm({ initialValues: { field: 'foo' } });
 
@@ -42,11 +42,11 @@ test('overrides the initial value in the form with its own', async () => {
     },
   );
 
-  expect(form.values).toEqual({ field: 'bar' });
+  await expect.poll(() => form.values).toEqual({ field: 'bar' });
 });
 
 test('obtains the initial value from the form', async () => {
-  const { field } = await renderSetup(
+  const { field } = renderSetup(
     () => {
       const form = useForm({ initialValues: { field: 'foo' } });
 
@@ -59,11 +59,11 @@ test('obtains the initial value from the form', async () => {
     },
   );
 
-  expect(field.fieldValue.value).toBe('foo');
+  await expect.poll(() => field.fieldValue.value).toBe('foo');
 });
 
 test('pathless field do not write to the form', async () => {
-  const { form } = await renderSetup(
+  const { form } = renderSetup(
     () => {
       const form = useForm();
 
@@ -83,7 +83,7 @@ describe('field touched state', () => {
   test('pathless field maintains its own touched state', async () => {
     const {
       state: { isTouched, setTouched },
-    } = await renderSetup(() => {
+    } = renderSetup(() => {
       return useFormField({ initialValue: 'bar' });
     });
 
@@ -93,7 +93,7 @@ describe('field touched state', () => {
   });
 
   test('field with path syncs touched state with form', async () => {
-    const { form, field } = await renderSetup(
+    const { form, field } = renderSetup(
       () => {
         const form = useForm({ initialValues: { field: 'foo' } });
         return { form };
@@ -117,7 +117,7 @@ describe('field blurred state', () => {
   test('pathless field maintains its own blurred state', async () => {
     const {
       state: { isBlurred, setBlurred },
-    } = await renderSetup(() => {
+    } = renderSetup(() => {
       return useFormField({ initialValue: 'bar' });
     });
 
@@ -127,7 +127,7 @@ describe('field blurred state', () => {
   });
 
   test('field with path syncs blurred state with form', async () => {
-    const { form, field } = await renderSetup(
+    const { form, field } = renderSetup(
       () => {
         const form = useForm({ initialValues: { field: 'foo' } });
         return { form };
@@ -151,7 +151,7 @@ describe('field dirty state', () => {
   test('formless fields maintain their own dirty state', async () => {
     const {
       state: { isDirty, setValue },
-    } = await renderSetup(() => {
+    } = renderSetup(() => {
       return useFormField({ initialValue: 'bar' });
     });
 
@@ -164,7 +164,7 @@ describe('field dirty state', () => {
 });
 
 test('formless fields maintain their own error state', async () => {
-  const { setErrors, isValid, errorMessage, errors } = await renderSetup(() => {
+  const { setErrors, isValid, errorMessage, errors } = renderSetup(() => {
     return useFormField({ label: 'Field', initialValue: 'bar' }).state;
   });
 
@@ -179,7 +179,7 @@ test('formless fields maintain their own error state', async () => {
 });
 
 test('can have a typed schema for validation', async () => {
-  const { validate, errors } = await renderSetup(() => {
+  const { validate, errors } = renderSetup(() => {
     return useFormField({
       label: 'Field',
       initialValue: 'bar',
@@ -196,7 +196,7 @@ test('can have a typed schema for validation', async () => {
 
 test('disabled fields report isValid as true and errors as empty after being invalid', async () => {
   const disabled = ref(false);
-  const { validate, isValid, errors, errorMessage } = await renderSetup(() => {
+  const { validate, isValid, errors, errorMessage } = renderSetup(() => {
     return useFormField({
       label: 'Field',
       initialValue: 'bar',
@@ -225,7 +225,7 @@ test('disabled fields report isValid as true and errors as empty after being inv
 test('setErrors warns when trying to set errors on a disabled field', async () => {
   const disabled = ref(true);
   const consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
-  const { isValid, errors, errorMessage, setErrors } = await renderSetup(() => {
+  const { isValid, errors, errorMessage, setErrors } = renderSetup(() => {
     return exposeField(
       {},
       useFormField({
@@ -270,7 +270,7 @@ test('validate warns and skips validation on a disabled field', async () => {
     return { issues: [{ message: 'error', path: ['field'] }] };
   });
 
-  const { validate, errors } = await renderSetup(() => {
+  const { validate, errors } = renderSetup(() => {
     return useFormField({
       label: 'Field',
       initialValue: 'bar',
@@ -297,7 +297,7 @@ test('validate warns and skips validation on a disabled field', async () => {
 
 describe('isValidated state', () => {
   test('field starts with isValidated as false', async () => {
-    const { isValidated } = await renderSetup(() => {
+    const { isValidated } = renderSetup(() => {
       return useFormField({ label: 'Field', initialValue: 'bar' }).state;
     });
 
@@ -305,7 +305,7 @@ describe('isValidated state', () => {
   });
 
   test('isValidated remains false after programmatic validation without schema', async () => {
-    const { isValidated, validate } = await renderSetup(() => {
+    const { isValidated, validate } = renderSetup(() => {
       return useFormField({ label: 'Field', initialValue: 'bar' }).state;
     });
 
@@ -315,7 +315,7 @@ describe('isValidated state', () => {
   });
 
   test('isValidated remains false after programmatic validation with schema', async () => {
-    const { isValidated, validate } = await renderSetup(() => {
+    const { isValidated, validate } = renderSetup(() => {
       return useFormField({
         label: 'Field',
         initialValue: 'bar',
@@ -331,7 +331,7 @@ describe('isValidated state', () => {
   });
 
   test('isValidated remains false after programmatic validation with errors', async () => {
-    const { isValidated, validate } = await renderSetup(() => {
+    const { isValidated, validate } = renderSetup(() => {
       return useFormField({
         label: 'Field',
         initialValue: '',
@@ -347,7 +347,7 @@ describe('isValidated state', () => {
   });
 
   test('isValidated can be set manually', async () => {
-    const { isValidated, setIsValidated } = await renderSetup(() => {
+    const { isValidated, setIsValidated } = renderSetup(() => {
       return useFormField({ label: 'Field', initialValue: 'bar' }).state;
     });
 
@@ -359,7 +359,7 @@ describe('isValidated state', () => {
   });
 
   test('isValidated becomes true after form submit attempt', async () => {
-    const { form, field } = await renderSetup(
+    const { form, field } = renderSetup(
       () => {
         const form = useForm({
           initialValues: { field: 'valid' },
@@ -390,7 +390,7 @@ describe('isValidated state', () => {
   });
 
   test('isValidated is independent for pathless fields', async () => {
-    const { field1, field2 } = await renderSetup(() => {
+    const { field1, field2 } = renderSetup(() => {
       const field1 = useFormField({ label: 'Field1', initialValue: 'bar' });
       const field2 = useFormField({ label: 'Field2', initialValue: 'baz' });
       return { field1, field2 };

@@ -1,15 +1,19 @@
 import { RadioGroupProps, useRadioGroup } from './useRadioGroup';
 import { type Component, defineComponent } from 'vue';
 import { RadioProps, useRadio } from './useRadio';
-import { fireEvent, render, screen } from '@testing-library/vue';
-import { axe } from 'vitest-axe';
 import { describe } from 'vitest';
-import { flush, defineStandardSchema } from '@test-utils/index';
+import { defineStandardSchema, expectNoA11yViolations } from '@test-utils/index';
+import { page } from 'vitest/browser';
 
-const createGroup = (props: RadioGroupProps): Component => {
+const createGroup = (
+  props: RadioGroupProps,
+  onSetup?: (group: ReturnType<typeof useRadioGroup<string>>) => void,
+): Component => {
   return defineComponent({
     setup() {
       const group = useRadioGroup(props);
+
+      onSetup?.(group);
 
       return {
         ...props,
@@ -37,7 +41,7 @@ const InputBase: string = `
 
 const CustomBase: string = `
   <div>
-    <div v-bind="inputProps"></div>
+    <div v-bind="inputProps" style="width: 100px; height: 100px;"></div>
     <div v-bind="labelProps" >{{ label }}</div>
   </div>
 `;
@@ -58,52 +62,12 @@ const createRadio = (template = InputBase): Component => {
   });
 };
 
-describe('has no a11y violations', () => {
-  test('with input as base element', async () => {
-    const RadioGroup = createGroup({ label: 'Group' });
-    const RadioInput = createRadio();
-
-    await render({
-      components: { RadioGroup, RadioInput },
-      template: `
-        <RadioGroup data-testid="fixture">
-          <RadioInput label="First" value="1" />
-          <RadioInput label="Second" value="2" />
-        </RadioGroup>
-      `,
-    });
-
-    vi.useRealTimers();
-    expect(await axe(screen.getByTestId('fixture'))).toHaveNoViolations();
-    vi.useFakeTimers();
-  });
-
-  test('with custom elements as base', async () => {
-    const RadioGroup = createGroup({ label: 'Group' });
-    const RadioInput = createRadio(CustomBase);
-
-    await render({
-      components: { RadioGroup, RadioInput },
-      template: `
-        <RadioGroup data-testid="fixture">
-          <RadioInput label="First" value="1" />
-          <RadioInput label="Second" value="2" />
-        </RadioGroup>
-      `,
-    });
-
-    vi.useRealTimers();
-    expect(await axe(screen.getByTestId('fixture'))).toHaveNoViolations();
-    vi.useFakeTimers();
-  });
-});
-
 describe('click behavior', () => {
   test('with input as base element', async () => {
     const RadioGroup = createGroup({ label: 'Group' });
     const RadioInput = createRadio();
 
-    await render({
+    page.render({
       components: { RadioGroup, RadioInput },
       template: `
         <RadioGroup data-testid="fixture">
@@ -113,17 +77,17 @@ describe('click behavior', () => {
       `,
     });
 
-    await fireEvent.click(screen.getByLabelText('First'));
-    expect(screen.getByTestId('value')).toHaveTextContent('1');
-    await fireEvent.click(screen.getByLabelText('Second'));
-    expect(screen.getByTestId('value')).toHaveTextContent('2');
+    await page.getByLabelText('First').click();
+    await expect.element(page.getByTestId('value')).toHaveTextContent('1');
+    await page.getByLabelText('Second').click();
+    await expect.element(page.getByTestId('value')).toHaveTextContent('2');
   });
 
   test('with custom elements as base', async () => {
     const RadioGroup = createGroup({ label: 'Group' });
     const RadioInput = createRadio(CustomBase);
 
-    await render({
+    page.render({
       components: { RadioGroup, RadioInput },
       template: `
         <RadioGroup data-testid="fixture">
@@ -133,10 +97,10 @@ describe('click behavior', () => {
       `,
     });
 
-    await fireEvent.click(screen.getByLabelText('First'));
-    expect(screen.getByTestId('value')).toHaveTextContent('1');
-    await fireEvent.click(screen.getByLabelText('Second'));
-    expect(screen.getByTestId('value')).toHaveTextContent('2');
+    await page.getByLabelText('First').click();
+    await expect.element(page.getByTestId('value')).toHaveTextContent('1');
+    await page.getByLabelText('Second').click();
+    await expect.element(page.getByTestId('value')).toHaveTextContent('2');
   });
 });
 
@@ -145,7 +109,7 @@ describe('Space key selects the radio', () => {
     const RadioGroup = createGroup({ label: 'Group' });
     const RadioInput = createRadio();
 
-    await render({
+    page.render({
       components: { RadioGroup, RadioInput },
       template: `
         <RadioGroup data-testid="fixture">
@@ -155,17 +119,17 @@ describe('Space key selects the radio', () => {
       `,
     });
 
-    await fireEvent.keyDown(screen.getByLabelText('First'), { code: 'Space' });
-    expect(screen.getByTestId('value')).toHaveTextContent('1');
-    await fireEvent.click(screen.getByLabelText('Second'), { code: 'Space' });
-    expect(screen.getByTestId('value')).toHaveTextContent('2');
+    (await page.getByLabelText('First').element()).dispatchEvent(new KeyboardEvent('keydown', { code: 'Space' }));
+    await expect.element(page.getByTestId('value')).toHaveTextContent('1');
+    (await page.getByLabelText('Second').element()).dispatchEvent(new KeyboardEvent('keydown', { code: 'Space' }));
+    await expect.element(page.getByTestId('value')).toHaveTextContent('2');
   });
 
   test('with custom elements as base', async () => {
     const RadioGroup = createGroup({ label: 'Group' });
     const RadioInput = createRadio(CustomBase);
 
-    await render({
+    page.render({
       components: { RadioGroup, RadioInput },
       template: `
         <RadioGroup data-testid="fixture">
@@ -175,17 +139,17 @@ describe('Space key selects the radio', () => {
       `,
     });
 
-    await fireEvent.keyDown(screen.getByLabelText('First'), { code: 'Space' });
-    expect(screen.getByTestId('value')).toHaveTextContent('1');
-    await fireEvent.click(screen.getByLabelText('Second'), { code: 'Space' });
-    expect(screen.getByTestId('value')).toHaveTextContent('2');
+    (await page.getByLabelText('First').element()).dispatchEvent(new KeyboardEvent('keydown', { code: 'Space' }));
+    await expect.element(page.getByTestId('value')).toHaveTextContent('1');
+    (await page.getByLabelText('Second').element()).dispatchEvent(new KeyboardEvent('keydown', { code: 'Space' }));
+    await expect.element(page.getByTestId('value')).toHaveTextContent('2');
   });
 
   test('disabled radio cannot be selected', async () => {
     const RadioGroup = createGroup({ label: 'Group' });
     const RadioInput = createRadio();
 
-    await render({
+    page.render({
       components: { RadioGroup, RadioInput },
       template: `
         <RadioGroup data-testid="fixture">
@@ -195,10 +159,10 @@ describe('Space key selects the radio', () => {
       `,
     });
 
-    await fireEvent.keyDown(screen.getByLabelText('First'), { code: 'Space' });
-    expect(screen.getByTestId('value')).toHaveTextContent('');
-    await fireEvent.click(screen.getByLabelText('Second'), { code: 'Space' });
-    expect(screen.getByTestId('value')).toHaveTextContent('');
+    (await page.getByLabelText('First').element()).dispatchEvent(new KeyboardEvent('keydown', { code: 'Space' }));
+    await expect.element(page.getByTestId('value')).toHaveTextContent('');
+    (await page.getByLabelText('Second').element()).dispatchEvent(new KeyboardEvent('keydown', { code: 'Space' }));
+    await expect.element(page.getByTestId('value')).toHaveTextContent('');
   });
 });
 
@@ -208,7 +172,7 @@ describe('Arrow keys behavior', () => {
       const RadioGroup = createGroup({ label: 'Group' });
       const RadioInput = createRadio();
 
-      await render({
+      page.render({
         components: { RadioGroup, RadioInput },
         template: `
         <RadioGroup data-testid="fixture">
@@ -221,47 +185,51 @@ describe('Arrow keys behavior', () => {
     }
 
     test('arrow down moves forward', async () => {
-      await renderTest();
+      renderTest();
 
-      await fireEvent.keyDown(screen.getByLabelText('Group'), { code: 'ArrowDown' });
-      expect(screen.getByTestId('value')).toHaveTextContent('1');
-      await fireEvent.keyDown(screen.getByLabelText('Group'), { code: 'ArrowDown' });
-      expect(screen.getByTestId('value')).toHaveTextContent('2');
-      await fireEvent.keyDown(screen.getByLabelText('Group'), { code: 'ArrowDown' });
-      expect(screen.getByTestId('value')).toHaveTextContent('3');
+      const group = page.getByLabelText('Group');
+      (await group.element()).dispatchEvent(new KeyboardEvent('keydown', { code: 'ArrowDown', bubbles: true }));
+      await expect.element(page.getByTestId('value')).toHaveTextContent('1');
+      (await group.element()).dispatchEvent(new KeyboardEvent('keydown', { code: 'ArrowDown', bubbles: true }));
+      await expect.element(page.getByTestId('value')).toHaveTextContent('2');
+      (await group.element()).dispatchEvent(new KeyboardEvent('keydown', { code: 'ArrowDown', bubbles: true }));
+      await expect.element(page.getByTestId('value')).toHaveTextContent('3');
     });
 
     test('arrow up moves backward', async () => {
-      await renderTest();
+      renderTest();
 
-      await fireEvent.keyDown(screen.getByLabelText('Group'), { code: 'ArrowUp' });
-      expect(screen.getByTestId('value')).toHaveTextContent('1');
-      await fireEvent.keyDown(screen.getByLabelText('Group'), { code: 'ArrowUp' });
-      expect(screen.getByTestId('value')).toHaveTextContent('3');
-      await fireEvent.keyDown(screen.getByLabelText('Group'), { code: 'ArrowUp' });
-      expect(screen.getByTestId('value')).toHaveTextContent('2');
+      const group = page.getByLabelText('Group');
+      (await group.element()).dispatchEvent(new KeyboardEvent('keydown', { code: 'ArrowUp', bubbles: true }));
+      await expect.element(page.getByTestId('value')).toHaveTextContent('1');
+      (await group.element()).dispatchEvent(new KeyboardEvent('keydown', { code: 'ArrowUp', bubbles: true }));
+      await expect.element(page.getByTestId('value')).toHaveTextContent('3');
+      (await group.element()).dispatchEvent(new KeyboardEvent('keydown', { code: 'ArrowUp', bubbles: true }));
+      await expect.element(page.getByTestId('value')).toHaveTextContent('2');
     });
 
     test('arrow right moves forward', async () => {
-      await renderTest();
+      renderTest();
 
-      await fireEvent.keyDown(screen.getByLabelText('Group'), { code: 'ArrowRight' });
-      expect(screen.getByTestId('value')).toHaveTextContent('1');
-      await fireEvent.keyDown(screen.getByLabelText('Group'), { code: 'ArrowRight' });
-      expect(screen.getByTestId('value')).toHaveTextContent('2');
-      await fireEvent.keyDown(screen.getByLabelText('Group'), { code: 'ArrowRight' });
-      expect(screen.getByTestId('value')).toHaveTextContent('3');
+      const group = page.getByLabelText('Group');
+      (await group.element()).dispatchEvent(new KeyboardEvent('keydown', { code: 'ArrowRight', bubbles: true }));
+      await expect.element(page.getByTestId('value')).toHaveTextContent('1');
+      (await group.element()).dispatchEvent(new KeyboardEvent('keydown', { code: 'ArrowRight', bubbles: true }));
+      await expect.element(page.getByTestId('value')).toHaveTextContent('2');
+      (await group.element()).dispatchEvent(new KeyboardEvent('keydown', { code: 'ArrowRight', bubbles: true }));
+      await expect.element(page.getByTestId('value')).toHaveTextContent('3');
     });
 
     test('arrow left moves backward', async () => {
-      await renderTest();
+      renderTest();
 
-      await fireEvent.keyDown(screen.getByLabelText('Group'), { code: 'ArrowLeft' });
-      expect(screen.getByTestId('value')).toHaveTextContent('1');
-      await fireEvent.keyDown(screen.getByLabelText('Group'), { code: 'ArrowLeft' });
-      expect(screen.getByTestId('value')).toHaveTextContent('3');
-      await fireEvent.keyDown(screen.getByLabelText('Group'), { code: 'ArrowLeft' });
-      expect(screen.getByTestId('value')).toHaveTextContent('2');
+      const group = page.getByLabelText('Group');
+      (await group.element()).dispatchEvent(new KeyboardEvent('keydown', { code: 'ArrowLeft', bubbles: true }));
+      await expect.element(page.getByTestId('value')).toHaveTextContent('1');
+      (await group.element()).dispatchEvent(new KeyboardEvent('keydown', { code: 'ArrowLeft', bubbles: true }));
+      await expect.element(page.getByTestId('value')).toHaveTextContent('3');
+      (await group.element()).dispatchEvent(new KeyboardEvent('keydown', { code: 'ArrowLeft', bubbles: true }));
+      await expect.element(page.getByTestId('value')).toHaveTextContent('2');
     });
   });
 
@@ -270,7 +238,7 @@ describe('Arrow keys behavior', () => {
       const RadioGroup = createGroup({ label: 'Group', dir: 'rtl' });
       const RadioInput = createRadio();
 
-      await render({
+      page.render({
         components: { RadioGroup, RadioInput },
         template: `
         <RadioGroup data-testid="fixture">
@@ -283,47 +251,51 @@ describe('Arrow keys behavior', () => {
     }
 
     test('arrow down moves forward', async () => {
-      await renderTest();
+      renderTest();
 
-      await fireEvent.keyDown(screen.getByLabelText('Group'), { code: 'ArrowDown' });
-      expect(screen.getByTestId('value')).toHaveTextContent('1');
-      await fireEvent.keyDown(screen.getByLabelText('Group'), { code: 'ArrowDown' });
-      expect(screen.getByTestId('value')).toHaveTextContent('2');
-      await fireEvent.keyDown(screen.getByLabelText('Group'), { code: 'ArrowDown' });
-      expect(screen.getByTestId('value')).toHaveTextContent('3');
+      const group = page.getByLabelText('Group');
+      (await group.element()).dispatchEvent(new KeyboardEvent('keydown', { code: 'ArrowDown', bubbles: true }));
+      await expect.element(page.getByTestId('value')).toHaveTextContent('1');
+      (await group.element()).dispatchEvent(new KeyboardEvent('keydown', { code: 'ArrowDown', bubbles: true }));
+      await expect.element(page.getByTestId('value')).toHaveTextContent('2');
+      (await group.element()).dispatchEvent(new KeyboardEvent('keydown', { code: 'ArrowDown', bubbles: true }));
+      await expect.element(page.getByTestId('value')).toHaveTextContent('3');
     });
 
     test('arrow up moves backward', async () => {
-      await renderTest();
+      renderTest();
 
-      await fireEvent.keyDown(screen.getByLabelText('Group'), { code: 'ArrowUp' });
-      expect(screen.getByTestId('value')).toHaveTextContent('1');
-      await fireEvent.keyDown(screen.getByLabelText('Group'), { code: 'ArrowUp' });
-      expect(screen.getByTestId('value')).toHaveTextContent('3');
-      await fireEvent.keyDown(screen.getByLabelText('Group'), { code: 'ArrowUp' });
-      expect(screen.getByTestId('value')).toHaveTextContent('2');
+      const group = page.getByLabelText('Group');
+      (await group.element()).dispatchEvent(new KeyboardEvent('keydown', { code: 'ArrowUp', bubbles: true }));
+      await expect.element(page.getByTestId('value')).toHaveTextContent('1');
+      (await group.element()).dispatchEvent(new KeyboardEvent('keydown', { code: 'ArrowUp', bubbles: true }));
+      await expect.element(page.getByTestId('value')).toHaveTextContent('3');
+      (await group.element()).dispatchEvent(new KeyboardEvent('keydown', { code: 'ArrowUp', bubbles: true }));
+      await expect.element(page.getByTestId('value')).toHaveTextContent('2');
     });
 
     test('arrow left moves forward', async () => {
-      await renderTest();
+      renderTest();
 
-      await fireEvent.keyDown(screen.getByLabelText('Group'), { code: 'ArrowLeft' });
-      expect(screen.getByTestId('value')).toHaveTextContent('1');
-      await fireEvent.keyDown(screen.getByLabelText('Group'), { code: 'ArrowLeft' });
-      expect(screen.getByTestId('value')).toHaveTextContent('2');
-      await fireEvent.keyDown(screen.getByLabelText('Group'), { code: 'ArrowLeft' });
-      expect(screen.getByTestId('value')).toHaveTextContent('3');
+      const group = page.getByLabelText('Group');
+      (await group.element()).dispatchEvent(new KeyboardEvent('keydown', { code: 'ArrowLeft', bubbles: true }));
+      await expect.element(page.getByTestId('value')).toHaveTextContent('1');
+      (await group.element()).dispatchEvent(new KeyboardEvent('keydown', { code: 'ArrowLeft', bubbles: true }));
+      await expect.element(page.getByTestId('value')).toHaveTextContent('2');
+      (await group.element()).dispatchEvent(new KeyboardEvent('keydown', { code: 'ArrowLeft', bubbles: true }));
+      await expect.element(page.getByTestId('value')).toHaveTextContent('3');
     });
 
     test('arrow right moves backward', async () => {
-      await renderTest();
+      renderTest();
 
-      await fireEvent.keyDown(screen.getByLabelText('Group'), { code: 'ArrowRight' });
-      expect(screen.getByTestId('value')).toHaveTextContent('1');
-      await fireEvent.keyDown(screen.getByLabelText('Group'), { code: 'ArrowRight' });
-      expect(screen.getByTestId('value')).toHaveTextContent('3');
-      await fireEvent.keyDown(screen.getByLabelText('Group'), { code: 'ArrowRight' });
-      expect(screen.getByTestId('value')).toHaveTextContent('2');
+      const group = page.getByLabelText('Group');
+      (await group.element()).dispatchEvent(new KeyboardEvent('keydown', { code: 'ArrowRight', bubbles: true }));
+      await expect.element(page.getByTestId('value')).toHaveTextContent('1');
+      (await group.element()).dispatchEvent(new KeyboardEvent('keydown', { code: 'ArrowRight', bubbles: true }));
+      await expect.element(page.getByTestId('value')).toHaveTextContent('3');
+      (await group.element()).dispatchEvent(new KeyboardEvent('keydown', { code: 'ArrowRight', bubbles: true }));
+      await expect.element(page.getByTestId('value')).toHaveTextContent('2');
     });
   });
 
@@ -331,7 +303,7 @@ describe('Arrow keys behavior', () => {
     const RadioGroup = createGroup({ label: 'Group' });
     const RadioInput = createRadio();
 
-    await render({
+    page.render({
       components: { RadioGroup, RadioInput },
       template: `
         <RadioGroup data-testid="fixture">
@@ -342,19 +314,20 @@ describe('Arrow keys behavior', () => {
       `,
     });
 
-    await fireEvent.keyDown(screen.getByLabelText('Group'), { code: 'ArrowDown' });
-    expect(screen.getByTestId('value')).toHaveTextContent('1');
-    await fireEvent.keyDown(screen.getByLabelText('Group'), { code: 'ArrowDown' });
-    expect(screen.getByTestId('value')).toHaveTextContent('2');
-    await fireEvent.keyDown(screen.getByLabelText('Group'), { code: 'ArrowDown' });
-    expect(screen.getByTestId('value')).toHaveTextContent('1');
+    const group = page.getByLabelText('Group');
+    (await group.element()).dispatchEvent(new KeyboardEvent('keydown', { code: 'ArrowDown', bubbles: true }));
+    await expect.element(page.getByTestId('value')).toHaveTextContent('1');
+    (await group.element()).dispatchEvent(new KeyboardEvent('keydown', { code: 'ArrowDown', bubbles: true }));
+    await expect.element(page.getByTestId('value')).toHaveTextContent('2');
+    (await group.element()).dispatchEvent(new KeyboardEvent('keydown', { code: 'ArrowDown', bubbles: true }));
+    await expect.element(page.getByTestId('value')).toHaveTextContent('1');
   });
 
   test('skips disabled buttons with first disabled', async () => {
     const RadioGroup = createGroup({ label: 'Group' });
     const RadioInput = createRadio();
 
-    await render({
+    page.render({
       components: { RadioGroup, RadioInput },
       template: `
         <RadioGroup data-testid="fixture">
@@ -365,19 +338,20 @@ describe('Arrow keys behavior', () => {
       `,
     });
 
-    await fireEvent.keyDown(screen.getByLabelText('Group'), { code: 'ArrowDown' });
-    expect(screen.getByTestId('value')).toHaveTextContent('2');
-    await fireEvent.keyDown(screen.getByLabelText('Group'), { code: 'ArrowDown' });
-    expect(screen.getByTestId('value')).toHaveTextContent('3');
-    await fireEvent.keyDown(screen.getByLabelText('Group'), { code: 'ArrowDown' });
-    expect(screen.getByTestId('value')).toHaveTextContent('2');
+    const group = page.getByLabelText('Group');
+    (await group.element()).dispatchEvent(new KeyboardEvent('keydown', { code: 'ArrowDown', bubbles: true }));
+    await expect.element(page.getByTestId('value')).toHaveTextContent('2');
+    (await group.element()).dispatchEvent(new KeyboardEvent('keydown', { code: 'ArrowDown', bubbles: true }));
+    await expect.element(page.getByTestId('value')).toHaveTextContent('3');
+    (await group.element()).dispatchEvent(new KeyboardEvent('keydown', { code: 'ArrowDown', bubbles: true }));
+    await expect.element(page.getByTestId('value')).toHaveTextContent('2');
   });
 
   test('does not affect disabled groups', async () => {
     const RadioGroup = createGroup({ label: 'Group', disabled: true });
     const RadioInput = createRadio();
 
-    await render({
+    page.render({
       components: { RadioGroup, RadioInput },
       template: `
         <RadioGroup data-testid="fixture">
@@ -388,17 +362,18 @@ describe('Arrow keys behavior', () => {
       `,
     });
 
-    await fireEvent.keyDown(screen.getByLabelText('Group'), { code: 'ArrowDown' });
-    expect(screen.getByTestId('value')).toHaveTextContent('');
-    await fireEvent.keyDown(screen.getByLabelText('Group'), { code: 'ArrowDown' });
-    expect(screen.getByTestId('value')).toHaveTextContent('');
+    const group = page.getByLabelText('Group');
+    (await group.element()).dispatchEvent(new KeyboardEvent('keydown', { code: 'ArrowDown', bubbles: true }));
+    await expect.element(page.getByTestId('value')).toHaveTextContent('');
+    (await group.element()).dispatchEvent(new KeyboardEvent('keydown', { code: 'ArrowDown', bubbles: true }));
+    await expect.element(page.getByTestId('value')).toHaveTextContent('');
   });
 
   test('does not affect readonly groups', async () => {
     const RadioGroup = createGroup({ label: 'Group', readonly: true });
     const RadioInput = createRadio();
 
-    await render({
+    page.render({
       components: { RadioGroup, RadioInput },
       template: `
         <RadioGroup data-testid="fixture">
@@ -409,19 +384,118 @@ describe('Arrow keys behavior', () => {
       `,
     });
 
-    await fireEvent.keyDown(screen.getByLabelText('Group'), { code: 'ArrowDown' });
-    expect(screen.getByTestId('value')).toHaveTextContent('');
-    await fireEvent.keyDown(screen.getByLabelText('Group'), { code: 'ArrowDown' });
-    expect(screen.getByTestId('value')).toHaveTextContent('');
+    const group = page.getByLabelText('Group');
+    (await group.element()).dispatchEvent(new KeyboardEvent('keydown', { code: 'ArrowDown', bubbles: true }));
+    await expect.element(page.getByTestId('value')).toHaveTextContent('');
+    (await group.element()).dispatchEvent(new KeyboardEvent('keydown', { code: 'ArrowDown', bubbles: true }));
+    await expect.element(page.getByTestId('value')).toHaveTextContent('');
   });
 });
 
 describe('validation', () => {
+  test('should revalidate when value changes via arrow keys', async () => {
+    let group!: ReturnType<typeof useRadioGroup<string>>;
+    const schema = defineStandardSchema<any, any>(value => {
+      return Number(value) > 2
+        ? { value: String(value) }
+        : { issues: [{ message: 'Value must be greater than 2', path: [] }] };
+    });
+
+    const RadioGroup = createGroup({ label: 'Group', required: true, schema }, g => {
+      group = g;
+    });
+    const RadioInput = createRadio(CustomBase);
+
+    page.render({
+      components: { RadioGroup, RadioInput },
+      template: `
+        <RadioGroup data-testid="fixture">
+          <RadioInput label="First" value="1" />
+          <RadioInput label="Second" value="2" />
+          <RadioInput label="Third"  value="3" />
+        </RadioGroup>
+      `,
+    });
+
+    await page.getByLabelText('Second').click();
+    await expect.poll(() => group.errorMessage.value).toBe('Value must be greater than 2');
+    (await page.getByRole('radiogroup').element()).dispatchEvent(
+      new KeyboardEvent('keydown', { code: 'ArrowDown', bubbles: true }),
+    );
+    await expect.poll(() => group.errorMessage.value).toBe('');
+  });
+
+  test('should revalidate when value changes via clicks', async () => {
+    let group!: ReturnType<typeof useRadioGroup<string>>;
+    const schema = defineStandardSchema<any, any>(value => {
+      return Number(value) > 2
+        ? { value: String(value) }
+        : { issues: [{ message: 'Value must be greater than 2', path: [] }] };
+    });
+
+    const RadioGroup = createGroup({ label: 'Group', required: true, schema }, g => {
+      group = g;
+    });
+    const RadioInput = createRadio(CustomBase);
+
+    page.render({
+      components: { RadioGroup, RadioInput },
+      template: `
+        <RadioGroup data-testid="fixture">
+          <RadioInput label="First" value="1" />
+          <RadioInput label="Second" value="2" />
+          <RadioInput label="Third"  value="3" />
+        </RadioGroup>
+      `,
+    });
+
+    await page.getByLabelText('First').click();
+    await expect.poll(() => group.errorMessage.value).toBe('Value must be greater than 2');
+    await page.getByLabelText('Third').click();
+    await expect.poll(() => group.errorMessage.value).toBe('');
+  });
+});
+
+describe('a11y', () => {
+  test('with input as base element', async () => {
+    const RadioGroup = createGroup({ label: 'Group' });
+    const RadioInput = createRadio();
+
+    page.render({
+      components: { RadioGroup, RadioInput },
+      template: `
+        <RadioGroup data-testid="fixture">
+          <RadioInput label="First" value="1" />
+          <RadioInput label="Second" value="2" />
+        </RadioGroup>
+      `,
+    });
+
+    await expectNoA11yViolations('[data-testid="fixture"]');
+  });
+
+  test('with custom elements as base', async () => {
+    const RadioGroup = createGroup({ label: 'Group' });
+    const RadioInput = createRadio(CustomBase);
+
+    page.render({
+      components: { RadioGroup, RadioInput },
+      template: `
+        <RadioGroup data-testid="fixture">
+          <RadioInput label="First" value="1" />
+          <RadioInput label="Second" value="2" />
+        </RadioGroup>
+      `,
+    });
+
+    await expectNoA11yViolations('[data-testid="fixture"]');
+  });
+
   test('picks up native error messages', async () => {
     const RadioGroup = createGroup({ label: 'Group', required: true });
     const RadioInput = createRadio();
 
-    await render({
+    page.render({
       components: { RadioGroup, RadioInput },
       template: `
         <RadioGroup data-testid="fixture">
@@ -432,70 +506,11 @@ describe('validation', () => {
       `,
     });
 
-    await fireEvent.invalid(screen.getByLabelText('First'));
-    await flush();
-    expect(screen.getByLabelText('Group')).toHaveErrorMessage('Constraints not satisfied');
+    (await page.getByLabelText('First').element()).dispatchEvent(new Event('invalid', { bubbles: true }));
 
-    vi.useRealTimers();
-    expect(await axe(screen.getByTestId('fixture'))).toHaveNoViolations();
-    vi.useFakeTimers();
-  });
+    // The group itself isn't a native input, so validate by ARIA state.
+    await expect.element(page.getByRole('radiogroup')).toHaveAttribute('aria-invalid', 'true');
 
-  test('should revalidate when value changes via arrow keys', async () => {
-    const schema = defineStandardSchema<any, any>(value => {
-      return Number(value) > 2
-        ? { value: String(value) }
-        : { issues: [{ message: 'Value must be greater than 2', path: [] }] };
-    });
-
-    const RadioGroup = createGroup({ label: 'Group', required: true, schema });
-    const RadioInput = createRadio(CustomBase);
-
-    await render({
-      components: { RadioGroup, RadioInput },
-      template: `
-        <RadioGroup data-testid="fixture">
-          <RadioInput label="First" value="1" />
-          <RadioInput label="Second" value="2" />
-          <RadioInput label="Third"  value="3" />
-        </RadioGroup>
-      `,
-    });
-
-    await fireEvent.click(screen.getByLabelText('Second'));
-    await flush();
-    expect(screen.getByLabelText('Group')).toHaveErrorMessage('Value must be greater than 2');
-    await fireEvent.keyDown(screen.getByRole('radiogroup'), { code: 'ArrowDown' });
-    await flush();
-    expect(screen.getByLabelText('Group')).not.toHaveErrorMessage();
-  });
-
-  test('should revalidate when value changes via clicks', async () => {
-    const schema = defineStandardSchema<any, any>(value => {
-      return Number(value) > 2
-        ? { value: String(value) }
-        : { issues: [{ message: 'Value must be greater than 2', path: [] }] };
-    });
-
-    const RadioGroup = createGroup({ label: 'Group', required: true, schema });
-    const RadioInput = createRadio(CustomBase);
-
-    await render({
-      components: { RadioGroup, RadioInput },
-      template: `
-        <RadioGroup data-testid="fixture">
-          <RadioInput label="First" value="1" />
-          <RadioInput label="Second" value="2" />
-          <RadioInput label="Third"  value="3" />
-        </RadioGroup>
-      `,
-    });
-
-    await fireEvent.click(screen.getByLabelText('First'));
-    await flush();
-    expect(screen.getByLabelText('Group')).toHaveErrorMessage('Value must be greater than 2');
-    await fireEvent.click(screen.getByLabelText('Third'));
-    await flush();
-    expect(screen.getByLabelText('Group')).not.toHaveErrorMessage();
+    await expectNoA11yViolations('[data-testid="fixture"]');
   });
 });

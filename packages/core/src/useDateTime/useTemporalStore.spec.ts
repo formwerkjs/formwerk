@@ -3,13 +3,18 @@ import { useTemporalStore } from './useTemporalStore';
 import { createTemporalPartial, isTemporalPartial } from './temporalPartial';
 import { ref } from 'vue';
 import { Maybe } from '../types';
-import { flush } from '@test-utils/flush';
 import { vi } from 'vitest';
 
 describe('useTemporalStore', () => {
   const calendar = createCalendar('gregory');
   const timeZone = 'UTC';
   const locale = 'en-US';
+
+  async function settle() {
+    await Promise.resolve();
+    await new Promise<void>(r => setTimeout(r, 0));
+    await Promise.resolve();
+  }
 
   describe('initialization', () => {
     test('initializes with Date value', () => {
@@ -73,7 +78,7 @@ describe('useTemporalStore', () => {
 
       const newDate = new Date();
       modelValue.value = newDate;
-      await flush();
+      await settle();
 
       expect(store.value.toDate()).toEqual(newDate);
       expect(isTemporalPartial(store.value)).toBe(false);
@@ -96,7 +101,7 @@ describe('useTemporalStore', () => {
 
       // Update model to null
       modelValue.value = null;
-      await flush();
+      await settle();
 
       // Should still be temporal partial
       expect(isTemporalPartial(store.value)).toBe(true);

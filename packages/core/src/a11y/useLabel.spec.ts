@@ -1,13 +1,13 @@
-import { render, screen } from '@testing-library/vue';
 import { useLabel } from './useLabel';
 import { defineComponent, shallowRef } from 'vue';
+import { page } from 'vitest/browser';
 
 describe('label element', () => {
   test('should render label with `for` attribute', async () => {
     const label = 'label';
     const labelFor = 'input';
 
-    await render({
+    page.render({
       setup: () => {
         const inputRef = shallowRef<HTMLElement>();
 
@@ -26,15 +26,14 @@ describe('label element', () => {
     `,
     });
 
-    const labelEl = screen.getByTestId('label');
-    expect(labelEl?.getAttribute('for')).toBe(labelFor);
+    await expect.element(page.getByTestId('label')).toHaveAttribute('for', labelFor);
   });
 
   test('should omit `for` attribute if label is not a label element', async () => {
     const label = 'label';
     const labelFor = 'input';
 
-    await render({
+    page.render({
       setup: () =>
         useLabel({
           for: labelFor,
@@ -45,8 +44,7 @@ describe('label element', () => {
     `,
     });
 
-    const labelEl = screen.getByTestId('label');
-    expect(labelEl.hasAttribute('for')).toBe(false);
+    await expect.element(page.getByTestId('label')).not.toHaveAttribute('for');
   });
 });
 
@@ -54,7 +52,7 @@ describe('label target (labelledBy)', () => {
   test('should have aria-label if there is no target element or label element', async () => {
     const label = 'label';
     const labelFor = 'input';
-    await render({
+    page.render({
       setup: () =>
         useLabel({
           label: label,
@@ -65,9 +63,8 @@ describe('label target (labelledBy)', () => {
     `,
     });
 
-    const labelEl = screen.getByTestId('target');
-    expect(labelEl?.hasAttribute('aria-labelledby')).toBe(false);
-    expect(labelEl?.getAttribute('aria-label')).toBe(label);
+    await expect.element(page.getByTestId('target')).not.toHaveAttribute('aria-labelledby');
+    await expect.element(page.getByTestId('target')).toHaveAttribute('aria-label', label);
   });
 
   test('should have aria-labelledby if there is both a target element and a label element', async () => {
@@ -75,7 +72,7 @@ describe('label target (labelledBy)', () => {
     const labelFor = 'input';
     const targetRef = shallowRef<HTMLElement>();
 
-    await render({
+    page.render({
       setup: () => {
         return {
           ...useLabel({
@@ -92,7 +89,7 @@ describe('label target (labelledBy)', () => {
     `,
     });
 
-    expect(screen.getByTestId('input')?.getAttribute('aria-labelledby')).toBe(`${labelFor}-l`);
+    await expect.element(page.getByTestId('input')).toHaveAttribute('aria-labelledby', `${labelFor}-l`);
   });
 });
 
@@ -111,7 +108,7 @@ describe('label component', () => {
       `,
     });
 
-    await render({
+    page.render({
       components: { LabelComp },
       setup: () => {
         return {
@@ -126,7 +123,7 @@ describe('label component', () => {
       `,
     });
 
-    expect(screen.getByTestId('label')).toHaveTextContent(label);
-    expect(screen.getByTestId('label')?.getAttribute('for')).toBe(labelFor);
+    await expect.element(page.getByTestId('label')).toHaveTextContent(label);
+    await expect.element(page.getByTestId('label')).toHaveAttribute('for', labelFor);
   });
 });

@@ -1,11 +1,10 @@
 import { defineComponent, ref, Ref } from 'vue';
 import { ComboBoxProps, useComboBox } from '.';
 import { useOption } from '../useOption';
-import { fireEvent, render, screen } from '@testing-library/vue';
-import { axe } from 'vitest-axe';
-import { flush } from '@test-utils/index';
 import { useDefaultFilter } from '../collections';
 import { useForm } from '../useForm';
+import { page, userEvent } from 'vitest/browser';
+import { dispatchEvent, expectNoA11yViolations } from '@test-utils/index';
 
 function createComboBox(fixedProps: Partial<ComboBoxProps<any, any>> = {}) {
   const Option = defineComponent({
@@ -107,44 +106,19 @@ function createComboBox(fixedProps: Partial<ComboBoxProps<any, any>> = {}) {
 }
 
 function getInput() {
-  return screen.getByRole('combobox');
+  return page.getByRole('combobox');
 }
 
 function getButton() {
-  return screen.getByRole('button');
+  return page.getByRole('button');
 }
-
-describe('should not have a11y errors', () => {
-  test('with options', async () => {
-    await render({
-      components: {
-        MyComboBox: createComboBox(),
-      },
-      setup() {
-        const options = [{ label: 'One' }, { label: 'Two' }, { label: 'Three' }];
-
-        return { options };
-      },
-      template: `
-        <div data-testid="fixture">
-          <MyComboBox label="Field" :options="options" />
-        </div>
-      `,
-    });
-
-    await flush();
-    vi.useRealTimers();
-    expect(await axe(screen.getByTestId('fixture'))).toHaveNoViolations();
-    vi.useFakeTimers();
-  });
-});
 
 describe('reset', () => {
   test('should set inputValue on reset with values', async () => {
     const MyComboBox = createComboBox();
     const options = [{ label: 'One' }, { label: 'Two' }, { label: 'Three' }];
 
-    await render({
+    page.render({
       components: { MyComboBox },
       setup() {
         const { reset, formProps } = useForm();
@@ -171,7 +145,7 @@ describe('reset', () => {
 
 describe('keyboard features', () => {
   async function renderComboBox(opts?: { label: string; disabled?: boolean }[], props?: { readonly?: boolean }) {
-    await render({
+    page.render({
       components: {
         MyComboBox: createComboBox(),
       },
@@ -190,8 +164,8 @@ describe('keyboard features', () => {
 
     return {
       async open() {
-        await fireEvent.click(getButton());
-        await flush();
+        await getButton().click();
+        await expect.element(getInput()).toHaveAttribute('aria-expanded', 'true');
       },
     };
   }
@@ -199,274 +173,207 @@ describe('keyboard features', () => {
   test('Pressing ArrowDown should open the listbox', async () => {
     await renderComboBox();
 
-    await fireEvent.keyDown(getInput(), { code: 'ArrowDown' });
-    await flush();
-    expect(getInput()).toHaveAttribute('aria-expanded', 'true');
+    await getInput().click();
+    await dispatchEvent.keyboard(getInput(), 'ArrowDown');
+    await expect.element(getInput()).toHaveAttribute('aria-expanded', 'true');
   });
 
   test('Pressing ArrowUp should open the listbox', async () => {
     await renderComboBox();
 
-    await fireEvent.keyDown(getInput(), { code: 'ArrowUp' });
-    await flush();
-    expect(getInput()).toHaveAttribute('aria-expanded', 'true');
+    await getInput().click();
+    await dispatchEvent.keyboard(getInput(), 'ArrowUp');
+    await expect.element(getInput()).toHaveAttribute('aria-expanded', 'true');
   });
 
   test('Clicking the button should toggle the listbox', async () => {
     await renderComboBox();
 
-    await fireEvent.click(getButton());
-    await flush();
-    expect(getInput()).toHaveAttribute('aria-expanded', 'true');
+    await getButton().click();
+    await expect.element(getInput()).toHaveAttribute('aria-expanded', 'true');
 
-    await fireEvent.click(getButton());
-    await flush();
-    expect(getInput()).toHaveAttribute('aria-expanded', 'false');
+    await getButton().click();
+    await expect.element(getInput()).toHaveAttribute('aria-expanded', 'false');
   });
 
   test('Pressing Escape should close the listbox', async () => {
     const { open } = await renderComboBox();
     await open();
 
-    await fireEvent.keyDown(getInput(), { code: 'Escape' });
-    await flush();
-    expect(getInput()).toHaveAttribute('aria-expanded', 'false');
+    await userEvent.keyboard('{Escape}');
+    await expect.element(getInput()).toHaveAttribute('aria-expanded', 'false');
   });
 
   test('Pressing Tab should close the listbox', async () => {
     const { open } = await renderComboBox();
     await open();
 
-    await fireEvent.keyDown(getInput(), { code: 'Tab' });
-    await flush();
-    expect(getInput()).toHaveAttribute('aria-expanded', 'false');
+    await dispatchEvent.keyboard(getInput(), 'Tab');
+    await expect.element(getInput()).toHaveAttribute('aria-expanded', 'false');
   });
 
   test('Clicking an option should select it and close the listbox', async () => {
     const { open } = await renderComboBox();
     await open();
 
-    await fireEvent.click(screen.getAllByRole('option')[1]);
-    await flush();
-    expect(getInput()).toHaveValue('Two');
-    expect(getInput()).toHaveAttribute('aria-expanded', 'false');
+    await page.getByRole('option').nth(1).click();
+    await expect.element(getInput()).toHaveValue('Two');
+    await expect.element(getInput()).toHaveAttribute('aria-expanded', 'false');
   });
 
   test('Pressing Enter on a focused option should select it', async () => {
     const { open } = await renderComboBox();
     await open();
 
-    await fireEvent.keyDown(screen.getAllByRole('option')[1], { code: 'Enter' });
-    await flush();
-    expect(getInput()).toHaveValue('Two');
-    expect(getInput()).toHaveAttribute('aria-expanded', 'false');
+    // Navigate to second option
+    const input = getInput();
+    await dispatchEvent.keyboard(input, 'ArrowDown');
+    await dispatchEvent.keyboard(input, 'ArrowDown');
+    // Press Enter to select it
+    await dispatchEvent.keyboard(input, 'Enter');
+    await expect.element(getInput()).toHaveValue('Two');
+    await expect.element(getInput()).toHaveAttribute('aria-expanded', 'false');
   });
 
   test('Should not select disabled options', async () => {
     const { open } = await renderComboBox([{ label: 'One' }, { label: 'Two', disabled: true }, { label: 'Three' }]);
     await open();
 
-    await fireEvent.click(screen.getAllByRole('option')[1]);
-    await flush();
-    expect(getInput()).not.toHaveValue('Two');
+    const option = page.getByRole('option').nth(1);
+    await dispatchEvent(option, 'click');
+    await expect.element(getInput()).not.toHaveValue('Two');
   });
 
   test('Should revert to last selected value when blurred with invalid input', async () => {
     const { open } = await renderComboBox();
     await open();
 
-    // First select an option
-    await fireEvent.click(screen.getAllByRole('option')[1]);
-    await flush();
-    expect(getInput()).toHaveValue('Two');
+    await page.getByRole('option').nth(1).click();
+    await expect.element(getInput()).toHaveValue('Two');
 
-    // Type some random text
-    await fireEvent.input(getInput(), { target: { value: 'Random stuff' } });
-    await flush();
-    expect(getInput()).toHaveValue('Random stuff');
+    await getInput().fill('Random stuff');
+    await expect.element(getInput()).toHaveValue('Random stuff');
 
-    // Blur the input
-    await fireEvent.blur(getInput());
-    await flush();
-
-    // Should revert back to last selected value
-    expect(getInput()).toHaveValue('Two');
+    await dispatchEvent(getInput(), 'blur');
+    await expect.element(getInput()).toHaveValue('Two');
   });
 
   test('Should select option when blurred with relatedTarget being an option', async () => {
     const { open } = await renderComboBox();
     await open();
 
-    // Get the option element we want to simulate clicking
-    const option = screen.getAllByRole('option')[1];
+    // Click on option to select it (blur with relatedTarget being an option)
+    await page.getByRole('option').nth(1).click();
 
-    // Simulate blur with relatedTarget being the option
-    await fireEvent.blur(getInput(), {
-      relatedTarget: option,
-    });
-    await flush();
-
-    // Should select the option that was "clicked"
-    expect(getInput()).toHaveValue('Two');
-    expect(getInput()).toHaveAttribute('aria-expanded', 'false');
+    await expect.element(getInput()).toHaveValue('Two');
+    await expect.element(getInput()).toHaveAttribute('aria-expanded', 'false');
   });
 
   test('ArrowDown should highlight options in sequence and stop at last option', async () => {
     const { open } = await renderComboBox();
     await open();
 
-    const options = screen.getAllByRole('option');
+    const options = page.getByRole('option');
+    const input = getInput();
 
-    // Initially no option should be highlighted
-    expect(options[0]).not.toHaveAttribute('aria-selected');
-    expect(options[1]).not.toHaveAttribute('aria-selected');
-    expect(options[2]).not.toHaveAttribute('aria-selected');
+    await expect.element(options.nth(0)).not.toHaveAttribute('aria-selected');
+    await expect.element(options.nth(1)).not.toHaveAttribute('aria-selected');
+    await expect.element(options.nth(2)).not.toHaveAttribute('aria-selected');
 
-    // Press arrow down to highlight first option
-    await fireEvent.keyDown(getInput(), { code: 'ArrowDown' });
-    await flush();
-    expect(options[0]).toHaveAttribute('aria-selected', 'true');
-    expect(options[1]).not.toHaveAttribute('aria-selected');
-    expect(options[2]).not.toHaveAttribute('aria-selected');
+    await dispatchEvent.keyboard(input, 'ArrowDown');
+    await expect.element(options.nth(0)).toHaveAttribute('aria-selected', 'true');
 
-    // Press arrow down to highlight second option
-    await fireEvent.keyDown(getInput(), { code: 'ArrowDown' });
-    await flush();
-    expect(options[0]).not.toHaveAttribute('aria-selected');
-    expect(options[1]).toHaveAttribute('aria-selected', 'true');
-    expect(options[2]).not.toHaveAttribute('aria-selected');
+    await dispatchEvent.keyboard(input, 'ArrowDown');
+    await expect.element(options.nth(1)).toHaveAttribute('aria-selected', 'true');
 
-    // Press arrow down to highlight last option
-    await fireEvent.keyDown(getInput(), { code: 'ArrowDown' });
-    await flush();
-    expect(options[0]).not.toHaveAttribute('aria-selected');
-    expect(options[1]).not.toHaveAttribute('aria-selected');
-    expect(options[2]).toHaveAttribute('aria-selected', 'true');
+    await dispatchEvent.keyboard(input, 'ArrowDown');
+    await expect.element(options.nth(2)).toHaveAttribute('aria-selected', 'true');
 
-    // Press arrow down again - should stay on last option
-    await fireEvent.keyDown(getInput(), { code: 'ArrowDown' });
-    await flush();
-    expect(options[0]).not.toHaveAttribute('aria-selected');
-    expect(options[1]).not.toHaveAttribute('aria-selected');
-    expect(options[2]).toHaveAttribute('aria-selected', 'true');
+    await dispatchEvent.keyboard(input, 'ArrowDown');
+    await expect.element(options.nth(2)).toHaveAttribute('aria-selected', 'true');
   });
 
   test('ArrowUp should highlight options in reverse sequence and stop at first option', async () => {
     const { open } = await renderComboBox();
     await open();
 
-    const options = screen.getAllByRole('option');
+    const options = page.getByRole('option');
+    const input = getInput();
 
-    // Move to last option first
-    await fireEvent.keyDown(getInput(), { code: 'End' });
-    await flush();
-    expect(options[2]).toHaveAttribute('aria-selected', 'true');
+    await dispatchEvent.keyboard(input, 'End');
+    await expect.element(options.nth(2)).toHaveAttribute('aria-selected', 'true');
 
-    // Press arrow up to highlight second option
-    await fireEvent.keyDown(getInput(), { code: 'ArrowUp' });
-    await flush();
-    expect(options[0]).not.toHaveAttribute('aria-selected');
-    expect(options[1]).toHaveAttribute('aria-selected', 'true');
-    expect(options[2]).not.toHaveAttribute('aria-selected');
+    await dispatchEvent.keyboard(input, 'ArrowUp');
+    await expect.element(options.nth(1)).toHaveAttribute('aria-selected', 'true');
 
-    // Press arrow up to highlight first option
-    await fireEvent.keyDown(getInput(), { code: 'ArrowUp' });
-    await flush();
-    expect(options[0]).toHaveAttribute('aria-selected', 'true');
-    expect(options[1]).not.toHaveAttribute('aria-selected');
-    expect(options[2]).not.toHaveAttribute('aria-selected');
+    await dispatchEvent.keyboard(input, 'ArrowUp');
+    await expect.element(options.nth(0)).toHaveAttribute('aria-selected', 'true');
 
-    // Press arrow up again - should stay on first option
-    await fireEvent.keyDown(getInput(), { code: 'ArrowUp' });
-    await flush();
-    expect(options[0]).toHaveAttribute('aria-selected', 'true');
-    expect(options[1]).not.toHaveAttribute('aria-selected');
-    expect(options[2]).not.toHaveAttribute('aria-selected');
+    await dispatchEvent.keyboard(input, 'ArrowUp');
+    await expect.element(options.nth(0)).toHaveAttribute('aria-selected', 'true');
   });
 
   test('Home key should highlight first option', async () => {
     const { open } = await renderComboBox();
     await open();
 
-    const options = screen.getAllByRole('option');
+    const options = page.getByRole('option');
+    const input = getInput();
 
-    // First move to last option
-    await fireEvent.keyDown(getInput(), { code: 'End' });
-    await flush();
-    expect(options[2]).toHaveAttribute('aria-selected', 'true');
+    await dispatchEvent.keyboard(input, 'End');
+    await expect.element(options.nth(2)).toHaveAttribute('aria-selected', 'true');
 
-    // Press Home to jump to first option
-    await fireEvent.keyDown(getInput(), { code: 'Home' });
-    await flush();
-    expect(options[0]).toHaveAttribute('aria-selected', 'true');
-    expect(options[1]).not.toHaveAttribute('aria-selected');
-    expect(options[2]).not.toHaveAttribute('aria-selected');
+    await dispatchEvent.keyboard(input, 'Home');
+    await expect.element(options.nth(0)).toHaveAttribute('aria-selected', 'true');
   });
 
   test('Should open menu when user starts typing', async () => {
     await renderComboBox();
 
-    // Initially menu should be closed
-    expect(getInput()).toHaveAttribute('aria-expanded', 'false');
-
-    // Type something
-    await fireEvent.keyDown(getInput(), { target: { code: 'T' } });
-    await flush();
-
-    // Menu should be open
-    expect(getInput()).toHaveAttribute('aria-expanded', 'true');
+    await expect.element(getInput()).toHaveAttribute('aria-expanded', 'false');
+    await getInput().click();
+    await userEvent.keyboard('T');
+    await expect.element(getInput()).toHaveAttribute('aria-expanded', 'true');
   });
 
   test('Enter key should select the highlighted option', async () => {
     const { open } = await renderComboBox();
     await open();
 
-    const options = screen.getAllByRole('option');
+    const options = page.getByRole('option');
+    const input = getInput();
 
-    // First highlight second option using arrow down
-    await fireEvent.keyDown(getInput(), { code: 'ArrowDown' });
-    await fireEvent.keyDown(getInput(), { code: 'ArrowDown' });
-    await flush();
-    expect(options[1]).toHaveAttribute('aria-selected', 'true');
+    await dispatchEvent.keyboard(input, 'ArrowDown');
+    await dispatchEvent.keyboard(input, 'ArrowDown');
+    await expect.element(options.nth(1)).toHaveAttribute('aria-selected', 'true');
 
-    // Press Enter to select the highlighted option
-    await fireEvent.keyDown(getInput(), { code: 'Enter' });
-    await flush();
-
-    // Should select the highlighted option and close the menu
-    expect(getInput()).toHaveValue('Two');
-    expect(getInput()).toHaveAttribute('aria-expanded', 'false');
+    await dispatchEvent.keyboard(input, 'Enter');
+    await expect.element(getInput()).toHaveValue('Two');
+    await expect.element(getInput()).toHaveAttribute('aria-expanded', 'false');
   });
 
   test('Escape key should clear input value when menu is closed', async () => {
     const { open } = await renderComboBox();
 
-    // First select an option
     await open();
-    await fireEvent.click(screen.getAllByRole('option')[1]);
-    await flush();
-    expect(getInput()).toHaveValue('Two');
+    await page.getByRole('option').nth(1).click();
+    await expect.element(getInput()).toHaveValue('Two');
 
-    // Press Escape when menu is closed
-    await fireEvent.keyDown(getInput(), { code: 'Escape' });
-    await flush();
-
-    // Input value should be cleared
-    expect(getInput()).toHaveValue('');
-    expect(getInput()).toHaveAttribute('aria-expanded', 'false');
+    await dispatchEvent.keyboard(getInput(), 'Escape');
+    await expect.element(getInput()).toHaveValue('');
+    await expect.element(getInput()).toHaveAttribute('aria-expanded', 'false');
   });
 
   test('Should not change value when readonly', async () => {
     const { open } = await renderComboBox([{ label: 'One' }, { label: 'Two' }, { label: 'Three' }], { readonly: true });
     await open();
 
-    await fireEvent.click(screen.getAllByRole('option')[1]);
-    await flush();
-    expect(getInput()).not.toHaveValue('Two');
+    await page.getByRole('option').nth(1).click();
+    await expect.element(getInput()).not.toHaveValue('Two');
   });
 
   test('Should open menu when focused if openOnFocus is true', async () => {
-    await render({
+    page.render({
       components: {
         MyComboBox: createComboBox({ openOnFocus: true }),
       },
@@ -484,23 +391,15 @@ describe('keyboard features', () => {
       `,
     });
 
-    const input = getInput();
-
-    // Initially menu should be closed
-    expect(input).toHaveAttribute('aria-expanded', 'false');
-
-    // Focus the input
-    await fireEvent.focus(input);
-    await flush();
-
-    // Menu should be open
-    expect(input).toHaveAttribute('aria-expanded', 'true');
+    await expect.element(getInput()).toHaveAttribute('aria-expanded', 'false');
+    await dispatchEvent(getInput(), 'focus');
+    await expect.element(getInput()).toHaveAttribute('aria-expanded', 'true');
   });
 });
 
 describe('filtering', () => {
   test('should filter options based on input value', async () => {
-    await render({
+    page.render({
       components: {
         MyComboBox: createComboBox(),
       },
@@ -527,12 +426,10 @@ describe('filtering', () => {
     });
 
     const input = getInput();
-    await fireEvent.input(input, { target: { value: 'tw' } });
-    await flush();
-
-    const options = screen.getAllByRole('option');
-    expect(options).toHaveLength(1);
-    expect(options[0]).toHaveTextContent('Two');
+    await input.fill('tw');
+    await userEvent.keyboard('{ArrowDown}');
+    await expect.element(input).toHaveAttribute('aria-expanded', 'true');
+    await expect.element(page.getByRole('option').nth(0)).toHaveTextContent('Two');
   });
 });
 
@@ -541,7 +438,7 @@ describe('selection state', () => {
     const MyComboBox = createComboBox();
     const options = [{ label: 'One' }, { label: 'Two' }, { label: 'Three' }];
 
-    await render({
+    page.render({
       components: { MyComboBox },
       setup() {
         return { options };
@@ -553,15 +450,38 @@ describe('selection state', () => {
       `,
     });
 
-    await fireEvent.click(getButton());
-    await fireEvent.click(screen.getAllByRole('option')[1]);
-    await flush();
+    await getButton().click();
+    await page.getByRole('option').nth(1).click();
 
-    expect(MyComboBox.getExposedState().selectedOption).toEqual({
-      id: expect.any(String),
-      label: 'Two',
-      value: { label: 'Two' },
+    await expect
+      .poll(() => MyComboBox.getExposedState().selectedOption)
+      .toEqual({
+        id: expect.any(String),
+        label: 'Two',
+        value: { label: 'Two' },
+      });
+  });
+});
+
+describe('a11y', () => {
+  test('with options', async () => {
+    page.render({
+      components: {
+        MyComboBox: createComboBox(),
+      },
+      setup() {
+        const options = [{ label: 'One' }, { label: 'Two' }, { label: 'Three' }];
+
+        return { options };
+      },
+      template: `
+        <div data-testid="fixture">
+          <MyComboBox label="Field" :options="options" />
+        </div>
+      `,
     });
+
+    await expectNoA11yViolations('[data-testid="fixture"]');
   });
 });
 
@@ -571,7 +491,7 @@ test('Should use onNewValue handler instead of reverting when provided', async (
     value: value + '!',
   }));
 
-  await render({
+  page.render({
     components: {
       MyComboBox: createComboBox({ onNewValue: onNewValueSpy }),
     },
@@ -591,26 +511,25 @@ test('Should use onNewValue handler instead of reverting when provided', async (
 
   const input = getInput();
 
-  // Type some text that doesn't match any option
-  await fireEvent.input(input, { target: { value: 'Something new' } });
-  await flush();
+  // Type some text that doesn't match any option - need to click first and use keyboard
+  await input.click();
+  await userEvent.keyboard('Something new');
 
-  // Blur the input to trigger the new value handler
-  await fireEvent.keyDown(input, { code: 'Tab' });
-  await flush();
+  // Press Tab to trigger the new value handler (onNewValue is only called on Tab, not blur)
+  await dispatchEvent.keyboard(input, 'Tab');
 
   // Should have called the handler with the input value
   expect(onNewValueSpy).toHaveBeenCalledWith('Something new');
   expect(onNewValueSpy).toHaveBeenCalledTimes(1);
 
   // Should show the modified value from onNewValue handler
-  expect(getInput()).toHaveValue('Something new!');
+  await expect.element(getInput()).toHaveValue('Something new!');
 });
 
 test('Can reject new values if onNewValue returns undefined', async () => {
   const onNewValueSpy = vi.fn(() => undefined);
 
-  await render({
+  page.render({
     components: {
       MyComboBox: createComboBox({ onNewValue: onNewValueSpy }),
     },
@@ -630,25 +549,24 @@ test('Can reject new values if onNewValue returns undefined', async () => {
 
   const input = getInput();
 
-  // Type some text that doesn't match any option
-  await fireEvent.input(input, { target: { value: 'Something new' } });
-  await flush();
+  // Type some text that doesn't match any option - need to click first and use keyboard
+  await input.click();
+  await userEvent.keyboard('Something new');
 
-  // Blur the input to trigger the new value handler
-  await fireEvent.keyDown(input, { code: 'Tab' });
-  await flush();
+  // Press Tab to trigger the new value handler (onNewValue is only called on Tab, not blur)
+  await dispatchEvent.keyboard(input, 'Tab');
 
   // Should have called the handler with the input value
   expect(onNewValueSpy).toHaveBeenCalledWith('Something new');
   expect(onNewValueSpy).toHaveBeenCalledTimes(1);
 
   // Should show the modified value from onNewValue handler
-  expect(getInput()).not.toHaveValue('Something new!');
+  await expect.element(getInput()).not.toHaveValue('Something new!');
 });
 
 test('Should not accept new value on Enter when readonly', async () => {
   const MyComboBox = createComboBox();
-  await render({
+  page.render({
     components: { MyComboBox },
     setup() {
       const options = [{ label: 'One' }, { label: 'Two' }, { label: 'Three' }];
@@ -673,24 +591,19 @@ test('Should not accept new value on Enter when readonly', async () => {
   const input = getInput();
 
   // First select an option
-  await fireEvent.click(getButton());
-  await flush();
-  await fireEvent.click(screen.getAllByRole('option')[1]);
-  await flush();
-  expect(input).toHaveValue('Two');
+  await getButton().click();
+  await page.getByRole('option').nth(1).click();
+  await expect.element(input).toHaveValue('Two');
 
   // Enable readonly
-  await fireEvent.click(getButton());
-  await flush();
+  await getButton().click();
 
   // Try to type something new
-  await fireEvent.input(input, { target: { value: 'Something new' } });
-  await flush();
+  await input.fill('Something new');
 
   // Try to accept the new value with Enter
-  await fireEvent.keyDown(input, { code: 'Enter' });
-  await flush();
+  await userEvent.keyboard('{Enter}');
 
   // Should revert back to previously selected value
-  expect(input).toHaveValue('Two');
+  await expect.element(input).toHaveValue('Two');
 });

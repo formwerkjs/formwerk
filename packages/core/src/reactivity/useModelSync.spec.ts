@@ -1,12 +1,15 @@
-import { render } from '@testing-library/vue';
 import { useSyncModel } from './useModelSync';
 import { nextTick, ref } from 'vue';
+import { page } from 'vitest/browser';
 
 test('emits model update event when model changes', async () => {
   const model = ref('value');
+  const emittedEvents: string[] = [];
 
-  const result = await render({
+  // Create a child component that uses useSyncModel
+  const Child = {
     template: `<div></div>`,
+    emits: ['update:modelValue'],
     setup() {
       useSyncModel({
         model,
@@ -15,11 +18,24 @@ test('emits model update event when model changes', async () => {
         },
       });
     },
+  };
+
+  // Parent captures emitted events
+  page.render({
+    components: { Child },
+    setup() {
+      return {
+        onUpdate: (_val: unknown) => {
+          emittedEvents.push('update:modelValue');
+        },
+      };
+    },
+    template: `<Child @update:modelValue="onUpdate" />`,
   });
 
   model.value = 'new value';
   await nextTick();
-  expect(result.emitted()).toHaveProperty('update:modelValue');
+  await expect.poll(() => emittedEvents).toContain('update:modelValue');
 });
 
 test('calls model callback when prop changes', async () => {
@@ -37,7 +53,7 @@ test('calls model callback when prop changes', async () => {
     },
   };
 
-  await render({
+  page.render({
     setup() {
       return {
         model,

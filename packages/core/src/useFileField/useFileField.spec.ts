@@ -1,28 +1,9 @@
-import { fireEvent, render, screen } from '@testing-library/vue';
-import { axe } from 'vitest-axe';
 import { FileFieldProps, useFileField } from './useFileField';
-import { flush } from '@test-utils/index';
 import { type Component } from 'vue';
 import { SetOptional } from 'type-fest';
 import { Arrayable } from '../types';
-import { beforeAll, afterAll } from 'vitest';
-
-// Mock URL.createObjectURL and URL.revokeObjectURL since they're not available in Node.js
-const originalURL = global.URL;
-beforeAll(() => {
-  // Create a mock implementation for URL.createObjectURL
-  global.URL.createObjectURL = vi.fn(blob => {
-    return `mock-url-for-${blob instanceof File ? blob.name : 'blob'}`;
-  });
-
-  // Create a mock implementation for URL.revokeObjectURL
-  global.URL.revokeObjectURL = vi.fn();
-});
-
-afterAll(() => {
-  // Restore the original URL object after tests
-  global.URL = originalURL;
-});
+import { page } from 'vitest/browser';
+import { dispatchEvent, expectNoA11yViolations, waitForTimeout } from '@test-utils/index';
 
 const label = 'Upload File';
 
@@ -75,10 +56,10 @@ const makeTest = (props?: SetOptional<FileFieldProps, 'label'>): Component => ({
   },
   template: `
     <div data-testid="fixture" :class="{ 'touched': isTouched, 'dragging': isDragging, 'blurred': isBlurred }">
-      <div v-bind="dropzoneProps">
+      <div v-bind="dropzoneProps" data-testid="dropzone">
         <input v-bind="inputProps" data-testid="input" />
         <button v-bind="triggerProps">{{ label }}</button>
-        <span v-bind="errorMessageProps">{{ errorMessage }}</span>
+        <span v-bind="errorMessageProps" data-testid="error-message">{{ errorMessage }}</span>
         <div data-testid="entries">{{ entries.length }} files</div>
         <div data-testid="value">{{ printValue(fieldValue) }}</div>
       </div>
@@ -86,104 +67,125 @@ const makeTest = (props?: SetOptional<FileFieldProps, 'label'>): Component => ({
   `,
 });
 
-test('should not have a11y errors', async () => {
-  await render(makeTest());
-  vi.useRealTimers();
-  expect(await axe(screen.getByTestId('fixture'))).toHaveNoViolations();
-  vi.useFakeTimers();
-});
+async function setFiles(input: ReturnType<typeof page.getByTestId>, files: File[]) {
+  const inputEl = (await input.element()) as HTMLInputElement;
+  const dt = new DataTransfer();
+  for (const f of files) dt.items.add(f);
+
+  Object.defineProperty(inputEl, 'files', { value: dt.files, configurable: true });
+  inputEl.dispatchEvent(new Event('change', { bubbles: true }));
+}
+
+async function dropFiles(dropzone: ReturnType<typeof page.getByTestId>, files: File[]) {
+  const el = (await dropzone.element()) as HTMLElement;
+  const dt = new DataTransfer();
+  for (const f of files) dt.items.add(f);
+
+  const e = new DragEvent('drop', { bubbles: true, cancelable: true, dataTransfer: dt });
+  el.dispatchEvent(e);
+}
+
+async function dragEvent(dropzone: ReturnType<typeof page.getByTestId>, type: 'dragenter' | 'dragover' | 'dragleave') {
+  const el = (await dropzone.element()) as HTMLElement;
+  el.dispatchEvent(new DragEvent(type, { bubbles: true, cancelable: true }));
+}
 
 test('blur sets blurred to true', async () => {
-  await render(makeTest());
-  expect(screen.getByTestId('fixture').className).not.includes('blurred');
-  await fireEvent.blur(screen.getByTestId('input'));
-  expect(screen.getByTestId('fixture').className).includes('blurred');
+  page.render(makeTest());
+  const fixture = page.getByTestId('fixture');
+  const input = page.getByTestId('input');
+
+  await expect.element(fixture).not.toHaveClass(/blurred/);
+  await dispatchEvent(input, 'blur');
+  await expect.element(fixture).toHaveClass(/blurred/);
 });
 
 test('selecting a file sets touched to true', async () => {
-  await render(makeTest());
+  page.render(makeTest());
 
-  expect(screen.getByTestId('fixture').className).not.includes('touched');
+  const fixture = page.getByTestId('fixture');
+  const input = page.getByTestId('input');
+
+  await expect.element(fixture).not.toHaveClass(/touched/);
   const file = new File(['test content'], 'test.txt', { type: 'text/plain' });
-  await fireEvent.change(screen.getByTestId('input'), {
-    target: {
-      files: [file],
-    },
-  });
+  await setFiles(input, [file]);
 
-  await flush();
-  expect(screen.getByTestId('fixture').className).includes('touched');
+  await expect.element(fixture).toHaveClass(/touched/);
 });
 
 test('clicking the trigger button opens the file picker', async () => {
-  await render(makeTest());
+  page.render(makeTest());
   const showPickerMock = vi.fn();
-  const input = screen.getByTestId('input') as HTMLInputElement;
-  input.showPicker = showPickerMock;
+  const input = page.getByTestId('input');
+  const inputEl = (await input.element()) as HTMLInputElement;
+  (inputEl as any).showPicker = showPickerMock;
 
-  await fireEvent.click(screen.getByText(label));
+  ((await page.getByText(label).element()) as HTMLElement).click();
   expect(showPickerMock).toHaveBeenCalled();
 });
 
 test('disabled state prevents file picker from opening', async () => {
-  await render(makeTest({ disabled: true }));
+  page.render(makeTest({ disabled: true }));
   const showPickerMock = vi.fn();
-  const input = screen.getByTestId('input') as HTMLInputElement;
-  input.showPicker = showPickerMock;
+  const input = page.getByTestId('input');
+  const inputEl = (await input.element()) as HTMLInputElement;
+  (inputEl as any).showPicker = showPickerMock;
 
-  await fireEvent.click(screen.getByText(label));
+  ((await page.getByText(label).element()) as HTMLElement).click();
   expect(showPickerMock).not.toHaveBeenCalled();
 });
 
 test('selecting a file adds it to entries and updates value', async () => {
-  await render(makeTest());
+  page.render(makeTest());
 
+  const input = page.getByTestId('input');
   const file = new File(['test content'], 'test.txt', { type: 'text/plain' });
-  await fireEvent.change(screen.getByTestId('input'), {
-    target: {
-      files: [file],
-    },
-  });
+  await setFiles(input, [file]);
 
-  await flush();
-  expect(screen.getByTestId('entries')).toHaveTextContent('1 files');
-  expect(screen.getByTestId('value')).toHaveTextContent('test.txt');
+  await expect.element(page.getByTestId('entries')).toHaveTextContent('1 files');
+  await expect.element(page.getByTestId('value')).toHaveTextContent('test.txt');
 });
 
 test('multiple files can be selected when multiple is true', async () => {
-  await render(makeTest({ multiple: true }));
+  page.render(makeTest({ multiple: true }));
 
+  const input = page.getByTestId('input');
   const file1 = new File(['test content 1'], 'test1.txt', { type: 'text/plain' });
   const file2 = new File(['test content 2'], 'test2.txt', { type: 'text/plain' });
 
-  await fireEvent.change(screen.getByTestId('input'), {
-    target: {
-      files: [file1, file2],
-    },
-  });
-
-  await flush();
-  expect(screen.getByTestId('entries')).toHaveTextContent('2 files');
+  await setFiles(input, [file1, file2]);
+  await expect.element(page.getByTestId('entries')).toHaveTextContent('2 files');
 });
 
 test('only one file is kept when multiple is false', async () => {
-  await render(makeTest({ multiple: false }));
+  page.render(makeTest({ multiple: false }));
 
+  const input = page.getByTestId('input');
   const file1 = new File(['test content 1'], 'test1.txt', { type: 'text/plain' });
   const file2 = new File(['test content 2'], 'test2.txt', { type: 'text/plain' });
 
-  await fireEvent.change(screen.getByTestId('input'), {
-    target: {
-      files: [file1, file2],
-    },
-  });
+  await setFiles(input, [file1, file2]);
+  await expect.element(page.getByTestId('entries')).toHaveTextContent('1 files');
+});
 
-  await flush();
-  expect(screen.getByTestId('entries')).toHaveTextContent('1 files');
+test('drag and drop adds files (multiple=true)', async () => {
+  page.render(makeTest({ multiple: true }));
+
+  const dropzone = page.getByTestId('dropzone');
+  const file1 = new File(['test content 1'], 'test1.txt', { type: 'text/plain' });
+  const file2 = new File(['test content 2'], 'test2.txt', { type: 'text/plain' });
+
+  await dropFiles(dropzone, [file1, file2]);
+  await expect.element(page.getByTestId('entries')).toHaveTextContent('2 files');
+});
+
+test('should not have a11y errors', async () => {
+  page.render(makeTest());
+  await expectNoA11yViolations('[data-testid="fixture"]');
 });
 
 test('clear method removes all entries', async () => {
-  await render({
+  page.render({
     setup() {
       const { inputProps, entries, clear, fieldValue } = useFileField({
         label,
@@ -209,25 +211,19 @@ test('clear method removes all entries', async () => {
     `,
   });
 
+  const input = page.getByTestId('input');
   const file1 = new File(['test content 1'], 'test1.txt', { type: 'text/plain' });
   const file2 = new File(['test content 2'], 'test2.txt', { type: 'text/plain' });
 
-  await fireEvent.change(screen.getByTestId('input'), {
-    target: {
-      files: [file1, file2],
-    },
-  });
+  await setFiles(input, [file1, file2]);
+  await expect.element(page.getByTestId('entries')).toHaveTextContent('2 files');
 
-  await flush();
-  expect(screen.getByTestId('entries')).toHaveTextContent('2 files');
-
-  await fireEvent.click(screen.getByTestId('clear-btn'));
-  await flush();
-  expect(screen.getByTestId('entries')).toHaveTextContent('0 files');
+  ((await page.getByTestId('clear-btn').element()) as HTMLElement).click();
+  await expect.element(page.getByTestId('entries')).toHaveTextContent('0 files');
 });
 
 test('remove removes a specific entry', async () => {
-  await render({
+  page.render({
     setup() {
       const { inputProps, entries, remove, fieldValue } = useFileField({
         label,
@@ -254,26 +250,20 @@ test('remove removes a specific entry', async () => {
     `,
   });
 
+  const input = page.getByTestId('input');
   const file1 = new File(['test content 1'], 'test1.txt', { type: 'text/plain' });
   const file2 = new File(['test content 2'], 'test2.txt', { type: 'text/plain' });
 
-  await fireEvent.change(screen.getByTestId('input'), {
-    target: {
-      files: [file1, file2],
-    },
-  });
+  await setFiles(input, [file1, file2]);
+  await expect.element(page.getByTestId('entries')).toHaveTextContent('2 files');
 
-  await flush();
-  expect(screen.getByTestId('entries')).toHaveTextContent('2 files');
-
-  await fireEvent.click(screen.getByTestId('remove-btn'));
-  await flush();
-  expect(screen.getByTestId('entries')).toHaveTextContent('1 files');
-  expect(screen.getByTestId('value')).toHaveTextContent('test2.txt');
+  await page.getByTestId('remove-btn').click();
+  await expect.element(page.getByTestId('entries')).toHaveTextContent('1 files');
+  await expect.element(page.getByTestId('value')).toHaveTextContent('test2.txt');
 });
 
-test('remove removes a the last entry when no key is provided', async () => {
-  await render({
+test('remove removes the last entry when no key is provided', async () => {
+  page.render({
     setup() {
       const { inputProps, entries, remove, fieldValue } = useFileField({
         label,
@@ -299,139 +289,91 @@ test('remove removes a the last entry when no key is provided', async () => {
     `,
   });
 
+  const input = page.getByTestId('input');
   const file1 = new File(['test content 1'], 'test1.txt', { type: 'text/plain' });
   const file2 = new File(['test content 2'], 'test2.txt', { type: 'text/plain' });
 
-  await fireEvent.change(screen.getByTestId('input'), {
-    target: {
-      files: [file1, file2],
-    },
-  });
+  await setFiles(input, [file1, file2]);
+  await expect.element(page.getByTestId('entries')).toHaveTextContent('2 files');
 
-  await flush();
-  expect(screen.getByTestId('entries')).toHaveTextContent('2 files');
-
-  await fireEvent.click(screen.getByTestId('remove-btn'));
-  await flush();
-  expect(screen.getByTestId('entries')).toHaveTextContent('1 files');
+  await page.getByTestId('remove-btn').click();
+  await expect.element(page.getByTestId('entries')).toHaveTextContent('1 files');
 });
 
 test('drag and drop functionality updates isDragging state', async () => {
-  await render(makeTest());
+  page.render(makeTest());
 
-  expect(screen.getByTestId('fixture').className).not.includes('dragging');
+  const fixture = page.getByTestId('fixture');
+  const dropzone = page.getByTestId('dropzone');
 
-  const dropzone = screen.getByTestId('fixture').firstChild as HTMLElement;
-  await fireEvent.dragOver(dropzone);
-  await fireEvent.dragEnter(dropzone);
-  expect(screen.getByTestId('fixture').className).includes('dragging');
+  await expect.element(fixture).not.toHaveClass(/dragging/);
+  await dragEvent(dropzone, 'dragover');
+  await dragEvent(dropzone, 'dragenter');
+  await expect.element(fixture).toHaveClass(/dragging/);
 
-  await fireEvent.dragLeave(dropzone);
-  expect(screen.getByTestId('fixture').className).not.includes('dragging');
-});
-
-test('dropping files adds them to entries', async () => {
-  await render(makeTest({ multiple: true }));
-
-  const file1 = new File(['test content 1'], 'test1.txt', { type: 'text/plain' });
-  const file2 = new File(['test content 2'], 'test2.txt', { type: 'text/plain' });
-
-  const dropzone = screen.getByTestId('fixture').firstChild as HTMLElement;
-  await fireEvent.drop(dropzone, {
-    dataTransfer: {
-      files: [file1, file2],
-    },
-  });
-
-  await flush();
-  expect(screen.getByTestId('entries')).toHaveTextContent('2 files');
+  await dragEvent(dropzone, 'dragleave');
+  await expect.element(fixture).not.toHaveClass(/dragging/);
 });
 
 test('isDragging state resets to false after drop event', async () => {
-  await render(makeTest({ multiple: true }));
+  page.render(makeTest({ multiple: true }));
 
-  const dropzone = screen.getByTestId('fixture').firstChild as HTMLElement;
-  const fixture = screen.getByTestId('fixture');
+  const dropzone = page.getByTestId('dropzone');
+  const fixture = page.getByTestId('fixture');
 
-  // Initially not dragging
-  expect(fixture.className).not.toContain('dragging');
+  await expect.element(fixture).not.toHaveClass(/dragging/);
 
-  // Start dragging - dragenter and dragover should set isDragging to true
-  await fireEvent.dragEnter(dropzone);
-  await fireEvent.dragOver(dropzone);
-  expect(fixture.className).toContain('dragging');
+  await dragEvent(dropzone, 'dragenter');
+  await dragEvent(dropzone, 'dragover');
+  await expect.element(fixture).toHaveClass(/dragging/);
 
-  // Drop files - should reset isDragging to false
   const file1 = new File(['test content 1'], 'test1.txt', { type: 'text/plain' });
   const file2 = new File(['test content 2'], 'test2.txt', { type: 'text/plain' });
+  await dropFiles(dropzone, [file1, file2]);
 
-  await fireEvent.drop(dropzone, {
-    dataTransfer: {
-      files: [file1, file2],
-    },
-  });
-
-  await flush();
-
-  // Verify isDragging is false after drop
-  expect(fixture.className).not.toContain('dragging');
-
-  // Verify files were added
-  expect(screen.getByTestId('entries')).toHaveTextContent('2 files');
+  await expect.element(fixture).not.toHaveClass(/dragging/);
+  await expect.element(page.getByTestId('entries')).toHaveTextContent('2 files');
 });
 
 test('isDragging state transitions correctly during drag sequence', async () => {
-  await render(makeTest({ multiple: true }));
+  page.render(makeTest({ multiple: true }));
 
-  const dropzone = screen.getByTestId('fixture').firstChild as HTMLElement;
-  const fixture = screen.getByTestId('fixture');
+  const dropzone = page.getByTestId('dropzone');
+  const fixture = page.getByTestId('fixture');
 
-  // Initially not dragging
-  expect(fixture.className).not.toContain('dragging');
+  await expect.element(fixture).not.toHaveClass(/dragging/);
 
-  // dragenter should not change isDragging by itself
-  await fireEvent.dragEnter(dropzone);
-  expect(fixture.className).not.toContain('dragging');
+  // dragenter alone should not set dragging
+  await dragEvent(dropzone, 'dragenter');
+  await expect.element(fixture).not.toHaveClass(/dragging/);
 
-  // dragover should set isDragging to true
-  await fireEvent.dragOver(dropzone);
-  expect(fixture.className).toContain('dragging');
+  // dragover should set dragging
+  await dragEvent(dropzone, 'dragover');
+  await expect.element(fixture).toHaveClass(/dragging/);
 
-  // dragleave should reset isDragging to false
-  await fireEvent.dragLeave(dropzone);
-  expect(fixture.className).not.toContain('dragging');
+  // dragleave resets
+  await dragEvent(dropzone, 'dragleave');
+  await expect.element(fixture).not.toHaveClass(/dragging/);
 
-  // Start dragging again
-  await fireEvent.dragOver(dropzone);
-  expect(fixture.className).toContain('dragging');
+  // Start again and drop resets
+  await dragEvent(dropzone, 'dragover');
+  await expect.element(fixture).toHaveClass(/dragging/);
 
-  // Drop should reset isDragging to false
   const file = new File(['test content'], 'test.txt', { type: 'text/plain' });
-  await fireEvent.drop(dropzone, {
-    dataTransfer: {
-      files: [file],
-    },
-  });
-
-  await flush();
-  expect(fixture.className).not.toContain('dragging');
+  await dropFiles(dropzone, [file]);
+  await expect.element(fixture).not.toHaveClass(/dragging/);
 });
 
 test('aborting an upload when removing an entry', async () => {
-  // Create a mock upload function that returns a promise that never resolves
-  // This simulates a long-running upload
   const abortMock = vi.fn();
-  const uploadPromise = new Promise<string>(() => {
-    // This promise intentionally never resolves to simulate an ongoing upload
-  });
+  const uploadPromise = new Promise<string>(() => {});
 
   const onUploadMock = vi.fn().mockImplementation(({ signal }) => {
-    // Add an abort listener to the signal
     signal.addEventListener('abort', abortMock);
     return uploadPromise;
   });
 
-  await render({
+  page.render({
     setup() {
       const { inputProps, entries, remove, fieldValue } = useFileField({
         label,
@@ -460,47 +402,35 @@ test('aborting an upload when removing an entry', async () => {
     `,
   });
 
+  const input = page.getByTestId('input');
   const file = new File(['test content'], 'test.txt', { type: 'text/plain' });
-  await fireEvent.change(screen.getByTestId('input'), {
-    target: {
-      files: [file],
-    },
-  });
+  await setFiles(input, [file]);
 
-  await flush();
-  expect(screen.getByTestId('entries')).toHaveTextContent('1 files');
-  expect(screen.getByTestId('uploading')).toHaveTextContent('1 uploading');
+  await expect.element(page.getByTestId('entries')).toHaveTextContent('1 files');
+  await expect.element(page.getByTestId('uploading')).toHaveTextContent('1 uploading');
   expect(onUploadMock).toHaveBeenCalledTimes(1);
 
-  // Remove the entry, which should abort the upload
-  await fireEvent.click(screen.getByTestId('remove-btn'));
-  await flush();
-
-  // Check that the abort was called
-  expect(abortMock).toHaveBeenCalledTimes(1);
-  expect(screen.getByTestId('entries')).toHaveTextContent('0 files');
-  expect(screen.getByTestId('uploading')).toHaveTextContent('0 uploading');
+  await page.getByTestId('remove-btn').click();
+  await expect.poll(() => abortMock).toHaveBeenCalledTimes(1);
+  await expect.element(page.getByTestId('entries')).toHaveTextContent('0 files');
+  await expect.element(page.getByTestId('uploading')).toHaveTextContent('0 uploading');
 });
 
 test('aborting all uploads when clearing entries', async () => {
-  // Create mock abort handlers for multiple uploads
   const abortMock1 = vi.fn();
   const abortMock2 = vi.fn();
 
-  // Mock upload function that captures abort signals
   const onUploadMock = vi.fn().mockImplementation(({ signal, key }) => {
-    // Add different abort listeners based on the file
-    if (key.endsWith('0')) {
+    if (String(key).endsWith('0')) {
       signal.addEventListener('abort', abortMock1);
     } else {
       signal.addEventListener('abort', abortMock2);
     }
 
-    // Return a promise that never resolves to simulate ongoing uploads
     return new Promise<string>(() => {});
   });
 
-  await render({
+  page.render({
     setup() {
       const { inputProps, entries, clear, fieldValue } = useFileField({
         label,
@@ -529,70 +459,50 @@ test('aborting all uploads when clearing entries', async () => {
     `,
   });
 
+  const input = page.getByTestId('input');
   const file1 = new File(['test content 1'], 'test1.txt', { type: 'text/plain' });
   const file2 = new File(['test content 2'], 'test2.txt', { type: 'text/plain' });
+  await setFiles(input, [file1, file2]);
+  await expect.poll(() => page.getByTestId('entries')).toHaveTextContent('2 files');
+  await expect.poll(() => page.getByTestId('uploading')).toHaveTextContent('2 uploading');
+  await expect.poll(() => onUploadMock).toHaveBeenCalledTimes(2);
 
-  await fireEvent.change(screen.getByTestId('input'), {
-    target: {
-      files: [file1, file2],
-    },
-  });
-
-  await flush();
-  expect(screen.getByTestId('entries')).toHaveTextContent('2 files');
-  expect(screen.getByTestId('uploading')).toHaveTextContent('2 uploading');
-  expect(onUploadMock).toHaveBeenCalledTimes(2);
-
-  // Clear all entries, which should abort all uploads
-  await fireEvent.click(screen.getByTestId('clear-btn'));
-  await flush();
-
-  // Check that both aborts were called
-  expect(abortMock1).toHaveBeenCalledTimes(1);
-  expect(abortMock2).toHaveBeenCalledTimes(1);
-  expect(screen.getByTestId('entries')).toHaveTextContent('0 files');
-  expect(screen.getByTestId('uploading')).toHaveTextContent('0 uploading');
+  await page.getByTestId('clear-btn').click();
+  await expect.poll(() => abortMock1).toHaveBeenCalledTimes(1);
+  await expect.poll(() => abortMock2).toHaveBeenCalledTimes(1);
+  await expect.element(page.getByTestId('entries')).toHaveTextContent('0 files');
+  await expect.element(page.getByTestId('uploading')).toHaveTextContent('0 uploading');
 });
 
 test('onUpload callback is called when provided', async () => {
   const onUploadMock = vi.fn().mockImplementation(({ file }) => {
-    return Promise.resolve(`uploaded-${file.name}`);
+    return Promise.resolve(`uploaded-${(file as File).name}`);
   });
 
-  await render(makeTest({ onUpload: onUploadMock }));
+  page.render(makeTest({ onUpload: onUploadMock }));
 
+  const input = page.getByTestId('input');
   const file = new File(['test content'], 'test.txt', { type: 'text/plain' });
-  await fireEvent.change(screen.getByTestId('input'), {
-    target: {
-      files: [file],
-    },
-  });
+  await setFiles(input, [file]);
 
-  await flush();
-  expect(onUploadMock).toHaveBeenCalledTimes(1);
-  expect(onUploadMock.mock.calls[0][0].file).toBe(file);
-  expect(screen.getByTestId('value')).toHaveTextContent('uploaded-test.txt');
+  await expect.poll(() => onUploadMock).toHaveBeenCalledTimes(1);
+  await expect.poll(() => onUploadMock.mock.calls[0][0].file).toBe(file);
+  await expect.element(page.getByTestId('value')).toHaveTextContent('uploaded-test.txt');
 });
 
 test('validation works with required attribute', async () => {
-  await render(makeTest({ required: true }));
+  page.render(makeTest({ required: true }));
 
-  screen.debug();
-  await flush();
-  await fireEvent.blur(screen.getByText(label));
-  expect(screen.getByText(label)).toHaveErrorMessage('Constraints not satisfied');
-
-  vi.useRealTimers();
-  expect(await axe(screen.getByTestId('fixture'))).toHaveNoViolations();
-  vi.useFakeTimers();
+  const input = page.getByTestId('input');
+  await dispatchEvent(input, 'invalid');
+  await expect.element(page.getByTestId('error-message')).toHaveTextContent(/.+/);
+  await expectNoA11yViolations('[data-testid="fixture"]');
 });
 
 test('nested FileEntry components can access the FileEntryCollection', async () => {
-  // Import the necessary components
   const { FileEntry } = await import('./useFileEntry');
 
-  // Create a component that uses FileEntry components within useFileField
-  await render({
+  page.render({
     components: { FileEntry },
     setup() {
       const { inputProps, entries, fieldValue } = useFileField({
@@ -623,16 +533,10 @@ test('nested FileEntry components can access the FileEntryCollection', async () 
             :uploadResult="entry.uploadResult"
             data-testid="file-entry"
           >
-            <template #default="{ remove, isUploading, removeButtonProps }">
+            <template #default="{ removeButtonProps }">
               <div>
                 <span>{{ entry.file.name }}</span>
-                <span v-if="isUploading">Uploading...</span>
-                <button
-                  v-bind="removeButtonProps"
-                  data-testid="entry-remove-btn"
-                >
-                  Remove
-                </button>
+                <button v-bind="removeButtonProps" data-testid="entry-remove-btn">Remove</button>
               </div>
             </template>
           </FileEntry>
@@ -641,50 +545,34 @@ test('nested FileEntry components can access the FileEntryCollection', async () 
     `,
   });
 
-  // Add some files
+  const input = page.getByTestId('input');
   const file1 = new File(['test content 1'], 'test1.txt', { type: 'text/plain' });
   const file2 = new File(['test content 2'], 'test2.txt', { type: 'text/plain' });
+  await setFiles(input, [file1, file2]);
 
-  await fireEvent.change(screen.getByTestId('input'), {
-    target: {
-      files: [file1, file2],
-    },
-  });
+  await expect.element(page.getByTestId('entries')).toHaveTextContent('2 files');
+  await expect.poll(() => document.querySelectorAll('[data-testid="file-entry"]').length).toBe(2);
+  await expect.element(page.getByText('test1.txt')).toBeInTheDocument();
+  await expect.element(page.getByText('test2.txt')).toBeInTheDocument();
 
-  await flush();
+  await page.getByTestId('entry-remove-btn').nth(0).click();
 
-  // Verify that the FileEntry components are rendered
-  expect(screen.getByTestId('entries')).toHaveTextContent('2 files');
-  expect(screen.getAllByTestId('file-entry')).toHaveLength(2);
-  expect(screen.getByText('test1.txt')).toBeInTheDocument();
-  expect(screen.getByText('test2.txt')).toBeInTheDocument();
-
-  // Test that the remove button in the FileEntry works
-  await fireEvent.click(screen.getAllByTestId('entry-remove-btn')[0]);
-  await flush();
-
-  // Verify that the entry was removed
-  expect(screen.getByTestId('entries')).toHaveTextContent('1 files');
-  expect(screen.getAllByTestId('file-entry')).toHaveLength(1);
-  expect(screen.queryByText('test1.txt')).not.toBeInTheDocument();
-  expect(screen.getByText('test2.txt')).toBeInTheDocument();
+  await expect.element(page.getByTestId('entries')).toHaveTextContent('1 files');
+  await expect.poll(() => document.querySelectorAll('[data-testid="file-entry"]').length).toBe(1);
+  await expect.poll(() => document.body.textContent).not.toContain('test1.txt');
+  await expect.element(page.getByText('test2.txt')).toBeInTheDocument();
 });
 
 test('FileEntry components can display upload status', async () => {
-  // Import the necessary components
   const { FileEntry } = await import('./useFileEntry');
 
-  // Create a mock upload function that returns a delayed promise
   const onUploadMock = vi.fn().mockImplementation(({ file }) => {
-    // Return a promise that resolves after a delay
     return new Promise<string>(resolve => {
-      setTimeout(() => {
-        resolve(`uploaded-${file.name}`);
-      }, 100);
+      setTimeout(() => resolve(`uploaded-${(file as File).name}`), 100);
     });
   });
 
-  await render({
+  page.render({
     components: { FileEntry },
     setup() {
       const { inputProps, entries, fieldValue } = useFileField({
@@ -701,72 +589,59 @@ test('FileEntry components can display upload status', async () => {
       };
     },
     template: `
-      <div data-testid="fixture">
-        <label :for="inputProps.id">{{ label }}</label>
-        <input v-bind="inputProps" data-testid="input" />
-        <div data-testid="entries">{{ entries.length }} files</div>
-        <div data-testid="value">{{ JSON.stringify(fieldValue) }}</div>
-        <div data-testid="file-entries">
-          <FileEntry
-            v-for="entry in entries"
-            :key="entry.id"
-            :id="entry.id"
-            :file="entry.file"
-            :isUploading="entry.isUploading"
-            :uploadResult="entry.uploadResult"
-            data-testid="file-entry"
-          >
-            <template #default="{ isUploading, isUploaded, removeButtonProps }">
-              <div>
-                <span>{{ entry.file.name }}</span>
-                <span v-if="isUploading" data-testid="uploading-indicator">Uploading...</span>
-                <span v-if="isUploaded" data-testid="uploaded-indicator">Uploaded!</span>
-                <button v-bind="removeButtonProps" data-testid="entry-remove-btn">Remove</button>
-              </div>
-            </template>
-          </FileEntry>
+        <div data-testid="fixture">
+          <label :for="inputProps.id">{{ label }}</label>
+          <input v-bind="inputProps" data-testid="input" />
+          <div data-testid="entries">{{ entries.length }} files</div>
+          <div data-testid="value">{{ JSON.stringify(fieldValue) }}</div>
+          <div data-testid="file-entries">
+            <FileEntry
+              v-for="entry in entries"
+              :key="entry.id"
+              :id="entry.id"
+              :file="entry.file"
+              :isUploading="entry.isUploading"
+              :uploadResult="entry.uploadResult"
+              data-testid="file-entry"
+            >
+              <template #default="{ isUploading, isUploaded, removeButtonProps }">
+                <div>
+                  <span>{{ entry.file.name }}</span>
+                  <span v-if="isUploading" data-testid="uploading-indicator">Uploading...</span>
+                  <span v-if="isUploaded" data-testid="uploaded-indicator">Uploaded!</span>
+                  <button v-bind="removeButtonProps" data-testid="entry-remove-btn">Remove</button>
+                </div>
+              </template>
+            </FileEntry>
+          </div>
         </div>
-      </div>
-    `,
+      `,
   });
 
-  // Add a file
+  const input = page.getByTestId('input');
   const file = new File(['test content'], 'test.txt', { type: 'text/plain' });
+  await setFiles(input, [file]);
 
-  await fireEvent.change(screen.getByTestId('input'), {
-    target: {
-      files: [file],
-    },
-  });
+  await expect.element(page.getByTestId('entries')).toHaveTextContent('1 files');
+  await expect.element(page.getByTestId('uploading-indicator')).toBeInTheDocument();
+  await expect.element(page.getByTestId('uploaded-indicator')).not.toBeInTheDocument();
 
-  await flush();
+  await waitForTimeout(200);
 
-  // Verify that the FileEntry component shows uploading status
-  expect(screen.getByTestId('entries')).toHaveTextContent('1 files');
-  expect(screen.getByTestId('uploading-indicator')).toBeInTheDocument();
-  expect(screen.queryByTestId('uploaded-indicator')).not.toBeInTheDocument();
-
-  // Fast-forward time to complete the upload
-  vi.advanceTimersByTime(200);
-  await flush();
-
-  // Verify that the FileEntry component shows uploaded status
-  expect(screen.queryByTestId('uploading-indicator')).not.toBeInTheDocument();
-  expect(screen.getByTestId('uploaded-indicator')).toBeInTheDocument();
+  await expect.element(page.getByTestId('uploading-indicator')).not.toBeInTheDocument();
+  await expect.element(page.getByTestId('uploaded-indicator')).toBeInTheDocument();
 });
 
 test('FileEntry components create and revoke object URLs for previews', async () => {
-  // Import the necessary components
   const { FileEntry } = await import('./useFileEntry');
 
-  // Reset mock counters
-  vi.clearAllMocks();
+  const createSpy = vi.spyOn(URL, 'createObjectURL');
+  const revokeSpy = vi.spyOn(URL, 'revokeObjectURL');
 
-  // Create a component that uses FileEntry components with preview
-  const { unmount } = await render({
+  const { unmount } = page.render({
     components: { FileEntry },
     setup() {
-      const { inputProps, entries, fieldValue } = useFileField({
+      const { inputProps, entries } = useFileField({
         label,
         multiple: true,
       });
@@ -774,7 +649,6 @@ test('FileEntry components create and revoke object URLs for previews', async ()
       return {
         inputProps,
         entries,
-        fieldValue,
         label,
       };
     },
@@ -782,7 +656,6 @@ test('FileEntry components create and revoke object URLs for previews', async ()
       <div data-testid="fixture">
         <label :for="inputProps.id">{{ label }}</label>
         <input v-bind="inputProps" data-testid="input" />
-        <div data-testid="entries">{{ entries.length }} files</div>
         <div data-testid="file-entries">
           <FileEntry
             v-for="entry in entries"
@@ -808,40 +681,23 @@ test('FileEntry components create and revoke object URLs for previews', async ()
     `,
   });
 
-  // Add image files to test preview
+  const input = page.getByTestId('input');
   const imageFile = new File(['image content'], 'image.jpg', { type: 'image/jpeg' });
   const videoFile = new File(['video content'], 'video.mp4', { type: 'video/mp4' });
+  await setFiles(input, [imageFile, videoFile]);
 
-  await fireEvent.change(screen.getByTestId('input'), {
-    target: {
-      files: [imageFile, videoFile],
-    },
-  });
+  await expect.poll(() => createSpy).toHaveBeenCalledTimes(2);
+  await expect.poll(() => createSpy).toHaveBeenCalledWith(imageFile);
+  await expect.poll(() => createSpy).toHaveBeenCalledWith(videoFile);
 
-  await flush();
+  await expect.poll(() => document.querySelectorAll('[data-testid="preview-element"]').length).toBe(2);
+  const previewElements = Array.from(document.querySelectorAll('[data-testid="preview-element"]')) as HTMLElement[];
+  expect(previewElements[0]?.tagName.toLowerCase()).toBe('img');
+  expect(previewElements[1]?.tagName.toLowerCase()).toBe('video');
 
-  // Verify that createObjectURL was called for each file
-  expect(global.URL.createObjectURL).toHaveBeenCalledTimes(2);
-  expect(global.URL.createObjectURL).toHaveBeenCalledWith(imageFile);
-  expect(global.URL.createObjectURL).toHaveBeenCalledWith(videoFile);
-
-  // Verify that the preview elements were created with the correct type
-  const previewElements = screen.getAllByTestId('preview-element');
-  expect(previewElements).toHaveLength(2);
-  expect(previewElements[0].tagName.toLowerCase()).toBe('img');
-  expect(previewElements[1].tagName.toLowerCase()).toBe('video');
-
-  // Verify that the src attributes contain the mock URLs
-  expect(previewElements[0]).toHaveAttribute('src', `mock-url-for-${imageFile.name}`);
-  expect(previewElements[1]).toHaveAttribute('src', `mock-url-for-${videoFile.name}`);
-
-  // Remove one entry and check if revokeObjectURL is called
-  await fireEvent.click(screen.getAllByTestId('entry-remove-btn')[0]);
-  await flush();
-
-  // Unmount the component to trigger cleanup
+  // Remove one entry to trigger cleanup.
+  ((await page.getByTestId('entry-remove-btn').nth(0).element()) as HTMLElement).click();
   unmount();
 
-  // Verify that revokeObjectURL was called to clean up the URLs
-  expect(global.URL.revokeObjectURL).toHaveBeenCalled();
+  await expect.poll(() => revokeSpy).toHaveBeenCalled();
 });

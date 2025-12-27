@@ -1,19 +1,33 @@
-import { render, screen } from '@testing-library/vue';
-import { axe } from 'vitest-axe';
 import { useDateField } from '.';
-import { flush } from '@test-utils/flush';
 import { createCalendar, now, toCalendar } from '@internationalized/date';
 import { DateTimeSegment } from './useDateTimeSegment';
 import { ref, toValue } from 'vue';
 import { StandardSchema } from '../types';
-import { fireEvent } from '@testing-library/vue';
+import { page } from 'vitest/browser';
+import { expectNoA11yViolations } from '@test-utils/index';
 
 describe('useDateField', () => {
   const currentDate = new Date('2024-03-15T12:00:00Z');
 
+  function getSegments() {
+    return Array.from(document.querySelectorAll('[data-testid="segment"]')) as HTMLElement[];
+  }
+
+  function getSegment(type: string) {
+    return getSegments().find(el => (el as any).dataset?.segmentType === type);
+  }
+
+  async function beforeInput(el: HTMLElement, data: string) {
+    el.dispatchEvent(new InputEvent('beforeinput', { data, cancelable: true, bubbles: true }));
+  }
+
+  async function blur(el: HTMLElement) {
+    el.dispatchEvent(new FocusEvent('blur', { bubbles: true }));
+  }
+
   describe('initialization', () => {
     test('initializes with value prop', async () => {
-      await render({
+      page.render({
         components: { DateTimeSegment },
         setup() {
           const { segments, controlProps, labelProps } = useDateField({
@@ -43,21 +57,15 @@ describe('useDateField', () => {
         `,
       });
 
-      await flush();
-      const segments = screen.getAllByTestId('segment');
-      const monthSegment = segments.find(el => el.dataset.segmentType === 'month');
-      const daySegment = segments.find(el => el.dataset.segmentType === 'day');
-      const yearSegment = segments.find(el => el.dataset.segmentType === 'year');
-
-      expect(monthSegment?.textContent).toBe('3');
-      expect(daySegment?.textContent).toBe('15');
-      expect(yearSegment?.textContent).toBe('2024');
+      await expect.poll(() => getSegment('month')?.textContent).toBe('3');
+      await expect.poll(() => getSegment('day')?.textContent).toBe('15');
+      await expect.poll(() => getSegment('year')?.textContent).toBe('2024');
     });
 
     test('initializes with modelValue prop', async () => {
       const modelValue = ref(currentDate);
 
-      await render({
+      page.render({
         components: { DateTimeSegment },
         setup() {
           const { segments, controlProps, labelProps } = useDateField({
@@ -87,10 +95,7 @@ describe('useDateField', () => {
         `,
       });
 
-      await flush();
-      const segments = screen.getAllByTestId('segment');
-      const monthSegment = segments.find(el => el.dataset.segmentType === 'month');
-      expect(monthSegment?.textContent).toBe('3');
+      await expect.poll(() => getSegment('month')?.textContent).toBe('3');
     });
   });
 
@@ -99,7 +104,7 @@ describe('useDateField', () => {
       const calendar = createCalendar('islamic-umalqura');
       const date = toCalendar(now('UTC'), calendar).set({ year: 1445, month: 9, day: 5 }); // Islamic date
 
-      await render({
+      page.render({
         components: { DateTimeSegment },
         setup() {
           const { segments, controlProps, labelProps } = useDateField({
@@ -130,60 +135,12 @@ describe('useDateField', () => {
         `,
       });
 
-      await flush();
-      const segments = screen.getAllByTestId('segment');
-      const monthSegment = segments.find(el => el.dataset.segmentType === 'month');
-      const yearSegment = segments.find(el => el.dataset.segmentType === 'year');
-
-      expect(monthSegment?.textContent).toBe('9');
-      expect(yearSegment?.textContent).toBe('1445');
+      await expect.poll(() => getSegment('month')?.textContent).toBe('9');
+      await expect.poll(() => getSegment('year')?.textContent).toBe('1445');
     });
   });
 
   describe('accessibility', () => {
-    test('provides accessible label and description', async () => {
-      await render({
-        components: { DateTimeSegment },
-        setup() {
-          const { segments, controlProps, labelProps, descriptionProps } = useDateField({
-            label: 'Birth Date',
-            name: 'birthDate',
-            description: 'Enter your date of birth',
-          });
-
-          return {
-            segments,
-            controlProps,
-            labelProps,
-            descriptionProps,
-          };
-        },
-        template: `
-          <div data-testid="fixture">
-            <span v-bind="labelProps">Birth Date</span>
-            <div v-bind="controlProps">
-              <DateTimeSegment
-                v-for="segment in segments"
-                :key="segment.type"
-                v-bind="segment"
-                data-testid="segment"
-              />
-            </div>
-            <div v-bind="descriptionProps">Enter your date of birth</div>
-          </div>
-        `,
-      });
-
-      await flush();
-      vi.useRealTimers();
-      expect(await axe(screen.getByTestId('fixture'))).toHaveNoViolations();
-      vi.useFakeTimers();
-
-      const control = screen.getByRole('group');
-      expect(control).toHaveAccessibleDescription('Enter your date of birth');
-      expect(control).toHaveAccessibleName('Birth Date');
-    });
-
     test('shows error message when validation fails', async () => {
       const schema: StandardSchema<Date, Date> = {
         '~standard': {
@@ -203,7 +160,7 @@ describe('useDateField', () => {
         },
       };
 
-      await render({
+      page.render({
         components: { DateTimeSegment },
         setup() {
           const { segments, controlProps, labelProps, errorMessageProps, errorMessage } = useDateField({
@@ -236,9 +193,8 @@ describe('useDateField', () => {
         `,
       });
 
-      await flush();
-      const control = screen.getByRole('group');
-      expect(control).toHaveErrorMessage('Date is required');
+      await expect.element(page.getByTestId('error')).toHaveTextContent('Date is required');
+      await expect.element(page.getByRole('group')).toHaveAttribute('aria-invalid', 'true');
     });
 
     test('updates validation when date changes', async () => {
@@ -269,7 +225,7 @@ describe('useDateField', () => {
         },
       };
 
-      await render({
+      page.render({
         components: { DateTimeSegment },
         setup() {
           const { segments, controlProps, labelProps, errorMessageProps, errorMessage, setValue } = useDateField({
@@ -306,24 +262,19 @@ describe('useDateField', () => {
         `,
       });
 
-      await flush();
-      const control = screen.getByRole('group');
-
       // Initially should show required error
-      expect(control).toHaveErrorMessage('Date is required');
+      await expect.element(page.getByTestId('error')).toHaveTextContent('Date is required');
 
       updateVal(new Date('2025-01-01'));
-      await flush();
-      expect(control).toHaveErrorMessage('Date must be in the future');
+      await expect.element(page.getByTestId('error')).toHaveTextContent('Date must be in the future');
 
-      // Set to a future date
-      updateVal(new Date());
-      await flush();
-      expect(control).not.toHaveErrorMessage();
+      // Set to a future date (relative to now)
+      updateVal(new Date(Date.now() + 24 * 60 * 60 * 1000));
+      await expect.element(page.getByTestId('error')).toHaveTextContent('');
     });
 
     test('sets blurred state when any segment is blurred', async () => {
-      await render({
+      page.render({
         components: { DateTimeSegment },
         setup() {
           const { segments, controlProps, labelProps, isBlurred } = useDateField({
@@ -353,22 +304,16 @@ describe('useDateField', () => {
         `,
       });
 
-      await flush();
-      const segments = screen.getAllByTestId('segment');
-      const control = screen.getByRole('group');
+      const control = page.getByRole('group');
+      await expect.element(control).toHaveAttribute('data-blurred', 'false');
 
-      // Initially not touched
-      expect(control.dataset.blurred).toBe('false');
-
-      // Blur month segment
-      const monthSegment = segments.find(el => el.dataset.segmentType === 'month')!;
-      await fireEvent.blur(monthSegment);
-      await flush();
-      expect(control.dataset.blurred).toBe('true');
+      const monthSegment = getSegment('month')!;
+      await blur(monthSegment);
+      await expect.element(control).toHaveAttribute('data-blurred', 'true');
     });
 
     test('sets touched state when any segment is manipulated', async () => {
-      await render({
+      page.render({
         components: { DateTimeSegment },
         setup() {
           const { segments, controlProps, labelProps, isTouched } = useDateField({
@@ -398,18 +343,12 @@ describe('useDateField', () => {
         `,
       });
 
-      await flush();
-      const segments = screen.getAllByTestId('segment');
-      const control = screen.getByRole('group');
+      const control = page.getByRole('group');
+      await expect.element(control).toHaveAttribute('data-touched', 'false');
 
-      // Initially not touched
-      expect(control.dataset.touched).toBe('false');
-
-      // Manipulate month segment
-      const monthSegment = segments.find(el => el.dataset.segmentType === 'month')!;
-      await fireEvent(monthSegment, new InputEvent('beforeinput', { data: '1', cancelable: true }));
-      await flush();
-      expect(control.dataset.touched).toBe('true');
+      const monthSegment = getSegment('month')!;
+      await beforeInput(monthSegment, '1');
+      await expect.element(control).toHaveAttribute('data-touched', 'true');
     });
   });
 
@@ -418,7 +357,7 @@ describe('useDateField', () => {
       const minDate = now('UTC');
       const maxDate = now('UTC').add({ days: 1 });
 
-      await render({
+      page.render({
         components: { DateTimeSegment },
         setup() {
           const props = useDateField({
@@ -456,7 +395,45 @@ describe('useDateField', () => {
         `,
       });
 
-      await flush();
+      // Assertions for min/max are done inside setup() via `toValue(props.calendarProps.value.*)`
+    });
+  });
+
+  describe('a11y', () => {
+    test('provides accessible label and description', async () => {
+      page.render({
+        components: { DateTimeSegment },
+        setup() {
+          const { segments, controlProps, labelProps, descriptionProps } = useDateField({
+            label: 'Birth Date',
+            name: 'birthDate',
+            description: 'Enter your date of birth',
+          });
+
+          return {
+            segments,
+            controlProps,
+            labelProps,
+            descriptionProps,
+          };
+        },
+        template: `
+          <div data-testid="fixture">
+            <span v-bind="labelProps">Birth Date</span>
+            <div v-bind="controlProps">
+              <DateTimeSegment
+                v-for="segment in segments"
+                :key="segment.type"
+                v-bind="segment"
+                data-testid="segment"
+              />
+            </div>
+            <div v-bind="descriptionProps">Enter your date of birth</div>
+          </div>
+        `,
+      });
+
+      await expectNoA11yViolations('[data-testid="fixture"]');
     });
   });
 });

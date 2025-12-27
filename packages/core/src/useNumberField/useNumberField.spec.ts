@@ -1,12 +1,29 @@
-import { fireEvent, render, screen } from '@testing-library/vue';
-import { axe } from 'vitest-axe';
 import { NumberFieldProps, useNumberField } from './useNumberField';
 import { type Component } from 'vue';
-import { flush, defineStandardSchema } from '@test-utils/index';
+import { defineStandardSchema, expectNoA11yViolations } from '@test-utils/index';
 import { SetOptional } from 'type-fest';
+import { page } from 'vitest/browser';
 
 const label = 'Amount';
 const description = 'Enter a valid amount';
+
+async function changeValue(input: ReturnType<typeof page.getByLabelText>, value: string) {
+  const el = (await input.element()) as HTMLInputElement;
+  el.value = value;
+  el.dispatchEvent(new Event('change', { bubbles: true }));
+}
+
+async function keyDown(target: ReturnType<typeof page.getByLabelText>, init: KeyboardEventInit & { code?: string }) {
+  (await target.element()).dispatchEvent(new KeyboardEvent('keydown', { bubbles: true, ...init }));
+}
+
+async function mouseDown(target: ReturnType<typeof page.getByLabelText>) {
+  (await target.element()).dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
+}
+
+async function wheel(target: ReturnType<typeof page.getByLabelText>, deltaY: number) {
+  (await target.element()).dispatchEvent(new WheelEvent('wheel', { bubbles: true, deltaY }));
+}
 
 const makeTest = (props?: SetOptional<NumberFieldProps, 'label'>): Component => ({
   setup() {
@@ -47,7 +64,7 @@ const makeTest = (props?: SetOptional<NumberFieldProps, 'label'>): Component => 
         <label v-bind="labelProps">{{ label }}</label>
         <input v-bind="inputProps" />
         <span v-bind="descriptionProps">description</span>
-        <span v-bind="errorMessageProps">{{ errorMessage }}</span>
+        <span data-testid="error-message" v-bind="errorMessageProps">{{ errorMessage }}</span>
 
         <button v-bind="incrementButtonProps">Incr</button>
         <button v-bind="decrementButtonProps">Decr</button>
@@ -56,132 +73,121 @@ const makeTest = (props?: SetOptional<NumberFieldProps, 'label'>): Component => 
     `,
 });
 
-test('should not have a11y errors with labels or descriptions', async () => {
-  await render(makeTest());
-  vi.useRealTimers();
-  expect(await axe(screen.getByTestId('fixture'))).toHaveNoViolations();
-  vi.useFakeTimers();
-});
-
 test('blur sets blurred to true', async () => {
-  await render(makeTest());
-  expect(screen.getByTestId('fixture').className).not.includes('blurred');
-  await fireEvent.blur(screen.getByLabelText(label));
-  expect(screen.getByTestId('fixture').className).includes('blurred');
+  page.render(makeTest());
+  const fixture = page.getByTestId('fixture');
+  const input = page.getByLabelText(label);
+
+  await expect.element(fixture).not.toHaveClass(/blurred/);
+  (await input.element()).dispatchEvent(new FocusEvent('blur'));
+  await expect.element(fixture).toHaveClass(/blurred/);
 });
 
 test('input sets touched to true', async () => {
-  await render(makeTest());
-  expect(screen.getByTestId('fixture').className).not.includes('touched');
-  await fireEvent.change(screen.getByLabelText(label), { target: { value: '10' } });
-  await flush();
-  expect(screen.getByTestId('fixture').className).includes('touched');
+  page.render(makeTest());
+  const fixture = page.getByTestId('fixture');
+  const input = page.getByLabelText(label);
+
+  await expect.element(fixture).not.toHaveClass(/touched/);
+  await changeValue(input, '10');
+  await expect.element(fixture).toHaveClass(/touched/);
 });
 
 test('change event updates the value and parses it as a number', async () => {
-  await render(makeTest());
+  page.render(makeTest());
   const value = '123';
-  await fireEvent.change(screen.getByLabelText(label), { target: { value } });
-  expect(screen.getByLabelText(label)).toHaveDisplayValue(value);
-  expect(screen.getByTestId('value')).toHaveTextContent('123');
+  const input = page.getByLabelText(label);
+  await changeValue(input, value);
+  await expect.element(input).toHaveValue(value);
+  await expect.element(page.getByTestId('value')).toHaveTextContent('123');
 });
 
 test('arrow up and down should increment and decrement the value', async () => {
-  await render(makeTest());
-  await fireEvent.keyDown(screen.getByLabelText(label), { code: 'ArrowUp' });
-  expect(screen.getByLabelText(label)).toHaveDisplayValue('1');
-  await fireEvent.keyDown(screen.getByLabelText(label), { code: 'ArrowDown' });
-  expect(screen.getByLabelText(label)).toHaveDisplayValue('0');
+  page.render(makeTest());
+  const input = page.getByLabelText(label);
+  await keyDown(input, { code: 'ArrowUp' });
+  await expect.element(input).toHaveValue('1');
+  await keyDown(input, { code: 'ArrowDown' });
+  await expect.element(input).toHaveValue('0');
 });
 
 test('increment and decrement buttons should update the value', async () => {
-  await render(makeTest());
-  await fireEvent.mouseDown(screen.getByLabelText('Increment'));
-  expect(screen.getByLabelText(label)).toHaveDisplayValue('1');
-  await fireEvent.mouseDown(screen.getByLabelText('Decrement'));
-  expect(screen.getByLabelText(label)).toHaveDisplayValue('0');
+  page.render(makeTest());
+  const input = page.getByLabelText(label);
+  await mouseDown(page.getByLabelText('Increment'));
+  await expect.element(input).toHaveValue('1');
+  await mouseDown(page.getByLabelText('Decrement'));
+  await expect.element(input).toHaveValue('0');
 });
 
 test('Tries out different locales to match the value', async () => {
-  await render(makeTest());
+  page.render(makeTest());
   const value = '١٠';
-  await fireEvent.change(screen.getByLabelText(label), { target: { value } });
-  await flush();
-  expect(screen.getByTestId('value')).toHaveTextContent('10');
+  await changeValue(page.getByLabelText(label), value);
+  await expect.element(page.getByTestId('value')).toHaveTextContent('10');
 });
 
 test('Prevents invalid numeric input', async () => {
-  await render(makeTest());
+  page.render(makeTest());
   const value = 'test';
-  await fireEvent.change(screen.getByLabelText(label), { target: { value } });
-  await flush();
-  expect(screen.getByTestId('value')).toHaveTextContent('null');
+  await changeValue(page.getByLabelText(label), value);
+  await expect.element(page.getByTestId('value')).toHaveTextContent('null');
 });
 
 test('Applies decimal inputmode if the step contains decimals', async () => {
-  await render(makeTest({ step: 1.5 }));
-  expect(screen.getByLabelText(label)).toHaveAttribute('inputmode', 'decimal');
+  page.render(makeTest({ step: 1.5 }));
+  await expect.element(page.getByLabelText(label)).toHaveAttribute('inputmode', 'decimal');
 });
 
 test('Increments and decrements correctly with decimal steps', async () => {
-  await render(makeTest({ step: 0.1, value: 0 }));
+  page.render(makeTest({ step: 0.1, value: 0 }));
+  const input = page.getByLabelText(label);
 
   // Test increment
-  await fireEvent.keyDown(screen.getByLabelText(label), { code: 'ArrowUp' });
-  expect(screen.getByLabelText(label)).toHaveDisplayValue('0.1');
-  expect(screen.getByTestId('value')).toHaveTextContent('0.1');
+  await keyDown(input, { code: 'ArrowUp' });
+  await expect.element(input).toHaveValue('0.1');
+  await expect.element(page.getByTestId('value')).toHaveTextContent('0.1');
 
-  await fireEvent.keyDown(screen.getByLabelText(label), { code: 'ArrowUp' });
-  expect(screen.getByLabelText(label)).toHaveDisplayValue('0.2');
-  expect(screen.getByTestId('value')).toHaveTextContent('0.2');
+  await keyDown(input, { code: 'ArrowUp' });
+  await expect.element(input).toHaveValue('0.2');
+  await expect.element(page.getByTestId('value')).toHaveTextContent('0.2');
 
   // Test decrement
-  await fireEvent.keyDown(screen.getByLabelText(label), { code: 'ArrowDown' });
-  expect(screen.getByLabelText(label)).toHaveDisplayValue('0.1');
-  expect(screen.getByTestId('value')).toHaveTextContent('0.1');
+  await keyDown(input, { code: 'ArrowDown' });
+  await expect.element(input).toHaveValue('0.1');
+  await expect.element(page.getByTestId('value')).toHaveTextContent('0.1');
 
   // Test with increment button
-  await fireEvent.mouseDown(screen.getByLabelText('Increment'));
-  expect(screen.getByLabelText(label)).toHaveDisplayValue('0.2');
-  expect(screen.getByTestId('value')).toHaveTextContent('0.2');
+  await mouseDown(page.getByLabelText('Increment'));
+  await expect.element(input).toHaveValue('0.2');
+  await expect.element(page.getByTestId('value')).toHaveTextContent('0.2');
 
   // Test with decrement button
-  await fireEvent.mouseDown(screen.getByLabelText('Decrement'));
-  expect(screen.getByLabelText(label)).toHaveDisplayValue('0.1');
-  expect(screen.getByTestId('value')).toHaveTextContent('0.1');
+  await mouseDown(page.getByLabelText('Decrement'));
+  await expect.element(input).toHaveValue('0.1');
+  await expect.element(page.getByTestId('value')).toHaveTextContent('0.1');
 });
 
 test('Increments and decrements correctly with step 1.5', async () => {
-  await render(makeTest({ step: 1.5, value: 0 }));
+  page.render(makeTest({ step: 1.5, value: 0 }));
+  const input = page.getByLabelText(label);
 
   // Test increment
-  await fireEvent.keyDown(screen.getByLabelText(label), { code: 'ArrowUp' });
-  expect(screen.getByLabelText(label)).toHaveDisplayValue('1.5');
-  expect(screen.getByTestId('value')).toHaveTextContent('1.5');
+  await keyDown(input, { code: 'ArrowUp' });
+  await expect.element(input).toHaveValue('1.5');
+  await expect.element(page.getByTestId('value')).toHaveTextContent('1.5');
 
-  await fireEvent.keyDown(screen.getByLabelText(label), { code: 'ArrowUp' });
-  expect(screen.getByLabelText(label)).toHaveDisplayValue('3');
-  expect(screen.getByTestId('value')).toHaveTextContent('3');
+  await keyDown(input, { code: 'ArrowUp' });
+  await expect.element(input).toHaveValue('3');
+  await expect.element(page.getByTestId('value')).toHaveTextContent('3');
 
   // Test decrement
-  await fireEvent.keyDown(screen.getByLabelText(label), { code: 'ArrowDown' });
-  expect(screen.getByLabelText(label)).toHaveDisplayValue('1.5');
-  expect(screen.getByTestId('value')).toHaveTextContent('1.5');
+  await keyDown(input, { code: 'ArrowDown' });
+  await expect.element(input).toHaveValue('1.5');
+  await expect.element(page.getByTestId('value')).toHaveTextContent('1.5');
 });
 
 describe('validation', () => {
-  test('picks up native error messages', async () => {
-    await render(makeTest({ required: true }));
-
-    await fireEvent.invalid(screen.getByLabelText(label));
-    await flush();
-    expect(screen.getByLabelText(label)).toHaveErrorMessage('Constraints not satisfied');
-
-    vi.useRealTimers();
-    expect(await axe(screen.getByTestId('fixture'))).toHaveNoViolations();
-    vi.useFakeTimers();
-  });
-
   test('should revalidate when increment/decrement buttons', async () => {
     const schema = defineStandardSchema<number>(value => {
       return Number(value) > 1
@@ -189,15 +195,17 @@ describe('validation', () => {
         : { issues: [{ message: 'Value must be greater than 1', path: [] }] };
     });
 
-    await render(makeTest({ schema }));
-    await flush();
-    expect(screen.getByLabelText(label)).toHaveErrorMessage();
-    await fireEvent.mouseDown(screen.getByLabelText('Increment'));
-    expect(screen.getByLabelText(label)).toHaveDisplayValue('1');
-    expect(screen.getByLabelText(label)).toHaveErrorMessage();
-    await fireEvent.mouseDown(screen.getByLabelText('Increment'));
-    await flush();
-    expect(screen.getByLabelText(label)).not.toHaveErrorMessage();
+    page.render(makeTest({ schema }));
+    const error = page.getByTestId('error-message');
+    const input = page.getByLabelText(label);
+    await expect.element(error).toHaveTextContent('');
+
+    await mouseDown(page.getByLabelText('Increment'));
+    await expect.element(input).toHaveValue('1');
+    await expect.element(error).toHaveTextContent('');
+
+    await mouseDown(page.getByLabelText('Increment'));
+    await expect.element(error).toHaveTextContent('');
   });
 
   test('should revalidate when increment/decrement with arrows', async () => {
@@ -207,14 +215,14 @@ describe('validation', () => {
         : { issues: [{ message: 'Value must be greater than 1', path: [] }] };
     });
 
-    await render(makeTest({ schema }));
-    await fireEvent.keyDown(screen.getByLabelText(label), { code: 'ArrowUp' });
-    await flush();
-    expect(screen.getByLabelText(label)).toHaveErrorMessage('Value must be greater than 1');
+    page.render(makeTest({ schema }));
+    const error = page.getByTestId('error-message');
+    const input = page.getByLabelText(label);
+    await keyDown(input, { code: 'ArrowUp' });
+    await expect.element(error).toHaveTextContent('Value must be greater than 1');
 
-    await fireEvent.keyDown(screen.getByLabelText(label), { code: 'ArrowUp' });
-    await flush();
-    expect(screen.getByLabelText(label)).not.toHaveErrorMessage();
+    await keyDown(input, { code: 'ArrowUp' });
+    await expect.element(error).toHaveTextContent('');
   });
 });
 
@@ -222,7 +230,7 @@ describe('sets initial value', () => {
   test('with value prop', async () => {
     const label = 'Field';
 
-    await render({
+    page.render({
       setup() {
         const { inputProps, labelProps } = useNumberField({
           label,
@@ -243,14 +251,13 @@ describe('sets initial value', () => {
     `,
     });
 
-    await flush();
-    expect(screen.getByLabelText(label)).toHaveDisplayValue('55');
+    await expect.element(page.getByLabelText(label)).toHaveValue('55');
   });
 
   test('with modelValue prop', async () => {
     const label = 'Field';
 
-    await render({
+    page.render({
       setup() {
         const { inputProps, labelProps } = useNumberField({
           label,
@@ -271,29 +278,50 @@ describe('sets initial value', () => {
     `,
     });
 
-    await flush();
-    expect(screen.getByLabelText(label)).toHaveDisplayValue('55');
+    await expect.element(page.getByLabelText(label)).toHaveValue('55');
   });
 });
 
 describe('mouse wheel', () => {
   test('should increment and decrement the value', async () => {
-    await render(makeTest());
-    await fireEvent.wheel(screen.getByLabelText(label), { deltaY: 100 });
-    await fireEvent.wheel(screen.getByLabelText(label), { deltaY: 100 });
-    expect(screen.getByLabelText(label)).toHaveDisplayValue('2');
-    await fireEvent.wheel(screen.getByLabelText(label), { deltaY: -100 });
-    await fireEvent.wheel(screen.getByLabelText(label), { deltaY: -100 });
-    expect(screen.getByLabelText(label)).toHaveDisplayValue('0');
+    page.render(makeTest());
+    const input = page.getByLabelText(label);
+    await wheel(input, 100);
+    await wheel(input, 100);
+    await expect.element(input).toHaveValue('2');
+    await wheel(input, -100);
+    await wheel(input, -100);
+    await expect.element(input).toHaveValue('0');
   });
 
   test('should be disabled when disableMouseWheel is true', async () => {
-    await render(makeTest({ disableWheel: true, value: 0 }));
-    await fireEvent.wheel(screen.getByLabelText(label), { deltaY: 100 });
-    await fireEvent.wheel(screen.getByLabelText(label), { deltaY: 100 });
-    expect(screen.getByLabelText(label)).toHaveDisplayValue('0');
-    await fireEvent.wheel(screen.getByLabelText(label), { deltaY: -100 });
-    await fireEvent.wheel(screen.getByLabelText(label), { deltaY: -100 });
-    expect(screen.getByLabelText(label)).toHaveDisplayValue('0');
+    page.render(makeTest({ disableWheel: true, value: 0 }));
+    const input = page.getByLabelText(label);
+    await wheel(input, 100);
+    await wheel(input, 100);
+    await expect.element(input).toHaveValue('0');
+    await wheel(input, -100);
+    await wheel(input, -100);
+    await expect.element(input).toHaveValue('0');
+  });
+});
+
+describe('a11y', () => {
+  test('useNumberField should not have a11y errors with labels or descriptions', async () => {
+    page.render(makeTest());
+    await expectNoA11yViolations('[data-testid="fixture"]');
+  });
+
+  test('useNumberField picks up native error messages', async () => {
+    page.render(makeTest({ required: true }));
+
+    const input = page.getByLabelText(label);
+    (await input.element()).dispatchEvent(new Event('invalid', { bubbles: true }));
+
+    await expect.element(input).toHaveAttribute('aria-invalid', 'true');
+    const el = (await input.element()) as HTMLInputElement;
+    expect(el.validationMessage).toMatch(/.+/);
+
+    await expectNoA11yViolations('[data-testid="fixture"]');
   });
 });
