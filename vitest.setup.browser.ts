@@ -12,5 +12,3 @@ if (typeof window !== 'undefined') {
   Element.prototype.scrollIntoView = vi.fn();
   HTMLElement.prototype.scrollIntoView = vi.fn();
 }
-
-

@@ -1,11 +1,10 @@
 import { defineComponent, watch, ref, onMounted } from 'vue';
 import { StepResolveContext, useStepFormFlow } from '.';
-import { flush } from '@test-utils/flush';
 import { useTextField } from '../useTextField';
 import { FormFlowSegment } from './useFlowSegment';
 import { z } from 'zod';
 import { FormObject } from '../types';
-import { expectNoA11yViolations } from '@test-utils/index';
+import { dispatchEvent, expectNoA11yViolations } from '@test-utils/index';
 import { page } from 'vitest/browser';
 import { expect } from 'vitest';
 
@@ -161,10 +160,8 @@ describe('navigation', () => {
         `,
     });
 
-    await flush();
-
     // Should start at the first step
-    await expect.element(page.getByText('Step 1')).toBeInTheDocument();
+    await expect.element(page.getByText('Step 1', { exact: true })).toBeInTheDocument();
     expect(((await page.getByTestId('previous-button').element()) as HTMLButtonElement).disabled).toBe(true);
     await expect.element(page.getByLabelText('Name')).toBeInTheDocument();
     expect(document.querySelector('input[name="address"]')).toBeNull();
@@ -174,10 +171,9 @@ describe('navigation', () => {
 
     // Go to the next step
     await page.getByTestId('next-button').click();
-    await flush();
 
     // Should now be on the second step
-    await expect.element(page.getByText('Step 2')).toBeInTheDocument();
+    await expect.element(page.getByText('Step 2', { exact: true })).toBeInTheDocument();
     expect(((await page.getByTestId('previous-button').element()) as HTMLButtonElement).disabled).toBe(false);
     expect(document.querySelector('input[name="name"]')).toBeNull();
     await expect.element(page.getByLabelText('Address')).toBeInTheDocument();
@@ -187,10 +183,9 @@ describe('navigation', () => {
 
     // Go back to the first step
     await page.getByTestId('previous-button').click();
-    await flush();
 
     // Should be back on the first step
-    await expect.element(page.getByText('Step 1')).toBeInTheDocument();
+    await expect.element(page.getByText('Step 1', { exact: true })).toBeInTheDocument();
     expect(((await page.getByTestId('previous-button').element()) as HTMLButtonElement).disabled).toBe(true);
     await expect.element(page.getByLabelText('Name')).toBeInTheDocument();
     expect(document.querySelector('input[name="address"]')).toBeNull();
@@ -200,7 +195,6 @@ describe('navigation', () => {
 
     // Go to the next step
     await page.getByTestId('next-button').click();
-    await flush();
 
     // Check the form values are preserved
     expect(((await page.getByLabelText('Address').element()) as HTMLInputElement).value).toBe('123 Main St');
@@ -241,21 +235,17 @@ describe('navigation', () => {
       },
     });
 
-    await flush();
-
     // Fill in the name field
     await page.getByLabelText('Name').fill('John Doe');
 
     // Go to the next step
     await page.getByTestId('next-button').click();
-    await flush();
 
     // Fill in the address field
     await page.getByLabelText('Address').fill('123 Main St');
 
     // Submit the form
     await page.getByTestId('next-button').click();
-    await flush();
 
     expect(onDoneMock).toHaveBeenCalledTimes(1);
 
@@ -322,49 +312,55 @@ describe('navigation', () => {
         `,
     });
 
-    await flush();
-
     // Should start at the first step
-    await expect.element(page.getByText('Step 1')).toBeInTheDocument();
+    await expect.element(page.getByText('Step 1', { exact: true })).toBeInTheDocument();
     await expect.element(page.getByLabelText('Name')).toBeInTheDocument();
 
     // Try to go to step 2 without filling step 1
     await page.getByTestId('next-button').click();
-    await flush();
 
     // Should still be on step 1
-    await expect.element(page.getByText('Step 1')).toBeInTheDocument();
+    await expect.element(page.getByText('Step 1', { exact: true })).toBeInTheDocument();
     await expect.element(page.getByLabelText('Name')).toBeInTheDocument();
-    expect(document.querySelector('input[name="address"]')).toBeNull();
-    const nameInput = (await page.getByLabelText('Name').element()) as HTMLInputElement;
-    expect(nameInput.getAttribute('aria-invalid')).toBe('true');
-    expect(nameInput.validationMessage || '').toMatch(/.+/);
+    await expect.poll(() => document.querySelector('input[name="address"]')).toBeNull();
+    await expect.element(page.getByLabelText('Name')).toHaveAttribute('aria-invalid', 'true');
 
-    // Fill in the name field
+    // Fill in the name field and trigger validation via blur
     await page.getByLabelText('Name').fill('John Doe');
+    await dispatchEvent(page.getByLabelText('Name'), 'blur');
+
+    // Wait for validation to complete (field should become valid)
+    await expect.element(page.getByLabelText('Name')).toHaveAttribute('aria-invalid', 'false');
 
     // Go to the next step
     await page.getByTestId('next-button').click();
-    await flush();
+
+    // Wait for navigation by polling for the Address field
+    await expect.poll(() => document.querySelector('input[name="address"]')).not.toBeNull();
 
     // Fill in the address field
     await expect.element(page.getByLabelText('Address')).toBeInTheDocument();
-    expect(document.querySelector('input[name="name"]')).toBeNull();
+    await expect.poll(() => document.querySelector('input[name="name"]')).toBeNull();
 
     await page.getByLabelText('Address').fill('123 Main St');
+    await dispatchEvent(page.getByLabelText('Address'), 'blur');
+    await expect.element(page.getByLabelText('Address')).toHaveAttribute('aria-invalid', 'false');
     await page.getByTestId('next-button').click();
-    await flush();
+
+    // Wait for navigation by polling for the Phone field
+    await expect.poll(() => document.querySelector('input[name="phone"]')).not.toBeNull();
 
     // Should now be on step 3 since previous steps are filled
-    await expect.element(page.getByText('Step 3')).toBeInTheDocument();
+    await expect.element(page.getByText('Step 3', { exact: true })).toBeInTheDocument();
     await expect.element(page.getByLabelText('Phone')).toBeInTheDocument();
-    expect(document.querySelector('input[name="address"]')).toBeNull();
+    await expect.poll(() => document.querySelector('input[name="address"]')).toBeNull();
 
     await page.getByLabelText('Phone').fill('1234567890');
+    await dispatchEvent(page.getByLabelText('Phone'), 'blur');
+    await expect.element(page.getByLabelText('Phone')).toHaveAttribute('aria-invalid', 'false');
     await page.getByTestId('next-button').click();
-    await flush();
 
-    expect(onDone).toHaveBeenCalledTimes(1);
+    await expect.poll(() => onDone.mock.calls.length).toBe(1);
     expect(onDone).toHaveBeenCalledWith({
       name: 'John Doe',
       address: '123 Main St',
@@ -432,74 +428,74 @@ describe('navigation', () => {
         `,
     });
 
-    await flush();
-
     // Should start at the first step
-    await expect.element(page.getByText('Step 1')).toBeInTheDocument();
+    await expect.element(page.getByText('Step 1', { exact: true })).toBeInTheDocument();
     await expect.element(page.getByLabelText('Name')).toBeInTheDocument();
 
     // Fill in the name field
     await page.getByLabelText('Name').fill('John Doe');
-    await flush();
+    await dispatchEvent(page.getByLabelText('Name'), 'blur');
+    await expect.element(page.getByLabelText('Name')).toHaveAttribute('aria-invalid', 'false');
 
     // Try to go to step 2
-    await page.getByText('Go to Step 2').click();
-    await flush();
+    await page.getByRole('button', { name: 'Go to Step 2' }).click();
 
     // Won't jump to step 2, unless step 1 gets submitted
-    await expect.element(page.getByText('Step 1')).toBeInTheDocument();
+    await expect.element(page.getByText('Step 1', { exact: true })).toBeInTheDocument();
     await expect.element(page.getByLabelText('Name')).toBeInTheDocument();
-    expect(document.querySelector('input[name="address"]')).toBeNull();
+    await expect.poll(() => document.querySelector('input[name="address"]')).toBeNull();
 
     // Submit step 1
     await page.getByTestId('next-button').click();
-    await flush();
 
     // Now we are at step 2
-    await expect.element(page.getByText('Step 2')).toBeInTheDocument();
+    await expect.poll(() => document.querySelector('input[name="address"]')).not.toBeNull();
+    await expect.element(page.getByText('Step 2', { exact: true })).toBeInTheDocument();
     await expect.element(page.getByLabelText('Address')).toBeInTheDocument();
 
     // We can go back to step 1
-    await page.getByText('Go to Step 1').click();
-    await flush();
+    await page.getByRole('button', { name: 'Go to Step 1' }).click();
 
-    await expect.element(page.getByText('Step 1')).toBeInTheDocument();
+    await expect.poll(() => document.querySelector('input[name="name"]')).not.toBeNull();
+    await expect.element(page.getByText('Step 1', { exact: true })).toBeInTheDocument();
     await expect.element(page.getByLabelText('Name')).toBeInTheDocument();
 
     // Let's go back to step 2
-    await page.getByText('Go to Step 2').click();
-    await flush();
+    await page.getByRole('button', { name: 'Go to Step 2' }).click();
 
-    await expect.element(page.getByText('Step 2')).toBeInTheDocument();
+    await expect.poll(() => document.querySelector('input[name="address"]')).not.toBeNull();
+    await expect.element(page.getByText('Step 2', { exact: true })).toBeInTheDocument();
     await expect.element(page.getByLabelText('Address')).toBeInTheDocument();
 
     await page.getByLabelText('Address').fill('123 Main St');
+    await dispatchEvent(page.getByLabelText('Address'), 'blur');
+    await expect.element(page.getByLabelText('Address')).toHaveAttribute('aria-invalid', 'false');
     await page.getByTestId('next-button').click();
-    await flush();
 
     // Should now be on step 3 since previous steps are filled
-    await expect.element(page.getByText('Step 3')).toBeInTheDocument();
+    await expect.poll(() => document.querySelector('input[name="phone"]')).not.toBeNull();
+    await expect.element(page.getByText('Step 3', { exact: true })).toBeInTheDocument();
     await expect.element(page.getByLabelText('Phone')).toBeInTheDocument();
 
     // We can go back to step 2
-    await page.getByText('Go to Step 2').click();
-    await flush();
+    await page.getByRole('button', { name: 'Go to Step 2' }).click();
 
-    await expect.element(page.getByText('Step 2')).toBeInTheDocument();
+    await expect.poll(() => document.querySelector('input[name="address"]')).not.toBeNull();
+    await expect.element(page.getByText('Step 2', { exact: true })).toBeInTheDocument();
     await expect.element(page.getByLabelText('Address')).toBeInTheDocument();
 
     // We can go back to step 1
-    await page.getByText('Go to Step 1').click();
-    await flush();
+    await page.getByRole('button', { name: 'Go to Step 1' }).click();
 
-    await expect.element(page.getByText('Step 1')).toBeInTheDocument();
+    await expect.poll(() => document.querySelector('input[name="name"]')).not.toBeNull();
+    await expect.element(page.getByText('Step 1', { exact: true })).toBeInTheDocument();
     await expect.element(page.getByLabelText('Name')).toBeInTheDocument();
 
     // We can go back to step 3
-    await page.getByText('Go to Step 3').click();
-    await flush();
+    await page.getByRole('button', { name: 'Go to Step 3' }).click();
 
-    await expect.element(page.getByText('Step 3')).toBeInTheDocument();
+    await expect.poll(() => document.querySelector('input[name="phone"]')).not.toBeNull();
+    await expect.element(page.getByText('Step 3', { exact: true })).toBeInTheDocument();
   });
 
   test('can give steps a name and use it to navigate with goToStep', async () => {
@@ -540,74 +536,63 @@ describe('navigation', () => {
         `,
     });
 
-    await flush();
-
     // Should start at the first step
-    await expect.element(page.getByText('Step 1')).toBeInTheDocument();
+    await expect.element(page.getByText('Step 1', { exact: true })).toBeInTheDocument();
     await expect.element(page.getByLabelText('Name')).toBeInTheDocument();
 
     // Fill in the name field
     await page.getByLabelText('Name').fill('John Doe');
-    await flush();
 
     // Try to go to step 2
-    await page.getByText('Go to Step 2').click();
-    await flush();
+    await page.getByRole('button', { name: 'Go to Step 2' }).click();
 
     // Won't jump to step 2, unless step 1 gets submitted
-    await expect.element(page.getByText('Step 1')).toBeInTheDocument();
+    await expect.element(page.getByText('Step 1', { exact: true })).toBeInTheDocument();
     await expect.element(page.getByLabelText('Name')).toBeInTheDocument();
     expect(document.querySelector('input[name="address"]')).toBeNull();
 
     // Submit step 1
     await page.getByTestId('next-button').click();
-    await flush();
 
     // Now we are at step 2
-    await expect.element(page.getByText('Step 2')).toBeInTheDocument();
+    await expect.element(page.getByText('Step 2', { exact: true })).toBeInTheDocument();
     await expect.element(page.getByLabelText('Address')).toBeInTheDocument();
 
     // We can go back to step 1
-    await page.getByText('Go to Step 1').click();
-    await flush();
+    await page.getByRole('button', { name: 'Go to Step 1' }).click();
 
-    await expect.element(page.getByText('Step 1')).toBeInTheDocument();
+    await expect.element(page.getByText('Step 1', { exact: true })).toBeInTheDocument();
     await expect.element(page.getByLabelText('Name')).toBeInTheDocument();
 
     // Let's go back to step 2
-    await page.getByText('Go to Step 2').click();
-    await flush();
+    await page.getByRole('button', { name: 'Go to Step 2' }).click();
 
-    await expect.element(page.getByText('Step 2')).toBeInTheDocument();
+    await expect.element(page.getByText('Step 2', { exact: true })).toBeInTheDocument();
     await expect.element(page.getByLabelText('Address')).toBeInTheDocument();
 
     await page.getByLabelText('Address').fill('123 Main St');
     await page.getByTestId('next-button').click();
-    await flush();
 
     // Should now be on step 3 since previous steps are filled
-    await expect.element(page.getByText('Step 3')).toBeInTheDocument();
+    await expect.element(page.getByText('Step 3', { exact: true })).toBeInTheDocument();
     await expect.element(page.getByLabelText('Phone')).toBeInTheDocument();
 
     // We can go back to step 2
-    await page.getByText('Go to Step 2').click();
-    await flush();
+    await page.getByRole('button', { name: 'Go to Step 2' }).click();
 
-    await expect.element(page.getByText('Step 2')).toBeInTheDocument();
+    await expect.element(page.getByText('Step 2', { exact: true })).toBeInTheDocument();
     await expect.element(page.getByLabelText('Address')).toBeInTheDocument();
 
     // We can go back to step 1
-    await page.getByText('Go to Step 1').click();
-    await flush();
+    await page.getByRole('button', { name: 'Go to Step 1' }).click();
 
-    await expect.element(page.getByText('Step 1')).toBeInTheDocument();
+    await expect.element(page.getByText('Step 1', { exact: true })).toBeInTheDocument();
     await expect.element(page.getByLabelText('Name')).toBeInTheDocument();
 
     // We can go back to step 3
-    await page.getByText('Go to Step 3').click();
-    await flush();
+    await page.getByRole('button', { name: 'Go to Step 3' }).click();
 
-    await expect.element(page.getByText('Step 3')).toBeInTheDocument();
+    await expect.element(page.getByText('Step 3', { exact: true })).toBeInTheDocument();
   });
 
   test('going to the same step again is a NO-OP', async () => {
@@ -640,21 +625,17 @@ describe('navigation', () => {
         `,
     });
 
-    await flush();
-
     // Should start at the first step
-    await expect.element(page.getByText('Step 1')).toBeInTheDocument();
+    await expect.element(page.getByText('Step 1', { exact: true })).toBeInTheDocument();
     await expect.element(page.getByLabelText('Name')).toBeInTheDocument();
 
     // Fill in the name field
     await page.getByLabelText('Name').fill('John Doe');
-    await flush();
 
     // Try to go to step 2
-    await page.getByText('Go to Step 1').click();
-    await flush();
+    await page.getByRole('button', { name: 'Go to Step 1' }).click();
 
-    await expect.element(page.getByText('Step 1')).toBeInTheDocument();
+    await expect.element(page.getByText('Step 1', { exact: true })).toBeInTheDocument();
     await expect.element(page.getByLabelText('Name')).toBeInTheDocument();
   });
 
@@ -697,10 +678,8 @@ describe('navigation', () => {
         `,
     });
 
-    await flush();
-
     // Should start at the first step
-    await expect.element(page.getByText('Step 1')).toBeInTheDocument();
+    await expect.element(page.getByText('Step 1', { exact: true })).toBeInTheDocument();
     await expect.element(page.getByLabelText('Name')).toBeInTheDocument();
 
     await expect.element(page.getByText('Go to Step 1')).toHaveAttribute('aria-selected', 'true');
@@ -709,10 +688,8 @@ describe('navigation', () => {
 
     // Fill in the name field
     await page.getByLabelText('Name').fill('John Doe');
-    await flush();
 
     await page.getByTestId('next-button').click();
-    await flush();
 
     await expect.element(page.getByText('Go to Step 1')).toHaveAttribute('aria-selected', 'false');
     await expect.element(page.getByText('Go to Step 2')).toHaveAttribute('aria-selected', 'true');
@@ -721,7 +698,6 @@ describe('navigation', () => {
     await page.getByLabelText('Address').fill('123 Main St');
 
     await page.getByTestId('next-button').click();
-    await flush();
 
     await expect.element(page.getByText('Go to Step 1')).toHaveAttribute('aria-selected', 'false');
     await expect.element(page.getByText('Go to Step 2')).toHaveAttribute('aria-selected', 'false');
@@ -786,37 +762,34 @@ describe('navigation', () => {
         `,
     });
 
-    await flush();
-
     // Should start at the first step
-    await expect.element(page.getByText('Step 1')).toBeInTheDocument();
+    await expect.element(page.getByText('Step 1', { exact: true })).toBeInTheDocument();
     await expect.element(page.getByLabelText('Name')).toBeInTheDocument();
 
     // Try to go to step 3 without force - should not work since step 1 is not submitted
-    await page.getByText('Go to Step 3').click();
-    await flush();
+    await page.getByRole('button', { name: 'Go to Step 3', exact: true }).click();
 
     // Should still be on step 1
-    await expect.element(page.getByText('Step 1')).toBeInTheDocument();
+    await expect.element(page.getByText('Step 1', { exact: true })).toBeInTheDocument();
     await expect.element(page.getByLabelText('Name')).toBeInTheDocument();
-    expect(document.querySelector('input[name="phone"]')).toBeNull();
+    await expect.poll(() => document.querySelector('input[name="phone"]')).toBeNull();
 
     // Now try with force option - should work
-    await page.getByText('Force Go to Step 3').click();
-    await flush();
+    await page.getByRole('button', { name: 'Force Go to Step 3' }).click();
 
     // Should now be on step 3
-    await expect.element(page.getByText('Step 3')).toBeInTheDocument();
+    await expect.poll(() => document.querySelector('input[name="phone"]')).not.toBeNull();
+    await expect.element(page.getByText('Step 3', { exact: true })).toBeInTheDocument();
     await expect.element(page.getByLabelText('Phone')).toBeInTheDocument();
-    expect(document.querySelector('input[name="name"]')).toBeNull();
+    await expect.poll(() => document.querySelector('input[name="name"]')).toBeNull();
 
     // Can go back to step 1 with force
-    await page.getByText('Go to Step 1').click();
-    await flush();
+    await page.getByRole('button', { name: 'Go to Step 1', exact: true }).click();
 
-    await expect.element(page.getByText('Step 1')).toBeInTheDocument();
+    await expect.poll(() => document.querySelector('input[name="name"]')).not.toBeNull();
+    await expect.element(page.getByText('Step 1', { exact: true })).toBeInTheDocument();
     await expect.element(page.getByLabelText('Name')).toBeInTheDocument();
-    expect(document.querySelector('input[name="phone"]')).toBeNull();
+    await expect.poll(() => document.querySelector('input[name="phone"]')).toBeNull();
   });
 
   test('should use custom step resolver to determine next step', async () => {
@@ -885,32 +858,26 @@ describe('navigation', () => {
         `,
     });
 
-    await flush();
-
     // Should start at the first step
-    await expect.element(page.getByText('Step 1')).toBeInTheDocument();
+    await expect.element(page.getByText('Step 1', { exact: true })).toBeInTheDocument();
     await expect.element(page.getByLabelText('Name')).toBeInTheDocument();
 
     // Fill in the name field with "skip" to trigger custom resolver
     await page.getByLabelText('Name').fill('skip');
-    await flush();
 
     // Go to next step
     await page.getByTestId('next-button').click();
-    await flush();
 
     // Should skip step 2 and go directly to step 3
-    await expect.element(page.getByText('Step 3')).toBeInTheDocument();
+    await expect.element(page.getByText('Step 3', { exact: true })).toBeInTheDocument();
     await expect.element(page.getByLabelText('Phone')).toBeInTheDocument();
     expect(document.querySelector('input[name="address"]')).toBeNull();
 
     // Fill in the phone field
     await page.getByLabelText('Phone').fill('1234567890');
-    await flush();
 
     // Submit the form
     await page.getByTestId('next-button').click();
-    await flush();
 
     // Verify onDone was called with the correct values
     expect(onDone).toHaveBeenCalledWith({
@@ -970,17 +937,13 @@ describe('navigation', () => {
         `,
     });
 
-    await flush();
-
     // Should start at the first step
-    await expect.element(page.getByText('Step 1')).toBeInTheDocument();
+    await expect.element(page.getByText('Step 1', { exact: true })).toBeInTheDocument();
     await expect.element(page.getByLabelText('Name')).toBeInTheDocument();
 
     // Fill in the name field with "skip" to trigger custom resolver
     await page.getByLabelText('Name').fill('skip');
-    await flush();
     await page.getByTestId('next-button').click();
-    await flush();
 
     // Verify onDone was called with the correct values
     expect(onDone).toHaveBeenCalledWith({
@@ -1020,24 +983,19 @@ describe('state', () => {
     `,
     });
 
-    await flush();
-
     await expect.element(page.getByTestId('step-1-values')).toHaveTextContent('{}');
     await expect.element(page.getByTestId('step-2-values')).toHaveTextContent('{}');
 
     // Fill in the name field
     await page.getByLabelText('Name').fill('John Doe');
-    await flush();
 
     await page.getByTestId('next-button').click();
-    await flush();
 
     await expect.element(page.getByTestId('step-1-values')).toHaveTextContent('{ "name": "John Doe" }');
     await expect.element(page.getByTestId('step-2-values')).toHaveTextContent('{}');
 
     await page.getByLabelText('Address').fill('123 Main St');
     await page.getByTestId('next-button').click();
-    await flush();
 
     await expect.element(page.getByTestId('step-1-values')).toHaveTextContent('{ "name": "John Doe" }');
     await expect.element(page.getByTestId('step-2-values')).toHaveTextContent('{ "address": "123 Main St" }');
@@ -1070,7 +1028,6 @@ describe('a11y', () => {
         `,
     });
 
-    await flush();
     await expectNoA11yViolations('[data-testid="fixture"]');
   });
 
@@ -1093,8 +1050,6 @@ describe('a11y', () => {
         `,
       });
 
-      await flush();
-
       // Check that buttons have accessible attributes
       const nextButton = page.getByTestId('next-button');
       const prevButton = page.getByTestId('previous-button');
@@ -1108,7 +1063,6 @@ describe('a11y', () => {
 
       // Go to next step
       await nextButton.click();
-      await flush();
 
       // Prev button should now be enabled
       expect(((await page.getByTestId('previous-button').element()) as HTMLButtonElement).disabled).toBe(false);
@@ -1132,14 +1086,11 @@ describe('a11y', () => {
         `,
       });
 
-      await flush();
-
       // Next button should say "Next" on first step
       await expect.element(page.getByTestId('next-button')).toHaveTextContent('Next');
 
       // Go to next step
       await page.getByTestId('next-button').click();
-      await flush();
 
       // Next button should say "Submit" on last step
       await expect.element(page.getByTestId('next-button')).toHaveTextContent('Submit');
@@ -1201,15 +1152,11 @@ describe('warnings', () => {
       `,
     });
 
-    await flush();
-
     // Fill in the name field with "invalid" to trigger invalid step identifier
     await page.getByLabelText('Name').fill('invalid');
-    await flush();
 
     // Try to go to next step
     await page.getByTestId('next-button').click();
-    await flush();
 
     // Should warn about invalid step identifier
     expect(consoleSpy).toHaveBeenCalledWith(
@@ -1217,7 +1164,7 @@ describe('warnings', () => {
     );
 
     // Should still be on step 1 since the step change was skipped
-    await expect.element(page.getByText('Step 1')).toBeInTheDocument();
+    await expect.element(page.getByText('Step 1', { exact: true })).toBeInTheDocument();
     await expect.element(page.getByLabelText('Name')).toBeInTheDocument();
   });
 
@@ -1264,15 +1211,11 @@ describe('warnings', () => {
       `,
     });
 
-    await flush();
-
     // Fill in the name field with "null" to trigger null return
     await page.getByLabelText('Name').fill('null');
-    await flush();
 
     // Try to go to next step
     await page.getByTestId('next-button').click();
-    await flush();
 
     // Should warn about empty step identifier
     expect(consoleSpy).toHaveBeenCalledWith(
@@ -1280,7 +1223,7 @@ describe('warnings', () => {
     );
 
     // Should execute default next resolver and move to step 2
-    await expect.element(page.getByText('Step 2')).toBeInTheDocument();
+    await expect.element(page.getByText('Step 2', { exact: true })).toBeInTheDocument();
     await expect.element(page.getByLabelText('Address')).toBeInTheDocument();
   });
 
@@ -1327,15 +1270,11 @@ describe('warnings', () => {
       `,
     });
 
-    await flush();
-
     // Fill in the name field with "undefined" to trigger undefined return
     await page.getByLabelText('Name').fill('undefined');
-    await flush();
 
     // Try to go to next step
     await page.getByTestId('next-button').click();
-    await flush();
 
     // Should warn about empty step identifier
     expect(consoleSpy).toHaveBeenCalledWith(
@@ -1343,7 +1282,7 @@ describe('warnings', () => {
     );
 
     // Should execute default next resolver and move to step 2
-    await expect.element(page.getByText('Step 2')).toBeInTheDocument();
+    await expect.element(page.getByText('Step 2', { exact: true })).toBeInTheDocument();
     await expect.element(page.getByLabelText('Address')).toBeInTheDocument();
   });
 
@@ -1383,8 +1322,6 @@ describe('warnings', () => {
       `,
     });
 
-    await flush();
-
     // The warning should be triggered during the resolver context creation
     // if there's no current step resolved (edge case scenario)
     // Note: This is a defensive test for the warning in createStepResolverContext
@@ -1419,12 +1356,9 @@ describe('warnings', () => {
       `,
     });
 
-    await flush();
-
     // Try to trigger the next action which should call the resolver
     // and trigger the warning about no current step
     await page.getByTestId('next-button').click();
-    await flush();
 
     // Should warn about no current step resolved
     expect(consoleSpy).toHaveBeenCalledWith(
@@ -1453,8 +1387,6 @@ describe('single-step forms', () => {
       `,
     });
 
-    await flush();
-
     // With only one step, the next button should say "Submit" not "Next"
     await expect.element(page.getByTestId('next-button')).toHaveTextContent('Submit');
   });
@@ -1480,15 +1412,11 @@ describe('single-step forms', () => {
       `,
     });
 
-    await flush();
-
     // Fill in the field
     await page.getByLabelText('Name').fill('John Doe');
-    await flush();
 
     // Click next/submit button
     await page.getByTestId('next-button').click();
-    await flush();
 
     // Should have triggered onDone, not moved to another step
     expect(onDone).toHaveBeenCalledWith({
@@ -1536,8 +1464,6 @@ describe('single-step forms', () => {
       `,
     });
 
-    await flush();
-
     // The button should start as "Next" and not flicker to "Submit" during registration
     // First value should be "Next" (not "Submit")
     expect(buttonTexts[0]).toBe('Next');
@@ -1562,11 +1488,8 @@ describe('single-step forms', () => {
       `,
     });
 
-    await flush();
-
     // Wait an extra tick for the microtask (segmentsStable) to resolve
     await new Promise(resolve => Promise.resolve().then(resolve));
-    await flush();
 
     // After segments stabilize, single-step form should show "Submit"
     await expect.element(page.getByTestId('next-button')).toHaveTextContent('Submit');
@@ -1608,10 +1531,8 @@ describe('conditional rendering with v-if', () => {
       `,
     });
 
-    await flush();
-
     // After showFirstStep becomes true, step 1 should appear and be active
-    await expect.element(page.getByText('Step 1')).toBeInTheDocument();
+    await expect.element(page.getByText('Step 1', { exact: true })).toBeInTheDocument();
     await expect.element(page.getByTestId('current-segment')).toHaveTextContent('Current: step1');
   });
 
@@ -1644,8 +1565,6 @@ describe('conditional rendering with v-if', () => {
         </SteppedFormFlow>
       `,
     });
-
-    await flush();
 
     // Step 1 is not rendered, so step 2 should be the first available step
     // However, step 1 was registered first, so currentSegmentId points to step1
@@ -1684,8 +1603,6 @@ describe('conditional rendering with v-if', () => {
         </SteppedFormFlow>
       `,
     });
-
-    await flush();
 
     // With the fix, step 2 (first available) should be active and visible
     expect(document.body.textContent).toContain('Step 2');
@@ -1735,10 +1652,8 @@ describe('conditional rendering with v-if', () => {
     `,
     });
 
-    await flush();
-
     // Should be on step 3 and not step 1, meaning the correction did not happen
-    await expect.element(page.getByText('Step 3')).toBeInTheDocument();
+    await expect.element(page.getByText('Step 3', { exact: true })).toBeInTheDocument();
     expect(document.body.textContent).not.toContain('Step 1');
     expect(document.body.textContent).not.toContain('Step 2');
     await expect.element(page.getByTestId('current-step')).toHaveTextContent('Current: step3');

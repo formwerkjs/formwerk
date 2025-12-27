@@ -34,4 +34,8 @@ dispatchEvent.keyboard = async function (target: Locator, code: string, type: 'k
   el.dispatchEvent(new KeyboardEvent(type, { bubbles: true, code, key: code }));
 };
 
-export { dispatchEvent };
+async function waitForTimeout(ms: number) {
+  await new Promise(resolve => setTimeout(resolve, ms));
+}
+
+export { dispatchEvent, waitForTimeout };

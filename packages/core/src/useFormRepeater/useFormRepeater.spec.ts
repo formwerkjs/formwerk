@@ -1,6 +1,5 @@
 import { defineComponent, ref } from 'vue';
 import { useFormRepeater, FormRepeaterProps } from './useFormRepeater';
-import { flush } from '@test-utils/index';
 import { useForm } from '../useForm';
 import { useTextField } from '../useTextField';
 import { page } from 'vitest/browser';
@@ -72,7 +71,6 @@ test('adds a new item when add button is clicked', async () => {
     min: 1,
   });
   await page.getByTestId('add-button').click();
-  await flush();
   expect(document.querySelectorAll('[data-testid="repeater-item"]').length).toBe(2);
 });
 
@@ -89,7 +87,6 @@ test('does not add a new item when max limit is reached', async () => {
   // Attempt to add 4th item, but the button is disabled.
   // Don't use locator.click() here because it waits for the element to become enabled.
   ((await addButton.element()) as HTMLButtonElement).click();
-  await flush();
 
   expect(document.querySelectorAll('[data-testid="repeater-item"]').length).toBe(3); // Should not exceed max
 
@@ -107,12 +104,10 @@ test('removes an item when remove button is clicked', async () => {
   // Add two more items to have three in total
   await addButton.click();
   await addButton.click();
-  await flush();
   expect(document.querySelectorAll('[data-testid="repeater-item"]').length).toBe(3);
 
   // Remove the second item
   await page.getByTestId('remove-button').nth(1).click();
-  await flush();
   expect(document.querySelectorAll('[data-testid="repeater-item"]').length).toBe(2);
 
   // Verify that the add button is enabled again
@@ -129,7 +124,6 @@ test('should disable add button when max is reached', async () => {
   // Add items to reach the maximum limit
   await addButton.click(); // 2nd item
   await addButton.click(); // 3rd item
-  await flush();
 
   expect(((await addButton.element()) as HTMLButtonElement).disabled).toBe(true);
 });
@@ -154,13 +148,11 @@ test('moves an item up', async () => {
   // Add two more items to have three in total
   await addButton.click(); // 2nd item
   await addButton.click(); // 3rd item
-  await flush();
 
   expect(document.querySelectorAll('[data-testid="repeater-item"]').length).toBe(3);
 
   // Move the third item up to the second position
   await page.getByTestId('move-up-button').nth(2).click();
-  await flush();
 
   // Since we're not tracking the order, we'll assume the move was successful if no errors occur
   expect(document.querySelectorAll('[data-testid="repeater-item"]').length).toBe(3);
@@ -176,13 +168,11 @@ test('moves an item down', async () => {
   // Add two more items to have three in total
   await addButton.click(); // 2nd item
   await addButton.click(); // 3rd item
-  await flush();
 
   expect(document.querySelectorAll('[data-testid="repeater-item"]').length).toBe(3);
 
   // Move the first item down to the second position
   await page.getByTestId('move-down-button').nth(0).click();
-  await flush();
 
   // Since we're not tracking the order, we'll assume the move was successful if no errors occur
   expect(document.querySelectorAll('[data-testid="repeater-item"]').length).toBe(3);
@@ -198,12 +188,10 @@ test('swaps two items', async () => {
   const addButton = page.getByTestId('add-button');
   await addButton.click();
   await addButton.click();
-  await flush();
   await expect.element(page.getByTestId('key').nth(0)).toHaveTextContent('-0');
   await expect.element(page.getByTestId('key').nth(1)).toHaveTextContent('-1');
 
   swap(0, 1);
-  await flush();
 
   await expect.element(page.getByTestId('key').nth(0)).toHaveTextContent('-1');
   await expect.element(page.getByTestId('key').nth(1)).toHaveTextContent('-0');
@@ -217,9 +205,8 @@ test('inserts an item at a specific index', async () => {
   });
 
   insert(1);
-  await flush();
 
-  expect(document.querySelectorAll('[data-testid="repeater-item"]').length).toBe(2);
+  await expect.poll(() => document.querySelectorAll('[data-testid="repeater-item"]').length).toBe(2);
 });
 
 test('does not insert an item when max is reached', async () => {
@@ -232,11 +219,9 @@ test('does not insert an item when max is reached', async () => {
   const addButton = page.getByTestId('add-button');
   await addButton.click();
   await addButton.click();
-  await flush();
 
   const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
   insert(1);
-  await flush();
 
   expect(document.querySelectorAll('[data-testid="repeater-item"]').length).toBe(3);
 
@@ -266,7 +251,6 @@ test('does not remove an item when min is reached', async () => {
   const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
 
   remove(0);
-  await flush();
 
   expect(document.querySelectorAll('[data-testid="repeater-item"]').length).toBe(1);
   expect(warn).toHaveBeenCalledOnce();
@@ -279,7 +263,6 @@ test('can remove all if no min is set', async () => {
   });
 
   remove(0);
-  await flush();
 
   expect(document.querySelectorAll('[data-testid="repeater-item"]').length).toBe(0);
 });
@@ -354,7 +337,6 @@ test('warns if move is called with the same index', async () => {
 
   const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
   move(0, 0);
-  await flush();
 
   expect(warn).toHaveBeenCalledOnce();
   warn.mockRestore();
@@ -368,7 +350,6 @@ test('warns if move is called with an out of bounds index', async () => {
 
   const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
   move(0, 10);
-  await flush();
 
   expect(warn).toHaveBeenCalledOnce();
   warn.mockRestore();
@@ -382,7 +363,6 @@ test('warns if insert is called with an out of bounds index', async () => {
 
   const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
   insert(10);
-  await flush();
 
   expect(warn).toHaveBeenCalledOnce();
   warn.mockRestore();
@@ -396,7 +376,6 @@ test('warns if swap is called with the same index', async () => {
 
   const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
   swap(0, 0);
-  await flush();
 
   expect(warn).toHaveBeenCalledOnce();
   warn.mockRestore();
@@ -410,7 +389,6 @@ test('warns if swap is called with an out of bounds index', async () => {
 
   const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
   swap(0, 10);
-  await flush();
 
   expect(warn).toHaveBeenCalledOnce();
   warn.mockRestore();
@@ -504,7 +482,6 @@ describe('form repeater with form context', () => {
     });
 
     page.render(TestComponent);
-    await flush();
 
     // Verify initial state - 3 users with all data
     expect(formReturns.value!.values.users).toHaveLength(3);
@@ -520,7 +497,6 @@ describe('form repeater with form context', () => {
     const secondUserFirstNameInput = firstNameInputs[1];
     secondUserFirstNameInput.value = '';
     secondUserFirstNameInput.dispatchEvent(new Event('input', { bubbles: true }));
-    await flush();
 
     // After clearing firstName, lastName should be unmounted (due to v-if)
     // The form value for firstName should be empty
@@ -528,7 +504,6 @@ describe('form repeater with form context', () => {
 
     // Step 3: Remove the second row
     await page.getByTestId('remove-1').click();
-    await flush();
 
     // After removal, we should have 2 users
     expect(formReturns.value!.values.users).toHaveLength(2);
@@ -608,7 +583,6 @@ describe('form repeater with form context', () => {
     });
 
     page.render(TestComponent);
-    await flush();
 
     // Verify initial state
     expect(formReturns.value!.values.users).toHaveLength(3);
@@ -618,7 +592,6 @@ describe('form repeater with form context', () => {
 
     // Remove the second item (index 1)
     await page.getByTestId('remove-1').click();
-    await flush();
 
     // After removal, we should have 2 users
     expect(formReturns.value!.values.users).toHaveLength(2);
@@ -692,23 +665,21 @@ describe('form repeater with form context', () => {
     });
 
     page.render(TestComponent);
-    await flush();
 
     // Verify initial state
-    expect(formReturns.value!.values.users).toHaveLength(3);
-    expect(formReturns.value!.values.users![0].firstName).toBe('User 1');
-    expect(formReturns.value!.values.users![1].firstName).toBe('User 2');
-    expect(formReturns.value!.values.users![2].firstName).toBe('User 3');
+    await expect.poll(() => formReturns.value!.values.users).toHaveLength(3);
+    await expect.poll(() => formReturns.value!.values.users![0].firstName).toBe('User 1');
+    await expect.poll(() => formReturns.value!.values.users![1].firstName).toBe('User 2');
+    await expect.poll(() => formReturns.value!.values.users![2].firstName).toBe('User 3');
 
     // Swap first and third items (index 0 and 2)
     repeaterReturns.value!.swap(0, 2);
-    await flush();
 
     // After swap, User 1 and User 3 should be swapped
-    expect(formReturns.value!.values.users).toHaveLength(3);
-    expect(formReturns.value!.values.users![0].firstName).toBe('User 3');
-    expect(formReturns.value!.values.users![1].firstName).toBe('User 2');
-    expect(formReturns.value!.values.users![2].firstName).toBe('User 1');
+    await expect.poll(() => formReturns.value!.values.users).toHaveLength(3);
+    await expect.poll(() => formReturns.value!.values.users![0].firstName).toBe('User 3');
+    await expect.poll(() => formReturns.value!.values.users![1].firstName).toBe('User 2');
+    await expect.poll(() => formReturns.value!.values.users![2].firstName).toBe('User 1');
   });
 
   test('moving an item updates form values correctly', async () => {
@@ -777,23 +748,21 @@ describe('form repeater with form context', () => {
     });
 
     page.render(TestComponent);
-    await flush();
 
     // Verify initial state
-    expect(formReturns.value!.values.users).toHaveLength(3);
-    expect(formReturns.value!.values.users![0].firstName).toBe('User 1');
-    expect(formReturns.value!.values.users![1].firstName).toBe('User 2');
-    expect(formReturns.value!.values.users![2].firstName).toBe('User 3');
+    await expect.poll(() => formReturns.value!.values.users).toHaveLength(3);
+    await expect.poll(() => formReturns.value!.values.users![0].firstName).toBe('User 1');
+    await expect.poll(() => formReturns.value!.values.users![1].firstName).toBe('User 2');
+    await expect.poll(() => formReturns.value!.values.users![2].firstName).toBe('User 3');
 
     // Move first item to the end (from index 0 to index 2)
     repeaterReturns.value!.move(0, 2);
-    await flush();
 
     // After move, User 1 should be at the end
-    expect(formReturns.value!.values.users).toHaveLength(3);
-    expect(formReturns.value!.values.users![0].firstName).toBe('User 2');
-    expect(formReturns.value!.values.users![1].firstName).toBe('User 3');
-    expect(formReturns.value!.values.users![2].firstName).toBe('User 1');
+    await expect.poll(() => formReturns.value!.values.users).toHaveLength(3);
+    await expect.poll(() => formReturns.value!.values.users![0].firstName).toBe('User 2');
+    await expect.poll(() => formReturns.value!.values.users![1].firstName).toBe('User 3');
+    await expect.poll(() => formReturns.value!.values.users![2].firstName).toBe('User 1');
   });
 
   test('inserting an item updates form values correctly', async () => {
@@ -862,24 +831,22 @@ describe('form repeater with form context', () => {
     });
 
     page.render(TestComponent);
-    await flush();
 
     // Verify initial state
-    expect(formReturns.value!.values.users).toHaveLength(3);
-    expect(formReturns.value!.values.users![0].firstName).toBe('User 1');
-    expect(formReturns.value!.values.users![1].firstName).toBe('User 2');
-    expect(formReturns.value!.values.users![2].firstName).toBe('User 3');
+    await expect.poll(() => formReturns.value!.values.users).toHaveLength(3);
+    await expect.poll(() => formReturns.value!.values.users![0].firstName).toBe('User 1');
+    await expect.poll(() => formReturns.value!.values.users![1].firstName).toBe('User 2');
+    await expect.poll(() => formReturns.value!.values.users![2].firstName).toBe('User 3');
 
     // Insert at index 1 (between User 1 and User 2)
     repeaterReturns.value!.insert(1);
-    await flush();
 
     // After insert, we should have 4 items with an empty item at index 1
-    expect(formReturns.value!.values.users).toHaveLength(4);
-    expect(formReturns.value!.values.users![0].firstName).toBe('User 1');
-    expect(formReturns.value!.values.users![1].firstName).toBeUndefined(); // New empty item
-    expect(formReturns.value!.values.users![2].firstName).toBe('User 2');
-    expect(formReturns.value!.values.users![3].firstName).toBe('User 3');
+    await expect.poll(() => formReturns.value!.values.users).toHaveLength(4);
+    await expect.poll(() => formReturns.value!.values.users![0].firstName).toBe('User 1');
+    await expect.poll(() => formReturns.value!.values.users![1].firstName).toBeUndefined(); // New empty item
+    await expect.poll(() => formReturns.value!.values.users![2].firstName).toBe('User 2');
+    await expect.poll(() => formReturns.value!.values.users![3].firstName).toBe('User 3');
   });
 
   test('removing an item works when form is passed as prop (same component setup)', async () => {
@@ -946,7 +913,6 @@ describe('form repeater with form context', () => {
     });
 
     page.render(TestComponent);
-    await flush();
 
     // Verify initial state
     expect(formReturns.value!.values.users).toHaveLength(3);
@@ -956,7 +922,6 @@ describe('form repeater with form context', () => {
 
     // Remove the second item (index 1)
     await page.getByTestId('remove-1').click();
-    await flush();
 
     // After removal, we should have 2 users
     expect(formReturns.value!.values.users).toHaveLength(2);

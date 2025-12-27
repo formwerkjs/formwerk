@@ -28,7 +28,7 @@ describe('form values', () => {
       return useForm({ initialValues: Promise.resolve({ foo: 'bar' }) });
     });
 
-    expect(values).toEqual({ foo: 'bar' });
+    await expect.poll(() => values).toEqual({ foo: 'bar' });
   });
 
   test('it initializes form values from a getter', async () => {
@@ -44,7 +44,7 @@ describe('form values', () => {
       return useForm({ initialValues: async () => ({ foo: 'bar' }) });
     });
 
-    expect(values).toEqual({ foo: 'bar' });
+    await expect.poll(() => values).toEqual({ foo: 'bar' });
   });
 
   test('setValues replaces form values by default', async () => {
@@ -489,10 +489,13 @@ describe('form submit', () => {
       },
     );
 
-    expect(form.isTouched('field')).toBe(false);
+    // Wait for Vue's reactivity to settle after component mount
+    await expect.poll(() => form.isTouched('field')).toBe(false);
     const cb = vi.fn();
     const onSubmit = form.handleSubmit(cb);
     await onSubmit(new Event('submit'));
+    // Wait for the submit callback to be called, then check touched state
+    await expect.poll(() => cb.mock.calls.length).toBe(1);
     await expect.poll(() => form.isTouched('field')).toBe(true);
   });
 

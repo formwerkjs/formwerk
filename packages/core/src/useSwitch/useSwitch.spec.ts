@@ -1,10 +1,10 @@
 import { SwitchProps, useSwitch } from './useSwitch';
 import { describe } from 'vitest';
 import { page } from 'vitest/browser';
-import { expectNoA11yViolations } from '@test-utils/index';
+import { dispatchEvent, expectNoA11yViolations } from '@test-utils/index';
 
 async function keyDown(target: ReturnType<typeof page.getByLabelText>, code: string) {
-  (await target.element()).dispatchEvent(new KeyboardEvent('keydown', { bubbles: true, code }));
+  await dispatchEvent.keyboard(target, code);
 }
 
 describe('with input as base element', () => {
@@ -100,7 +100,8 @@ describe('with input as base element', () => {
     await keyDown(input, 'Space');
     await expect.element(value).toHaveTextContent('false');
     await expect.element(input).not.toBeChecked();
-    await input.click();
+    // Use dispatchEvent because Playwright's click() waits for element to be enabled
+    await dispatchEvent(input, 'click');
     await expect.element(value).toHaveTextContent('false');
     await expect.element(input).not.toBeChecked();
   });
@@ -196,7 +197,8 @@ describe('with custom base element', () => {
     await keyDown(control, 'Space');
     await expect.element(value).toHaveTextContent('false');
     await expect.element(control).toHaveAttribute('aria-checked', 'false');
-    await control.click();
+    // Use dispatchEvent because Playwright's click() waits for element to be enabled
+    await dispatchEvent(control, 'click');
     await expect.element(value).toHaveTextContent('false');
     await expect.element(control).toHaveAttribute('aria-checked', 'false');
   });

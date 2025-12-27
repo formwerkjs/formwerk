@@ -25,7 +25,7 @@ test('it initializes the field value in a form', async () => {
     },
   );
 
-  expect(form.values).toEqual({ field: 'bar' });
+  await expect.poll(() => form.values).toEqual({ field: 'bar' });
 });
 
 test('overrides the initial value in the form with its own', async () => {
@@ -42,7 +42,7 @@ test('overrides the initial value in the form with its own', async () => {
     },
   );
 
-  expect(form.values).toEqual({ field: 'bar' });
+  await expect.poll(() => form.values).toEqual({ field: 'bar' });
 });
 
 test('obtains the initial value from the form', async () => {
@@ -59,7 +59,7 @@ test('obtains the initial value from the form', async () => {
     },
   );
 
-  expect(field.fieldValue.value).toBe('foo');
+  await expect.poll(() => field.fieldValue.value).toBe('foo');
 });
 
 test('pathless field do not write to the form', async () => {

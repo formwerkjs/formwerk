@@ -1,6 +1,4 @@
-import { render } from '@testing-library/vue';
 import { useCustomField } from './useCustomField';
-import { flush } from '@test-utils/flush';
 import { describe, expect, test } from 'vitest';
 import { StandardSchema } from '../types';
 import { renderSetup } from '../../../test-utils/src';
@@ -10,7 +8,7 @@ import { page } from 'vitest/browser';
 describe('useCustomField', () => {
   describe('accessibility', () => {
     test('with label and custom input', async () => {
-      render({
+      page.render({
         setup() {
           const label = 'Custom Field';
           const description = 'A custom field description';
@@ -36,12 +34,11 @@ describe('useCustomField', () => {
         `,
       });
 
-      await flush();
       await expectNoA11yViolations('[data-testid="fixture"]');
     });
 
     test('with error message', async () => {
-      render({
+      page.render({
         setup() {
           const label = 'Custom Field';
           const { controlProps, labelProps, errorMessageProps } = useCustomField({
@@ -64,7 +61,6 @@ describe('useCustomField', () => {
         `,
       });
 
-      await flush();
       await expectNoA11yViolations('[data-testid="fixture"]');
     });
   });
@@ -74,7 +70,7 @@ describe('useCustomField', () => {
       const initialValue = 'test value';
       let value;
 
-      render({
+      page.render({
         setup() {
           const { controlProps, fieldValue } = useCustomField({
             label: 'Custom Field',
@@ -87,15 +83,14 @@ describe('useCustomField', () => {
         template: '<div v-bind="controlProps">Custom input</div>',
       });
 
-      await flush();
-      expect(value.value).toBe(initialValue);
+      await expect.poll(() => value.value).toBe(initialValue);
     });
 
     test('sets initial value from modelValue prop', async () => {
       const initialValue = 'test value';
       let value;
 
-      render({
+      page.render({
         setup() {
           const { controlProps, fieldValue } = useCustomField({
             label: 'Custom Field',
@@ -108,14 +103,13 @@ describe('useCustomField', () => {
         template: '<div v-bind="controlProps">Custom input</div>',
       });
 
-      await flush();
-      expect(value.value).toBe(initialValue);
+      await expect.poll(() => value.value).toBe(initialValue);
     });
   });
 
   describe('disabled state', () => {
     test('applies disabled state when prop is true', async () => {
-      render({
+      page.render({
         setup() {
           const { controlProps } = useCustomField({
             label: 'Custom Field',
@@ -127,14 +121,13 @@ describe('useCustomField', () => {
         template: '<div v-bind="controlProps" data-testid="custom-input">Custom input</div>',
       });
 
-      await flush();
-      await expect.element(page.getByTestId('custom-input')).toHaveAttribute('aria-disabled', 'true');
+      await expect.poll(() => page.getByTestId('custom-input')).toHaveAttribute('aria-disabled', 'true');
     });
   });
 
   describe('readonly state', () => {
     test('applies readonly attribute when prop is true', async () => {
-      render({
+      page.render({
         setup() {
           const { controlProps } = useCustomField({
             label: 'Custom Field',
@@ -146,14 +139,13 @@ describe('useCustomField', () => {
         template: '<div v-bind="controlProps" data-testid="custom-input">Custom input</div>',
       });
 
-      await flush();
-      await expect.element(page.getByTestId('custom-input')).toHaveAttribute('aria-readonly', 'true');
+      await expect.poll(() => page.getByTestId('custom-input')).toHaveAttribute('aria-readonly', 'true');
     });
   });
 
   describe('form integration', () => {
     test('uses provided name attribute', async () => {
-      render({
+      page.render({
         setup() {
           const { controlProps } = useCustomField({
             label: 'Custom Field',
@@ -165,8 +157,7 @@ describe('useCustomField', () => {
         template: '<div v-bind="controlProps" data-testid="custom-input">Custom input</div>',
       });
 
-      await flush();
-      await expect.element(page.getByTestId('custom-input')).toHaveAttribute('name', 'custom-field-name');
+      await expect.poll(() => page.getByTestId('custom-input')).toHaveAttribute('name', 'custom-field-name');
     });
   });
 
@@ -199,7 +190,7 @@ describe('useCustomField', () => {
 
       expect(errorMessage.value).toBe('');
       await validate();
-      expect(errorMessage.value).toBe('Value is required');
+      await expect.poll(() => errorMessage.value).toBe('Value is required');
     });
   });
 });

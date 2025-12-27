@@ -3,16 +3,15 @@ import { Component } from 'vue';
 import { useFormGroup } from './useFormGroup';
 import { useTextField } from '../useTextField';
 import { useForm } from '../useForm';
-import { flush, defineStandardSchema } from '@test-utils/index';
+import { defineStandardSchema, dispatchEvent } from '@test-utils/index';
 import { configure } from '../config';
 import { StandardSchema } from '../types';
 import { page } from 'vitest/browser';
 import { expect } from 'vitest';
 
-async function touchField(locator: { element: () => unknown }) {
-  const el = (await Promise.resolve(locator.element())) as HTMLInputElement;
-  el.focus?.();
-  el.blur?.();
+async function touchField(locator: ReturnType<typeof page.getByTestId>) {
+  await locator.click();
+  await dispatchEvent(locator, 'blur');
 }
 
 function createInputComponent(): Component {
@@ -87,10 +86,8 @@ test('prefixes path values with its name', async () => {
     `,
   });
 
-  await flush();
   await page.getByTestId('field1').fill('test 1');
   await page.getByTestId('field2').fill('test 2');
-  await flush();
 
   expect(form.values).toEqual({ groupTest: { field1: 'test 1' }, nestedGroup: { deep: { field2: 'test 2' } } });
 });
@@ -117,11 +114,9 @@ test('nested groups', async () => {
     `,
   });
 
-  await flush();
   await page.getByTestId('input_a').fill('input_a');
   await page.getByTestId('input_a_b').fill('input_a_b');
   await page.getByTestId('input_a_b_c').fill('input_a_b_c');
-  await flush();
 
   expect(form.values).toEqual({
     group_a: {
@@ -156,11 +151,9 @@ test('tracks its dirty state', async () => {
     `,
   });
 
-  await flush();
   expect(groups[0].isDirty.value).toBe(false);
   expect(groups[1].isDirty.value).toBe(false);
   await page.getByTestId('field1').fill('test 1');
-  await flush();
   expect(groups[0].isDirty.value).toBe(true);
   expect(groups[1].isDirty.value).toBe(false);
 });
@@ -185,11 +178,9 @@ test('tracks its touched state', async () => {
     `,
   });
 
-  await flush();
   expect(groups[0].isTouched.value).toBe(false);
   expect(groups[1].isTouched.value).toBe(false);
   await touchField(page.getByTestId('field1'));
-  await flush();
   expect(groups[0].isTouched.value).toBe(true);
   expect(groups[1].isTouched.value).toBe(false);
 });
@@ -222,14 +213,12 @@ test('tracks its valid state', async () => {
     `,
   });
 
-  await flush();
-  expect(groups[0].isValid.value).toBe(false);
-  expect(groups[1].isValid.value).toBe(true);
+  await expect.poll(() => groups[0].isValid.value).toBe(false);
+  await expect.poll(() => groups[1].isValid.value).toBe(true);
   await page.getByTestId('field1').fill('test');
-  ((await page.getByTestId('field1').element()) as HTMLInputElement).blur();
-  await flush();
-  expect(groups[0].isValid.value).toBe(true);
-  expect(groups[1].isValid.value).toBe(true);
+  await dispatchEvent(page.getByTestId('field1'), 'blur');
+  await expect.poll(() => groups[0].isValid.value).toBe(true);
+  await expect.poll(() => groups[1].isValid.value).toBe(true);
 });
 
 test('validates with a typed schema', async () => {
@@ -257,18 +246,14 @@ test('validates with a typed schema', async () => {
     `,
   });
 
-  await flush();
   await form.validate();
-  await flush();
   expect(groups[0].isValid.value).toBe(false);
   // Group-level schema issues are aggregated at the group path.
   expect(form.getError('group' as any)).toBe('error');
   await page.getByTestId('field').fill('test');
   ((await page.getByTestId('field').element()) as HTMLInputElement).blur();
 
-  await flush();
   await form.validate();
-  await flush();
   expect(groups[0].isValid.value).toBe(true);
   expect(form.getError('group' as any)).toBeUndefined();
 });
@@ -308,19 +293,14 @@ test('validation combines schema with form schema', async () => {
     `,
   });
 
-  await flush();
-  await flush();
-  expect(form.getErrors()).toHaveLength(2);
+  await expect.poll(() => form.getErrors()).toHaveLength(2);
 
   await page.getByTestId('field').fill('test');
-  ((await page.getByTestId('field').element()) as HTMLInputElement).blur();
-
-  await flush();
-  expect(form.getErrors()).toHaveLength(1);
+  await dispatchEvent(page.getByTestId('field'), 'blur');
+  await expect.poll(() => form.getErrors()).toHaveLength(1);
   await page.getByTestId('other').fill('test');
-  ((await page.getByTestId('other').element()) as HTMLInputElement).blur();
-  await flush();
-  expect(form.getErrors()).toHaveLength(0);
+  await dispatchEvent(page.getByTestId('other'), 'blur');
+  await expect.poll(() => form.getErrors()).toHaveLength(0);
 });
 
 test('validation cascades', async () => {
@@ -358,33 +338,26 @@ test('validation cascades', async () => {
     `,
   });
 
-  await flush();
-  expect(form.getErrors()).toHaveLength(4);
-  expect(form.getErrors()[0]).toBe('error');
-  expect(form.getErrors()[2]).toBe('error');
-  expect(form.getErrors()[1]).toMatch(/Constraints not satisfied|Please fill out this field\.?/);
-  expect(form.getErrors()[3]).toMatch(/Constraints not satisfied|Please fill out this field\.?/);
+  await expect.poll(() => form.getErrors()).toHaveLength(4);
+  await expect.poll(() => form.getErrors()[0]).toBe('error');
+  await expect.poll(() => form.getErrors()[2]).toBe('error');
+  await expect.poll(() => form.getErrors()[1]).toMatch(/Constraints not satisfied|Please fill out this field\.?/);
+  await expect.poll(() => form.getErrors()[3]).toMatch(/Constraints not satisfied|Please fill out this field\.?/);
 
   await page.getByTestId('field').fill('test');
-  ((await page.getByTestId('field').element()) as HTMLInputElement).blur();
+  await dispatchEvent(page.getByTestId('field'), 'blur');
 
-  await flush();
-  expect(form.getErrors()).toHaveLength(3);
-  expect(form.getErrors()[0]).toBe('error');
-  expect(form.getErrors()[2]).toBe('error');
-  expect(form.getErrors()[1]).toMatch(/Constraints not satisfied|Please fill out this field\.?/);
+  await expect.poll(() => form.getErrors()).toHaveLength(3);
+  await expect.poll(() => form.getErrors()[0]).toBe('error');
+  await expect.poll(() => form.getErrors()[2]).toBe('error');
+  await expect.poll(() => form.getErrors()[1]).toMatch(/Constraints not satisfied|Please fill out this field\.?/);
   await page.getByTestId('other').fill('test');
-  ((await page.getByTestId('other').element()) as HTMLInputElement).blur();
-  await flush();
-  expect(form.getErrors()).toHaveLength(2);
-  expect(form.getErrors()).toEqual(['error', 'error']);
+  await expect.poll(() => form.getErrors()).toHaveLength(2);
+  await expect.poll(() => form.getErrors()).toEqual(['error', 'error']);
 
   await page.getByTestId('other').fill('valid');
   await page.getByTestId('field').fill('valid');
-  ((await page.getByTestId('other').element()) as HTMLInputElement).blur();
-  ((await page.getByTestId('field').element()) as HTMLInputElement).blur();
-  await flush();
-  expect(form.getErrors()).toHaveLength(0);
+  await expect.poll(() => form.getErrors()).toHaveLength(0);
 });
 
 test('submission combines group data with form data', async () => {
@@ -422,14 +395,11 @@ test('submission combines group data with form data', async () => {
     `,
   });
 
-  await flush();
   expect(submitHandler).not.toHaveBeenCalled();
   await page.getByTestId('first').fill('first');
   await page.getByTestId('second').fill('second');
   await page.getByTestId('third').fill('third');
-  await flush();
   await page.getByRole('button', { name: 'Submit' }).click();
-  await flush();
   expect(submitHandler).toHaveBeenCalledOnce();
   expect(submitHandler).toHaveBeenLastCalledWith({
     group: { first: 'wow', second: 'how' },
@@ -456,7 +426,6 @@ describe('disabling HTML validation', () => {
       `,
     });
 
-    await flush();
     await touchField(page.getByTestId('field1'));
     await touchField(page.getByTestId('field2'));
 
@@ -486,7 +455,6 @@ describe('disabling HTML validation', () => {
       `,
     });
 
-    await flush();
     await touchField(page.getByTestId('field1'));
     await touchField(page.getByTestId('field2'));
     await touchField(page.getByTestId('field3'));
@@ -515,13 +483,15 @@ describe('disabling HTML validation', () => {
       `,
     });
 
-    await flush();
     await touchField(page.getByTestId('field1'));
     await touchField(page.getByTestId('field2'));
     await touchField(page.getByTestId('field3'));
 
     const errors = page.getByTestId('err');
-    await expect.element(errors.nth(0)).toHaveTextContent(/Constraints not satisfied|Please fill out this field\.?/);
+    // Wait for validation to complete by polling for error message
+    await expect
+      .poll(async () => ((await errors.nth(0).element()) as HTMLElement).textContent)
+      .toMatch(/Constraints not satisfied|Please fill out this field\.?/);
     await expect.element(errors.nth(1)).toHaveTextContent('');
     await expect.element(errors.nth(2)).toHaveTextContent('');
   });
@@ -551,7 +521,6 @@ describe('disabling HTML validation', () => {
       `,
     });
 
-    await flush();
     await touchField(page.getByTestId('field1'));
     await touchField(page.getByTestId('field2'));
     await touchField(page.getByTestId('field3'));
