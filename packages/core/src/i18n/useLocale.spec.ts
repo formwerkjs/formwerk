@@ -1,4 +1,3 @@
-import { render } from '@testing-library/vue';
 import { useLocale } from './useLocale';
 import { configure } from '../config';
 import { nextTick, ref } from 'vue';
@@ -6,7 +5,7 @@ import { page } from 'vitest/browser';
 import { expect } from 'vitest';
 
 test('fetches the site locale and direction initially', async () => {
-  render({
+  page.render({
     setup: () => useLocale(),
     template: `
       <span>{{ locale }}</span>
@@ -19,7 +18,7 @@ test('fetches the site locale and direction initially', async () => {
 });
 
 test('updates the locale when the locale config changes', async () => {
-  render({
+  page.render({
     setup: () => useLocale(),
     template: `
       <span>{{ locale }}</span>
@@ -38,7 +37,7 @@ test('updates locale and direction when a reactive locale config changes', async
   const locale = ref('en-US');
   configure({ locale });
 
-  render({
+  page.render({
     setup: () => useLocale(),
     template: `
       <span>{{ locale }}</span>

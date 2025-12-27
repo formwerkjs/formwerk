@@ -1,11 +1,9 @@
 import { CheckboxProps, useCheckbox } from './useCheckbox';
 import { describe } from 'vitest';
-import { render } from '@testing-library/vue';
 import { Component, defineComponent } from 'vue';
-import { renderSetup } from '@test-utils/index';
+import { renderSetup, expectNoA11yViolations } from '@test-utils/index';
 import { useCheckboxGroup } from './useCheckboxGroup';
 import { page } from 'vitest/browser';
-import { expectNoA11yViolations } from '@test-utils/index';
 
 const InputBase: string = `
    <div>
@@ -44,7 +42,7 @@ describe('value toggling on click', () => {
   test('with input as base element', async () => {
     const Checkbox = createCheckbox({ label: 'First' });
 
-    render({
+    page.render({
       components: { Checkbox },
       template: `
         <Checkbox label="First"  />
@@ -61,7 +59,7 @@ describe('value toggling on click', () => {
   test('with custom elements as base', async () => {
     const Checkbox = createCheckbox({ label: 'First' }, CustomBase);
 
-    render({
+    page.render({
       components: { Checkbox },
       template: `
         <Checkbox label="First" />
@@ -80,7 +78,7 @@ describe('value toggling on space key', () => {
   test('with input as base element', async () => {
     const Checkbox = createCheckbox({ label: 'First' });
 
-    render({
+    page.render({
       components: { Checkbox },
       template: `
         <Checkbox label="First"  />
@@ -97,7 +95,7 @@ describe('value toggling on space key', () => {
   test('with custom elements as base', async () => {
     const Checkbox = createCheckbox({ label: 'First' }, CustomBase);
 
-    render({
+    page.render({
       components: { Checkbox },
       template: `
         <Checkbox label="First" />
@@ -116,7 +114,7 @@ describe('value toggling with custom true and false values', () => {
   test('with input as base element', async () => {
     const Checkbox = createCheckbox({ label: 'First', trueValue: '1', falseValue: '2' });
 
-    render({
+    page.render({
       components: { Checkbox },
       template: `
         <Checkbox label="First"  />
@@ -133,7 +131,7 @@ describe('value toggling with custom true and false values', () => {
   test('with custom elements as base', async () => {
     const Checkbox = createCheckbox({ label: 'First', trueValue: '1', falseValue: '2' }, CustomBase);
 
-    render({
+    page.render({
       components: { Checkbox },
       template: `
         <Checkbox label="First" />
@@ -187,7 +185,7 @@ describe('a11y', () => {
   test('with input as base element', async () => {
     const Checkbox = createCheckbox({ label: 'First' });
 
-    render({
+    page.render({
       components: { Checkbox },
       template: `
         <div data-testid="fixture">
@@ -202,7 +200,7 @@ describe('a11y', () => {
   test('with custom elements as base', async () => {
     const Checkbox = createCheckbox({ label: 'First' }, CustomBase);
 
-    render({
+    page.render({
       components: { Checkbox },
       template: `
         <div data-testid="fixture">
@@ -218,7 +216,7 @@ describe('a11y', () => {
     const label = 'First';
     const Checkbox = createCheckbox({ label, required: true });
 
-    render({
+    page.render({
       components: { Checkbox },
       template: `
         <div data-testid="fixture">

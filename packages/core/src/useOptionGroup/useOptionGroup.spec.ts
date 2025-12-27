@@ -1,4 +1,3 @@
-import { render } from '@testing-library/vue';
 import { useOptionGroup } from './useOptionGroup';
 import { useOption } from '../useOption';
 import { defineComponent } from 'vue';
@@ -21,7 +20,7 @@ test('disabling a group disables all options', async () => {
     `,
   });
 
-  render({
+  page.render({
     components: {
       Option,
     },
@@ -55,7 +54,7 @@ test('disabling a group disables all options', async () => {
 });
 
 test('useOptionGroup should not have a11y errors', async () => {
-  render({
+  page.render({
     setup() {
       const label = 'Field';
       const { groupProps, labelProps } = useOptionGroup({

@@ -1,4 +1,3 @@
-import { render } from '@testing-library/vue';
 import { useDateField } from '.';
 import { createCalendar, now, toCalendar } from '@internationalized/date';
 import { DateTimeSegment } from './useDateTimeSegment';
@@ -28,7 +27,7 @@ describe('useDateField', () => {
 
   describe('initialization', () => {
     test('initializes with value prop', async () => {
-      render({
+      page.render({
         components: { DateTimeSegment },
         setup() {
           const { segments, controlProps, labelProps } = useDateField({
@@ -66,7 +65,7 @@ describe('useDateField', () => {
     test('initializes with modelValue prop', async () => {
       const modelValue = ref(currentDate);
 
-      render({
+      page.render({
         components: { DateTimeSegment },
         setup() {
           const { segments, controlProps, labelProps } = useDateField({
@@ -105,7 +104,7 @@ describe('useDateField', () => {
       const calendar = createCalendar('islamic-umalqura');
       const date = toCalendar(now('UTC'), calendar).set({ year: 1445, month: 9, day: 5 }); // Islamic date
 
-      render({
+      page.render({
         components: { DateTimeSegment },
         setup() {
           const { segments, controlProps, labelProps } = useDateField({
@@ -161,7 +160,7 @@ describe('useDateField', () => {
         },
       };
 
-      render({
+      page.render({
         components: { DateTimeSegment },
         setup() {
           const { segments, controlProps, labelProps, errorMessageProps, errorMessage } = useDateField({
@@ -226,7 +225,7 @@ describe('useDateField', () => {
         },
       };
 
-      render({
+      page.render({
         components: { DateTimeSegment },
         setup() {
           const { segments, controlProps, labelProps, errorMessageProps, errorMessage, setValue } = useDateField({
@@ -275,7 +274,7 @@ describe('useDateField', () => {
     });
 
     test('sets blurred state when any segment is blurred', async () => {
-      render({
+      page.render({
         components: { DateTimeSegment },
         setup() {
           const { segments, controlProps, labelProps, isBlurred } = useDateField({
@@ -314,7 +313,7 @@ describe('useDateField', () => {
     });
 
     test('sets touched state when any segment is manipulated', async () => {
-      render({
+      page.render({
         components: { DateTimeSegment },
         setup() {
           const { segments, controlProps, labelProps, isTouched } = useDateField({
@@ -358,7 +357,7 @@ describe('useDateField', () => {
       const minDate = now('UTC');
       const maxDate = now('UTC').add({ days: 1 });
 
-      render({
+      page.render({
         components: { DateTimeSegment },
         setup() {
           const props = useDateField({
@@ -402,7 +401,7 @@ describe('useDateField', () => {
 
   describe('a11y', () => {
     test('provides accessible label and description', async () => {
-      render({
+      page.render({
         components: { DateTimeSegment },
         setup() {
           const { segments, controlProps, labelProps, descriptionProps } = useDateField({

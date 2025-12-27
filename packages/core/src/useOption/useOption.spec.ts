@@ -1,7 +1,6 @@
-import { renderSetup } from '@test-utils/index';
+import { renderSetup, expectNoA11yViolations } from '@test-utils/index';
 import { useOption } from './useOption';
-import { render } from '@testing-library/vue';
-import { expectNoA11yViolations } from '@test-utils/index';
+import { page } from 'vitest/browser';
 
 test('warns if no ListBox Context is provided', async () => {
   const warn = vi.spyOn(console, 'warn');
@@ -17,7 +16,7 @@ test('warns if no ListBox Context is provided', async () => {
 });
 
 test('useOption should not have a11y errors', async () => {
-  render({
+  page.render({
     setup() {
       const label = 'Field';
       const { optionProps } = useOption({ label, value: '' });

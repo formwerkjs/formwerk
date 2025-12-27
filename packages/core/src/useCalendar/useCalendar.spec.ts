@@ -1,11 +1,10 @@
-import { render } from '@testing-library/vue';
 import { useCalendar, CalendarCell } from './index';
 import { createCalendar, fromDate } from '@internationalized/date';
 import { page } from 'vitest/browser';
 import { expectNoA11yViolations } from '@test-utils/index';
 
 async function click(target: ReturnType<typeof page.getByText> | ReturnType<typeof page.getByTestId>) {
-  (await target.element()).click();
+  ((await target.element()) as HTMLElement).click();
 }
 
 async function keyDown(target: ReturnType<typeof page.getByTestId>, code: string) {
@@ -24,7 +23,7 @@ describe('useCalendar', () => {
     test('calls onUpdateModelValue when a date is selected', async () => {
       const currentDate = fromDate(new Date(2025, 2, 11), 'UTC');
 
-      const vm = render({
+      const { emitted } = page.render({
         components: {
           CalendarCell,
         },
@@ -50,13 +49,13 @@ describe('useCalendar', () => {
       });
 
       await click(page.getByText('Select Date'));
-      await expect.poll(() => vm.emitted('update:modelValue')?.[0]).toEqual([currentDate.toDate()]);
+      await expect.poll(() => emitted('update:modelValue')?.[0]).toEqual([currentDate.toDate()]);
     });
 
     test('uses provided calendar type', async () => {
       const calendar = createCalendar('islamic-umalqura');
 
-      render({
+      page.render({
         setup() {
           const { selectedDate } = useCalendar({
             label: 'Calendar',
@@ -80,7 +79,7 @@ describe('useCalendar', () => {
     test('handles Enter key on calendar cell', async () => {
       const currentDate = fromDate(new Date(2025, 2, 11), 'UTC');
 
-      const vm = render({
+      const { emitted } = page.render({
         components: {
           CalendarCell,
         },
@@ -114,13 +113,13 @@ describe('useCalendar', () => {
 
       // Test Enter key selects the date
       await keyDownEl(page.getByTestId('calendar-cell'), 'Enter');
-      await expect.poll(() => vm.emitted('update:modelValue')?.[0]).toEqual([currentDate.toDate()]);
+      await expect.poll(() => emitted('update:modelValue')?.[0]).toEqual([currentDate.toDate()]);
     });
 
     test('handles Enter key in different panels', async () => {
       const currentDate = fromDate(new Date(2025, 2, 11), 'UTC');
 
-      const vm = render({
+      const { emitted } = page.render({
         setup() {
           const { calendarProps, focusedDate, gridLabelProps, currentView } = useCalendar({
             label: 'Calendar',
@@ -151,7 +150,7 @@ describe('useCalendar', () => {
 
       // Test Enter in day panel
       await keyDown(calendar, 'Enter');
-      await expect.poll(() => vm.emitted('update:modelValue')?.[0]).toEqual([currentDate.toDate()]);
+      await expect.poll(() => emitted('update:modelValue')?.[0]).toEqual([currentDate.toDate()]);
 
       // Switch to month panel
       await click(panelLabel);
@@ -168,7 +167,7 @@ describe('useCalendar', () => {
 
   describe('panel navigation', () => {
     test('switches between day, month, and year panels', async () => {
-      render({
+      page.render({
         setup() {
           const { gridLabelProps, currentView } = useCalendar({ label: 'Calendar' });
 
@@ -195,7 +194,7 @@ describe('useCalendar', () => {
     });
 
     test('navigates to next/previous panels', async () => {
-      render({
+      page.render({
         setup() {
           const { nextButtonProps, previousButtonProps, currentView } = useCalendar({
             label: 'Calendar',
@@ -226,7 +225,7 @@ describe('useCalendar', () => {
     test('navigates months using next/previous buttons in month panel', async () => {
       const currentDate = fromDate(new Date(2025, 2, 11), 'UTC');
 
-      render({
+      page.render({
         setup() {
           const { nextButtonProps, previousButtonProps, gridLabelProps, focusedDate, calendarProps } = useCalendar({
             label: 'Calendar',
@@ -279,7 +278,7 @@ describe('useCalendar', () => {
     test('navigates years using next/previous buttons in year panel', async () => {
       const currentDate = fromDate(new Date(2025, 2, 11), 'UTC');
 
-      render({
+      page.render({
         setup() {
           const { nextButtonProps, previousButtonProps, gridLabelProps, focusedDate, calendarProps } = useCalendar({
             label: 'Calendar',
@@ -371,7 +370,7 @@ describe('useCalendar', () => {
     test('handles arrow key navigation in day panel', async () => {
       const currentDate = fromDate(new Date(2025, 2, 11), 'UTC');
 
-      render({
+      page.render({
         setup() {
           const { calendarProps, selectedDate, focusedDate } = useCalendar({
             label: 'Calendar',
@@ -434,7 +433,7 @@ describe('useCalendar', () => {
     test('handles arrow key navigation in month panel', async () => {
       const currentDate = fromDate(new Date(2025, 2, 11), 'UTC');
 
-      render({
+      page.render({
         setup() {
           const { calendarProps, selectedDate, focusedDate, gridLabelProps } = useCalendar({
             label: 'Calendar',
@@ -505,7 +504,7 @@ describe('useCalendar', () => {
     test('handles arrow key navigation in year panel', async () => {
       const currentDate = fromDate(new Date(2025, 2, 11), 'UTC');
 
-      render({
+      page.render({
         setup() {
           const { calendarProps, selectedDate, focusedDate, gridLabelProps } = useCalendar({
             label: 'Calendar',
@@ -575,7 +574,7 @@ describe('useCalendar', () => {
       const minDate = currentDate.subtract({ days: 1 });
       const maxDate = currentDate.add({ days: 1 });
 
-      render({
+      page.render({
         setup() {
           const { calendarProps, selectedDate, focusedDate } = useCalendar({
             label: 'Calendar',
@@ -617,7 +616,7 @@ describe('useCalendar', () => {
     test('prevents all interactions when disabled', async () => {
       const currentDate = fromDate(new Date(2025, 2, 11), 'UTC');
 
-      render({
+      page.render({
         components: {
           CalendarCell,
         },
@@ -695,7 +694,7 @@ describe('useCalendar', () => {
     test('prevents all interactions when readonly', async () => {
       const currentDate = fromDate(new Date(2025, 2, 11), 'UTC');
 
-      render({
+      page.render({
         components: {
           CalendarCell,
         },
@@ -771,7 +770,7 @@ describe('useCalendar', () => {
 
   describe('a11y', () => {
     test('calendar should not have accessibility violations', async () => {
-      render({
+      page.render({
         setup() {
           const { calendarProps, gridProps, gridLabelProps, nextButtonProps, previousButtonProps } = useCalendar({
             label: 'Calendar',

@@ -1,4 +1,3 @@
-import { render } from '@testing-library/vue';
 import { useTimeField } from '.';
 import { DateTimeSegment } from './useDateTimeSegment';
 import { ref, toValue } from 'vue';
@@ -29,7 +28,7 @@ describe('useTimeField', () => {
 
   describe('initialization', () => {
     test('initializes with value prop', async () => {
-      render({
+      page.render({
         components: { DateTimeSegment },
         setup() {
           const { segments, controlProps, labelProps } = useTimeField({
@@ -66,7 +65,7 @@ describe('useTimeField', () => {
     test('initializes with modelValue prop', async () => {
       const modelValue = ref('14:30');
 
-      render({
+      page.render({
         components: { DateTimeSegment },
         setup() {
           const { segments, controlProps, labelProps } = useTimeField({
@@ -100,7 +99,7 @@ describe('useTimeField', () => {
     });
 
     test('initializes with 12-hour format', async () => {
-      render({
+      page.render({
         components: { DateTimeSegment },
         setup() {
           const { segments, controlProps, labelProps } = useTimeField({
@@ -140,7 +139,7 @@ describe('useTimeField', () => {
     });
 
     test('initializes with seconds', async () => {
-      render({
+      page.render({
         components: { DateTimeSegment },
         setup() {
           const { segments, controlProps, labelProps } = useTimeField({
@@ -199,7 +198,7 @@ describe('useTimeField', () => {
         },
       };
 
-      render({
+      page.render({
         components: { DateTimeSegment },
         setup() {
           const { segments, controlProps, labelProps, errorMessageProps, errorMessage } = useTimeField({
@@ -265,7 +264,7 @@ describe('useTimeField', () => {
         },
       };
 
-      render({
+      page.render({
         components: { DateTimeSegment },
         setup() {
           const { segments, controlProps, labelProps, errorMessageProps, errorMessage, setValue } = useTimeField({
@@ -314,7 +313,7 @@ describe('useTimeField', () => {
     });
 
     test('sets blurred state when any segment is blurred', async () => {
-      render({
+      page.render({
         components: { DateTimeSegment },
         setup() {
           const { segments, controlProps, labelProps, isTouched, isBlurred } = useTimeField({
@@ -354,7 +353,7 @@ describe('useTimeField', () => {
     });
 
     test('sets touched state when any segment is manipulated', async () => {
-      render({
+      page.render({
         components: { DateTimeSegment },
         setup() {
           const { segments, controlProps, labelProps, isTouched } = useTimeField({
@@ -397,7 +396,7 @@ describe('useTimeField', () => {
     test('handles time format with hours and minutes only', async () => {
       let fieldValue: string | undefined | null;
 
-      render({
+      page.render({
         components: { DateTimeSegment },
         setup() {
           const {
@@ -442,7 +441,7 @@ describe('useTimeField', () => {
     test('handles time format with hours, minutes, and seconds', async () => {
       let fieldValue: string | undefined | null;
 
-      render({
+      page.render({
         components: { DateTimeSegment },
         setup() {
           const {
@@ -492,7 +491,7 @@ describe('useTimeField', () => {
 
   describe('disabled state', () => {
     test('respects disabled prop', async () => {
-      render({
+      page.render({
         components: { DateTimeSegment },
         setup() {
           const { segments, controlProps, labelProps } = useTimeField({
@@ -529,7 +528,7 @@ describe('useTimeField', () => {
 
   describe('readonly state', () => {
     test('respects readonly prop', async () => {
-      render({
+      page.render({
         components: { DateTimeSegment },
         setup() {
           const { segments, controlProps, labelProps } = useTimeField({
@@ -572,7 +571,7 @@ describe('useTimeField', () => {
       const minTime = '09:00';
       let updateVal!: (value: string) => void;
 
-      render({
+      page.render({
         components: { DateTimeSegment },
         setup() {
           const { segments, controlProps, labelProps, errorMessageProps, errorMessage, setValue } = useTimeField({
@@ -628,7 +627,7 @@ describe('useTimeField', () => {
       const maxTime = '17:00';
       let updateVal!: (value: string) => void;
 
-      render({
+      page.render({
         components: { DateTimeSegment },
         setup() {
           const { segments, controlProps, labelProps, errorMessageProps, errorMessage, setValue } = useTimeField({
@@ -684,7 +683,7 @@ describe('useTimeField', () => {
       const maxTime = '17:00';
       let updateVal!: (value: string) => void;
 
-      render({
+      page.render({
         components: { DateTimeSegment },
         setup() {
           const { segments, controlProps, labelProps, errorMessageProps, errorMessage, setValue } = useTimeField({
@@ -741,7 +740,7 @@ describe('useTimeField', () => {
       const maxTime = '17:00';
       let updateVal!: (value: string) => void;
 
-      render({
+      page.render({
         components: { DateTimeSegment },
         setup() {
           const { segments, controlProps, labelProps, errorMessageProps, errorMessage, setValue } = useTimeField({
@@ -796,7 +795,7 @@ describe('useTimeField', () => {
 
   describe('spinOnly behavior', () => {
     test('segments with spinOnly only respond to arrow key events and not text input', async () => {
-      render({
+      page.render({
         components: { DateTimeSegment },
         setup() {
           const { segments, controlProps, labelProps } = useTimeField({
@@ -862,7 +861,7 @@ describe('useTimeField', () => {
 
   describe('a11y', () => {
     test('provides accessible label and description', async () => {
-      render({
+      page.render({
         components: { DateTimeSegment },
         setup() {
           const { segments, controlProps, labelProps, descriptionProps } = useTimeField({

@@ -33,7 +33,6 @@
     "@changesets/cli": "^2.29.8",
     "@commitlint/cli": "^20.2.0",
     "@commitlint/config-conventional": "^20.2.0",
-    "@testing-library/vue": "^8.1.0",
     "@types/fs-extra": "^11.0.4",
     "@types/node": "^24.6.2",
     "@vitest/browser-playwright": "^4.0.15",

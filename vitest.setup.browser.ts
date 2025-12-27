@@ -4,7 +4,6 @@ import { vi } from 'vitest';
 // Note: `vitest-dom/extend-expect` relies on Node internals and can't be used in browser mode.
 // We only stub a couple of DOM APIs that might be missing in some environments.
 if (typeof window !== 'undefined') {
-  // Some libraries (e.g. @testing-library/*) still probe `process.env`.
   // Provide a minimal shim for browser mode.
   if (!('process' in globalThis)) {
     // @ts-expect-error - intentional global shim for tests

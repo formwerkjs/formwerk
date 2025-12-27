@@ -1,11 +1,11 @@
 import { DateFormatter, fromDate } from '@internationalized/date';
 import { useDateTimeSegmentGroup } from './useDateTimeSegmentGroup';
 import { Ref, ref, shallowRef } from 'vue';
-import { render } from '@testing-library/vue';
 import { DateTimeSegment } from './useDateTimeSegment';
 import { createTemporalPartial, isTemporalPartial } from './temporalPartial';
 import { TemporalPartial } from './types';
 import { getSegmentTypePlaceholder } from './constants';
+import { page } from 'vitest/browser';
 
 function dispatchEvent() {
   // NOOP
@@ -56,7 +56,7 @@ describe('useDateTimeSegmentGroup', () => {
       const controlEl = shallowRef<HTMLElement>();
       const onValueChange = vi.fn();
 
-      render({
+      page.render({
         setup() {
           const { segments, useDateSegmentRegistration } = useDateTimeSegmentGroup({
             formatter,
@@ -104,7 +104,7 @@ describe('useDateTimeSegmentGroup', () => {
       const controlEl = shallowRef<HTMLElement>();
       const onValueChange = vi.fn();
 
-      render({
+      page.render({
         components: {
           DateTimeSegment,
         },
@@ -157,7 +157,7 @@ describe('useDateTimeSegmentGroup', () => {
       const controlEl = shallowRef<HTMLElement>();
       const onValueChange = vi.fn();
 
-      render({
+      page.render({
         components: {
           DateTimeSegment,
         },
@@ -214,7 +214,7 @@ describe('useDateTimeSegmentGroup', () => {
       const onValueChange = vi.fn();
       let monthRegistration!: ReturnType<ReturnType<typeof useDateTimeSegmentGroup>['useDateSegmentRegistration']>;
 
-      render({
+      page.render({
         setup() {
           const { useDateSegmentRegistration } = useDateTimeSegmentGroup({
             formatter,
@@ -251,7 +251,7 @@ describe('useDateTimeSegmentGroup', () => {
       const onValueChange = vi.fn();
       let monthRegistration!: ReturnType<ReturnType<typeof useDateTimeSegmentGroup>['useDateSegmentRegistration']>;
 
-      render({
+      page.render({
         setup() {
           const { useDateSegmentRegistration } = useDateTimeSegmentGroup({
             formatter,
@@ -288,7 +288,7 @@ describe('useDateTimeSegmentGroup', () => {
       const onValueChange = vi.fn();
       let monthRegistration!: ReturnType<ReturnType<typeof useDateTimeSegmentGroup>['useDateSegmentRegistration']>;
 
-      render({
+      page.render({
         setup() {
           const { useDateSegmentRegistration } = useDateTimeSegmentGroup({
             formatter,
@@ -325,7 +325,7 @@ describe('useDateTimeSegmentGroup', () => {
       const onValueChange = vi.fn();
       let monthRegistration!: ReturnType<ReturnType<typeof useDateTimeSegmentGroup>['useDateSegmentRegistration']>;
 
-      render({
+      page.render({
         setup() {
           const { useDateSegmentRegistration } = useDateTimeSegmentGroup({
             formatter,
@@ -364,7 +364,7 @@ describe('useDateTimeSegmentGroup', () => {
       const controlEl = shallowRef<HTMLElement>();
       const onValueChange = vi.fn();
 
-      render({
+      page.render({
         setup() {
           const { segments } = useDateTimeSegmentGroup({
             formatter,
@@ -403,7 +403,7 @@ describe('useDateTimeSegmentGroup', () => {
       const controlEl = shallowRef<HTMLElement>();
       const onValueChange = vi.fn();
 
-      render({
+      page.render({
         components: {
           DateTimeSegment,
         },
@@ -462,7 +462,7 @@ describe('useDateTimeSegmentGroup', () => {
       const controlEl = shallowRef<HTMLElement>();
       const onValueChange = vi.fn();
 
-      render({
+      page.render({
         components: {
           DateTimeSegment,
         },
@@ -535,7 +535,7 @@ describe('useDateTimeSegmentGroup', () => {
       const controlEl = shallowRef<HTMLElement>();
       const onValueChange = vi.fn();
 
-      render({
+      page.render({
         components: {
           DateTimeSegment,
         },
@@ -598,7 +598,7 @@ describe('useDateTimeSegmentGroup', () => {
       const controlEl = shallowRef<HTMLElement>();
       const onValueChange = vi.fn();
 
-      render({
+      page.render({
         components: {
           DateTimeSegment,
         },
@@ -655,7 +655,7 @@ describe('useDateTimeSegmentGroup', () => {
       const controlEl = shallowRef<HTMLElement>();
       const onValueChange = vi.fn();
 
-      render({
+      page.render({
         components: {
           DateTimeSegment,
         },
@@ -725,7 +725,7 @@ describe('useDateTimeSegmentGroup', () => {
       const onValueChange = vi.fn();
       const initialDate = currentDate.set({ year: 2024, month: 1, day: 1 });
 
-      render({
+      page.render({
         components: {
           DateTimeSegment,
         },
@@ -827,7 +827,7 @@ describe('useDateTimeSegmentGroup', () => {
         temporalValue.value = v;
       });
 
-      render({
+      page.render({
         components: {
           DateTimeSegment,
         },
