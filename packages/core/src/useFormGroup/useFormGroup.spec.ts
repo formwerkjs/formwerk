@@ -483,13 +483,15 @@ describe('disabling HTML validation', () => {
       `,
     });
 
+    const errors = page.getByTestId('err');
+
+    // Touch field1 and wait for validation to complete before touching others
     await touchField(page.getByTestId('field1'));
+    await expect.element(errors.nth(0)).toHaveTextContent(/Constraints not satisfied|Please fill out this field\.?/);
+
     await touchField(page.getByTestId('field2'));
     await touchField(page.getByTestId('field3'));
 
-    const errors = page.getByTestId('err');
-    // Wait for validation to complete by polling for error message
-    await expect.element(errors.nth(0)).toHaveTextContent(/Constraints not satisfied|Please fill out this field\.?/);
     await expect.element(errors.nth(1)).toHaveTextContent('');
     await expect.element(errors.nth(2)).toHaveTextContent('');
   });
