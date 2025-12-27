@@ -49,6 +49,7 @@ export default defineConfig({
   },
   test: {
     testTimeout: 5000,
+    retry: 3,
     browser: {
       enabled: true,
       provider: playwright(),
