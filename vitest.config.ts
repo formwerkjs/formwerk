@@ -58,7 +58,7 @@ export default defineConfig({
         axeCheck,
       },
     },
-    setupFiles: ['./vitest.setup.browser.ts', 'vitest-browser-vue'],
+    setupFiles: ['./vitest.setup.ts', 'vitest-browser-vue'],
     globals: true,
     exclude: ['docs/*', ...configDefaults.exclude],
     coverage: {

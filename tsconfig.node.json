@@ -27,7 +27,7 @@
     "commitlint.config.ts",
     "global.d.ts",
     "vitest.setup.ts",
-    "vitest.node.config.ts"
+    "vitest.config.ts"
   ],
   "exclude": ["packages/playground"]
 }
