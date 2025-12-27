@@ -1,9 +1,8 @@
-import { flush, renderSetup, defineStandardSchema } from '@test-utils/index';
+import { renderSetup, defineStandardSchema } from '@test-utils/index';
 import { useForm } from './useForm';
 import { useFormField } from '../useFormField';
-import { Component, nextTick, Ref, ref } from 'vue';
+import { Component, Ref, ref } from 'vue';
 import { useInputValidity } from '../validation/useInputValidity';
-import { render } from '@testing-library/vue';
 import { useTextField } from '../useTextField';
 import { StandardSchema } from '../types';
 import { page } from 'vitest/browser';
@@ -17,7 +16,7 @@ async function focusAndBlur(testId: string) {
 
 describe('form values', () => {
   test('it initializes form values', async () => {
-    const { values } = await renderSetup(() => {
+    const { values } = renderSetup(() => {
       return useForm({ initialValues: { foo: 'bar' } });
     });
 
@@ -25,7 +24,7 @@ describe('form values', () => {
   });
 
   test('it initializes form values from a promise', async () => {
-    const { values } = await renderSetup(() => {
+    const { values } = renderSetup(() => {
       return useForm({ initialValues: Promise.resolve({ foo: 'bar' }) });
     });
 
@@ -33,7 +32,7 @@ describe('form values', () => {
   });
 
   test('it initializes form values from a getter', async () => {
-    const { values } = await renderSetup(() => {
+    const { values } = renderSetup(() => {
       return useForm({ initialValues: () => ({ foo: 'bar' }) });
     });
 
@@ -41,7 +40,7 @@ describe('form values', () => {
   });
 
   test('initializes form values form an async getter', async () => {
-    const { values } = await renderSetup(() => {
+    const { values } = renderSetup(() => {
       return useForm({ initialValues: async () => ({ foo: 'bar' }) });
     });
 
@@ -49,7 +48,7 @@ describe('form values', () => {
   });
 
   test('setValues replaces form values by default', async () => {
-    const { values, setValues } = await renderSetup(() => {
+    const { values, setValues } = renderSetup(() => {
       return useForm({ initialValues: { x: 'y' } as Record<string, any> });
     });
 
@@ -59,7 +58,7 @@ describe('form values', () => {
   });
 
   test('setValues can merge form values if specified', async () => {
-    const { values, setValues } = await renderSetup(() => {
+    const { values, setValues } = renderSetup(() => {
       return useForm({ initialValues: { x: 'y' } as Record<string, any> });
     });
 
@@ -69,7 +68,7 @@ describe('form values', () => {
   });
 
   test('can set specific field value', async () => {
-    const { values, setValue } = await renderSetup(() => {
+    const { values, setValue } = renderSetup(() => {
       return useForm({ initialValues: { foo: 'bar' } });
     });
 
@@ -79,7 +78,7 @@ describe('form values', () => {
   });
 
   test('can set nested field value', async () => {
-    const { values, setValue } = await renderSetup(() => {
+    const { values, setValue } = renderSetup(() => {
       return useForm<any>({ initialValues: {} });
     });
 
@@ -89,7 +88,7 @@ describe('form values', () => {
   });
 
   test('checks if a path is set', async () => {
-    const { context } = await renderSetup(() => {
+    const { context } = renderSetup(() => {
       return useForm<any>({ initialValues: { foo: 'bar' } });
     });
 
@@ -98,7 +97,7 @@ describe('form values', () => {
   });
 
   test('dot paths keys in setValues are treated as literal keys', async () => {
-    const { values, setValues } = await renderSetup(() => {
+    const { values, setValues } = renderSetup(() => {
       return useForm<any>({ initialValues: { foo: { bar: 'baz' } } });
     });
 
@@ -108,7 +107,7 @@ describe('form values', () => {
   });
 
   test('set values in arrays', async () => {
-    const { values, setValue } = await renderSetup(() => {
+    const { values, setValue } = renderSetup(() => {
       return useForm<any>({ initialValues: { users: [{ isActive: false }] } });
     });
 
@@ -127,7 +126,7 @@ describe('form values', () => {
 
 describe('form touched', () => {
   test('can set field touched state', async () => {
-    const { setTouched, isTouched } = await renderSetup(() => {
+    const { setTouched, isTouched } = renderSetup(() => {
       return useForm({ initialValues: { foo: 'bar' } });
     });
 
@@ -137,7 +136,7 @@ describe('form touched', () => {
   });
 
   test('can set nested field touched state', async () => {
-    const { setTouched, isTouched } = await renderSetup(() => {
+    const { setTouched, isTouched } = renderSetup(() => {
       return useForm<any>();
     });
 
@@ -147,7 +146,7 @@ describe('form touched', () => {
   });
 
   test('can set initial touched state', async () => {
-    const { isTouched } = await renderSetup(() => {
+    const { isTouched } = renderSetup(() => {
       return useForm({ initialValues: { foo: 'bar' }, initialTouched: { foo: true } });
     });
 
@@ -155,7 +154,7 @@ describe('form touched', () => {
   });
 
   test('has a form-level computed isTouched state', async () => {
-    const { isTouched, setTouched } = await renderSetup(() => {
+    const { isTouched, setTouched } = renderSetup(() => {
       return useForm({ initialValues: { foo: 'bar' } });
     });
 
@@ -167,7 +166,7 @@ describe('form touched', () => {
   });
 
   test('sets touched state correctly for discriminated union paths', async () => {
-    const { setTouched, isTouched, setValue, values } = await renderSetup(() => {
+    const { setTouched, isTouched, setValue, values } = renderSetup(() => {
       return useForm<any>({
         initialValues: {
           someConfig: {
@@ -205,7 +204,7 @@ describe('form touched', () => {
   });
 
   test('handles nested touched states independently', async () => {
-    const { setTouched, isTouched } = await renderSetup(() => {
+    const { setTouched, isTouched } = renderSetup(() => {
       return useForm<any>({
         initialValues: {
           parent: {
@@ -230,7 +229,7 @@ describe('form touched', () => {
   });
 
   test('handles escaped paths correctly for touched state', async () => {
-    const { setTouched, isTouched } = await renderSetup(() => {
+    const { setTouched, isTouched } = renderSetup(() => {
       return useForm<any>({
         initialValues: {
           parent: {
@@ -264,7 +263,7 @@ describe('form touched', () => {
 
 describe('form blurred', () => {
   test('can set field blurred state', async () => {
-    const { setBlurred, isBlurred } = await renderSetup(() => {
+    const { setBlurred, isBlurred } = renderSetup(() => {
       return useForm({ initialValues: { foo: 'bar' } });
     });
 
@@ -274,7 +273,7 @@ describe('form blurred', () => {
   });
 
   test('can set nested field blurred state', async () => {
-    const { setBlurred, isBlurred } = await renderSetup(() => {
+    const { setBlurred, isBlurred } = renderSetup(() => {
       return useForm<any>();
     });
 
@@ -284,7 +283,7 @@ describe('form blurred', () => {
   });
 
   test('has a form-level computed isBlurred state', async () => {
-    const { isBlurred, setBlurred } = await renderSetup(() => {
+    const { isBlurred, setBlurred } = renderSetup(() => {
       return useForm({ initialValues: { foo: 'bar' } });
     });
 
@@ -296,7 +295,7 @@ describe('form blurred', () => {
   });
 
   test('handles nested blurred states independently', async () => {
-    const { setBlurred, isBlurred } = await renderSetup(() => {
+    const { setBlurred, isBlurred } = renderSetup(() => {
       return useForm<any>({
         initialValues: {
           parent: {
@@ -323,7 +322,7 @@ describe('form blurred', () => {
 
 describe('form reset', () => {
   test('can reset form values and touched to their original state and blurred to false', async () => {
-    const { values, reset, setValue, isTouched, setTouched, isBlurred, setBlurred } = await renderSetup(() => {
+    const { values, reset, setValue, isTouched, setTouched, isBlurred, setBlurred } = renderSetup(() => {
       return useForm({ initialValues: { foo: 'bar' }, initialTouched: { foo: true } });
     });
 
@@ -340,7 +339,7 @@ describe('form reset', () => {
   });
 
   test('can reset form values, touched and blurred to a new state', async () => {
-    const { values, reset, setValue, isTouched, setTouched, isBlurred, setBlurred } = await renderSetup(() => {
+    const { values, reset, setValue, isTouched, setTouched, isBlurred, setBlurred } = renderSetup(() => {
       return useForm({ initialValues: { foo: 'bar' } });
     });
 
@@ -358,7 +357,7 @@ describe('form reset', () => {
   });
 
   test('can reset form path values and touched to their original state', async () => {
-    const { values, reset, setValue, isTouched, setTouched } = await renderSetup(() => {
+    const { values, reset, setValue, isTouched, setTouched } = renderSetup(() => {
       return useForm({
         initialValues: { company: { employee: { name: 'John' } } },
         initialTouched: { company: { employee: { name: true } } },
@@ -377,7 +376,7 @@ describe('form reset', () => {
   });
 
   test('can reset from path values and touched to a new state', async () => {
-    const { values, reset, setValue, isTouched, setTouched } = await renderSetup(() => {
+    const { values, reset, setValue, isTouched, setTouched } = renderSetup(() => {
       return useForm({
         initialValues: { company: { employee: { name: 'John' } } },
       });
@@ -402,7 +401,7 @@ describe('form reset', () => {
 
   test('handleReset creates a handler that resets the form and calls afterReset', async () => {
     const afterResetMock = vi.fn();
-    const { values, handleReset, setValue } = await renderSetup(() => {
+    const { values, handleReset, setValue } = renderSetup(() => {
       return useForm({ initialValues: { foo: 'bar' } });
     });
 
@@ -421,7 +420,7 @@ describe('form reset', () => {
   });
 
   test('handleReset works without afterReset callback and without event', async () => {
-    const { values, handleReset, setValue } = await renderSetup(() => {
+    const { values, handleReset, setValue } = renderSetup(() => {
       return useForm({ initialValues: { foo: 'bar' } });
     });
 
@@ -437,7 +436,7 @@ describe('form reset', () => {
   test('handleReset can be used with a form element reset event', async () => {
     const afterResetMock = vi.fn();
 
-    render({
+    page.render({
       template: `
         <form v-bind="formProps" data-testid="form">
           <button type="reset">Reset</button>
@@ -457,15 +456,14 @@ describe('form reset', () => {
     });
 
     await page.getByRole('button', { name: 'Reset' }).click();
-    await flush();
 
-    expect(afterResetMock).toHaveBeenCalledOnce();
+    await expect.poll(() => afterResetMock.mock.calls.length).toBe(1);
   });
 });
 
 describe('form submit', () => {
   test('can handle form submit', async () => {
-    const { handleSubmit } = await renderSetup(() => {
+    const { handleSubmit } = renderSetup(() => {
       return useForm({ initialValues: { foo: 'bar' } });
     });
 
@@ -478,7 +476,7 @@ describe('form submit', () => {
   });
 
   test('submitting sets touched state to true', async () => {
-    const { form } = await renderSetup(
+    const { form } = renderSetup(
       () => {
         const form = useForm({ initialValues: { field: 'foo' } });
 
@@ -491,17 +489,15 @@ describe('form submit', () => {
       },
     );
 
-    await flush();
     expect(form.isTouched('field')).toBe(false);
     const cb = vi.fn();
     const onSubmit = form.handleSubmit(cb);
     await onSubmit(new Event('submit'));
-    await flush();
-    expect(form.isTouched('field')).toBe(true);
+    await expect.poll(() => form.isTouched('field')).toBe(true);
   });
 
   test('submitting sets the isSubmitting flag', async () => {
-    const { handleSubmit, isSubmitting } = await renderSetup(() => {
+    const { handleSubmit, isSubmitting } = renderSetup(() => {
       return useForm({ initialValues: { field: 'foo' } });
     });
 
@@ -519,7 +515,7 @@ describe('form submit', () => {
       field: 'foo',
       multiple: ['field 1', 'field 2', 'field 3', { name: 'string' }, 'field 4'],
     });
-    const { handleSubmit, values } = await renderSetup(
+    const { handleSubmit, values } = renderSetup(
       () => {
         return useForm({ initialValues: defaults() });
       },
@@ -582,7 +578,7 @@ describe('form submit', () => {
       ],
     } as const;
 
-    const { form } = await renderSetup(() => {
+    const { form } = renderSetup(() => {
       return { form: useForm({ initialValues: input }) };
     });
 
@@ -668,7 +664,7 @@ describe('form submit', () => {
       ],
     } as const;
 
-    const { form } = await renderSetup(() => {
+    const { form } = renderSetup(() => {
       return { form: useForm({ initialValues: input }) };
     });
 
@@ -754,7 +750,7 @@ describe('form submit', () => {
       ],
     };
 
-    const { form } = await renderSetup(() => {
+    const { form } = renderSetup(() => {
       return { form: useForm({ initialValues: input }) };
     });
 
@@ -837,7 +833,7 @@ describe('form submit', () => {
   test('Adds form values to FormData on native formdata event', async () => {
     const formData = new FormData();
 
-    render({
+    page.render({
       template: `
       <form v-bind="formProps" data-testid="form">
         <button type="submit">Submit</button>
@@ -854,12 +850,11 @@ describe('form submit', () => {
     // @ts-expect-error - If only we can just new up a FormDataEvent
     e.formData = formData;
     ((await page.getByTestId('form').element()) as HTMLFormElement).dispatchEvent(e);
-    await flush();
-    expect(formData.get('foo')).toBe('bar');
+    await expect.poll(() => formData.get('foo')).toBe('bar');
   });
 
   test('can compute the submit counts, attempts and resets', async () => {
-    const { submitAttemptsCount, handleSubmit, reset } = await renderSetup(() => {
+    const { submitAttemptsCount, handleSubmit, reset } = renderSetup(() => {
       return useForm({ initialValues: { foo: 'bar' } });
     });
 
@@ -876,7 +871,7 @@ describe('form submit', () => {
   });
 
   test('Can detect wether the form was submitted or not ', async () => {
-    const { wasSubmitted, handleSubmit } = await renderSetup(() => {
+    const { wasSubmitted, handleSubmit } = renderSetup(() => {
       return useForm({ initialValues: { foo: 'bar' } });
     });
 
@@ -889,7 +884,7 @@ describe('form submit', () => {
   });
 
   test('Can reset the was submitted state', async () => {
-    const { wasSubmitted, handleSubmit, reset } = await renderSetup(() => {
+    const { wasSubmitted, handleSubmit, reset } = renderSetup(() => {
       return useForm({ initialValues: { foo: 'bar' } });
     });
 
@@ -904,7 +899,7 @@ describe('form submit', () => {
   });
 
   test('Can persist the was submitted state when a submission fails', async () => {
-    const { wasSubmitted, handleSubmit } = await renderSetup(() => {
+    const { wasSubmitted, handleSubmit } = renderSetup(() => {
       return useForm({ initialValues: { foo: 'bar' } });
     });
     try {
@@ -919,7 +914,7 @@ describe('form submit', () => {
   });
 
   test('Can detect wether was attempted to submit or not ', async () => {
-    const { isSubmitAttempted, handleSubmit } = await renderSetup(() => {
+    const { isSubmitAttempted, handleSubmit } = renderSetup(() => {
       return useForm({ initialValues: { foo: 'bar' } });
     });
 
@@ -932,7 +927,7 @@ describe('form submit', () => {
   });
 
   test('Can detect wether it attempt to submit even the validation fails', async () => {
-    const { isSubmitAttempted, handleSubmit } = await renderSetup(() => {
+    const { isSubmitAttempted, handleSubmit } = renderSetup(() => {
       return useForm({ initialValues: { foo: 'bar' } });
     });
 
@@ -945,7 +940,7 @@ describe('form submit', () => {
   });
 
   test('Can detect wether it attempt to submit even the submission fails', async () => {
-    const { isSubmitAttempted, handleSubmit } = await renderSetup(() => {
+    const { isSubmitAttempted, handleSubmit } = renderSetup(() => {
       return useForm({ initialValues: { foo: 'bar' } });
     });
 
@@ -961,7 +956,7 @@ describe('form submit', () => {
   });
 
   test('Can reset the is submit attempt state', async () => {
-    const { isSubmitAttempted, handleSubmit, reset } = await renderSetup(() => {
+    const { isSubmitAttempted, handleSubmit, reset } = renderSetup(() => {
       return useForm({ initialValues: { foo: 'bar' } });
     });
 
@@ -978,7 +973,7 @@ describe('form submit', () => {
 
 describe('form dirty state', () => {
   test('isDirty is true when the current values are different than the originals', async () => {
-    const { isDirty, setValue, reset } = await renderSetup(() => {
+    const { isDirty, setValue, reset } = renderSetup(() => {
       return useForm({ initialValues: { foo: 'bar' } });
     });
 
@@ -990,7 +985,7 @@ describe('form dirty state', () => {
   });
 
   test('pathless fields do not contribute their dirty state to the form', async () => {
-    const { form, field } = await renderSetup(
+    const { form, field } = renderSetup(
       () => {
         return { form: useForm({ initialValues: { field: 'foo' } }) };
       },
@@ -1014,7 +1009,7 @@ describe('form dirty state', () => {
   });
 
   test('fields with path sync their dirty state with the form', async () => {
-    const { form, field } = await renderSetup(
+    const { form, field } = renderSetup(
       () => {
         return { form: useForm({ initialValues: { field: 'foo' } }) };
       },
@@ -1033,7 +1028,7 @@ describe('form dirty state', () => {
   });
 
   test('can query if a field is dirty', async () => {
-    const { form } = await renderSetup(
+    const { form } = renderSetup(
       () => {
         return { form: useForm<any>({ initialValues: { foo: 'bar' } }) };
       },
@@ -1072,7 +1067,7 @@ describe('form validation', () => {
     test('validates initially with native constraint API', async () => {
       const input = ref<HTMLInputElement>();
 
-      render({
+      page.render({
         components: { Child: createInputComponent(input) },
         setup() {
           const { getError } = useForm();
@@ -1101,7 +1096,7 @@ describe('form validation', () => {
       const input = ref<HTMLInputElement>();
       const handler = vi.fn();
 
-      render({
+      page.render({
         components: { Child: createInputComponent(input) },
         setup() {
           const { handleSubmit } = useForm();
@@ -1117,21 +1112,22 @@ describe('form validation', () => {
     `,
       });
 
-      // FIXME: Looks like it is possible to submit the form before the initial validation kicks in.
-      await nextTick();
+      // Trigger initial validation via blur
+      await focusAndBlur('input');
+      await expect.element(page.getByTestId('err')).toHaveTextContent(/.+/);
       await page.getByRole('button', { name: 'Submit' }).click();
-      await flush();
       expect(handler).not.toHaveBeenCalled();
       await page.getByTestId('input').fill('test');
+      await focusAndBlur('input'); // Trigger validation recheck
+      await expect.element(page.getByTestId('err')).toHaveTextContent('');
       await page.getByRole('button', { name: 'Submit' }).click();
-      await flush();
-      expect(handler).toHaveBeenCalledOnce();
+      await expect.poll(() => handler.mock.calls.length).toBe(1);
     });
 
     test('updates the form isValid', async () => {
       const input = ref<HTMLInputElement>();
 
-      render({
+      page.render({
         components: { Child: createInputComponent(input) },
         setup() {
           const { isValid } = useForm();
@@ -1172,7 +1168,7 @@ describe('form validation', () => {
         };
       };
 
-      render({
+      page.render({
         components: { Child: createInputComponent(input) },
         setup() {
           const { getSubmitErrors, handleSubmit } = useForm();
@@ -1190,7 +1186,6 @@ describe('form validation', () => {
 
       await expect.element(page.getByTestId('submit-err')).toHaveTextContent('');
       await page.getByRole('button', { name: 'Submit' }).click();
-      await flush();
       await expect
         .element(page.getByTestId('submit-err'))
         .toHaveTextContent(/Constraints not satisfied|Please fill out this field\.?/);
@@ -1198,14 +1193,12 @@ describe('form validation', () => {
       await page.getByTestId('input').fill('test');
       // update validity
       await focusAndBlur('input');
-      await flush();
       await expect
         .element(page.getByTestId('submit-err'))
         .toHaveTextContent(/Constraints not satisfied|Please fill out this field\.?/);
       await expect.element(page.getByTestId('err')).toHaveTextContent('');
       // when submitting clearing the submit errors
       await page.getByRole('button', { name: 'Submit' }).click();
-      await flush();
       await expect.element(page.getByTestId('submit-err')).toHaveTextContent('');
     });
   });
@@ -1236,7 +1229,7 @@ describe('form validation', () => {
         };
       });
 
-      render({
+      page.render({
         setup() {
           const { handleSubmit } = useForm({
             schema,
@@ -1251,7 +1244,6 @@ describe('form validation', () => {
     `,
       });
 
-      await nextTick();
       await page.getByRole('button', { name: 'Submit' }).click();
       expect(handler).not.toHaveBeenCalled();
     });
@@ -1265,7 +1257,7 @@ describe('form validation', () => {
         };
       });
 
-      render({
+      page.render({
         components: { Child: createInputComponent() },
         setup() {
           const { handleSubmit, getError } = useForm({
@@ -1285,14 +1277,12 @@ describe('form validation', () => {
       });
 
       await page.getByRole('button', { name: 'Submit' }).click();
-      await flush();
       await expect.element(page.getByTestId('err')).toHaveTextContent('error');
       await expect.element(page.getByTestId('form-err')).toHaveTextContent('error');
       expect(handler).not.toHaveBeenCalled();
       shouldError = false;
       await page.getByRole('button', { name: 'Submit' }).click();
-      await flush();
-      expect(handler).toHaveBeenCalledOnce();
+      await expect.poll(() => handler.mock.calls.length).toBe(1);
     });
 
     test('clears errors on successful submission', async () => {
@@ -1303,7 +1293,7 @@ describe('form validation', () => {
         };
       });
 
-      render({
+      page.render({
         components: { Child: createInputComponent() },
         setup() {
           const { handleSubmit, getError, setErrors } = useForm({
@@ -1327,8 +1317,7 @@ describe('form validation', () => {
       await expect.element(page.getByTestId('err')).toHaveTextContent('error');
       await expect.element(page.getByTestId('form-err')).toHaveTextContent('error');
       await page.getByRole('button', { name: 'Submit' }).click();
-      await flush();
-      expect(handler).toHaveBeenCalledOnce();
+      await expect.poll(() => handler.mock.calls.length).toBe(1);
       await expect.element(page.getByTestId('err')).toHaveTextContent('');
       await expect.element(page.getByTestId('form-err')).toHaveTextContent('');
     });
@@ -1344,7 +1333,7 @@ describe('form validation', () => {
         };
       });
 
-      render({
+      page.render({
         components: { Child: createInputComponent() },
         setup() {
           const { handleSubmit, getError, setErrors } = useForm({
@@ -1366,8 +1355,7 @@ describe('form validation', () => {
       });
 
       await page.getByRole('button', { name: 'Submit' }).click();
-      await flush();
-      expect(handler).toHaveBeenCalledOnce();
+      await expect.poll(() => handler.mock.calls.length).toBe(1);
       expect(handler).toHaveBeenLastCalledWith({ test: true, foo: 'bar' });
     });
 
@@ -1378,7 +1366,7 @@ describe('form validation', () => {
         };
       });
 
-      render({
+      page.render({
         components: { Child: createInputComponent() },
         setup() {
           const { getError } = useForm({
@@ -1396,17 +1384,15 @@ describe('form validation', () => {
     `,
       });
 
-      await flush();
       await expect.element(page.getByTestId('form-err')).toHaveTextContent('error');
       await page.getByTestId('test').fill('test');
       await focusAndBlur('test');
-      await flush();
       await expect.element(page.getByTestId('form-err')).toHaveTextContent('');
     });
 
     // FIXME: Standard schema does not support defaults yet.
     test.fails('initializes with default values', async () => {
-      const { values } = await renderSetup(() => {
+      const { values } = renderSetup(() => {
         return useForm({
           // schema: {
           //   defaults: () => ({ test: 'foo' }),
@@ -1436,7 +1422,7 @@ describe('form validation', () => {
         };
       });
 
-      render({
+      page.render({
         components: { Child: createInputComponent() },
         setup() {
           const { handleSubmit, getError } = useForm({
@@ -1458,7 +1444,6 @@ describe('form validation', () => {
       });
 
       await page.getByRole('button', { name: 'Submit' }).click();
-      await flush();
       await expect.element(page.getByTestId('form-err')).toHaveTextContent('error');
       await expect.element(page.getByTestId('field-err')).toHaveTextContent('field error');
       expect(handler).not.toHaveBeenCalled();
@@ -1472,16 +1457,15 @@ describe('form validation', () => {
       };
     });
 
-    const { reset, getError } = await renderSetup(() => {
+    const { reset, getError } = renderSetup(() => {
       return useForm({
         schema,
       });
     });
 
-    await flush();
-    expect(getError('test')).toBe('error');
+    await expect.poll(() => getError('test')).toBe('error');
     await reset();
-    expect(getError('test')).toBe('error');
+    await expect.poll(() => getError('test')).toBe('error');
   });
 
   test('form reset revalidation can be disabled', async () => {
@@ -1492,14 +1476,13 @@ describe('form validation', () => {
       };
     });
 
-    const { reset, getError } = await renderSetup(() => {
+    const { reset, getError } = renderSetup(() => {
       return useForm({
         schema,
       });
     });
 
-    await flush();
-    expect(getError('test')).toBe('error');
+    await expect.poll(() => getError('test')).toBe('error');
     wasReset = true;
     await reset({ revalidate: false });
     expect(getError('test')).toBeUndefined();
@@ -1549,7 +1532,7 @@ describe('form validation', () => {
   });
 
   test('setErrors accepts an array of IssueCollection', async () => {
-    const { setErrors, getError } = await renderSetup(() => {
+    const { setErrors, getError } = renderSetup(() => {
       return useForm();
     });
 

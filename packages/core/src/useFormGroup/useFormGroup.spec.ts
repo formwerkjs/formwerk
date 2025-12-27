@@ -3,7 +3,6 @@ import { Component } from 'vue';
 import { useFormGroup } from './useFormGroup';
 import { useTextField } from '../useTextField';
 import { useForm } from '../useForm';
-import { render } from '@testing-library/vue';
 import { flush, defineStandardSchema } from '@test-utils/index';
 import { configure } from '../config';
 import { StandardSchema } from '../types';
@@ -70,7 +69,7 @@ test('warns if no form is present', async () => {
 
 test('prefixes path values with its name', async () => {
   let form!: ReturnType<typeof useForm>;
-  render({
+  page.render({
     components: { TInput: createInputComponent(), TGroup: createGroupComponent() },
     setup() {
       form = useForm();
@@ -98,7 +97,7 @@ test('prefixes path values with its name', async () => {
 
 test('nested groups', async () => {
   let form!: ReturnType<typeof useForm>;
-  render({
+  page.render({
     components: { TInput: createInputComponent(), TGroup: createGroupComponent() },
     setup() {
       form = useForm();
@@ -139,7 +138,7 @@ test('nested groups', async () => {
 
 test('tracks its dirty state', async () => {
   const groups: ReturnType<typeof useFormGroup>[] = [];
-  render({
+  page.render({
     components: { TInput: createInputComponent(), TGroup: createGroupComponent(fg => groups.push(fg)) },
     setup() {
       useForm();
@@ -168,7 +167,7 @@ test('tracks its dirty state', async () => {
 
 test('tracks its touched state', async () => {
   const groups: ReturnType<typeof useFormGroup>[] = [];
-  render({
+  page.render({
     components: { TInput: createInputComponent(), TGroup: createGroupComponent(fg => groups.push(fg)) },
     setup() {
       useForm();
@@ -203,7 +202,7 @@ test('tracks its valid state', async () => {
     };
   });
 
-  render({
+  page.render({
     components: { TInput: createInputComponent(), TGroup: createGroupComponent(fg => groups.push(fg)) },
     setup() {
       useForm();
@@ -242,7 +241,7 @@ test('validates with a typed schema', async () => {
     };
   });
 
-  render({
+  page.render({
     components: { TInput: createInputComponent(), TGroup: createGroupComponent(fg => groups.push(fg)) },
     setup() {
       form = useForm();
@@ -289,7 +288,7 @@ test('validation combines schema with form schema', async () => {
     };
   });
 
-  render({
+  page.render({
     components: { TInput: createInputComponent(), TGroup: createGroupComponent(fg => groups.push(fg)) },
     setup() {
       form = useForm({
@@ -339,7 +338,7 @@ test('validation cascades', async () => {
     };
   });
 
-  render({
+  page.render({
     components: { TInput: createInputComponent(), TGroup: createGroupComponent(fg => groups.push(fg)) },
     setup() {
       form = useForm({
@@ -396,7 +395,7 @@ test('submission combines group data with form data', async () => {
     };
   });
 
-  render({
+  page.render({
     components: { TInput: createInputComponent(), TGroup: createGroupComponent() },
     setup() {
       const { handleSubmit } = useForm({});
@@ -441,7 +440,7 @@ test('submission combines group data with form data', async () => {
 
 describe('disabling HTML validation', () => {
   test('can be disabled on the group level', async () => {
-    render({
+    page.render({
       components: { TInput: createInputComponent(), TGroup: createGroupComponent() },
       setup() {
         useForm();
@@ -467,7 +466,7 @@ describe('disabling HTML validation', () => {
   });
 
   test('can be disabled on the form level', async () => {
-    render({
+    page.render({
       components: { TInput: createInputComponent(), TGroup: createGroupComponent() },
       setup() {
         useForm({ disableHtmlValidation: true });
@@ -499,7 +498,7 @@ describe('disabling HTML validation', () => {
   });
 
   test('can be disabled on the field level', async () => {
-    render({
+    page.render({
       components: { TInput: createInputComponent(), TGroup: createGroupComponent() },
       setup() {
         useForm();
@@ -532,7 +531,7 @@ describe('disabling HTML validation', () => {
       disableHtmlValidation: true,
     });
 
-    render({
+    page.render({
       components: { TInput: createInputComponent(), TGroup: createGroupComponent() },
       setup() {
         useForm({ disableHtmlValidation: true });
@@ -578,7 +577,7 @@ describe('group props rendering', () => {
       },
     };
 
-    render({
+    page.render({
       components: { FieldsetGroup },
       template: `
         <FieldsetGroup>
@@ -608,7 +607,7 @@ describe('group props rendering', () => {
       },
     };
 
-    render({
+    page.render({
       components: { DivGroup },
       template: `
         <DivGroup>

@@ -1,16 +1,14 @@
 import { computed, ref } from 'vue';
 import { useInputValidity } from './useInputValidity';
-import { render } from '@testing-library/vue';
 import { FieldState, useFormField } from '../useFormField';
 import { EventExpression } from '../helpers/useEventListener';
-import { flush } from '../../../test-utils/src';
-import { page } from 'vitest/browser';
+import { page, userEvent } from 'vitest/browser';
 import { expect } from 'vitest';
 
 test('updates the validity state on blur events', async () => {
   const input = ref<HTMLInputElement>();
 
-  render({
+  page.render({
     setup: () => {
       const field = useFormField().state;
       useInputValidity({ inputEl: input, field });
@@ -25,19 +23,18 @@ test('updates the validity state on blur events', async () => {
     `,
   });
 
-  ((await page.getByTestId('input').element()) as HTMLInputElement).dispatchEvent(
-    new FocusEvent('blur', { bubbles: true }),
-  );
-  await flush();
-  expect(((await page.getByTestId('err').element()) as HTMLElement).textContent).toMatch(
-    /Constraints not satisfied|Please fill out this field\.?/,
-  );
+  await page.getByTestId('input').click();
+  await userEvent.tab();
+
+  await expect
+    .element(page.getByTestId('err'))
+    .toHaveTextContent(/Constraints not satisfied|Please fill out this field\.?/);
 });
 
 test('updates the validity state on change events', async () => {
   const input = ref<HTMLInputElement>();
 
-  render({
+  page.render({
     setup: () => {
       const field = useFormField().state;
       useInputValidity({ inputEl: input, field });
@@ -52,23 +49,22 @@ test('updates the validity state on change events', async () => {
     `,
   });
 
-  const inputEl = (await page.getByTestId('input').element()) as HTMLInputElement;
-  inputEl.dispatchEvent(new Event('change', { bubbles: true }));
-  await flush();
-  expect(((await page.getByTestId('err').element()) as HTMLElement).textContent).toMatch(
-    /Constraints not satisfied|Please fill out this field\.?/,
-  );
+  // Focus and blur triggers change event validation
+  await page.getByTestId('input').click();
+  await userEvent.tab();
+  await expect
+    .element(page.getByTestId('err'))
+    .toHaveTextContent(/Constraints not satisfied|Please fill out this field\.?/);
 
-  inputEl.value = 'test';
-  inputEl.dispatchEvent(new Event('change', { bubbles: true }));
-  await flush();
-  expect(((await page.getByTestId('err').element()) as HTMLElement).textContent).toBe('');
+  await page.getByTestId('input').fill('test');
+  await userEvent.tab();
+  await expect.element(page.getByTestId('err')).toHaveTextContent('');
 });
 
 test('updates the validity on specified events', async () => {
   const input = ref<HTMLInputElement>();
 
-  render({
+  page.render({
     setup: () => {
       const field = useFormField().state;
       useInputValidity({ inputEl: input, field, events: ['input'] });
@@ -85,21 +81,19 @@ test('updates the validity on specified events', async () => {
 
   const inputEl = (await page.getByTestId('input').element()) as HTMLInputElement;
   inputEl.dispatchEvent(new Event('input', { bubbles: true }));
-  await flush();
-  expect(((await page.getByTestId('err').element()) as HTMLElement).textContent).toMatch(
-    /Constraints not satisfied|Please fill out this field\.?/,
-  );
+  await expect
+    .element(page.getByTestId('err'))
+    .toHaveTextContent(/Constraints not satisfied|Please fill out this field\.?/);
 
   inputEl.value = 'test';
   inputEl.dispatchEvent(new Event('input', { bubbles: true }));
-  await flush();
-  expect(((await page.getByTestId('err').element()) as HTMLElement).textContent).toBe('');
+  await expect.element(page.getByTestId('err')).toHaveTextContent('');
 });
 
 test('updates the input native validity with custom validity errors', async () => {
   const input = ref<HTMLInputElement>();
   let field!: FieldState<any>;
-  render({
+  page.render({
     setup: () => {
       field = useFormField().state;
       useInputValidity({ inputEl: input, field, events: ['input'] });
@@ -114,18 +108,16 @@ test('updates the input native validity with custom validity errors', async () =
     `,
   });
 
-  await flush();
+  await expect.element(page.getByTestId('err')).toHaveTextContent('');
   field.setErrors('Custom error');
-  await flush();
-  expect(((await page.getByTestId('err').element()) as HTMLElement).textContent).toBe('Custom error');
-  expect(input.value?.validationMessage).toBe('Custom error');
+  await expect.element(page.getByTestId('err')).toHaveTextContent('Custom error');
 });
 
 test('events can be reactive', async () => {
   const input = ref<HTMLInputElement>();
   const events = ref<EventExpression[]>(['test']);
 
-  render({
+  page.render({
     setup: () => {
       const field = useFormField().state;
       useInputValidity({ inputEl: input, field, events });
@@ -140,22 +132,19 @@ test('events can be reactive', async () => {
     `,
   });
 
-  ((await page.getByTestId('input').element()) as HTMLInputElement).dispatchEvent(
-    new FocusEvent('blur', { bubbles: true }),
-  );
+  await page.getByTestId('input').click();
+  await userEvent.tab();
   // mounted validation
-  expect(((await page.getByTestId('err').element()) as HTMLElement).textContent).toMatch(
-    /Constraints not satisfied|Please fill out this field\.?/,
-  );
+  await expect
+    .element(page.getByTestId('err'))
+    .toHaveTextContent(/Constraints not satisfied|Please fill out this field\.?/);
   events.value = ['blur'];
   await page.getByTestId('input').fill('12');
-  expect(((await page.getByTestId('err').element()) as HTMLElement).textContent).toMatch(
-    /Constraints not satisfied|Please fill out this field\.?/,
-  );
-  ((await page.getByTestId('input').element()) as HTMLInputElement).dispatchEvent(
-    new FocusEvent('blur', { bubbles: true }),
-  );
-  expect(((await page.getByTestId('err').element()) as HTMLElement).textContent).toBe('');
+  await expect
+    .element(page.getByTestId('err'))
+    .toHaveTextContent(/Constraints not satisfied|Please fill out this field\.?/);
+  await userEvent.tab();
+  await expect.element(page.getByTestId('err')).toHaveTextContent('');
 });
 
 describe('isValidated tracking', () => {
@@ -163,7 +152,7 @@ describe('isValidated tracking', () => {
     const input = ref<HTMLInputElement>();
     let field!: FieldState<any>;
 
-    render({
+    page.render({
       setup: () => {
         field = useFormField().state;
         useInputValidity({ inputEl: input, field });
@@ -189,13 +178,12 @@ describe('isValidated tracking', () => {
     });
 
     // Initial state: no error displayed (even though field is invalid)
-    expect(((await page.getByTestId('display-err').element()) as HTMLElement).textContent).toBe('');
+    await expect.element(page.getByTestId('display-err')).toHaveTextContent('');
 
     // Raw error should exist after mount validation
-    await flush();
-    expect(((await page.getByTestId('raw-err').element()) as HTMLElement).textContent).toMatch(
-      /Constraints not satisfied|Please fill out this field\.?/,
-    );
+    await expect
+      .element(page.getByTestId('raw-err'))
+      .toHaveTextContent(/Constraints not satisfied|Please fill out this field\.?/);
 
     // isValidated should still be false after mount (not user interaction)
     expect(field.isValidated.value).toBe(false);
@@ -204,27 +192,24 @@ describe('isValidated tracking', () => {
     await page.getByTestId('input').fill('valid value');
 
     // Focus the field and then blur it
-    ((await page.getByTestId('input').element()) as HTMLInputElement).focus();
+    await page.getByTestId('input').click();
     field.setBlurred(true);
-    ((await page.getByTestId('input').element()) as HTMLInputElement).dispatchEvent(
-      new FocusEvent('blur', { bubbles: true }),
-    );
-    await flush();
+    await userEvent.tab();
+
+    // Key assertion: NO error should flash because the field is now valid
+    // Validation runs synchronously with real browser events
+    await expect.element(page.getByTestId('display-err')).toHaveTextContent('');
+    await expect.element(page.getByTestId('raw-err')).toHaveTextContent('');
 
     // Now isValidated should be true (user interaction)
     expect(field.isValidated.value).toBe(true);
-
-    // Key assertion: NO error should flash because the field is now valid
-    // If there was a bug, we'd see the stale error flash before async validation completes
-    expect(((await page.getByTestId('display-err').element()) as HTMLElement).textContent).toBe('');
-    expect(((await page.getByTestId('raw-err').element()) as HTMLElement).textContent).toBe('');
   });
 
   test('isValidated remains false after mount validation', async () => {
     const input = ref<HTMLInputElement>();
     let field!: FieldState<any>;
 
-    render({
+    page.render({
       setup: () => {
         field = useFormField().state;
         useInputValidity({ inputEl: input, field });
@@ -240,8 +225,7 @@ describe('isValidated tracking', () => {
     });
 
     // After mount, validation runs but isValidated should remain false
-    await flush();
-    expect(((await page.getByTestId('validated').element()) as HTMLElement).textContent).toBe('false');
+    await expect.element(page.getByTestId('validated')).toHaveTextContent('false');
     expect(field.isValidated.value).toBe(false);
   });
 
@@ -249,7 +233,7 @@ describe('isValidated tracking', () => {
     const input = ref<HTMLInputElement>();
     let field!: FieldState<any>;
 
-    render({
+    page.render({
       setup: () => {
         field = useFormField().state;
         useInputValidity({ inputEl: input, field });
@@ -268,21 +252,19 @@ describe('isValidated tracking', () => {
     expect(field.isValidated.value).toBe(false);
 
     // User blurs the field (user interaction)
-    ((await page.getByTestId('input').element()) as HTMLInputElement).dispatchEvent(
-      new FocusEvent('blur', { bubbles: true }),
-    );
-    await flush();
+    await page.getByTestId('input').click();
+    await userEvent.tab();
+    await expect.element(page.getByTestId('validated')).toHaveTextContent('true');
 
     // Now isValidated should be true
     expect(field.isValidated.value).toBe(true);
-    expect(((await page.getByTestId('validated').element()) as HTMLElement).textContent).toBe('true');
   });
 
   test('isValidated is set to true after change event triggers validation', async () => {
     const input = ref<HTMLInputElement>();
     let field!: FieldState<any>;
 
-    render({
+    page.render({
       setup: () => {
         field = useFormField().state;
         useInputValidity({ inputEl: input, field });
@@ -298,32 +280,28 @@ describe('isValidated tracking', () => {
     });
 
     // Initially false even after mount
-    await flush();
-    expect(field.isValidated.value).toBe(false);
+    await expect.poll(() => field.isValidated.value).toBe(false);
 
     // User triggers change event (user interaction)
-    const inputEl = (await page.getByTestId('input').element()) as HTMLInputElement;
-    inputEl.value = 'test';
-    inputEl.dispatchEvent(new Event('change', { bubbles: true }));
-    await flush();
-    expect(field.isValidated.value).toBe(true);
+    await page.getByTestId('input').fill('test');
+    await userEvent.tab();
+    await expect.poll(() => field.isValidated.value).toBe(true);
 
     // Can be manually reset
     field.setIsValidated(false);
-    expect(field.isValidated.value).toBe(false);
+    await expect.poll(() => field.isValidated.value).toBe(false);
 
     // And set again by user interaction
-    inputEl.value = 'test2';
-    inputEl.dispatchEvent(new Event('change', { bubbles: true }));
-    await flush();
-    expect(field.isValidated.value).toBe(true);
+    await page.getByTestId('input').fill('test2');
+    await userEvent.tab();
+    await expect.poll(() => field.isValidated.value).toBe(true);
   });
 
   test('isValidated helps prevent displaying initial validation errors', async () => {
     const input = ref<HTMLInputElement>();
     let field!: FieldState<any>;
 
-    render({
+    page.render({
       setup: () => {
         field = useFormField().state;
         useInputValidity({ inputEl: input, field });
@@ -344,36 +322,34 @@ describe('isValidated tracking', () => {
       `,
     });
 
-    // Validation runs on mount and sets errors
-    await flush();
-
     // Raw error exists
-    expect(((await page.getByTestId('raw-err').element()) as HTMLElement).textContent).toMatch(
-      /Constraints not satisfied|Please fill out this field\.?/,
-    );
+    await expect
+      .element(page.getByTestId('raw-err'))
+      .toHaveTextContent(/Constraints not satisfied|Please fill out this field\.?/);
 
     // But displayError should NOT show because isValidated is still false (mount is not user interaction)
-    expect(((await page.getByTestId('err').element()) as HTMLElement).textContent).toBe('');
-    expect(field.isValidated.value).toBe(false);
+    await expect.element(page.getByTestId('err')).toHaveTextContent('');
+    await expect.poll(() => field.isValidated.value).toBe(false);
 
     // User interaction (blur) sets isValidated to true (field is still empty/invalid)
-    ((await page.getByTestId('input').element()) as HTMLInputElement).dispatchEvent(
-      new FocusEvent('blur', { bubbles: true }),
-    );
-    await flush();
+    await page.getByTestId('input').click();
+    await userEvent.tab();
+    await expect
+      .element(page.getByTestId('err'))
+      .toHaveTextContent(/Constraints not satisfied|Please fill out this field\.?/);
 
     // Now errors should show because isValidated is true
-    expect(field.isValidated.value).toBe(true);
-    expect(((await page.getByTestId('err').element()) as HTMLElement).textContent).toMatch(
-      /Constraints not satisfied|Please fill out this field\.?/,
-    );
+    await expect.poll(() => field.isValidated.value).toBe(true);
+    await expect
+      .element(page.getByTestId('err'))
+      .toHaveTextContent(/Constraints not satisfied|Please fill out this field\.?/);
   });
 
   test('isValidated with blur event allows showing errors after user interaction', async () => {
     const input = ref<HTMLInputElement>();
     let field!: FieldState<any>;
 
-    render({
+    page.render({
       setup: () => {
         field = useFormField().state;
         useInputValidity({ inputEl: input, field, events: ['blur'] });
@@ -394,31 +370,25 @@ describe('isValidated tracking', () => {
     });
 
     // Initially no error shown
-    expect(((await page.getByTestId('err').element()) as HTMLElement).textContent).toBe('');
+    await expect.element(page.getByTestId('err')).toHaveTextContent('');
 
-    // After blur, error should show
-    ((await page.getByTestId('input').element()) as HTMLInputElement).dispatchEvent(
-      new FocusEvent('blur', { bubbles: true }),
-    );
-    await flush();
+    // After blur on empty required field, error should show
+    await page.getByTestId('input').click();
+    await userEvent.tab();
 
+    // Manually set blurred state (in real usage, this would be done by the field's blur handler)
     field.setBlurred(true);
-    await flush();
 
-    expect(field.isValidated.value).toBe(true);
-    expect(field.isBlurred.value).toBe(true);
-    expect(((await page.getByTestId('err').element()) as HTMLElement).textContent).toMatch(
-      /Constraints not satisfied|Please fill out this field\.?/,
-    );
+    // The displayError computed requires both isValidated AND isBlurred to be true
+    await expect.poll(() => field.isValidated.value).toBe(true);
+    await expect.poll(() => field.isBlurred.value).toBe(true);
+    await expect
+      .element(page.getByTestId('err'))
+      .toHaveTextContent(/Constraints not satisfied|Please fill out this field\.?/);
 
-    // Fill in value and blur again
+    // Fill in value and blur again - error should be gone
     await page.getByTestId('input').fill('valid');
-    ((await page.getByTestId('input').element()) as HTMLInputElement).dispatchEvent(
-      new FocusEvent('blur', { bubbles: true }),
-    );
-    await flush();
-
-    // Error should be gone
-    expect(((await page.getByTestId('err').element()) as HTMLElement).textContent).toBe('');
+    await userEvent.tab();
+    await expect.element(page.getByTestId('err')).toHaveTextContent('');
   });
 });

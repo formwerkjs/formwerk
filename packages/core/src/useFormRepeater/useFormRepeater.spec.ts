@@ -1,21 +1,26 @@
 import { defineComponent, ref } from 'vue';
-import { render } from '@testing-library/vue';
 import { useFormRepeater, FormRepeaterProps } from './useFormRepeater';
 import { flush } from '@test-utils/index';
 import { useForm } from '../useForm';
 import { useTextField } from '../useTextField';
 import { page } from 'vitest/browser';
 
-async function renderTest(props: FormRepeaterProps) {
-  const { addButtonProps, items, Iteration, swap, insert, remove, move } = useFormRepeater(props);
+function renderTest(props: FormRepeaterProps) {
+  const repeaterReturns = ref<ReturnType<typeof useFormRepeater<any>> | null>(null);
 
   const TestComponent = defineComponent({
-    components: { Iteration },
     setup() {
-      return { addButtonProps, items };
+      const result = useFormRepeater(props);
+      repeaterReturns.value = result;
+      return {
+        addButtonProps: result.addButtonProps,
+        items: result.items,
+        Iteration: result.Iteration,
+      };
     },
     template: `
-      <Iteration
+      <component
+        :is="Iteration"
         v-for="(key, index) in items"
         :key="key"
         :index="index"
@@ -28,19 +33,27 @@ async function renderTest(props: FormRepeaterProps) {
           <button data-testid="move-up-button" v-bind="moveUpButtonProps">Move Up</button>
           <button data-testid="move-down-button" v-bind="moveDownButtonProps">Move Down</button>
         </div>
-      </Iteration>
+      </component>
 
       <button data-testid="add-button" v-bind="addButtonProps">Add</button>
     `,
   });
 
-  render(TestComponent);
+  page.render(TestComponent);
 
   return {
-    swap,
-    insert,
-    remove,
-    move,
+    get swap() {
+      return repeaterReturns.value!.swap;
+    },
+    get insert() {
+      return repeaterReturns.value!.insert;
+    },
+    get remove() {
+      return repeaterReturns.value!.remove;
+    },
+    get move() {
+      return repeaterReturns.value!.move;
+    },
   };
 }
 
@@ -272,29 +285,27 @@ test('can remove all if no min is set', async () => {
 });
 
 test('renders Iteration component with correct props', async () => {
-  const { Iteration, items } = useFormRepeater({
-    name: 'testRepeater',
-    min: 1,
-  });
-
   const TestComponent = defineComponent({
-    components: { Iteration },
-
     setup() {
+      const { Iteration, items } = useFormRepeater({
+        name: 'testRepeater',
+        min: 1,
+      });
+
       return { items, Iteration };
     },
     template: `
-      <Iteration v-for="(key, index) in items" :index="index" v-slot="{ removeButtonProps, moveUpButtonProps, moveDownButtonProps }">
+      <component :is="Iteration" v-for="(key, index) in items" :key="key" :index="index" v-slot="{ removeButtonProps, moveUpButtonProps, moveDownButtonProps }">
         <div data-testid="iteration-content">
           <button data-testid="remove-button" v-bind="removeButtonProps">Remove</button>
           <button data-testid="move-up-button" v-bind="moveUpButtonProps">Move Up</button>
           <button data-testid="move-down-button" v-bind="moveDownButtonProps">Move Down</button>
         </div>
-      </Iteration>
+      </component>
     `,
   });
 
-  render(TestComponent);
+  page.render(TestComponent);
 
   await expect.element(page.getByTestId('iteration-content')).toBeInTheDocument();
 
@@ -310,28 +321,27 @@ test('renders Iteration component with correct props', async () => {
 });
 
 test('renders Iteration component with correct props with custom element', async () => {
-  const { Iteration, items } = useFormRepeater({
-    name: 'testRepeater',
-    min: 1,
-  });
-
   const TestComponent = defineComponent({
-    components: { Iteration },
     setup() {
-      return { items };
+      const { Iteration, items } = useFormRepeater({
+        name: 'testRepeater',
+        min: 1,
+      });
+
+      return { items, Iteration };
     },
     template: `
-      <Iteration v-for="(key, index) in items" as="div" data-testid="repeater-item" :index="index" v-slot="{ removeButtonProps, moveUpButtonProps, moveDownButtonProps }">
+      <component :is="Iteration" v-for="(key, index) in items" :key="key" as="div" data-testid="repeater-item" :index="index" v-slot="{ removeButtonProps, moveUpButtonProps, moveDownButtonProps }">
         <div data-testid="iteration-content">
           <button data-testid="remove-button" v-bind="removeButtonProps">Remove</button>
           <button data-testid="move-up-button" v-bind="moveUpButtonProps">Move Up</button>
           <button data-testid="move-down-button" v-bind="moveDownButtonProps">Move Down</button>
         </div>
-      </Iteration>
+      </component>
     `,
   });
 
-  render(TestComponent);
+  page.render(TestComponent);
 
   await expect.element(page.getByTestId('repeater-item')).toBeInTheDocument();
 });
@@ -493,7 +503,7 @@ describe('form repeater with form context', () => {
       template: `<RepeaterChild :form="form" />`,
     });
 
-    render(TestComponent);
+    page.render(TestComponent);
     await flush();
 
     // Verify initial state - 3 users with all data
@@ -597,7 +607,7 @@ describe('form repeater with form context', () => {
       template: `<RepeaterChild />`,
     });
 
-    render(TestComponent);
+    page.render(TestComponent);
     await flush();
 
     // Verify initial state
@@ -681,7 +691,7 @@ describe('form repeater with form context', () => {
       template: `<RepeaterChild />`,
     });
 
-    render(TestComponent);
+    page.render(TestComponent);
     await flush();
 
     // Verify initial state
@@ -766,7 +776,7 @@ describe('form repeater with form context', () => {
       template: `<RepeaterChild />`,
     });
 
-    render(TestComponent);
+    page.render(TestComponent);
     await flush();
 
     // Verify initial state
@@ -851,7 +861,7 @@ describe('form repeater with form context', () => {
       template: `<RepeaterChild />`,
     });
 
-    render(TestComponent);
+    page.render(TestComponent);
     await flush();
 
     // Verify initial state
@@ -935,7 +945,7 @@ describe('form repeater with form context', () => {
       `,
     });
 
-    render(TestComponent);
+    page.render(TestComponent);
     await flush();
 
     // Verify initial state

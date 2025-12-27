@@ -1,9 +1,9 @@
-import { render } from '@testing-library/vue';
+import { page } from 'vitest/browser';
 
-export async function renderSetup<TReturns extends object, TChildReturns extends object | undefined>(
+export function renderSetup<TReturns extends object, TChildReturns extends object | undefined>(
   setup: () => TReturns,
   childSetup?: () => TChildReturns,
-): Promise<TReturns & TChildReturns> {
+): TReturns & TChildReturns {
   const su = withSetupReturns(setup);
   const component = { template: '<div></div>', setup: su, components: {} };
   const csu = childSetup ? withSetupReturns(childSetup) : undefined;
@@ -14,7 +14,7 @@ export async function renderSetup<TReturns extends object, TChildReturns extends
     component.components = { Child };
   }
 
-  render(component);
+  page.render(component);
 
   return {
     ...((su.result || {}) as TReturns),

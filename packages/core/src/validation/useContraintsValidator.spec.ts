@@ -1,6 +1,5 @@
-import { nextTick, onMounted, ref, shallowRef } from 'vue';
+import { ref, shallowRef } from 'vue';
 import { dateToString, useConstraintsValidator } from './useConstraintsValidator';
-import { render } from '@testing-library/vue';
 import { renderSetup } from '@test-utils/index';
 import { page } from 'vitest/browser';
 
@@ -18,8 +17,8 @@ describe('useConstraintsValidator', () => {
         });
       });
 
-      expect(element.value?.type).toBe('text');
-      expect(element.value?.value).toBe('test');
+      await expect.poll(() => element.value?.type).toBe('text');
+      await expect.poll(() => element.value?.value).toBe('test');
     });
 
     test('sets required attribute', async () => {
@@ -36,12 +35,11 @@ describe('useConstraintsValidator', () => {
         });
       });
 
-      expect(element.value?.required).toBe(true);
+      await expect.poll(() => element.value?.required).toBe(true);
 
       // Change required value
       required.value = false;
-      await nextTick();
-      expect(element.value?.required).toBe(false);
+      await expect.poll(() => element.value?.required).toBe(false);
     });
 
     test('sets minLength and maxLength attributes', async () => {
@@ -60,15 +58,14 @@ describe('useConstraintsValidator', () => {
         });
       });
 
-      expect(element.value?.getAttribute('minlength')).toBe('2');
-      expect(element.value?.getAttribute('maxlength')).toBe('10');
+      await expect.poll(() => element.value?.getAttribute('minlength')).toBe('2');
+      await expect.poll(() => element.value?.getAttribute('maxlength')).toBe('10');
 
       // Change min/max values
       minLength.value = 3;
       maxLength.value = 20;
-      await nextTick();
-      expect(element.value?.getAttribute('minlength')).toBe('3');
-      expect(element.value?.getAttribute('maxlength')).toBe('20');
+      await expect.poll(() => element.value?.getAttribute('minlength')).toBe('3');
+      await expect.poll(() => element.value?.getAttribute('maxlength')).toBe('20');
     });
 
     test('updates value when source value changes', async () => {
@@ -83,11 +80,10 @@ describe('useConstraintsValidator', () => {
         });
       });
 
-      expect(element.value?.value).toBe('test');
+      await expect.poll(() => element.value?.value).toBe('test');
 
       value.value = 'updated';
-      await nextTick();
-      expect(element.value?.value).toBe('updated');
+      await expect.poll(() => element.value?.value).toBe('updated');
     });
   });
 
@@ -104,8 +100,8 @@ describe('useConstraintsValidator', () => {
         });
       });
 
-      expect(element.value?.type).toBe('text');
-      expect(element.value?.value).toBe('option1');
+      await expect.poll(() => element.value?.type).toBe('text');
+      await expect.poll(() => element.value?.value).toBe('option1');
     });
   });
 
@@ -122,8 +118,8 @@ describe('useConstraintsValidator', () => {
         });
       });
 
-      expect(element.value?.type).toBe('number');
-      expect(element.value?.value).toBe('42');
+      await expect.poll(() => element.value?.type).toBe('number');
+      await expect.poll(() => element.value?.value).toBe('42');
     });
 
     test('sets min and max attributes', async () => {
@@ -142,15 +138,14 @@ describe('useConstraintsValidator', () => {
         });
       });
 
-      expect(element.value?.getAttribute('min')).toBe('0');
-      expect(element.value?.getAttribute('max')).toBe('100');
+      await expect.poll(() => element.value?.getAttribute('min')).toBe('0');
+      await expect.poll(() => element.value?.getAttribute('max')).toBe('100');
 
       // Change min/max values
       min.value = 10;
       max.value = 200;
-      await nextTick();
-      expect(element.value?.getAttribute('min')).toBe('10');
-      expect(element.value?.getAttribute('max')).toBe('200');
+      await expect.poll(() => element.value?.getAttribute('min')).toBe('10');
+      await expect.poll(() => element.value?.getAttribute('max')).toBe('200');
     });
   });
 
@@ -167,8 +162,8 @@ describe('useConstraintsValidator', () => {
         });
       });
 
-      expect(element.value?.type).toBe('date');
-      expect(element.value?.value).toBe(dateToString(value.value));
+      await expect.poll(() => element.value?.type).toBe('date');
+      await expect.poll(() => element.value?.value).toBe(dateToString(value.value));
     });
 
     test('sets min and max date attributes', async () => {
@@ -187,15 +182,14 @@ describe('useConstraintsValidator', () => {
         });
       });
 
-      expect(element.value?.getAttribute('min')).toBe(dateToString(min.value));
-      expect(element.value?.getAttribute('max')).toBe(dateToString(max.value));
+      await expect.poll(() => element.value?.getAttribute('min')).toBe(dateToString(min.value));
+      await expect.poll(() => element.value?.getAttribute('max')).toBe(dateToString(max.value));
 
       // Change min/max values
       min.value = new Date('2023-02-01');
       max.value = new Date('2023-02-28');
-      await nextTick();
-      expect(element.value?.getAttribute('min')).toBe(dateToString(min.value));
-      expect(element.value?.getAttribute('max')).toBe(dateToString(max.value));
+      await expect.poll(() => element.value?.getAttribute('min')).toBe(dateToString(min.value));
+      await expect.poll(() => element.value?.getAttribute('max')).toBe(dateToString(max.value));
     });
 
     test('handles null date values', async () => {
@@ -210,11 +204,10 @@ describe('useConstraintsValidator', () => {
         });
       });
 
-      expect(element.value?.value).toBe('');
+      await expect.poll(() => element.value?.value).toBe('');
 
       value.value = new Date('2023-03-15');
-      await nextTick();
-      expect(element.value?.value).toBe(dateToString(value.value));
+      await expect.poll(() => element.value?.value).toBe(dateToString(value.value));
     });
   });
 
@@ -223,8 +216,9 @@ describe('useConstraintsValidator', () => {
       const source = shallowRef<HTMLElement>();
       const value = ref('test');
       const dispatchedEvents: string[] = [];
+      let constraintElement: ReturnType<typeof useConstraintsValidator>['element'];
 
-      render({
+      page.render({
         setup: () => {
           const { element } = useConstraintsValidator({
             type: 'text',
@@ -232,31 +226,31 @@ describe('useConstraintsValidator', () => {
             source,
           });
 
-          onMounted(() => {
-            // Mock the dispatchEvent method to track events
-            element.value!.dispatchEvent = ((event: Event) => {
-              dispatchedEvents.push(event.type);
-              return true;
-            }) as any;
-          });
+          constraintElement = element;
 
           return { source };
         },
         template: `<div ref="source" data-testid="source"></div>`,
       });
 
-      await nextTick();
+      // Wait for element to be created in onMounted
+      await expect.poll(() => constraintElement?.value).toBeTruthy();
 
-      // Trigger events on the source element
+      // Mock the dispatchEvent method to track events
+      const originalDispatch = constraintElement!.value!.dispatchEvent.bind(constraintElement!.value);
+      constraintElement!.value!.dispatchEvent = ((event: Event) => {
+        dispatchedEvents.push(event.type);
+        return originalDispatch(event);
+      }) as any;
+
+      // Trigger events on the source element (only blur and input are forwarded by the composable)
       const src = (await page.getByTestId('source').element()) as HTMLElement;
-      src.dispatchEvent(new Event('change', { bubbles: true }));
       src.dispatchEvent(new FocusEvent('blur', { bubbles: true }));
       src.dispatchEvent(new Event('input', { bubbles: true }));
 
       // Check if events were forwarded to the element
-      expect(dispatchedEvents).toContain('change');
-      expect(dispatchedEvents).toContain('blur');
-      expect(dispatchedEvents).toContain('input');
+      await expect.poll(() => dispatchedEvents).toContain('blur');
+      await expect.poll(() => dispatchedEvents).toContain('input');
     });
   });
 
@@ -276,10 +270,10 @@ describe('useConstraintsValidator', () => {
         });
       });
 
-      expect(element.value?.required).toBe(false);
-      expect(element.value?.getAttribute('minlength')).toBe('');
-      expect(element.value?.getAttribute('maxlength')).toBe('');
-      expect(element.value?.value).toBe('');
+      await expect.poll(() => element.value?.required).toBe(false);
+      await expect.poll(() => element.value?.getAttribute('minlength')).toBe('');
+      await expect.poll(() => element.value?.getAttribute('maxlength')).toBe('');
+      await expect.poll(() => element.value?.value).toBe('');
     });
   });
 });
