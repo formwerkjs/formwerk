@@ -1,3 +1,5 @@
+import { vi } from 'vitest';
+
 // Browser mode runs in a real browser, so keep real timers by default.
 // Note: `vitest-dom/extend-expect` relies on Node internals and can't be used in browser mode.
 // We only stub a couple of DOM APIs that might be missing in some environments.
