@@ -40,7 +40,7 @@
     "@vitest/browser-playwright": "^4.0.16",
     "@vitest/coverage-v8": "^4.0.16",
     "@vitest/ui": "^4.0.16",
-    "@vue/server-renderer": "3.5.13",
+    "@vue/server-renderer": "3.5.26",
     "axe-core": "^4.11.0",
     "concurrently": "^9.2.1",
     "consola": "^3.4.2",
@@ -61,7 +61,7 @@
     "vite-tsconfig-paths": "^5.1.4",
     "vitest": "^4.0.16",
     "vitest-browser-vue": "^2.0.1",
-    "vue": "^3.5.13",
+    "vue": "^3.5.26",
     "zod": "4.2.1"
   },
   "lint-staged": {
