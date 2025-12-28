@@ -1,21 +1,10 @@
 import * as v from 'valibot';
+import { toJsonSchema } from '@valibot/to-json-schema';
 import { useForm } from '@formwerk/core';
+import { appRender } from '@test-utils/index';
 import { defineComponent, h, nextTick } from 'vue';
-import { createApp } from 'vue';
 import { page } from 'vitest/browser';
-import { expect } from 'vitest';
-
-function mount(component: any) {
-  const root = document.createElement('div');
-  root.setAttribute('data-testid', 'root');
-  document.body.appendChild(root);
-  const app = createApp(component);
-  app.mount(root);
-  return () => {
-    app.unmount();
-    root.remove();
-  };
-}
+import { expect, describe, test, vi } from 'vitest';
 
 test('valibot schemas are supported', async () => {
   const handler = vi.fn();
@@ -24,7 +13,7 @@ test('valibot schemas are supported', async () => {
     password: v.pipe(v.string(), v.minLength(8)),
   });
 
-  const unmount = mount(
+  appRender(
     defineComponent({
       setup() {
         const { handleSubmit, getError, values } = useForm({
@@ -58,18 +47,14 @@ test('valibot schemas are supported', async () => {
     }),
   );
 
-  try {
-    await page.getByRole('button', { name: 'Submit' }).click();
-    await nextTick();
+  await page.getByRole('button', { name: 'Submit' }).click();
+  await nextTick();
 
-    await expect.element(page.getByTestId('form-err-1')).toHaveTextContent('');
-    await expect
-      .element(page.getByTestId('form-err-2'))
-      .toHaveTextContent('Invalid key: Expected "password" but received undefined');
-    expect(handler).not.toHaveBeenCalled();
-  } finally {
-    unmount();
-  }
+  await expect.element(page.getByTestId('form-err-1')).toHaveTextContent('');
+  await expect
+    .element(page.getByTestId('form-err-2'))
+    .toHaveTextContent('Invalid key: Expected "password" but received undefined');
+  expect(handler).not.toHaveBeenCalled();
 });
 
 test('collects multiple errors per field', async () => {
@@ -78,7 +63,7 @@ test('collects multiple errors per field', async () => {
     test: v.pipe(v.string(), v.email(), v.minLength(8)),
   });
 
-  const unmount = mount(
+  appRender(
     defineComponent({
       setup() {
         const { getErrors, validate } = useForm({
@@ -109,15 +94,338 @@ test('collects multiple errors per field', async () => {
     }),
   );
 
-  try {
-    await page.getByRole('button', { name: 'Submit' }).click();
+  await page.getByRole('button', { name: 'Submit' }).click();
+  await nextTick();
+
+  expect(handler).toHaveBeenCalledWith([
+    'Invalid email: Received "123"',
+    'Invalid length: Expected >=8 but received 3',
+  ]);
+});
+
+/**
+ * Helper to wrap a valibot schema with JSON Schema support for default extraction.
+ * This integrates @valibot/to-json-schema with the Standard Schema jsonSchema converter.
+ */
+function withJsonSchema<T extends v.GenericSchema>(schema: T) {
+  return {
+    ...schema,
+    '~standard': {
+      ...schema['~standard'],
+      jsonSchema: {
+        input: (config: { target: string }) => {
+          if (config.target === 'draft-07') {
+            return toJsonSchema(schema);
+          }
+          throw new Error(`Unsupported JSON Schema target: ${config.target}`);
+        },
+      },
+    },
+  } as T;
+}
+
+describe('JSON Schema defaults', () => {
+  test('extracts simple default values from valibot schema', async () => {
+    const schema = withJsonSchema(
+      v.object({
+        name: v.optional(v.string(), 'John'),
+        age: v.optional(v.number(), 25),
+        active: v.optional(v.boolean(), true),
+      }),
+    );
+
+    appRender(
+      defineComponent({
+        setup() {
+          const { values } = useForm({
+            schema,
+          });
+
+          return () => h('div', { 'data-testid': 'values' }, JSON.stringify(values));
+        },
+      }),
+    );
+
+    await nextTick();
+    const valuesEl = await page.getByTestId('values').element();
+    const values = JSON.parse(valuesEl.textContent || '{}');
+
+    expect(values).toEqual({
+      name: 'John',
+      age: 25,
+      active: true,
+    });
+  });
+
+  test('extracts nested object defaults from valibot schema', async () => {
+    const schema = withJsonSchema(
+      v.object({
+        user: v.object({
+          name: v.optional(v.string(), 'Jane'),
+          address: v.object({
+            city: v.optional(v.string(), 'NYC'),
+            zip: v.optional(v.string(), '10001'),
+          }),
+        }),
+      }),
+    );
+
+    appRender(
+      defineComponent({
+        setup() {
+          const { values } = useForm({
+            schema,
+          });
+
+          return () => h('div', { 'data-testid': 'values' }, JSON.stringify(values));
+        },
+      }),
+    );
+
+    await nextTick();
+    const valuesEl = await page.getByTestId('values').element();
+    const values = JSON.parse(valuesEl.textContent || '{}');
+
+    expect(values).toEqual({
+      user: {
+        name: 'Jane',
+        address: {
+          city: 'NYC',
+          zip: '10001',
+        },
+      },
+    });
+  });
+
+  test('merges provided initialValues with schema defaults', async () => {
+    const schema = withJsonSchema(
+      v.object({
+        name: v.optional(v.string(), 'Default Name'),
+        email: v.optional(v.string(), 'default@example.com'),
+        settings: v.object({
+          theme: v.optional(v.string(), 'dark'),
+          notifications: v.optional(v.boolean(), true),
+        }),
+      }),
+    );
+
+    appRender(
+      defineComponent({
+        setup() {
+          const { values } = useForm({
+            schema,
+            initialValues: {
+              name: 'Custom Name',
+              settings: {
+                theme: 'light',
+              },
+            },
+          });
+
+          return () => h('div', { 'data-testid': 'values' }, JSON.stringify(values));
+        },
+      }),
+    );
+
+    await nextTick();
+    const valuesEl = await page.getByTestId('values').element();
+    const values = JSON.parse(valuesEl.textContent || '{}');
+
+    // Provided values should take precedence, schema defaults fill the gaps
+    expect(values).toEqual({
+      name: 'Custom Name',
+      email: 'default@example.com',
+      settings: {
+        theme: 'light',
+        notifications: true,
+      },
+    });
+  });
+
+  test('handles deeply nested objects with mixed defaults and provided values', async () => {
+    const schema = withJsonSchema(
+      v.object({
+        company: v.object({
+          name: v.optional(v.string(), 'Acme Corp'),
+          departments: v.object({
+            engineering: v.object({
+              lead: v.optional(v.string(), 'Alice'),
+              teamSize: v.optional(v.number(), 10),
+            }),
+            sales: v.object({
+              lead: v.optional(v.string(), 'Bob'),
+              teamSize: v.optional(v.number(), 5),
+            }),
+          }),
+        }),
+      }),
+    );
+
+    appRender(
+      defineComponent({
+        setup() {
+          const { values } = useForm({
+            schema,
+            initialValues: {
+              company: {
+                departments: {
+                  engineering: {
+                    lead: 'Charlie',
+                  },
+                },
+              },
+            },
+          });
+
+          return () => h('div', { 'data-testid': 'values' }, JSON.stringify(values));
+        },
+      }),
+    );
+
+    await nextTick();
+    const valuesEl = await page.getByTestId('values').element();
+    const values = JSON.parse(valuesEl.textContent || '{}');
+
+    expect(values).toEqual({
+      company: {
+        name: 'Acme Corp',
+        departments: {
+          engineering: {
+            lead: 'Charlie', // Overridden
+            teamSize: 10, // Default
+          },
+          sales: {
+            lead: 'Bob', // Default
+            teamSize: 5, // Default
+          },
+        },
+      },
+    });
+  });
+
+  test('handles array defaults in schema', async () => {
+    const schema = withJsonSchema(
+      v.object({
+        tags: v.optional(v.array(v.string()), ['tag1', 'tag2']),
+        config: v.object({
+          features: v.optional(v.array(v.string()), ['feature1']),
+        }),
+      }),
+    );
+
+    appRender(
+      defineComponent({
+        setup() {
+          const { values } = useForm({
+            schema,
+          });
+
+          return () => h('div', { 'data-testid': 'values' }, JSON.stringify(values));
+        },
+      }),
+    );
+
+    await nextTick();
+    const valuesEl = await page.getByTestId('values').element();
+    const values = JSON.parse(valuesEl.textContent || '{}');
+
+    expect(values).toEqual({
+      tags: ['tag1', 'tag2'],
+      config: {
+        features: ['feature1'],
+      },
+    });
+  });
+
+  test('provided array values override schema defaults completely', async () => {
+    const schema = withJsonSchema(
+      v.object({
+        tags: v.optional(v.array(v.string()), ['default1', 'default2']),
+      }),
+    );
+
+    appRender(
+      defineComponent({
+        setup() {
+          const { values } = useForm({
+            schema,
+            initialValues: {
+              tags: ['custom1'],
+            },
+          });
+
+          return () => h('div', { 'data-testid': 'values' }, JSON.stringify(values));
+        },
+      }),
+    );
+
+    await nextTick();
+    const valuesEl = await page.getByTestId('values').element();
+    const values = JSON.parse(valuesEl.textContent || '{}');
+
+    // Arrays should be replaced entirely, not merged
+    expect(values).toEqual({
+      tags: ['custom1'],
+    });
+  });
+
+  test('works with no initialValues - schema defaults are used', async () => {
+    const schema = withJsonSchema(
+      v.object({
+        firstName: v.optional(v.string(), 'First'),
+        lastName: v.optional(v.string(), 'Last'),
+      }),
+    );
+
+    appRender(
+      defineComponent({
+        setup() {
+          const { values } = useForm({
+            schema,
+          });
+
+          return () => h('div', { 'data-testid': 'values' }, JSON.stringify(values));
+        },
+      }),
+    );
+
+    await nextTick();
+    const valuesEl = await page.getByTestId('values').element();
+    const values = JSON.parse(valuesEl.textContent || '{}');
+
+    expect(values).toEqual({
+      firstName: 'First',
+      lastName: 'Last',
+    });
+  });
+
+  test('fields without defaults remain undefined when not provided', async () => {
+    const schema = withJsonSchema(
+      v.object({
+        withDefault: v.optional(v.string(), 'has default'),
+        withoutDefault: v.string(),
+      }),
+    );
+
+    appRender(
+      defineComponent({
+        setup() {
+          const { values } = useForm({
+            schema,
+          });
+
+          return () =>
+            h('div', [
+              h('span', { 'data-testid': 'with-default' }, values.withDefault ?? 'UNDEFINED'),
+              h('span', { 'data-testid': 'without-default' }, values.withoutDefault ?? 'UNDEFINED'),
+            ]);
+        },
+      }),
+    );
+
     await nextTick();
 
-    expect(handler).toHaveBeenCalledWith([
-      'Invalid email: Received "123"',
-      'Invalid length: Expected >=8 but received 3',
-    ]);
-  } finally {
-    unmount();
-  }
+    await expect.element(page.getByTestId('with-default')).toHaveTextContent('has default');
+    await expect.element(page.getByTestId('without-default')).toHaveTextContent('UNDEFINED');
+  });
 });
