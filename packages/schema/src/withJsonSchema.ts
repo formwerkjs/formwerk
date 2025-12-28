@@ -8,17 +8,14 @@ import type { CombinedStandardSchema } from './types';
  *
  * @example
  * // For valibot with @valibot/to-json-schema
- * import { toJsonSchema } from '@valibot/to-json-schema';
- * const schema = withJsonSchema(valibotSchema, toJsonSchema);
+ * import { toStandardJsonSchema } from '@valibot/to-json-schema';
+ * const schema = withJsonSchema(valibotSchema, toStandardJsonSchema);
  *
  * @example
  * // For zod/mini
  * import * as zm from 'zod/mini';
  * const schema = withJsonSchema(zodMiniSchema, zm.toJSONSchema);
  *
- * @example
- * // For arktype
- * const schema = withJsonSchema(arktypeSchema, s => s.toJsonSchema());
  */
 export function withJsonSchema<
   TInput,

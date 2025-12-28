@@ -5,10 +5,10 @@
   "keywords": [
     "Vue",
     "VueJS",
+    "defaults",
     "form",
     "json-schema",
-    "schema",
-    "defaults"
+    "schema"
   ],
   "homepage": "https://formwerk.dev/",
   "license": "MIT",
@@ -44,4 +44,3 @@
     "json-schema-typed": "^8.0.2"
   }
 }
-
