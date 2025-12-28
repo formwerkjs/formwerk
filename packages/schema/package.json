@@ -1,0 +1,58 @@
+{
+  "name": "@formwerk/schema",
+  "version": "0.14.4",
+  "description": "Formwerk's schema utilities for JSON Schema default extraction",
+  "keywords": [
+    "Vue",
+    "VueJS",
+    "form",
+    "json-schema",
+    "schema",
+    "defaults"
+  ],
+  "homepage": "https://formwerk.dev/",
+  "license": "MIT",
+  "author": "Abdelrahman Awad <logaretm1@gmail.com>",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/formwerkjs/formwerk.git",
+    "directory": "packages/schema"
+  },
+  "funding": "https://github.com/sponsors/logaretm",
+  "files": [
+    "dist/*.cjs",
+    "dist/*.d.ts",
+    "dist/*.js",
+    "dist/*.mjs"
+  ],
+  "type": "module",
+  "sideEffects": false,
+  "main": "src/index.ts",
+  "module": "src/index.ts",
+  "types": "src/index.ts",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "import": "./src/index.ts",
+      "require": "./src/index.ts"
+    }
+  },
+  "publishConfig": {
+    "main": "dist/schema.mjs",
+    "module": "dist/schema.mjs",
+    "types": "dist/schema.d.ts",
+    "exports": {
+      ".": {
+        "types": "./dist/schema.d.ts",
+        "import": "./dist/schema.mjs",
+        "require": "./dist/schema.cjs"
+      },
+      "./dist/schema.d.ts": "./dist/schema.d.ts"
+    }
+  },
+  "dependencies": {
+    "@standard-schema/spec": "1.1.0",
+    "json-schema-typed": "^8.0.2"
+  }
+}
+

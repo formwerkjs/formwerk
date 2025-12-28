@@ -42,6 +42,7 @@
   },
   "dependencies": {
     "@formwerk/devtools": "workspace:*",
+    "@formwerk/schema": "workspace:*",
     "@internationalized/date": "^3.9.0",
     "@standard-schema/spec": "1.1.0",
     "@standard-schema/utils": "^0.3.0",
@@ -50,8 +51,5 @@
   },
   "peerDependencies": {
     "vue": ">=3.5.0"
-  },
-  "devDependencies": {
-    "json-schema-typed": "^8.0.2"
   }
 }

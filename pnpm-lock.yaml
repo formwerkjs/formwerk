@@ -113,6 +113,9 @@ importers:
       '@formwerk/devtools':
         specifier: workspace:*
         version: link:../devtools
+      '@formwerk/schema':
+        specifier: workspace:*
+        version: link:../schema
       '@internationalized/date':
         specifier: ^3.9.0
         version: 3.9.0
@@ -131,10 +134,6 @@ importers:
       vue:
         specifier: '>=3.5.0'
         version: 3.5.26(typescript@5.9.3)
-    devDependencies:
-      json-schema-typed:
-        specifier: ^8.0.2
-        version: 8.0.2
 
   packages/devtools:
     dependencies:
@@ -208,6 +207,15 @@ importers:
       vue-tsc:
         specifier: ^3.2.1
         version: 3.2.1(typescript@5.9.3)
+
+  packages/schema:
+    dependencies:
+      '@standard-schema/spec':
+        specifier: 1.1.0
+        version: 1.1.0
+      json-schema-typed:
+        specifier: ^8.0.2
+        version: 8.0.2
 
   packages/starter-kits:
     dependencies:
