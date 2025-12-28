@@ -40,6 +40,7 @@
     "@vitest/browser-playwright": "^4.0.16",
     "@vitest/coverage-v8": "^4.0.16",
     "@vitest/ui": "^4.0.16",
+    "@vue/compiler-dom": "^3.5.26",
     "@vue/server-renderer": "3.5.26",
     "axe-core": "^4.11.0",
     "concurrently": "^9.2.1",
