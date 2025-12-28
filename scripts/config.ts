@@ -8,14 +8,14 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 const formatNameMap = {
-  devtools: 'FormwerkDevtools',
   schema: 'FormwerkSchema',
+  devtools: 'FormwerkDevtools',
   core: 'Formwerk',
 };
 
 const pkgNameMap = {
-  devtools: 'devtools',
   schema: 'schema',
+  devtools: 'devtools',
   core: 'core',
 };
 
