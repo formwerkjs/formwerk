@@ -1,8 +1,9 @@
 import * as v from 'valibot';
-import { toJsonSchema } from '@valibot/to-json-schema';
+import { toStandardJsonSchema } from '@valibot/to-json-schema';
 import { useForm } from '@formwerk/core';
+import { withJsonSchema } from '@formwerk/schema';
 import { appRender } from '@test-utils/index';
-import { defineComponent, h, nextTick } from 'vue';
+import { h, nextTick } from 'vue';
 import { page } from 'vitest/browser';
 import { expect, describe, test, vi } from 'vitest';
 
@@ -13,39 +14,37 @@ test('valibot schemas are supported', async () => {
     password: v.pipe(v.string(), v.minLength(8)),
   });
 
-  appRender(
-    defineComponent({
-      setup() {
-        const { handleSubmit, getError, values } = useForm({
-          schema,
-        });
+  appRender({
+    setup() {
+      const { handleSubmit, getError, values } = useForm({
+        schema,
+      });
 
-        // eslint-disable-next-line @typescript-eslint/no-unused-expressions
-        values.email;
+      // eslint-disable-next-line @typescript-eslint/no-unused-expressions
+      values.email;
 
-        const onSubmit = handleSubmit(v => {
-          handler(v.toObject());
-        });
+      const onSubmit = handleSubmit(v => {
+        handler(v.toObject());
+      });
 
-        return () =>
-          h(
-            'form',
-            {
-              novalidate: true,
-              onSubmit: (e: Event) => {
-                e.preventDefault();
-                return onSubmit(e as any);
-              },
+      return () =>
+        h(
+          'form',
+          {
+            novalidate: true,
+            onSubmit: (e: Event) => {
+              e.preventDefault();
+              return onSubmit(e as any);
             },
-            [
-              h('span', { 'data-testid': 'form-err-1' }, getError('email')),
-              h('span', { 'data-testid': 'form-err-2' }, getError('password')),
-              h('button', { type: 'submit' }, 'Submit'),
-            ],
-          );
-      },
-    }),
-  );
+          },
+          [
+            h('span', { 'data-testid': 'form-err-1' }, getError('email')),
+            h('span', { 'data-testid': 'form-err-2' }, getError('password')),
+            h('button', { type: 'submit' }, 'Submit'),
+          ],
+        );
+    },
+  });
 
   await page.getByRole('button', { name: 'Submit' }).click();
   await nextTick();
@@ -63,36 +62,34 @@ test('collects multiple errors per field', async () => {
     test: v.pipe(v.string(), v.email(), v.minLength(8)),
   });
 
-  appRender(
-    defineComponent({
-      setup() {
-        const { getErrors, validate } = useForm({
-          schema,
-          initialValues: {
-            test: '123',
-          },
-        });
+  appRender({
+    setup() {
+      const { getErrors, validate } = useForm({
+        schema,
+        initialValues: {
+          test: '123',
+        },
+      });
 
-        const onSubmit = async () => {
-          await validate();
-          handler(getErrors());
-        };
+      const onSubmit = async () => {
+        await validate();
+        handler(getErrors());
+      };
 
-        return () =>
-          h(
-            'form',
-            {
-              novalidate: true,
-              onSubmit: async (e: Event) => {
-                e.preventDefault();
-                await onSubmit();
-              },
+      return () =>
+        h(
+          'form',
+          {
+            novalidate: true,
+            onSubmit: async (e: Event) => {
+              e.preventDefault();
+              await onSubmit();
             },
-            [h('button', { type: 'submit' }, 'Submit')],
-          );
-      },
-    }),
-  );
+          },
+          [h('button', { type: 'submit' }, 'Submit')],
+        );
+    },
+  });
 
   await page.getByRole('button', { name: 'Submit' }).click();
   await nextTick();
@@ -103,27 +100,6 @@ test('collects multiple errors per field', async () => {
   ]);
 });
 
-/**
- * Helper to wrap a valibot schema with JSON Schema support for default extraction.
- * This integrates @valibot/to-json-schema with the Standard Schema jsonSchema converter.
- */
-function withJsonSchema<T extends v.GenericSchema>(schema: T) {
-  return {
-    ...schema,
-    '~standard': {
-      ...schema['~standard'],
-      jsonSchema: {
-        input: (config: { target: string }) => {
-          if (config.target === 'draft-07') {
-            return toJsonSchema(schema);
-          }
-          throw new Error(`Unsupported JSON Schema target: ${config.target}`);
-        },
-      },
-    },
-  } as T;
-}
-
 describe('JSON Schema defaults', () => {
   test('extracts simple default values from valibot schema', async () => {
     const schema = withJsonSchema(
@@ -132,19 +108,18 @@ describe('JSON Schema defaults', () => {
         age: v.optional(v.number(), 25),
         active: v.optional(v.boolean(), true),
       }),
+      toStandardJsonSchema,
     );
 
-    appRender(
-      defineComponent({
-        setup() {
-          const { values } = useForm({
-            schema,
-          });
+    appRender({
+      setup() {
+        const { values } = useForm({
+          schema,
+        });
 
-          return () => h('div', { 'data-testid': 'values' }, JSON.stringify(values));
-        },
-      }),
-    );
+        return () => h('div', { 'data-testid': 'values' }, JSON.stringify(values));
+      },
+    });
 
     await nextTick();
     const valuesEl = await page.getByTestId('values').element();
@@ -168,19 +143,18 @@ describe('JSON Schema defaults', () => {
           }),
         }),
       }),
+      toStandardJsonSchema,
     );
 
-    appRender(
-      defineComponent({
-        setup() {
-          const { values } = useForm({
-            schema,
-          });
+    appRender({
+      setup() {
+        const { values } = useForm({
+          schema,
+        });
 
-          return () => h('div', { 'data-testid': 'values' }, JSON.stringify(values));
-        },
-      }),
-    );
+        return () => h('div', { 'data-testid': 'values' }, JSON.stringify(values));
+      },
+    });
 
     await nextTick();
     const valuesEl = await page.getByTestId('values').element();
@@ -207,25 +181,24 @@ describe('JSON Schema defaults', () => {
           notifications: v.optional(v.boolean(), true),
         }),
       }),
+      toStandardJsonSchema,
     );
 
-    appRender(
-      defineComponent({
-        setup() {
-          const { values } = useForm({
-            schema,
-            initialValues: {
-              name: 'Custom Name',
-              settings: {
-                theme: 'light',
-              },
+    appRender({
+      setup() {
+        const { values } = useForm({
+          schema,
+          initialValues: {
+            name: 'Custom Name',
+            settings: {
+              theme: 'light',
             },
-          });
+          },
+        });
 
-          return () => h('div', { 'data-testid': 'values' }, JSON.stringify(values));
-        },
-      }),
-    );
+        return () => h('div', { 'data-testid': 'values' }, JSON.stringify(values));
+      },
+    });
 
     await nextTick();
     const valuesEl = await page.getByTestId('values').element();
@@ -259,28 +232,27 @@ describe('JSON Schema defaults', () => {
           }),
         }),
       }),
+      toStandardJsonSchema,
     );
 
-    appRender(
-      defineComponent({
-        setup() {
-          const { values } = useForm({
-            schema,
-            initialValues: {
-              company: {
-                departments: {
-                  engineering: {
-                    lead: 'Charlie',
-                  },
+    appRender({
+      setup() {
+        const { values } = useForm({
+          schema,
+          initialValues: {
+            company: {
+              departments: {
+                engineering: {
+                  lead: 'Charlie',
                 },
               },
             },
-          });
+          },
+        });
 
-          return () => h('div', { 'data-testid': 'values' }, JSON.stringify(values));
-        },
-      }),
-    );
+        return () => h('div', { 'data-testid': 'values' }, JSON.stringify(values));
+      },
+    });
 
     await nextTick();
     const valuesEl = await page.getByTestId('values').element();
@@ -311,19 +283,18 @@ describe('JSON Schema defaults', () => {
           features: v.optional(v.array(v.string()), ['feature1']),
         }),
       }),
+      toStandardJsonSchema,
     );
 
-    appRender(
-      defineComponent({
-        setup() {
-          const { values } = useForm({
-            schema,
-          });
+    appRender({
+      setup() {
+        const { values } = useForm({
+          schema,
+        });
 
-          return () => h('div', { 'data-testid': 'values' }, JSON.stringify(values));
-        },
-      }),
-    );
+        return () => h('div', { 'data-testid': 'values' }, JSON.stringify(values));
+      },
+    });
 
     await nextTick();
     const valuesEl = await page.getByTestId('values').element();
@@ -342,22 +313,21 @@ describe('JSON Schema defaults', () => {
       v.object({
         tags: v.optional(v.array(v.string()), ['default1', 'default2']),
       }),
+      toStandardJsonSchema,
     );
 
-    appRender(
-      defineComponent({
-        setup() {
-          const { values } = useForm({
-            schema,
-            initialValues: {
-              tags: ['custom1'],
-            },
-          });
+    appRender({
+      setup() {
+        const { values } = useForm({
+          schema,
+          initialValues: {
+            tags: ['custom1'],
+          },
+        });
 
-          return () => h('div', { 'data-testid': 'values' }, JSON.stringify(values));
-        },
-      }),
-    );
+        return () => h('div', { 'data-testid': 'values' }, JSON.stringify(values));
+      },
+    });
 
     await nextTick();
     const valuesEl = await page.getByTestId('values').element();
@@ -375,19 +345,18 @@ describe('JSON Schema defaults', () => {
         firstName: v.optional(v.string(), 'First'),
         lastName: v.optional(v.string(), 'Last'),
       }),
+      toStandardJsonSchema,
     );
 
-    appRender(
-      defineComponent({
-        setup() {
-          const { values } = useForm({
-            schema,
-          });
+    appRender({
+      setup() {
+        const { values } = useForm({
+          schema,
+        });
 
-          return () => h('div', { 'data-testid': 'values' }, JSON.stringify(values));
-        },
-      }),
-    );
+        return () => h('div', { 'data-testid': 'values' }, JSON.stringify(values));
+      },
+    });
 
     await nextTick();
     const valuesEl = await page.getByTestId('values').element();
@@ -405,23 +374,22 @@ describe('JSON Schema defaults', () => {
         withDefault: v.optional(v.string(), 'has default'),
         withoutDefault: v.string(),
       }),
+      toStandardJsonSchema,
     );
 
-    appRender(
-      defineComponent({
-        setup() {
-          const { values } = useForm({
-            schema,
-          });
+    appRender({
+      setup() {
+        const { values } = useForm({
+          schema,
+        });
 
-          return () =>
-            h('div', [
-              h('span', { 'data-testid': 'with-default' }, values.withDefault ?? 'UNDEFINED'),
-              h('span', { 'data-testid': 'without-default' }, values.withoutDefault ?? 'UNDEFINED'),
-            ]);
-        },
-      }),
-    );
+        return () =>
+          h('div', [
+            h('span', { 'data-testid': 'with-default' }, values.withDefault ?? 'UNDEFINED'),
+            h('span', { 'data-testid': 'without-default' }, values.withoutDefault ?? 'UNDEFINED'),
+          ]);
+      },
+    });
 
     await nextTick();
 

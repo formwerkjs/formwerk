@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { useForm } from '@formwerk/core';
 import { appRender } from '@test-utils/index';
-import { defineComponent, h, nextTick } from 'vue';
+import { h, nextTick } from 'vue';
 import { page } from 'vitest/browser';
 import { expect, describe, test, vi } from 'vitest';
 
@@ -12,39 +12,37 @@ test('zod schemas are supported', async () => {
     password: z.string().min(8),
   });
 
-  appRender(
-    defineComponent({
-      setup() {
-        const { handleSubmit, getError, values } = useForm({
-          schema,
-        });
+  appRender({
+    setup() {
+      const { handleSubmit, getError, values } = useForm({
+        schema,
+      });
 
-        // eslint-disable-next-line @typescript-eslint/no-unused-expressions
-        values.email;
+      // eslint-disable-next-line @typescript-eslint/no-unused-expressions
+      values.email;
 
-        const onSubmit = handleSubmit(v => {
-          handler(v.toObject());
-        });
+      const onSubmit = handleSubmit(v => {
+        handler(v.toObject());
+      });
 
-        return () =>
-          h(
-            'form',
-            {
-              novalidate: true,
-              onSubmit: (e: Event) => {
-                e.preventDefault();
-                return onSubmit(e as any);
-              },
+      return () =>
+        h(
+          'form',
+          {
+            novalidate: true,
+            onSubmit: (e: Event) => {
+              e.preventDefault();
+              return onSubmit(e as any);
             },
-            [
-              h('span', { 'data-testid': 'form-err-1' }, getError('email')),
-              h('span', { 'data-testid': 'form-err-2' }, getError('password')),
-              h('button', { type: 'submit' }, 'Submit'),
-            ],
-          );
-      },
-    }),
-  );
+          },
+          [
+            h('span', { 'data-testid': 'form-err-1' }, getError('email')),
+            h('span', { 'data-testid': 'form-err-2' }, getError('password')),
+            h('button', { type: 'submit' }, 'Submit'),
+          ],
+        );
+    },
+  });
 
   await page.getByRole('button', { name: 'Submit' }).click();
   await nextTick();
@@ -62,36 +60,34 @@ test('collects multiple errors per field', async () => {
     test: z.email().min(8),
   });
 
-  appRender(
-    defineComponent({
-      setup() {
-        const { getErrors, validate } = useForm({
-          schema,
-          initialValues: {
-            test: '123',
-          },
-        });
+  appRender({
+    setup() {
+      const { getErrors, validate } = useForm({
+        schema,
+        initialValues: {
+          test: '123',
+        },
+      });
 
-        const onSubmit = async () => {
-          await validate();
-          handler(getErrors());
-        };
+      const onSubmit = async () => {
+        await validate();
+        handler(getErrors());
+      };
 
-        return () =>
-          h(
-            'form',
-            {
-              novalidate: true,
-              onSubmit: async (e: Event) => {
-                e.preventDefault();
-                await onSubmit();
-              },
+      return () =>
+        h(
+          'form',
+          {
+            novalidate: true,
+            onSubmit: async (e: Event) => {
+              e.preventDefault();
+              await onSubmit();
             },
-            [h('button', { type: 'submit' }, 'Submit')],
-          );
-      },
-    }),
-  );
+          },
+          [h('button', { type: 'submit' }, 'Submit')],
+        );
+    },
+  });
 
   await page.getByRole('button', { name: 'Submit' }).click();
   await nextTick();
@@ -107,17 +103,15 @@ describe('JSON Schema defaults', () => {
       active: z.boolean().default(true),
     });
 
-    appRender(
-      defineComponent({
-        setup() {
-          const { values } = useForm({
-            schema,
-          });
+    appRender({
+      setup() {
+        const { values } = useForm({
+          schema,
+        });
 
-          return () => h('div', { 'data-testid': 'values' }, JSON.stringify(values));
-        },
-      }),
-    );
+        return () => h('div', { 'data-testid': 'values' }, JSON.stringify(values));
+      },
+    });
 
     await nextTick();
     const valuesEl = await page.getByTestId('values').element();
@@ -141,17 +135,15 @@ describe('JSON Schema defaults', () => {
       }),
     });
 
-    appRender(
-      defineComponent({
-        setup() {
-          const { values } = useForm({
-            schema,
-          });
+    appRender({
+      setup() {
+        const { values } = useForm({
+          schema,
+        });
 
-          return () => h('div', { 'data-testid': 'values' }, JSON.stringify(values));
-        },
-      }),
-    );
+        return () => h('div', { 'data-testid': 'values' }, JSON.stringify(values));
+      },
+    });
 
     await nextTick();
     const valuesEl = await page.getByTestId('values').element();
@@ -178,23 +170,21 @@ describe('JSON Schema defaults', () => {
       }),
     });
 
-    appRender(
-      defineComponent({
-        setup() {
-          const { values } = useForm({
-            schema,
-            initialValues: {
-              name: 'Custom Name',
-              settings: {
-                theme: 'light',
-              },
+    appRender({
+      setup() {
+        const { values } = useForm({
+          schema,
+          initialValues: {
+            name: 'Custom Name',
+            settings: {
+              theme: 'light',
             },
-          });
+          },
+        });
 
-          return () => h('div', { 'data-testid': 'values' }, JSON.stringify(values));
-        },
-      }),
-    );
+        return () => h('div', { 'data-testid': 'values' }, JSON.stringify(values));
+      },
+    });
 
     await nextTick();
     const valuesEl = await page.getByTestId('values').element();
@@ -228,26 +218,24 @@ describe('JSON Schema defaults', () => {
       }),
     });
 
-    appRender(
-      defineComponent({
-        setup() {
-          const { values } = useForm({
-            schema,
-            initialValues: {
-              company: {
-                departments: {
-                  engineering: {
-                    lead: 'Charlie',
-                  },
+    appRender({
+      setup() {
+        const { values } = useForm({
+          schema,
+          initialValues: {
+            company: {
+              departments: {
+                engineering: {
+                  lead: 'Charlie',
                 },
               },
             },
-          });
+          },
+        });
 
-          return () => h('div', { 'data-testid': 'values' }, JSON.stringify(values));
-        },
-      }),
-    );
+        return () => h('div', { 'data-testid': 'values' }, JSON.stringify(values));
+      },
+    });
 
     await nextTick();
     const valuesEl = await page.getByTestId('values').element();
@@ -278,17 +266,15 @@ describe('JSON Schema defaults', () => {
       }),
     });
 
-    appRender(
-      defineComponent({
-        setup() {
-          const { values } = useForm({
-            schema,
-          });
+    appRender({
+      setup() {
+        const { values } = useForm({
+          schema,
+        });
 
-          return () => h('div', { 'data-testid': 'values' }, JSON.stringify(values));
-        },
-      }),
-    );
+        return () => h('div', { 'data-testid': 'values' }, JSON.stringify(values));
+      },
+    });
 
     await nextTick();
     const valuesEl = await page.getByTestId('values').element();
@@ -307,20 +293,18 @@ describe('JSON Schema defaults', () => {
       tags: z.array(z.string()).default(['default1', 'default2']),
     });
 
-    appRender(
-      defineComponent({
-        setup() {
-          const { values } = useForm({
-            schema,
-            initialValues: {
-              tags: ['custom1'],
-            },
-          });
+    appRender({
+      setup() {
+        const { values } = useForm({
+          schema,
+          initialValues: {
+            tags: ['custom1'],
+          },
+        });
 
-          return () => h('div', { 'data-testid': 'values' }, JSON.stringify(values));
-        },
-      }),
-    );
+        return () => h('div', { 'data-testid': 'values' }, JSON.stringify(values));
+      },
+    });
 
     await nextTick();
     const valuesEl = await page.getByTestId('values').element();
@@ -338,17 +322,15 @@ describe('JSON Schema defaults', () => {
       lastName: z.string().default('Last'),
     });
 
-    appRender(
-      defineComponent({
-        setup() {
-          const { values } = useForm({
-            schema,
-          });
+    appRender({
+      setup() {
+        const { values } = useForm({
+          schema,
+        });
 
-          return () => h('div', { 'data-testid': 'values' }, JSON.stringify(values));
-        },
-      }),
-    );
+        return () => h('div', { 'data-testid': 'values' }, JSON.stringify(values));
+      },
+    });
 
     await nextTick();
     const valuesEl = await page.getByTestId('values').element();
@@ -366,21 +348,19 @@ describe('JSON Schema defaults', () => {
       withoutDefault: z.string(),
     });
 
-    appRender(
-      defineComponent({
-        setup() {
-          const { values } = useForm({
-            schema,
-          });
+    appRender({
+      setup() {
+        const { values } = useForm({
+          schema,
+        });
 
-          return () =>
-            h('div', [
-              h('span', { 'data-testid': 'with-default' }, values.withDefault ?? 'UNDEFINED'),
-              h('span', { 'data-testid': 'without-default' }, values.withoutDefault ?? 'UNDEFINED'),
-            ]);
-        },
-      }),
-    );
+        return () =>
+          h('div', [
+            h('span', { 'data-testid': 'with-default' }, values.withDefault ?? 'UNDEFINED'),
+            h('span', { 'data-testid': 'without-default' }, values.withoutDefault ?? 'UNDEFINED'),
+          ]);
+      },
+    });
 
     await nextTick();
 
