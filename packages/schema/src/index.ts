@@ -1,2 +1,3 @@
-export { resolveJsonSchemaDefaults } from './jsonSchemaDefaults';
-export type { JsonSchemaDefaultsOptions } from './jsonSchemaDefaults';
+export * from './resolveDefaults';
+export * from './withJsonSchema';
+export * from './types';

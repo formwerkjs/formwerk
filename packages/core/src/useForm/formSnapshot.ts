@@ -1,11 +1,12 @@
 import { Ref, shallowRef, toValue } from 'vue';
-import { resolveJsonSchemaDefaults } from '@formwerk/schema';
-import { FormObject, MaybeGetter, MaybeAsync, StandardSchema } from '../types';
+import { resolveJsonSchemaDefaults, type CombinedStandardSchema } from '@formwerk/schema';
+import { FormObject, MaybeGetter, MaybeAsync } from '../types';
 import { cloneDeep, isPromise } from '../utils/common';
+import { isPlainObject } from '../../../shared/src';
 
 interface FormSnapshotOptions<TForm extends FormObject, TOutput extends FormObject = TForm> {
   onAsyncInit?: (values: TForm) => void;
-  schema?: StandardSchema<TForm, TOutput>;
+  schema?: CombinedStandardSchema<TForm, TOutput>;
 }
 
 export interface FormSnapshot<TForm extends FormObject> {
@@ -22,9 +23,10 @@ export function useFormSnapshots<TForm extends FormObject, TOutput extends FormO
   const originals = shallowRef<TForm>({} as TForm) as Ref<TForm>;
 
   // Extract schema defaults if JSON schema is available
-  const schemaDefaults = opts?.schema?.['~standard'].jsonSchema
-    ? resolveJsonSchemaDefaults<TForm>(opts.schema['~standard'].jsonSchema, { clone: cloneDeep })
-    : undefined;
+  let schemaDefaults: TForm | undefined;
+  if (opts?.schema) {
+    schemaDefaults = resolveJsonSchemaDefaults(opts?.schema);
+  }
 
   const provided = toValue(provider);
   if (isPromise(provided)) {
@@ -80,11 +82,4 @@ function mergeWithDefaults<TForm extends FormObject>(defaults: TForm | undefined
   }
 
   return result;
-}
-
-/**
- * Checks if a value is a plain object (not an array, null, or other special types).
- */
-function isPlainObject(value: unknown): value is FormObject {
-  return typeof value === 'object' && value !== null && !Array.isArray(value) && !(value instanceof Date);
 }

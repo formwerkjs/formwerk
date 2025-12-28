@@ -149,6 +149,9 @@ importers:
       '@formwerk/core':
         specifier: workspace:*
         version: link:../core
+      '@formwerk/schema':
+        specifier: workspace:*
+        version: link:../schema
       '@valibot/to-json-schema':
         specifier: ^1.0.0
         version: 1.5.0(valibot@1.2.0(typescript@5.9.3))

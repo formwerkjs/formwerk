@@ -3,6 +3,7 @@
   "private": true,
   "dependencies": {
     "@formwerk/core": "workspace:*",
+    "@formwerk/schema": "workspace:*",
     "@valibot/to-json-schema": "^1.0.0",
     "arktype": "2.1.29",
     "valibot": "1.2.0",
