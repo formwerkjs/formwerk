@@ -929,4 +929,107 @@ describe('form repeater with form context', () => {
     expect(formReturns.value!.values.users![0].firstName).toBe('User 1');
     expect(formReturns.value!.values.users![1].firstName).toBe('User 3');
   });
+
+  test('resetting form after removing an item should restore correct values without duplicates', async () => {
+    const formReturns = ref<ReturnType<typeof useForm<any>> | null>(null);
+    const repeaterReturns = ref<ReturnType<typeof useFormRepeater<any>> | null>(null);
+
+    const TextField = defineComponent({
+      props: {
+        name: { type: String, required: true },
+        label: { type: String, required: true },
+      },
+      setup(props) {
+        const { inputProps, labelProps } = useTextField({
+          name: props.name,
+          label: props.label,
+        });
+        return { inputProps, labelProps };
+      },
+      template: `
+        <div>
+          <label v-bind="labelProps">{{ label }}</label>
+          <input v-bind="inputProps" />
+        </div>
+      `,
+    });
+
+    const RepeaterChild = defineComponent({
+      components: { TextField },
+      setup() {
+        const repeater = useFormRepeater<{ firstName: string }>({
+          name: 'users',
+        });
+
+        repeaterReturns.value = repeater;
+
+        return { items: repeater.items, Iteration: repeater.Iteration };
+      },
+      template: `
+        <component
+          :is="Iteration"
+          v-for="(key, index) in items"
+          :key="key"
+          :index="index"
+          v-slot="{ removeButtonProps }"
+        >
+          <div :data-testid="'user-' + index">
+            <TextField name="firstName" label="First Name" />
+            <button v-bind="removeButtonProps" :data-testid="'remove-' + index">Remove</button>
+          </div>
+        </component>
+      `,
+    });
+
+    const TestComponent = defineComponent({
+      components: { RepeaterChild },
+      setup() {
+        const form = useForm<{ users: Array<{ firstName: string }> }>({
+          initialValues: {
+            users: [],
+          },
+        });
+
+        formReturns.value = form;
+
+        return { form };
+      },
+      template: `<RepeaterChild />`,
+    });
+
+    appRender(TestComponent);
+
+    const resetValue = {
+      users: [{ firstName: 'User 1' }, { firstName: 'User 2' }, { firstName: 'User 3' }],
+    };
+
+    // Step 1: Reset the form to specific values
+    await formReturns.value!.reset({ value: resetValue });
+
+    // Verify the reset worked correctly
+    await expect.poll(() => formReturns.value!.values.users).toHaveLength(3);
+    await expect.poll(() => formReturns.value!.values.users![0].firstName).toBe('User 1');
+    await expect.poll(() => formReturns.value!.values.users![1].firstName).toBe('User 2');
+    await expect.poll(() => formReturns.value!.values.users![2].firstName).toBe('User 3');
+
+    // Step 2: Remove the second item (index 1)
+    await page.getByTestId('remove-1').click();
+
+    // Verify removal worked
+    await expect.poll(() => formReturns.value!.values.users).toHaveLength(2);
+    await expect.poll(() => formReturns.value!.values.users![0].firstName).toBe('User 1');
+    await expect.poll(() => formReturns.value!.values.users![1].firstName).toBe('User 3');
+
+    // Step 3: Reset again to the same values
+    await formReturns.value!.reset({ value: resetValue });
+
+    // Verify the reset restored all 3 items correctly without duplicates
+    await expect.poll(() => formReturns.value!.values.users).toHaveLength(3);
+    await expect.poll(() => formReturns.value!.values.users![0].firstName).toBe('User 1');
+    await expect.poll(() => formReturns.value!.values.users![1].firstName).toBe('User 2');
+    await expect.poll(() => formReturns.value!.values.users![2].firstName).toBe('User 3');
+
+    // Also verify the DOM has 3 items
+    await expect.poll(() => document.querySelectorAll('[data-testid^="user-"]').length).toBe(3);
+  });
 });
