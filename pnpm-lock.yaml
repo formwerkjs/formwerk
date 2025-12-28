@@ -213,6 +213,7 @@ importers:
       '@standard-schema/spec':
         specifier: 1.1.0
         version: 1.1.0
+    devDependencies:
       json-schema-typed:
         specifier: ^8.0.2
         version: 8.0.2
