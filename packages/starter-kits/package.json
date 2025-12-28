@@ -2,8 +2,8 @@
   "name": "starter-kits",
   "private": true,
   "description": "Unstyled starter components implementing @formwerk/core composables",
-  "author": "Abdelrahman Awad <logaretm1@gmail.com>",
   "license": "MIT",
+  "author": "Abdelrahman Awad <logaretm1@gmail.com>",
   "dependencies": {
     "@formwerk/core": "workspace:*"
   }

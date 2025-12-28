@@ -2,44 +2,44 @@
   "name": "@formwerk/core",
   "version": "0.14.4",
   "description": "",
-  "author": "Abdelrahman Awad <logaretm1@gmail.com>",
+  "keywords": [
+    "Vue",
+    "VueJS",
+    "form",
+    "inputs",
+    "validation",
+    "validator"
+  ],
+  "homepage": "https://formwerk.dev/",
   "license": "MIT",
+  "author": "Abdelrahman Awad <logaretm1@gmail.com>",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/formwerkjs/formwerk.git",
+    "directory": "packages/core"
+  },
+  "funding": "https://github.com/sponsors/logaretm",
+  "files": [
+    "dist/*.cjs",
+    "dist/*.d.ts",
+    "dist/*.js",
+    "dist/*.mjs"
+  ],
+  "type": "module",
+  "sideEffects": false,
+  "main": "dist/core.mjs",
   "module": "dist/core.mjs",
+  "types": "dist/core.d.ts",
   "unpkg": "dist/core.iife.js",
   "jsdelivr": "dist/core.iife.js",
-  "main": "dist/core.mjs",
-  "types": "dist/core.d.ts",
-  "type": "module",
-  "funding": "https://github.com/sponsors/logaretm",
   "exports": {
     ".": {
+      "types": "./dist/core.d.ts",
       "import": "./dist/core.mjs",
-      "require": "./dist/core.cjs",
-      "types": "./dist/core.d.ts"
+      "require": "./dist/core.cjs"
     },
     "./dist/core.d.ts": "./dist/core.d.ts"
   },
-  "homepage": "https://formwerk.dev/",
-  "repository": {
-    "url": "https://github.com/formwerkjs/formwerk.git",
-    "type": "git",
-    "directory": "packages/core"
-  },
-  "sideEffects": false,
-  "keywords": [
-    "VueJS",
-    "Vue",
-    "validation",
-    "validator",
-    "inputs",
-    "form"
-  ],
-  "files": [
-    "dist/*.js",
-    "dist/*.mjs",
-    "dist/*.cjs",
-    "dist/*.d.ts"
-  ],
   "dependencies": {
     "@formwerk/devtools": "workspace:*",
     "@internationalized/date": "^3.9.0",

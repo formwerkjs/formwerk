@@ -1,4 +1,5 @@
 {
+  "$schema": "./node_modules/oxfmt/configuration_schema.json",
   "printWidth": 120,
   "tabWidth": 2,
   "semi": true,
@@ -6,12 +7,4 @@
   "bracketSpacing": true,
   "arrowParens": "avoid",
   "endOfLine": "lf",
-  "overrides": [
-    {
-      "files": "tsconfig.json",
-      "options": {
-        "trailingComma": "none"
-      }
-    }
-  ]
 }

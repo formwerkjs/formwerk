@@ -2,18 +2,20 @@
   "name": "formwerk-mono-repo",
   "private": true,
   "description": "",
-  "main": "index.js",
-  "type": "module",
-  "packageManager": "pnpm@10.17.1+sha512.17c560fca4867ae9473a3899ad84a88334914f379be46d455cbf92e5cf4b39d34985d452d2583baf19967fa76cb5c17bc9e245529d0b98745721aa7200ecaf7a",
+  "keywords": [],
   "homepage": "https://formwerk.dev",
+  "license": "MIT",
+  "author": "Abdelrahman Awad <logaretm1@gmail.com>",
   "repository": "https://github.com/formwerkjs/formwerk",
+  "type": "module",
+  "main": "index.js",
   "scripts": {
     "test": "vitest",
     "test:ci": "vitest run --coverage --browser.headless",
     "cover": "vitest run --coverage",
     "lint": "oxlint",
-    "format": "prettier \"./**/*.ts\" --write",
-    "format:check": "prettier \"./**/*.ts\" --check",
+    "format": "oxfmt --write",
+    "format:check": "oxfmt --check",
     "build": "tsx scripts/build.ts",
     "build:watch": "tsx scripts/watch.ts",
     "typecheck": "pnpm typecheck:lib && pnpm typecheck:node",
@@ -52,9 +54,9 @@
     "gzip-size": "^7.0.0",
     "husky": "^9.1.7",
     "lint-staged": "^16.2.7",
+    "oxfmt": "^0.20.0",
     "oxlint": "^1.35.0",
     "pkg-pr-new": "^0.0.62",
-    "prettier": "^3.7.4",
     "rolldown": "1.0.0-beta.57",
     "rolldown-plugin-dts": "0.20.0",
     "tsx": "^4.21.0",
@@ -68,15 +70,14 @@
   "lint-staged": {
     "*.ts": [
       "oxlint",
-      "prettier --write",
+      "oxfmt --write",
       "vitest run related --passWithNoTests --browser.headless"
     ],
     "*.js": [
       "oxlint",
+      "oxfmt --write",
       "vitest run related --passWithNoTests --browser.headless"
     ]
   },
-  "keywords": [],
-  "author": "Abdelrahman Awad <logaretm1@gmail.com>",
-  "license": "MIT"
+  "packageManager": "pnpm@10.17.1+sha512.17c560fca4867ae9473a3899ad84a88334914f379be46d455cbf92e5cf4b39d34985d452d2583baf19967fa76cb5c17bc9e245529d0b98745721aa7200ecaf7a"
 }

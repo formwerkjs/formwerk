@@ -35,8 +35,8 @@ Check the [FAQ](#faq) section for more information on how to pick an issue to wo
 ## Development Scripts
 
 - `pnpm test`: Runs tests.
-- `pnpm lint`: Lints code.
-- `pnpm format`: Formats code with Prettier.
+- `pnpm lint`: Lints code with `oxlint`.
+- `pnpm format`: Formats code with `oxfmt`.
 - `pnpm build`: Builds packages.
 - `pnpm typecheck`: Type checks TypeScript code.
 - `pnpm playground:dev`: Runs the playground app locally.
