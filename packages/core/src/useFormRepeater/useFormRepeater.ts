@@ -380,6 +380,13 @@ export function useFormRepeater<TItem = unknown>(_props: Reactivify<FormRepeater
     onMounted(() => {
       watch(getPathValue, value => {
         if (!isEqual(value, lastControlledValueSnapshot)) {
+          // Queue ARRAY_MUT to protect against stale DESTROY_PATH transactions
+          // from unmounting field components when records are rebuilt
+          form.transaction((_, { ARRAY_MUT }) => ({
+            kind: ARRAY_MUT,
+            path: getPath(),
+            value: value,
+          }));
           records.value = buildRecords();
         }
       });
