@@ -1,6 +1,6 @@
 import { inject, InjectionKey, MaybeRefOrGetter, onMounted, provide, reactive, readonly, Ref, ref } from 'vue';
-import type { StandardSchemaV1 } from '@standard-schema/spec';
 import { registerForm } from '@formwerk/devtools';
+import type { StandardTypedV1 } from '@standard-schema/spec';
 import { cloneDeep, toPrimitiveBooleanValue, useUniqId, warn } from '../utils/common';
 import {
   FormObject,
@@ -68,14 +68,14 @@ export interface NoSchemaFormProps<TInput extends FormObject> extends _FormProps
 }
 
 export interface SchemaFormProps<TSchema extends GenericFormSchema> extends _FormProps<
-  StandardSchemaV1.InferInput<TSchema>
+  StandardTypedV1.InferInput<TSchema>
 > {
   /**
    * The validation schema for the form.
    */
   schema: TSchema;
 
-  initialValues?: MaybeGetter<MaybeAsync<PartialDeep<StandardSchemaV1.InferInput<TSchema>>>>;
+  initialValues?: MaybeGetter<MaybeAsync<PartialDeep<StandardTypedV1.InferInput<TSchema>>>>;
 }
 
 export interface FormReturns<TInput extends FormObject = FormObject, TOutput extends FormObject = TInput> {
@@ -259,13 +259,13 @@ export const FormContextKey: InjectionKey<FormReturns & FormActions<any, any>> =
 export function useForm<TInput extends FormObject>(props?: NoSchemaFormProps<TInput>): FormReturns<TInput>;
 export function useForm<TSchema extends GenericFormSchema>(
   props?: SchemaFormProps<TSchema>,
-): FormReturns<StandardSchemaV1.InferInput<TSchema>, StandardSchemaV1.InferOutput<TSchema>>;
+): FormReturns<StandardTypedV1.InferInput<TSchema>, StandardTypedV1.InferOutput<TSchema>>;
 export function useForm<
   TSchema extends GenericFormSchema,
-  TInput extends FormObject = StandardSchemaV1.InferInput<TSchema>,
-  TOutput extends FormObject = StandardSchemaV1.InferOutput<TSchema>,
+  TInput extends FormObject = StandardTypedV1.InferInput<TSchema>,
+  TOutput extends FormObject = StandardTypedV1.InferOutput<TSchema>,
 >(props?: NoSchemaFormProps<TInput> | SchemaFormProps<TSchema>): FormReturns<TInput, TOutput> {
-  type TResolvedInput = typeof props extends NoSchemaFormProps<TInput> ? TInput : StandardSchemaV1.InferInput<TSchema>;
+  type TResolvedInput = typeof props extends NoSchemaFormProps<TInput> ? TInput : StandardTypedV1.InferInput<TSchema>;
 
   const schemaProps = props as SchemaFormProps<TSchema> | undefined;
   const touchedSnapshot = useFormSnapshots(props?.initialTouched);

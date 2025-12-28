@@ -1,12 +1,17 @@
 import { Schema, Simplify } from 'type-fest';
-import type { StandardSchemaV1 } from '@standard-schema/spec';
+import type { StandardSchemaV1, StandardJSONSchemaV1 } from '@standard-schema/spec';
 import { FormObject } from './common';
 import { Path } from './paths';
 import { FormValidationMode } from '../useForm/formContext';
 
+type CombinedStandardSchema<TInput = unknown, TOutput = TInput> = {
+  '~standard': StandardSchemaV1<TInput, TOutput>['~standard'] &
+    Partial<StandardJSONSchemaV1<TInput, TOutput>['~standard']>;
+};
+
 export type StandardIssue = StandardSchemaV1.Issue;
 
-export type StandardSchema<TInput = unknown, TOutput = TInput> = StandardSchemaV1<TInput, TOutput>;
+export type StandardSchema<TInput = unknown, TOutput = TInput> = CombinedStandardSchema<TInput, TOutput>;
 
 export type GenericFormSchema = StandardSchema<FormObject>;
 
