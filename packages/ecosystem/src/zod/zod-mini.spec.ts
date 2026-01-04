@@ -384,4 +384,55 @@ describe('JSON Schema defaults', () => {
     await expect.element(page.getByTestId('with-default')).toHaveTextContent('has default');
     await expect.element(page.getByTestId('without-default')).toHaveTextContent('UNDEFINED');
   });
+
+  test('validates and shows errors with JSON schema', async () => {
+    const handler = vi.fn();
+    const schema = zm.toJSONSchema(
+      zm.object({
+        email: zm.email(),
+        password: zm.string().check(zm.minLength(8)),
+      }),
+    );
+
+    appRender({
+      setup() {
+        const { handleSubmit, getError } = useForm({
+          schema,
+          initialValues: {
+            email: 'invalid-email',
+            password: 'short',
+          },
+        });
+
+        const onSubmit = handleSubmit(v => {
+          handler(v.toObject());
+        });
+
+        return () =>
+          h(
+            'form',
+            {
+              novalidate: true,
+              onSubmit: (e: Event) => {
+                e.preventDefault();
+                return onSubmit(e as any);
+              },
+            },
+            [
+              h('span', { 'data-testid': 'email-err' }, getError('email')),
+              h('span', { 'data-testid': 'password-err' }, getError('password')),
+              h('button', { type: 'submit' }, 'Submit'),
+            ],
+          );
+      },
+    });
+
+    await page.getByRole('button', { name: 'Submit' }).click();
+    await nextTick();
+
+    // zod/mini uses simpler error messages
+    await expect.element(page.getByTestId('email-err')).toHaveTextContent('Invalid input');
+    await expect.element(page.getByTestId('password-err')).toHaveTextContent('Invalid input');
+    expect(handler).not.toHaveBeenCalled();
+  });
 });
