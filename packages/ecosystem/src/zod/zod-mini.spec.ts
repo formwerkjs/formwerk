@@ -1,6 +1,5 @@
 import * as zm from 'zod/mini';
 import { useForm } from '@formwerk/core';
-import { withJsonSchema } from '@formwerk/schema';
 import { appRender } from '@test-utils/index';
 import { h, nextTick } from 'vue';
 import { page } from 'vitest/browser';
@@ -97,15 +96,14 @@ test('collects multiple errors per field', async () => {
 });
 
 // Zod Mini does not support object schema representations, so we can't test them.
-describe.skip('JSON Schema defaults', () => {
+describe('JSON Schema defaults', () => {
   test('extracts simple default values from zod/mini schema', async () => {
-    const schema = withJsonSchema(
+    const schema = zm.toJSONSchema(
       zm.object({
         name: zm._default(zm.string(), 'John'),
         age: zm._default(zm.number(), 25),
         active: zm._default(zm.boolean(), true),
       }),
-      zm.toJSONSchema,
     );
 
     appRender({
@@ -130,7 +128,7 @@ describe.skip('JSON Schema defaults', () => {
   });
 
   test('extracts nested object defaults from zod/mini schema', async () => {
-    const schema = withJsonSchema(
+    const schema = zm.toJSONSchema(
       zm.object({
         user: zm.object({
           name: zm._default(zm.string(), 'Jane'),
@@ -140,7 +138,6 @@ describe.skip('JSON Schema defaults', () => {
           }),
         }),
       }),
-      zm.toJSONSchema,
     );
 
     appRender({
@@ -169,7 +166,7 @@ describe.skip('JSON Schema defaults', () => {
   });
 
   test('merges provided initialValues with schema defaults', async () => {
-    const schema = withJsonSchema(
+    const schema = zm.toJSONSchema(
       zm.object({
         name: zm._default(zm.string(), 'Default Name'),
         email: zm._default(zm.string(), 'default@example.com'),
@@ -178,7 +175,6 @@ describe.skip('JSON Schema defaults', () => {
           notifications: zm._default(zm.boolean(), true),
         }),
       }),
-      zm.toJSONSchema,
     );
 
     appRender({
@@ -213,7 +209,7 @@ describe.skip('JSON Schema defaults', () => {
   });
 
   test('handles deeply nested objects with mixed defaults and provided values', async () => {
-    const schema = withJsonSchema(
+    const schema = zm.toJSONSchema(
       zm.object({
         company: zm.object({
           name: zm._default(zm.string(), 'Acme Corp'),
@@ -229,7 +225,6 @@ describe.skip('JSON Schema defaults', () => {
           }),
         }),
       }),
-      zm.toJSONSchema,
     );
 
     appRender({
@@ -273,14 +268,13 @@ describe.skip('JSON Schema defaults', () => {
   });
 
   test('handles array defaults in schema', async () => {
-    const schema = withJsonSchema(
+    const schema = zm.toJSONSchema(
       zm.object({
         tags: zm._default(zm.array(zm.string()), ['tag1', 'tag2']),
         config: zm.object({
           features: zm._default(zm.array(zm.string()), ['feature1']),
         }),
       }),
-      zm.toJSONSchema,
     );
 
     appRender({
@@ -306,11 +300,10 @@ describe.skip('JSON Schema defaults', () => {
   });
 
   test('provided array values override schema defaults completely', async () => {
-    const schema = withJsonSchema(
+    const schema = zm.toJSONSchema(
       zm.object({
         tags: zm._default(zm.array(zm.string()), ['default1', 'default2']),
       }),
-      zm.toJSONSchema,
     );
 
     appRender({
@@ -337,12 +330,11 @@ describe.skip('JSON Schema defaults', () => {
   });
 
   test('works with no initialValues - schema defaults are used', async () => {
-    const schema = withJsonSchema(
+    const schema = zm.toJSONSchema(
       zm.object({
         firstName: zm._default(zm.string(), 'First'),
         lastName: zm._default(zm.string(), 'Last'),
       }),
-      zm.toJSONSchema,
     );
 
     appRender({
@@ -366,12 +358,11 @@ describe.skip('JSON Schema defaults', () => {
   });
 
   test('fields without defaults remain undefined when not provided', async () => {
-    const schema = withJsonSchema(
+    const schema = zm.toJSONSchema(
       zm.object({
         withDefault: zm._default(zm.string(), 'has default'),
         withoutDefault: zm.string(),
       }),
-      zm.toJSONSchema,
     );
 
     appRender({

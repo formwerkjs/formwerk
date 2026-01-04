@@ -1,7 +1,6 @@
 import * as v from 'valibot';
 import { toStandardJsonSchema } from '@valibot/to-json-schema';
 import { useForm } from '@formwerk/core';
-import { withJsonSchema } from '@formwerk/schema';
 import { appRender } from '@test-utils/index';
 import { h, nextTick } from 'vue';
 import { page } from 'vitest/browser';
@@ -102,13 +101,12 @@ test('collects multiple errors per field', async () => {
 
 describe('JSON Schema defaults', () => {
   test('extracts simple default values from valibot schema', async () => {
-    const schema = withJsonSchema(
+    const schema = toStandardJsonSchema(
       v.object({
         name: v.optional(v.string(), 'John'),
         age: v.optional(v.number(), 25),
         active: v.optional(v.boolean(), true),
       }),
-      toStandardJsonSchema,
     );
 
     appRender({
@@ -133,7 +131,7 @@ describe('JSON Schema defaults', () => {
   });
 
   test('extracts nested object defaults from valibot schema', async () => {
-    const schema = withJsonSchema(
+    const schema = toStandardJsonSchema(
       v.object({
         user: v.object({
           name: v.optional(v.string(), 'Jane'),
@@ -143,7 +141,6 @@ describe('JSON Schema defaults', () => {
           }),
         }),
       }),
-      toStandardJsonSchema,
     );
 
     appRender({
@@ -172,7 +169,7 @@ describe('JSON Schema defaults', () => {
   });
 
   test('merges provided initialValues with schema defaults', async () => {
-    const schema = withJsonSchema(
+    const schema = toStandardJsonSchema(
       v.object({
         name: v.optional(v.string(), 'Default Name'),
         email: v.optional(v.string(), 'default@example.com'),
@@ -181,7 +178,6 @@ describe('JSON Schema defaults', () => {
           notifications: v.optional(v.boolean(), true),
         }),
       }),
-      toStandardJsonSchema,
     );
 
     appRender({
@@ -216,7 +212,7 @@ describe('JSON Schema defaults', () => {
   });
 
   test('handles deeply nested objects with mixed defaults and provided values', async () => {
-    const schema = withJsonSchema(
+    const schema = toStandardJsonSchema(
       v.object({
         company: v.object({
           name: v.optional(v.string(), 'Acme Corp'),
@@ -232,7 +228,6 @@ describe('JSON Schema defaults', () => {
           }),
         }),
       }),
-      toStandardJsonSchema,
     );
 
     appRender({
@@ -276,14 +271,13 @@ describe('JSON Schema defaults', () => {
   });
 
   test('handles array defaults in schema', async () => {
-    const schema = withJsonSchema(
+    const schema = toStandardJsonSchema(
       v.object({
         tags: v.optional(v.array(v.string()), ['tag1', 'tag2']),
         config: v.object({
           features: v.optional(v.array(v.string()), ['feature1']),
         }),
       }),
-      toStandardJsonSchema,
     );
 
     appRender({
@@ -309,11 +303,10 @@ describe('JSON Schema defaults', () => {
   });
 
   test('provided array values override schema defaults completely', async () => {
-    const schema = withJsonSchema(
+    const schema = toStandardJsonSchema(
       v.object({
         tags: v.optional(v.array(v.string()), ['default1', 'default2']),
       }),
-      toStandardJsonSchema,
     );
 
     appRender({
@@ -340,12 +333,11 @@ describe('JSON Schema defaults', () => {
   });
 
   test('works with no initialValues - schema defaults are used', async () => {
-    const schema = withJsonSchema(
+    const schema = toStandardJsonSchema(
       v.object({
         firstName: v.optional(v.string(), 'First'),
         lastName: v.optional(v.string(), 'Last'),
       }),
-      toStandardJsonSchema,
     );
 
     appRender({
@@ -369,12 +361,11 @@ describe('JSON Schema defaults', () => {
   });
 
   test('fields without defaults remain undefined when not provided', async () => {
-    const schema = withJsonSchema(
+    const schema = toStandardJsonSchema(
       v.object({
         withDefault: v.optional(v.string(), 'has default'),
         withoutDefault: v.string(),
       }),
-      toStandardJsonSchema,
     );
 
     appRender({
