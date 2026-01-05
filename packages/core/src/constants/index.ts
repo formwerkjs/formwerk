@@ -22,7 +22,7 @@ export const FieldTypePrefixes = {
   DateTimeSegment: 'dts',
   Calendar: 'cal',
   OTPField: 'otp',
-  OTPSlot: 'otps',
+  OtpCell: 'otpc',
   FileField: 'ff',
   FlowSegment: 'fs',
 } as const;

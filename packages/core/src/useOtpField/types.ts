@@ -1,8 +1,8 @@
 import { InjectionKey } from 'vue';
 
-export type OtpSlotAcceptType = 'all' | 'numeric' | 'alphanumeric';
+export type OtpCellAcceptType = 'all' | 'numeric' | 'alphanumeric';
 
-export interface OtpSlotRegistration {
+export interface OtpCellRegistration {
   id: string;
   focusNext(): void;
   focusPrevious(): void;
@@ -12,7 +12,7 @@ export interface OtpSlotRegistration {
 }
 
 export interface OtpContext {
-  useSlotRegistration(): OtpSlotRegistration;
+  useCellRegistration(): OtpCellRegistration;
   getMaskCharacter(): string;
   onBlur(): void;
 }
