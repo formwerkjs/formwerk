@@ -1,11 +1,11 @@
 import { computed, nextTick, provide, ref, toValue, watch, shallowRef } from 'vue';
 import { BuiltInControlTypes, ControlProps, MaybeAsync, Reactivify } from '../types';
-import { OtpContextKey, OtpSlotAcceptType } from './types';
+import { OtpContextKey, OtpCellAcceptType } from './types';
 import { normalizeProps, useUniqId, useCaptureProps } from '../utils/common';
 import { FieldTypePrefixes } from '../constants';
 import { resolveFieldState } from '../useFormField';
 import { useInputValidity, useConstraintsValidator } from '../validation';
-import { OtpSlotProps } from './useOtpSlot';
+import { OtpCellProps } from './useOtpCell';
 import { DEFAULT_MASK, getOtpValue, isValueAccepted, withPrefix } from './utils';
 import { blockEvent } from '../utils/events';
 import { useVModelProxy } from '../reactivity/useVModelProxy';
@@ -30,7 +30,7 @@ export interface OtpControlProps extends ControlProps<string | undefined> {
   /**
    * The type of the OTP field characters.
    */
-  accept?: OtpSlotAcceptType;
+  accept?: OtpCellAcceptType;
 
   /**
    * Whether to disable HTML validation.
@@ -118,28 +118,28 @@ export function useOtpControl(_props: Reactivify<OtpControlProps, ExcludedProps>
         return;
       }
 
-      const slots = Array.from(controlEl.value.querySelectorAll('[data-otp-slot][tabindex="0"]')) as HTMLElement[];
-      const currentSlot = controlEl.value.querySelector('[data-otp-slot]:focus') as HTMLElement | null;
-      if (!currentSlot) {
-        slots[0]?.focus();
+      const cells = Array.from(controlEl.value.querySelectorAll('[data-otp-cell][tabindex="0"]')) as HTMLElement[];
+      const currentCell = controlEl.value.querySelector('[data-otp-cell]:focus') as HTMLElement | null;
+      if (!currentCell) {
+        cells[0]?.focus();
         return;
       }
 
-      const currentIndex = slots.indexOf(currentSlot);
+      const currentIndex = cells.indexOf(currentCell);
       if (currentIndex === -1) {
-        slots[0]?.focus();
+        cells[0]?.focus();
         return;
       }
 
-      const nextSlot = slots[currentIndex + (direction === 'next' ? 1 : -1)];
-      nextSlot?.focus();
+      const nextCell = cells[currentIndex + (direction === 'next' ? 1 : -1)];
+      nextCell?.focus();
     };
   }
 
   const focusNext = createFocusHandler('next');
   const focusPrevious = createFocusHandler('previous');
 
-  const fieldSlots = computed<OtpSlotProps[]>(() => {
+  const fieldCells = computed<OtpCellProps[]>(() => {
     const prefix = toValue(props.prefix) || '';
     const length = prefix.length + getLength();
 
@@ -152,20 +152,20 @@ export function useOtpControl(_props: Reactivify<OtpControlProps, ExcludedProps>
     }));
   });
 
-  function getActiveSlotIndex(event: Event) {
-    const currentSlot = (event.target as HTMLElement).closest('[data-otp-slot]') as HTMLElement | null;
-    const slots = Array.from(controlEl.value?.querySelectorAll('[data-otp-slot]') ?? []) as HTMLElement[];
-    if (!currentSlot) {
+  function getActiveCellIndex(event: Event) {
+    const currentCell = (event.target as HTMLElement).closest('[data-otp-cell]') as HTMLElement | null;
+    const cells = Array.from(controlEl.value?.querySelectorAll('[data-otp-cell]') ?? []) as HTMLElement[];
+    if (!currentCell) {
       return -1;
     }
 
-    return slots.indexOf(currentSlot);
+    return cells.indexOf(currentCell);
   }
 
   function focusIndex(index: number) {
-    const slots = Array.from(controlEl.value?.querySelectorAll('[data-otp-slot]') ?? []) as HTMLElement[];
+    const cells = Array.from(controlEl.value?.querySelectorAll('[data-otp-cell]') ?? []) as HTMLElement[];
 
-    slots[index]?.focus();
+    cells[index]?.focus();
   }
 
   watch(model, value => {
@@ -191,14 +191,14 @@ export function useOtpControl(_props: Reactivify<OtpControlProps, ExcludedProps>
     const text = event.clipboardData?.getData('text/plain') || '';
     blockEvent(event);
 
-    fillSlots(text, event);
+    fillCells(text, event);
   }
 
-  function fillSlots(text: string, event: Event) {
+  function fillCells(text: string, event: Event) {
     field.setTouched(true);
     text = text.trim();
     if (!text.length) {
-      const currentIndex = getActiveSlotIndex(event);
+      const currentIndex = getActiveCellIndex(event);
       if (currentIndex === -1) {
         return;
       }
@@ -218,13 +218,13 @@ export function useOtpControl(_props: Reactivify<OtpControlProps, ExcludedProps>
         inputsState.value[index] = value;
       });
 
-      // Focuses the last slot
+      // Focuses the last cell
       focusIndex(getRequiredLength() - 1);
       updateFieldValue();
       return;
     }
 
-    const currentIndex = getActiveSlotIndex(event);
+    const currentIndex = getActiveCellIndex(event);
     if (currentIndex === -1) {
       return;
     }
@@ -232,12 +232,12 @@ export function useOtpControl(_props: Reactivify<OtpControlProps, ExcludedProps>
     // Fill input states starting from the active index
     const prefixLength = (toValue(props.prefix) || '').length;
     const maxLength = getRequiredLength();
-    const availableSlots = maxLength - currentIndex;
+    const availableCells = maxLength - currentIndex;
 
-    // Only take characters that can fit in the remaining slots
-    const textToFill = text.slice(0, availableSlots);
+    // Only take characters that can fit in the remaining cells
+    const textToFill = text.slice(0, availableCells);
 
-    // Skip prefix slots if we're pasting into a position after the prefix
+    // Skip prefix cells if we're pasting into a position after the prefix
     if (currentIndex >= prefixLength) {
       for (let i = 0; i < textToFill.length; i++) {
         const char = textToFill[i];
@@ -246,7 +246,7 @@ export function useOtpControl(_props: Reactivify<OtpControlProps, ExcludedProps>
     }
 
     focusIndex(Math.min(currentIndex + textToFill.length, getRequiredLength() - 1));
-    // Focuses the next slot
+    // Focuses the next cell
     updateFieldValue();
   }
 
@@ -261,7 +261,7 @@ export function useOtpControl(_props: Reactivify<OtpControlProps, ExcludedProps>
     }
   }
 
-  let registeredSlots = 0;
+  let registeredCells = 0;
 
   provide(OtpContextKey, {
     getMaskCharacter: () => {
@@ -269,12 +269,12 @@ export function useOtpControl(_props: Reactivify<OtpControlProps, ExcludedProps>
 
       return typeof mask === 'string' ? mask[0] : DEFAULT_MASK;
     },
-    useSlotRegistration() {
-      const slotId = useUniqId(FieldTypePrefixes.OTPSlot);
-      const index = registeredSlots++;
+    useCellRegistration() {
+      const cellId = useUniqId(FieldTypePrefixes.OtpCell);
+      const index = registeredCells++;
 
       return {
-        id: slotId,
+        id: cellId,
         focusNext,
         focusPrevious,
         setTouched: field.setTouched,
@@ -282,7 +282,7 @@ export function useOtpControl(_props: Reactivify<OtpControlProps, ExcludedProps>
           return index === getRequiredLength() - 1;
         },
         handlePaste: onPaste,
-        setValue: fillSlots,
+        setValue: fillCells,
       };
     },
     onBlur() {
@@ -302,9 +302,9 @@ export function useOtpControl(_props: Reactivify<OtpControlProps, ExcludedProps>
     controlProps,
 
     /**
-     * The slots of the OTP field. Use this as an iterable to render with `v-for`.
+     * The cells of the OTP field. Use this as an iterable to render with `v-for`.
      */
-    fieldSlots,
+    fieldCells,
 
     /**
      * The field state.

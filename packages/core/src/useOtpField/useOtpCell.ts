@@ -3,49 +3,49 @@ import { Reactivify } from '../types';
 import { hasKeyCode, isInputElement, normalizeProps, warn, useCaptureProps } from '../utils/common';
 import { isFirefox } from '../utils/platform';
 import { blockEvent } from '../utils/events';
-import { OtpContextKey, OtpSlotAcceptType } from './types';
+import { OtpContextKey, OtpCellAcceptType } from './types';
 import { createDisabledContext } from '../helpers/createDisabledContext';
 import { isValueAccepted } from './utils';
 
-export interface OtpSlotProps {
+export interface OtpCellProps {
   /**
-   * The value of the slot.
+   * The value of the cell.
    */
   value: string;
 
   /**
-   * Whether the slot is disabled.
+   * Whether the cell is disabled.
    */
   disabled?: boolean;
 
   /**
-   * Whether the slot is readonly.
+   * Whether the cell is readonly.
    */
   readonly?: boolean;
 
   /**
-   * Whether the slot is masked.
+   * Whether the cell is masked.
    */
   masked?: boolean;
 
   /**
-   * The type of the slot.
+   * The type of the cell.
    */
-  accept?: OtpSlotAcceptType;
+  accept?: OtpCellAcceptType;
 }
 
-export function useOtpSlot(_props: Reactivify<OtpSlotProps>) {
+export function useOtpCell(_props: Reactivify<OtpCellProps>) {
   const props = normalizeProps(_props);
-  const slotEl = shallowRef<HTMLElement>();
+  const cellEl = shallowRef<HTMLElement>();
   const isDisabled = createDisabledContext(props.disabled);
 
   const context = inject(OtpContextKey, null);
 
-  const registration = context?.useSlotRegistration();
+  const registration = context?.useCellRegistration();
 
   if (!context) {
     if (__DEV__) {
-      warn('OtpSlot must be used within an OtpField');
+      warn('OtpCell must be used within an OtpField');
     }
   }
 
@@ -58,16 +58,16 @@ export function useOtpSlot(_props: Reactivify<OtpSlotProps>) {
   }
 
   function setElementValue(value: string) {
-    if (!slotEl.value) {
+    if (!cellEl.value) {
       return;
     }
 
-    if (isInputElement(slotEl.value)) {
-      slotEl.value.value = value;
+    if (isInputElement(cellEl.value)) {
+      cellEl.value.value = value;
       return;
     }
 
-    slotEl.value.textContent = value;
+    cellEl.value.textContent = value;
   }
 
   const handlers = {
@@ -129,28 +129,28 @@ export function useOtpSlot(_props: Reactivify<OtpSlotProps>) {
       }
     },
     onChange(e: Event) {
-      if (!slotEl.value) {
+      if (!cellEl.value) {
         return;
       }
 
-      if (isInputElement(slotEl.value)) {
-        setElementValue(slotEl.value.value);
-        registration?.setValue(slotEl.value.value, e);
+      if (isInputElement(cellEl.value)) {
+        setElementValue(cellEl.value.value);
+        registration?.setValue(cellEl.value.value, e);
         return;
       }
 
-      setElementValue(slotEl.value.textContent ?? '');
-      registration?.setValue(slotEl.value.textContent ?? '', e);
+      setElementValue(cellEl.value.textContent ?? '');
+      registration?.setValue(cellEl.value.textContent ?? '', e);
     },
   };
 
-  const slotProps = useCaptureProps(() => {
-    const isInput = isInputElement(slotEl.value);
+  const cellProps = useCaptureProps(() => {
+    const isInput = isInputElement(cellEl.value);
 
     const baseProps: Record<string, unknown> = {
       [isInput ? 'readonly' : 'aria-readonly']: toValue(props.readonly),
       [isInput ? 'disabled' : 'aria-disabled']: toValue(props.disabled),
-      'data-otp-slot': true,
+      'data-otp-cell': true,
       spellcheck: false,
       tabindex: isDisabled.value ? '-1' : '0',
       autocorrect: 'off',
@@ -175,24 +175,24 @@ export function useOtpSlot(_props: Reactivify<OtpSlotProps>) {
     }
 
     return baseProps;
-  }, slotEl);
+  }, cellEl);
 
   return {
-    slotProps,
+    cellProps,
     key: registration?.id ?? useId(),
     value: computed(() => withMask(toValue(props.value))),
   };
 }
 
 /**
- * A helper component that renders an OTP slot. You can build your own with `useOtpSlot`.
+ * A helper component that renders an OTP cell. You can build your own with `useOtpCell`.
  */
-export const OtpSlot = /*#__PURE__*/ defineComponent<OtpSlotProps & { as?: string }>({
-  name: 'OtpSlot',
+export const OtpCell = /*#__PURE__*/ defineComponent<OtpCellProps & { as?: string }>({
+  name: 'OtpCell',
   props: ['value', 'disabled', 'readonly', 'accept', 'masked', 'as'],
   setup(props) {
-    const { slotProps, value, key } = useOtpSlot(props);
+    const { cellProps, value, key } = useOtpCell(props);
 
-    return () => h(props.as || 'input', { ...slotProps.value, key }, value.value);
+    return () => h(props.as || 'input', { ...cellProps.value, key }, value.value);
   },
 });

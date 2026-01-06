@@ -1,4 +1,4 @@
-import { OtpSlot } from '.';
+import { OtpCell } from '.';
 import { describe, expect, test, vi } from 'vitest';
 import { appRender } from '@test-utils/index';
 
@@ -8,14 +8,14 @@ describe('useOtpSlot', () => {
       const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
       // Render OtpSlot without a parent OtpField
       appRender({
-        components: { OtpSlot },
-        template: `<OtpSlot value="" />`,
+        components: { OtpCell },
+        template: `<OtpCell value="" />`,
       });
 
       // Verify that the warning was shown
       // In browser mode this can be logged more than once depending on mount/render,
       // so assert on content rather than exact count.
-      expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('OtpSlot must be used within an OtpField'));
+      expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('OtpCell must be used within an OtpField'));
 
       warnSpy.mockRestore();
     });

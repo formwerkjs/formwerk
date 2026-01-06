@@ -1,4 +1,4 @@
-import { OtpFieldProps, useOtpField, OtpSlot } from '.';
+import { OtpFieldProps, useOtpField, OtpCell } from '.';
 import { DEFAULT_MASK, isValueAccepted } from './utils';
 import { Component, defineComponent } from 'vue';
 import { renderSetup, expectNoA11yViolations, appRender } from '@test-utils/index';
@@ -7,7 +7,7 @@ import { page } from 'vitest/browser';
 const InputBase: string = `
   <div>
     <div v-bind="controlProps" data-testid="control">
-      <OtpSlot v-for="slot in fieldSlots" v-bind="slot" data-testid="slot" :as="slotType" />
+      <OtpCell v-for="cell in fieldCells" v-bind="cell" data-testid="slot" :as="cellType" />
     </div>
 
     <label v-bind="labelProps">{{ label }}</label>
@@ -44,18 +44,18 @@ async function paste(locator: any, text: string) {
   (await el(locator)).dispatchEvent(e);
 }
 
-function createOtpField(props: OtpFieldProps, template = InputBase, slotType = 'span'): Component {
+function createOtpField(props: OtpFieldProps, template = InputBase, cellType = 'span'): Component {
   return defineComponent({
     template,
     inheritAttrs: false,
-    components: { OtpSlot },
+    components: { OtpCell },
     setup() {
       const otp = useOtpField(props);
 
       return {
         ...props,
         ...otp,
-        slotType,
+        cellType,
       };
     },
   });
@@ -131,39 +131,39 @@ describe('useOtpField', () => {
 
   describe('field slots', () => {
     test('creates correct number of slots based on length', async () => {
-      const { fieldSlots } = renderSetup(() => {
+      const { fieldCells } = renderSetup(() => {
         return useOtpField({ label: 'OTP Code', length: 4 });
       });
 
-      expect(fieldSlots.value.length).toBe(4);
+      expect(fieldCells.value.length).toBe(4);
     });
 
     test('creates correct number of slots with prefix', async () => {
-      const { fieldSlots } = renderSetup(() => {
+      const { fieldCells } = renderSetup(() => {
         return useOtpField({ label: 'OTP Code', length: 4, prefix: 'G-' });
       });
 
-      expect(fieldSlots.value.length).toBe(6); // 'G-' (2 chars) + 4 slots
+      expect(fieldCells.value.length).toBe(6); // 'G-' (2 chars) + 4 slots
     });
 
     test('prefix slots are disabled', async () => {
-      const { fieldSlots } = renderSetup(() => {
+      const { fieldCells } = renderSetup(() => {
         return useOtpField({ label: 'OTP Code', length: 4, prefix: 'G-' });
       });
 
-      expect(fieldSlots.value[0].disabled).toBe(true);
-      expect(fieldSlots.value[1].disabled).toBe(true);
-      expect(fieldSlots.value[2].disabled).toBe(false);
+      expect(fieldCells.value[0].disabled).toBe(true);
+      expect(fieldCells.value[1].disabled).toBe(true);
+      expect(fieldCells.value[2].disabled).toBe(false);
     });
 
     test('prefix slots are not masked', async () => {
-      const { fieldSlots } = renderSetup(() => {
+      const { fieldCells } = renderSetup(() => {
         return useOtpField({ label: 'OTP Code', length: 4, prefix: 'G-', mask: true });
       });
 
-      expect(fieldSlots.value[0].masked).toBe(false);
-      expect(fieldSlots.value[1].masked).toBe(false);
-      expect(fieldSlots.value[2].masked).toBe(true);
+      expect(fieldCells.value[0].masked).toBe(false);
+      expect(fieldCells.value[1].masked).toBe(false);
+      expect(fieldCells.value[2].masked).toBe(true);
     });
   });
 

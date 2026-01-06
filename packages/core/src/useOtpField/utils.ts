@@ -1,15 +1,15 @@
 import { MaybeRefOrGetter, toValue } from 'vue';
-import { OtpSlotAcceptType } from './types';
+import { OtpCellAcceptType } from './types';
 import { NormalizedProps } from '../types';
 import { OtpControlProps } from './useOtpControl';
 
-const acceptMapRegex: Record<OtpSlotAcceptType, RegExp> = {
+const acceptMapRegex: Record<OtpCellAcceptType, RegExp> = {
   all: /./,
   numeric: /^\d+$/,
   alphanumeric: /^[a-zA-Z0-9]+$/,
 };
 
-export function isValueAccepted(value: string, accept: OtpSlotAcceptType) {
+export function isValueAccepted(value: string, accept: OtpCellAcceptType) {
   const regex = acceptMapRegex[accept];
 
   return regex.test(value);
