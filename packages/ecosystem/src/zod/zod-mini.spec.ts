@@ -1,16 +1,15 @@
-import * as v from 'valibot';
-import { toStandardJsonSchema } from '@valibot/to-json-schema';
+import * as zm from 'zod/mini';
 import { useForm } from '@formwerk/core';
 import { appRender } from '@test-utils/index';
 import { h, nextTick } from 'vue';
 import { page } from 'vitest/browser';
 import { expect, describe, test, vi } from 'vitest';
 
-test('valibot schemas are supported', async () => {
+test('zod/mini schemas are supported', async () => {
   const handler = vi.fn();
-  const schema = v.object({
-    email: v.optional(v.pipe(v.string(), v.email())),
-    password: v.pipe(v.string(), v.minLength(8)),
+  const schema = zm.object({
+    email: zm.nullable(zm.optional(zm.email())),
+    password: zm.string().check(zm.minLength(8)),
   });
 
   appRender({
@@ -49,16 +48,15 @@ test('valibot schemas are supported', async () => {
   await nextTick();
 
   await expect.element(page.getByTestId('form-err-1')).toHaveTextContent('');
-  await expect
-    .element(page.getByTestId('form-err-2'))
-    .toHaveTextContent('Invalid key: Expected "password" but received undefined');
+  // zod/mini uses simpler error messages
+  await expect.element(page.getByTestId('form-err-2')).toHaveTextContent('Invalid input');
   expect(handler).not.toHaveBeenCalled();
 });
 
 test('collects multiple errors per field', async () => {
   const handler = vi.fn();
-  const schema = v.object({
-    test: v.pipe(v.string(), v.email(), v.minLength(8)),
+  const schema = zm.object({
+    test: zm.email().check(zm.minLength(8)),
   });
 
   appRender({
@@ -93,19 +91,18 @@ test('collects multiple errors per field', async () => {
   await page.getByRole('button', { name: 'Submit' }).click();
   await nextTick();
 
-  expect(handler).toHaveBeenCalledWith([
-    'Invalid email: Received "123"',
-    'Invalid length: Expected >=8 but received 3',
-  ]);
+  // zod/mini uses simpler error messages
+  expect(handler).toHaveBeenCalledWith(['Invalid input', 'Invalid input']);
 });
 
+// Zod Mini does not support object schema representations, so we can't test them.
 describe('JSON Schema defaults', () => {
-  test('extracts simple default values from valibot schema', async () => {
-    const schema = toStandardJsonSchema(
-      v.object({
-        name: v.optional(v.string(), 'John'),
-        age: v.optional(v.number(), 25),
-        active: v.optional(v.boolean(), true),
+  test('extracts simple default values from zod/mini schema', async () => {
+    const schema = zm.toJSONSchema(
+      zm.object({
+        name: zm._default(zm.string(), 'John'),
+        age: zm._default(zm.number(), 25),
+        active: zm._default(zm.boolean(), true),
       }),
     );
 
@@ -130,14 +127,14 @@ describe('JSON Schema defaults', () => {
     });
   });
 
-  test('extracts nested object defaults from valibot schema', async () => {
-    const schema = toStandardJsonSchema(
-      v.object({
-        user: v.object({
-          name: v.optional(v.string(), 'Jane'),
-          address: v.object({
-            city: v.optional(v.string(), 'NYC'),
-            zip: v.optional(v.string(), '10001'),
+  test('extracts nested object defaults from zod/mini schema', async () => {
+    const schema = zm.toJSONSchema(
+      zm.object({
+        user: zm.object({
+          name: zm._default(zm.string(), 'Jane'),
+          address: zm.object({
+            city: zm._default(zm.string(), 'NYC'),
+            zip: zm._default(zm.string(), '10001'),
           }),
         }),
       }),
@@ -169,13 +166,13 @@ describe('JSON Schema defaults', () => {
   });
 
   test('merges provided initialValues with schema defaults', async () => {
-    const schema = toStandardJsonSchema(
-      v.object({
-        name: v.optional(v.string(), 'Default Name'),
-        email: v.optional(v.string(), 'default@example.com'),
-        settings: v.object({
-          theme: v.optional(v.string(), 'dark'),
-          notifications: v.optional(v.boolean(), true),
+    const schema = zm.toJSONSchema(
+      zm.object({
+        name: zm._default(zm.string(), 'Default Name'),
+        email: zm._default(zm.string(), 'default@example.com'),
+        settings: zm.object({
+          theme: zm._default(zm.string(), 'dark'),
+          notifications: zm._default(zm.boolean(), true),
         }),
       }),
     );
@@ -212,18 +209,18 @@ describe('JSON Schema defaults', () => {
   });
 
   test('handles deeply nested objects with mixed defaults and provided values', async () => {
-    const schema = toStandardJsonSchema(
-      v.object({
-        company: v.object({
-          name: v.optional(v.string(), 'Acme Corp'),
-          departments: v.object({
-            engineering: v.object({
-              lead: v.optional(v.string(), 'Alice'),
-              teamSize: v.optional(v.number(), 10),
+    const schema = zm.toJSONSchema(
+      zm.object({
+        company: zm.object({
+          name: zm._default(zm.string(), 'Acme Corp'),
+          departments: zm.object({
+            engineering: zm.object({
+              lead: zm._default(zm.string(), 'Alice'),
+              teamSize: zm._default(zm.number(), 10),
             }),
-            sales: v.object({
-              lead: v.optional(v.string(), 'Bob'),
-              teamSize: v.optional(v.number(), 5),
+            sales: zm.object({
+              lead: zm._default(zm.string(), 'Bob'),
+              teamSize: zm._default(zm.number(), 5),
             }),
           }),
         }),
@@ -271,11 +268,11 @@ describe('JSON Schema defaults', () => {
   });
 
   test('handles array defaults in schema', async () => {
-    const schema = toStandardJsonSchema(
-      v.object({
-        tags: v.optional(v.array(v.string()), ['tag1', 'tag2']),
-        config: v.object({
-          features: v.optional(v.array(v.string()), ['feature1']),
+    const schema = zm.toJSONSchema(
+      zm.object({
+        tags: zm._default(zm.array(zm.string()), ['tag1', 'tag2']),
+        config: zm.object({
+          features: zm._default(zm.array(zm.string()), ['feature1']),
         }),
       }),
     );
@@ -303,9 +300,9 @@ describe('JSON Schema defaults', () => {
   });
 
   test('provided array values override schema defaults completely', async () => {
-    const schema = toStandardJsonSchema(
-      v.object({
-        tags: v.optional(v.array(v.string()), ['default1', 'default2']),
+    const schema = zm.toJSONSchema(
+      zm.object({
+        tags: zm._default(zm.array(zm.string()), ['default1', 'default2']),
       }),
     );
 
@@ -333,10 +330,10 @@ describe('JSON Schema defaults', () => {
   });
 
   test('works with no initialValues - schema defaults are used', async () => {
-    const schema = toStandardJsonSchema(
-      v.object({
-        firstName: v.optional(v.string(), 'First'),
-        lastName: v.optional(v.string(), 'Last'),
+    const schema = zm.toJSONSchema(
+      zm.object({
+        firstName: zm._default(zm.string(), 'First'),
+        lastName: zm._default(zm.string(), 'Last'),
       }),
     );
 
@@ -361,10 +358,10 @@ describe('JSON Schema defaults', () => {
   });
 
   test('fields without defaults remain undefined when not provided', async () => {
-    const schema = toStandardJsonSchema(
-      v.object({
-        withDefault: v.optional(v.string(), 'has default'),
-        withoutDefault: v.string(),
+    const schema = zm.toJSONSchema(
+      zm.object({
+        withDefault: zm._default(zm.string(), 'has default'),
+        withoutDefault: zm.string(),
       }),
     );
 
@@ -390,10 +387,10 @@ describe('JSON Schema defaults', () => {
 
   test('validates and shows errors with JSON schema', async () => {
     const handler = vi.fn();
-    const schema = toStandardJsonSchema(
-      v.object({
-        email: v.pipe(v.string(), v.email()),
-        password: v.pipe(v.string(), v.minLength(8)),
+    const schema = zm.toJSONSchema(
+      zm.object({
+        email: zm.email(),
+        password: zm.string().check(zm.minLength(8)),
       }),
     );
 
@@ -433,10 +430,9 @@ describe('JSON Schema defaults', () => {
     await page.getByRole('button', { name: 'Submit' }).click();
     await nextTick();
 
-    await expect.element(page.getByTestId('email-err')).toHaveTextContent('Invalid email: Received "invalid-email"');
-    await expect
-      .element(page.getByTestId('password-err'))
-      .toHaveTextContent('Invalid length: Expected >=8 but received 5');
+    // zod/mini uses simpler error messages
+    await expect.element(page.getByTestId('email-err')).toHaveTextContent('Invalid input');
+    await expect.element(page.getByTestId('password-err')).toHaveTextContent('Invalid input');
     expect(handler).not.toHaveBeenCalled();
   });
 });

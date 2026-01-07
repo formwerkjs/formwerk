@@ -8,13 +8,15 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 const formatNameMap = {
-  core: 'Formwerk',
+  schema: 'FormwerkSchema',
   devtools: 'FormwerkDevtools',
+  core: 'Formwerk',
 };
 
 const pkgNameMap = {
-  core: 'core',
+  schema: 'schema',
   devtools: 'devtools',
+  core: 'core',
 };
 
 const formatExt: Partial<Record<ModuleFormat, string>> = {
