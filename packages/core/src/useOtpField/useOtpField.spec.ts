@@ -302,6 +302,26 @@ describe('useOtpField', () => {
 
       await expect.poll(() => onCompleted.mock.calls[0]?.[0]).toBe('1234');
     });
+
+    test('calls onCompleted when setValue fills all slots', async () => {
+      const onCompleted = vi.fn();
+      const { setValue } = renderSetup(() => {
+        return useOtpField({ label: 'OTP Code', length: 4, onCompleted });
+      });
+
+      setValue('1234');
+      await expect.poll(() => onCompleted.mock.calls[0]?.[0]).toBe('1234');
+    });
+
+    test('does not call onCompleted when setValue partially fills slots', async () => {
+      const onCompleted = vi.fn();
+      const { setValue } = renderSetup(() => {
+        return useOtpField({ label: 'OTP Code', length: 4, onCompleted });
+      });
+
+      setValue('12');
+      await expect.poll(() => onCompleted).not.toHaveBeenCalled();
+    });
   });
 
   describe('keyboard navigation', () => {

@@ -171,6 +171,7 @@ export function useOtpControl(_props: Reactivify<OtpControlProps, ExcludedProps>
   watch(model, value => {
     if (!value) {
       inputsState.value = withPrefix('', props.prefix).split('');
+      updateFieldValue();
       return;
     }
 
@@ -180,6 +181,7 @@ export function useOtpControl(_props: Reactivify<OtpControlProps, ExcludedProps>
     }
 
     inputsState.value = value.split('');
+    updateFieldValue();
   });
 
   function onPaste(event: ClipboardEvent) {
