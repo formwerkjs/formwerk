@@ -36,6 +36,11 @@ export interface SelectControlProps<TValue> extends ControlProps<Arrayable<TValu
    * The orientation of the listbox popup (vertical or horizontal).
    */
   orientation?: Orientation;
+
+  /**
+   * The label text for the clear button.
+   */
+  clearButtonLabel?: string;
 }
 
 export interface SelectTriggerDomProps extends AriaLabelableProps {
@@ -72,6 +77,7 @@ export function useSelectControl<TOption, TValue = TOption>(
     selectedOptions,
     listBoxId,
     findFocusedOption,
+    clearSelection,
   } = useListBox<TOption, TValue>({
     labeledBy: () => controller?.labelledByProps.value['aria-labelledby'],
     autofocusOnOpen: true,
@@ -241,6 +247,20 @@ export function useSelectControl<TOption, TValue = TOption>(
     };
   }, triggerEl);
 
+  const clearBtnProps = computed(() => {
+    return {
+      tabindex: '-1',
+      type: 'button' as const,
+      ariaLabel: toValue(props.clearButtonLabel) ?? 'Clear search',
+      onClick() {
+        if (!isMutable()) return;
+
+        clearSelection();
+        setModelValue(undefined);
+      },
+    };
+  });
+
   return {
     /**
      * The id of the input element.
@@ -278,6 +298,10 @@ export function useSelectControl<TOption, TValue = TOption>(
      * The currently selected options.
      */
     selectedOptions,
+    /**
+     * Props for the button element that clears the input and selection
+     */
+    clearBtnProps,
 
     /**
      * The field state.

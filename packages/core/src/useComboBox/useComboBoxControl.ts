@@ -46,6 +46,11 @@ export interface ComboBoxControlProps<TOption, TValue = TOption> extends Control
   openOnFocus?: boolean;
 
   /**
+   * The label text for the clear button.
+   */
+  clearButtonLabel?: string;
+
+  /**
    * Function to create a new option from the user input.
    */
   onNewValue?(value: string): Maybe<{ label: string; value: TValue }>;
@@ -90,6 +95,7 @@ export function useComboBoxControl<TOption, TValue = TOption>(
     focusNext,
     focusPrev,
     findFocusedOption,
+    clearSelection,
     renderedOptions,
     isEmpty,
     focusFirst: focusFirstOption,
@@ -322,6 +328,21 @@ export function useComboBoxControl<TOption, TValue = TOption>(
     watch(inputValue, debounce(filter.debounceMs, updateHiddenState));
   }
 
+  const clearBtnProps = computed(() => {
+    return {
+      tabindex: '-1',
+      type: 'button' as const,
+      ariaLabel: toValue(props.clearButtonLabel) ?? 'Clear search',
+      onClick() {
+        if (isReadOnly() || isDisabled.value) return;
+
+        clearSelection();
+        inputValue.value = '';
+        setModelValue(undefined);
+      },
+    };
+  });
+
   return {
     /**
      * The id of the input element.
@@ -370,6 +391,10 @@ export function useComboBoxControl<TOption, TValue = TOption>(
      * Whether the listbox is empty, i.e. no options are visible.
      */
     isListEmpty: isEmpty,
+    /**
+     * Props for the button element that clears the input and selection
+     */
+    clearBtnProps,
 
     /**
      * The field state.

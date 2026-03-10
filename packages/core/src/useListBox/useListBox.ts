@@ -253,6 +253,10 @@ export function useListBox<TOption, TValue = TOption>(
     }
   }
 
+  function clearSelection() {
+    renderedOptions.value.filter(opt => opt.isSelected()).forEach(opt => opt.toggleSelected());
+  }
+
   const listBoxProps = useCaptureProps<ListBoxDomProps>(() => {
     const isMultiple = toValue(props.multiple);
     const labeledBy = toValue(props.labeledBy);
@@ -324,5 +328,6 @@ export function useListBox<TOption, TValue = TOption>(
     focusFirst,
     focusLast,
     findFocusedOption,
+    clearSelection,
   };
 }

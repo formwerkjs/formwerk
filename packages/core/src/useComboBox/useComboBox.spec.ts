@@ -40,6 +40,7 @@ function createComboBox(fixedProps: Partial<ComboBoxProps<any, any>> = {}) {
         inputValue,
         errorMessage,
         selectedOption,
+        clearBtnProps,
       } = useComboBox(all, {
         filter: useDefaultFilter({ caseSensitive: false }).contains,
       });
@@ -63,6 +64,7 @@ function createComboBox(fixedProps: Partial<ComboBoxProps<any, any>> = {}) {
         errorMessage,
         options,
         selectedOption,
+        clearBtnProps,
       };
     },
     template: `
@@ -71,7 +73,8 @@ function createComboBox(fixedProps: Partial<ComboBoxProps<any, any>> = {}) {
 
           <div>
             <input v-bind="inputProps" />
-            <button v-bind="buttonProps">Toggle</button>
+            <button v-bind="buttonProps">toggle</button>
+            <button v-bind="clearBtnProps">clear</button>
           </div>
 
           <div v-bind="listBoxProps" popover>
@@ -109,12 +112,16 @@ function getInput() {
   return page.getByRole('combobox');
 }
 
-function getButton() {
-  return page.getByRole('button');
+function getToggleButton() {
+  return page.getByRole('button', { name: 'toggle' });
+}
+
+function getClearButton() {
+  return page.getByRole('button', { name: 'clear' });
 }
 
 describe('reset', () => {
-  test('should set inputValue on reset with values', async () => {
+  async function renderComboBox() {
     const MyComboBox = createComboBox();
     const options = [{ label: 'One' }, { label: 'Two' }, { label: 'Three' }];
 
@@ -139,7 +146,27 @@ describe('reset', () => {
       `,
     });
 
+    return MyComboBox;
+  }
+
+  test('should set inputValue on reset with values', async () => {
+    const MyComboBox = await renderComboBox();
+
     expect(MyComboBox.getExposedState().inputValue).toEqual('Two');
+  });
+
+  test('should be able to clear with button', async () => {
+    const MyComboBox = await renderComboBox();
+
+    expect(MyComboBox.getExposedState().inputValue).toEqual('Two');
+    expect(MyComboBox.getExposedState().selectedOption).toEqual({
+      id: expect.any(String),
+      label: 'Two',
+      value: { label: 'Two' },
+    });
+    await getClearButton().click();
+    expect(MyComboBox.getExposedState().inputValue).toEqual('');
+    expect(MyComboBox.getExposedState().selectedOption).toEqual(undefined);
   });
 });
 
@@ -164,7 +191,7 @@ describe('keyboard features', () => {
 
     return {
       async open() {
-        await getButton().click();
+        await getToggleButton().click();
         await expect.element(getInput()).toHaveAttribute('aria-expanded', 'true');
       },
     };
@@ -189,10 +216,10 @@ describe('keyboard features', () => {
   test('Clicking the button should toggle the listbox', async () => {
     await renderComboBox();
 
-    await getButton().click();
+    await getToggleButton().click();
     await expect.element(getInput()).toHaveAttribute('aria-expanded', 'true');
 
-    await getButton().click();
+    await getToggleButton().click();
     await expect.element(getInput()).toHaveAttribute('aria-expanded', 'false');
   });
 
@@ -450,7 +477,7 @@ describe('selection state', () => {
       `,
     });
 
-    await getButton().click();
+    await getToggleButton().click();
     await page.getByRole('option').nth(1).click();
 
     await expect
@@ -591,12 +618,12 @@ test('Should not accept new value on Enter when readonly', async () => {
   const input = getInput();
 
   // First select an option
-  await getButton().click();
+  await getToggleButton().click();
   await page.getByRole('option').nth(1).click();
   await expect.element(input).toHaveValue('Two');
 
   // Enable readonly
-  await getButton().click();
+  await getToggleButton().click();
 
   // Try to type something new
   await input.fill('Something new');

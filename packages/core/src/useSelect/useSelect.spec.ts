@@ -82,6 +82,7 @@ function createSelect() {
         selectedOptions,
         selectedOption,
         errorMessage,
+        clearBtnProps,
       } = useSelect(all);
 
       exposedSelectedOptions = selectedOptions;
@@ -106,6 +107,7 @@ function createSelect() {
         selectedOptions,
         selectedOption,
         errorMessage,
+        clearBtnProps,
       };
     },
     template: `
@@ -115,6 +117,8 @@ function createSelect() {
           <div v-bind="triggerProps">
             {{ fieldValue || 'Select here' }}
           </div>
+
+          <button v-bind="clearBtnProps">clear</button>
 
           <div v-bind="listBoxProps" popover>
             <slot>
@@ -563,6 +567,25 @@ describe('selection state', () => {
           value: { label: 'Three' },
         },
       ]);
+  });
+
+  test('clicking clear button should reset selected option', async () => {
+    const MySelect = createSelect();
+    const options = [{ label: 'One' }, { label: 'Two' }, { label: 'Three' }];
+
+    const sl = renderSelect(MySelect, options);
+
+    // Select first and third options
+    await sl.open();
+    await sl.select(0);
+
+    expect(MySelect.getExposedState().selectedOption).toEqual({
+      id: expect.any(String),
+      label: 'One',
+      value: { label: 'One' },
+    });
+    await page.getByRole('button', { name: 'clear' }).click();
+    expect(MySelect.getExposedState().selectedOption).toEqual(undefined);
   });
 });
 
