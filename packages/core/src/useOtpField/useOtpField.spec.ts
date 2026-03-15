@@ -1,6 +1,6 @@
 import { OtpFieldProps, useOtpField, OtpCell } from '.';
 import { DEFAULT_MASK, isValueAccepted } from './utils';
-import { Component, defineComponent } from 'vue';
+import { Component, defineComponent, nextTick } from 'vue';
 import { renderSetup, expectNoA11yViolations, appRender } from '@test-utils/index';
 import { page } from 'vitest/browser';
 
@@ -320,7 +320,8 @@ describe('useOtpField', () => {
       });
 
       setValue('12');
-      await expect.poll(() => onCompleted).not.toHaveBeenCalled();
+      await nextTick();
+      expect(onCompleted).not.toHaveBeenCalled();
     });
   });
 
