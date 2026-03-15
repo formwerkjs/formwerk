@@ -64,5 +64,5 @@ jobs:
           key: playwright-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
       - name: Install Playwright browsers
         if: steps.playwright-cache.outputs.cache-hit != 'true'
-        run: pnpx playwright install
+        run: pnpm exec playwright install chromium
       - run: pnpm test:ci
