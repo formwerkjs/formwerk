@@ -16,6 +16,3 @@ runs:
           packages/*/node_modules
           packages/*/dist
         key: build-${{ github.sha }}
-    - name: Install dependencies
-      run: pnpm install
-      shell: bash
