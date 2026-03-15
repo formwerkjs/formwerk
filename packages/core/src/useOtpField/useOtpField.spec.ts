@@ -1,6 +1,6 @@
 import { OtpFieldProps, useOtpField, OtpCell } from '.';
 import { DEFAULT_MASK, isValueAccepted } from './utils';
-import { Component, defineComponent } from 'vue';
+import { Component, defineComponent, nextTick } from 'vue';
 import { renderSetup, expectNoA11yViolations, appRender } from '@test-utils/index';
 import { page } from 'vitest/browser';
 
@@ -301,6 +301,27 @@ describe('useOtpField', () => {
       }
 
       await expect.poll(() => onCompleted.mock.calls[0]?.[0]).toBe('1234');
+    });
+
+    test('calls onCompleted when setValue fills all slots', async () => {
+      const onCompleted = vi.fn();
+      const { setValue } = renderSetup(() => {
+        return useOtpField({ label: 'OTP Code', length: 4, onCompleted });
+      });
+
+      setValue('1234');
+      await expect.poll(() => onCompleted.mock.calls[0]?.[0]).toBe('1234');
+    });
+
+    test('does not call onCompleted when setValue partially fills slots', async () => {
+      const onCompleted = vi.fn();
+      const { setValue } = renderSetup(() => {
+        return useOtpField({ label: 'OTP Code', length: 4, onCompleted });
+      });
+
+      setValue('12');
+      await nextTick();
+      expect(onCompleted).not.toHaveBeenCalled();
     });
   });
 
