@@ -1,5 +1,5 @@
 ---
-"@formwerk/core": minor
+'@formwerk/core': minor
 ---
 
 refactor: rename OtpSlot to OtpCell
