@@ -105,7 +105,7 @@ export function useInputValidity(opts: InputValidityOptions) {
     await nextTick();
     await _updateValidity();
     nextTick(() => {
-      opts.field.setIsValidated(true);
+      opts.field.setIsUserValidated(true);
     });
   }
 
@@ -134,7 +134,7 @@ export function useInputValidity(opts: InputValidityOptions) {
       validateNative(true);
       if (!isHtmlValidationDisabled()) {
         nextTick(() => {
-          opts.field.setIsValidated(true);
+          opts.field.setIsUserValidated(true);
         });
       }
     });
@@ -146,7 +146,7 @@ export function useInputValidity(opts: InputValidityOptions) {
       await updateValidity();
       // Field value change is user interaction - mark as validated
       nextTick(() => {
-        opts.field.setIsValidated(true);
+        opts.field.setIsUserValidated(true);
       });
     });
   }

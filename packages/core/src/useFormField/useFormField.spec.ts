@@ -295,27 +295,27 @@ test('validate warns and skips validation on a disabled field', async () => {
   consoleWarnSpy.mockRestore();
 });
 
-describe('isValidated state', () => {
-  test('field starts with isValidated as false', async () => {
-    const { isValidated } = renderSetup(() => {
+describe('isUserValidated state', () => {
+  test('field starts with isUserValidated as false', async () => {
+    const { isUserValidated } = renderSetup(() => {
       return useFormField({ label: 'Field', initialValue: 'bar' }).state;
     });
 
-    expect(isValidated.value).toBe(false);
+    expect(isUserValidated.value).toBe(false);
   });
 
-  test('isValidated remains false after programmatic validation without schema', async () => {
-    const { isValidated, validate } = renderSetup(() => {
+  test('isUserValidated remains false after programmatic validation without schema', async () => {
+    const { isUserValidated, validate } = renderSetup(() => {
       return useFormField({ label: 'Field', initialValue: 'bar' }).state;
     });
 
-    expect(isValidated.value).toBe(false);
+    expect(isUserValidated.value).toBe(false);
     await validate();
-    expect(isValidated.value).toBe(false); // Should remain false - programmatic validation
+    expect(isUserValidated.value).toBe(false); // Should remain false - programmatic validation
   });
 
-  test('isValidated remains false after programmatic validation with schema', async () => {
-    const { isValidated, validate } = renderSetup(() => {
+  test('isUserValidated remains false after programmatic validation with schema', async () => {
+    const { isUserValidated, validate } = renderSetup(() => {
       return useFormField({
         label: 'Field',
         initialValue: 'bar',
@@ -325,13 +325,13 @@ describe('isValidated state', () => {
       }).state;
     });
 
-    expect(isValidated.value).toBe(false);
+    expect(isUserValidated.value).toBe(false);
     await validate();
-    expect(isValidated.value).toBe(false); // Should remain false - programmatic validation
+    expect(isUserValidated.value).toBe(false); // Should remain false - programmatic validation
   });
 
-  test('isValidated remains false after programmatic validation with errors', async () => {
-    const { isValidated, validate } = renderSetup(() => {
+  test('isUserValidated remains false after programmatic validation with errors', async () => {
+    const { isUserValidated, validate } = renderSetup(() => {
       return useFormField({
         label: 'Field',
         initialValue: '',
@@ -341,24 +341,24 @@ describe('isValidated state', () => {
       }).state;
     });
 
-    expect(isValidated.value).toBe(false);
+    expect(isUserValidated.value).toBe(false);
     await validate(true);
-    expect(isValidated.value).toBe(false); // Should remain false - programmatic validation
+    expect(isUserValidated.value).toBe(false); // Should remain false - programmatic validation
   });
 
-  test('isValidated can be set manually', async () => {
-    const { isValidated, setIsValidated } = renderSetup(() => {
+  test('isUserValidated can be set manually', async () => {
+    const { isUserValidated, setIsUserValidated } = renderSetup(() => {
       return useFormField({ label: 'Field', initialValue: 'bar' }).state;
     });
 
-    expect(isValidated.value).toBe(false);
-    setIsValidated(true);
-    expect(isValidated.value).toBe(true);
-    setIsValidated(false);
-    expect(isValidated.value).toBe(false);
+    expect(isUserValidated.value).toBe(false);
+    setIsUserValidated(true);
+    expect(isUserValidated.value).toBe(true);
+    setIsUserValidated(false);
+    expect(isUserValidated.value).toBe(false);
   });
 
-  test('isValidated becomes true after form submit attempt', async () => {
+  test('isUserValidated becomes true after form submit attempt', async () => {
     const { form, field } = renderSetup(
       () => {
         const form = useForm({
@@ -380,32 +380,32 @@ describe('isValidated state', () => {
       },
     );
 
-    expect(field.state.isValidated.value).toBe(false);
+    expect(field.state.isUserValidated.value).toBe(false);
 
     // Submit attempt is a user interaction
     const handleSubmit = form.handleSubmit(async () => {});
     await handleSubmit();
 
-    expect(field.state.isValidated.value).toBe(true);
+    expect(field.state.isUserValidated.value).toBe(true);
   });
 
-  test('isValidated is independent for pathless fields', async () => {
+  test('isUserValidated is independent for pathless fields', async () => {
     const { field1, field2 } = renderSetup(() => {
       const field1 = useFormField({ label: 'Field1', initialValue: 'bar' });
       const field2 = useFormField({ label: 'Field2', initialValue: 'baz' });
       return { field1, field2 };
     });
 
-    expect(field1.state.isValidated.value).toBe(false);
-    expect(field2.state.isValidated.value).toBe(false);
+    expect(field1.state.isUserValidated.value).toBe(false);
+    expect(field2.state.isUserValidated.value).toBe(false);
 
-    // Manually set isValidated (simulating user interaction)
-    field1.state.setIsValidated(true);
-    expect(field1.state.isValidated.value).toBe(true);
-    expect(field2.state.isValidated.value).toBe(false);
+    // Manually set isUserValidated (simulating user interaction)
+    field1.state.setIsUserValidated(true);
+    expect(field1.state.isUserValidated.value).toBe(true);
+    expect(field2.state.isUserValidated.value).toBe(false);
 
-    field2.state.setIsValidated(true);
-    expect(field1.state.isValidated.value).toBe(true);
-    expect(field2.state.isValidated.value).toBe(true);
+    field2.state.setIsUserValidated(true);
+    expect(field1.state.isUserValidated.value).toBe(true);
+    expect(field2.state.isUserValidated.value).toBe(true);
   });
 });
