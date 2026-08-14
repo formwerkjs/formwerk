@@ -111,6 +111,27 @@ describe('field touched state', () => {
     expect(field.state.isTouched.value).toBe(true);
     expect(form.isTouched('field')).toBe(true);
   });
+
+  test('field can be touched again after the form resets it', async () => {
+    const { form, field } = renderSetup(
+      () => {
+        const form = useForm({ initialValues: { field: 'foo' } });
+        return { form };
+      },
+      () => {
+        const field = useFormField({ path: 'field' });
+        return { field };
+      },
+    );
+
+    field.state.setTouched(true);
+    await form.reset();
+    expect(field.state.isTouched.value).toBe(false);
+
+    field.state.setTouched(true);
+    expect(field.state.isTouched.value).toBe(true);
+    expect(form.isTouched('field')).toBe(true);
+  });
 });
 
 describe('field blurred state', () => {
@@ -144,6 +165,47 @@ describe('field blurred state', () => {
     field.state.setBlurred(true);
     expect(field.state.isBlurred.value).toBe(true);
     expect(form.isBlurred('field')).toBe(true);
+  });
+
+  test('field can be blurred again after the form resets it', async () => {
+    const { form, field } = renderSetup(
+      () => {
+        const form = useForm({ initialValues: { field: 'foo' } });
+        return { form };
+      },
+      () => {
+        const field = useFormField({ path: 'field' });
+        return { field };
+      },
+    );
+
+    field.state.setBlurred(true);
+    await form.reset();
+    expect(field.state.isBlurred.value).toBe(false);
+
+    field.state.setBlurred(true);
+    expect(field.state.isBlurred.value).toBe(true);
+    expect(form.isBlurred('field')).toBe(true);
+  });
+
+  test('field can be blurred again after the form clears it directly', async () => {
+    const { form, field } = renderSetup(
+      () => {
+        const form = useForm({ initialValues: { field: 'foo' } });
+        return { form };
+      },
+      () => {
+        const field = useFormField({ path: 'field' });
+        return { field };
+      },
+    );
+
+    field.state.setBlurred(true);
+    form.setBlurred('field', false);
+    expect(field.state.isBlurred.value).toBe(false);
+
+    field.state.setBlurred(true);
+    expect(field.state.isBlurred.value).toBe(true);
   });
 });
 
