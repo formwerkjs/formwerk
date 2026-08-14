@@ -277,10 +277,10 @@ function createFormTouchedRef(getPath: Getter<string | undefined>, form: FormCon
 
   function setTouched(value: boolean) {
     const path = getPath();
-    const isDifferent = pathlessTouched.value !== value;
     pathlessTouched.value = value;
-    // Only update it if the value is actually different, this avoids unnecessary path traversal/creation
-    if (path && isDifferent) {
+    // Only update it if the value is actually different, this avoids unnecessary path traversal/creation.
+    // Compared against the form rather than `pathlessTouched` because the form can change it on its own (e.g: reset).
+    if (path && form.isTouched(path) !== value) {
       form.setTouched(path, value);
     }
   }
@@ -318,10 +318,10 @@ function createFormBlurredRef(getPath: Getter<string | undefined>, form: FormCon
 
   function setBlurred(value: boolean) {
     const path = getPath();
-    const isDifferent = pathlessBlurred.value !== value;
     pathlessBlurred.value = value;
-    // Only update it if the value is actually different, this avoids unnecessary path traversal/creation
-    if (path && isDifferent) {
+    // Only update it if the value is actually different, this avoids unnecessary path traversal/creation.
+    // Compared against the form rather than `pathlessBlurred` because the form can change it on its own (e.g: reset).
+    if (path && form.isBlurred(path) !== value) {
       form.setBlurred(path, value);
     }
   }
