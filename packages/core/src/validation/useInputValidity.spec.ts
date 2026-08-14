@@ -148,7 +148,7 @@ test('events can be reactive', async () => {
   await expect.element(page.getByTestId('err')).toHaveTextContent('');
 });
 
-describe('isValidated tracking', () => {
+describe('isUserValidated tracking', () => {
   test('does not flash error on blur when field becomes valid (issue #203)', async () => {
     const input = ref<HTMLInputElement>();
     let field!: FieldState<any>;
@@ -161,7 +161,7 @@ describe('isValidated tracking', () => {
         // This mimics the user pattern: only show errors after validation AND blur
         const displayError = computed(() => {
           // Don't show error until validated (prevents initial mount validation from showing)
-          if (!field.isValidated.value) return '';
+          if (!field.isUserValidated.value) return '';
           // Don't show error until blurred (prevents showing while typing)
           if (!field.isBlurred.value) return '';
           return field.errorMessage.value;
@@ -186,8 +186,8 @@ describe('isValidated tracking', () => {
       .element(page.getByTestId('raw-err'))
       .toHaveTextContent(/Constraints not satisfied|Please fill out this field\.?/);
 
-    // isValidated should still be false after mount (not user interaction)
-    expect(field.isValidated.value).toBe(false);
+    // isUserValidated should still be false after mount (not user interaction)
+    expect(field.isUserValidated.value).toBe(false);
 
     // User types a valid value
     await page.getByTestId('input').fill('valid value');
@@ -202,11 +202,11 @@ describe('isValidated tracking', () => {
     await expect.element(page.getByTestId('display-err')).toHaveTextContent('');
     await expect.element(page.getByTestId('raw-err')).toHaveTextContent('');
 
-    // Now isValidated should be true (user interaction)
-    expect(field.isValidated.value).toBe(true);
+    // Now isUserValidated should be true (user interaction)
+    expect(field.isUserValidated.value).toBe(true);
   });
 
-  test('isValidated remains false after mount validation', async () => {
+  test('isUserValidated remains false after mount validation', async () => {
     const input = ref<HTMLInputElement>();
     let field!: FieldState<any>;
 
@@ -215,22 +215,22 @@ describe('isValidated tracking', () => {
         field = useFormField().state;
         useInputValidity({ inputEl: input, field });
 
-        return { input, isValidated: field.isValidated };
+        return { input, isUserValidated: field.isUserValidated };
       },
       template: `
         <form>
           <input ref="input" data-testid="input" required />
-          <span data-testid="validated">{{ isValidated }}</span>
+          <span data-testid="validated">{{ isUserValidated }}</span>
         </form>
       `,
     });
 
-    // After mount, validation runs but isValidated should remain false
+    // After mount, validation runs but isUserValidated should remain false
     await expect.element(page.getByTestId('validated')).toHaveTextContent('false');
-    expect(field.isValidated.value).toBe(false);
+    expect(field.isUserValidated.value).toBe(false);
   });
 
-  test('isValidated becomes true after blur event triggers validation', async () => {
+  test('isUserValidated becomes true after blur event triggers validation', async () => {
     const input = ref<HTMLInputElement>();
     let field!: FieldState<any>;
 
@@ -239,29 +239,29 @@ describe('isValidated tracking', () => {
         field = useFormField().state;
         useInputValidity({ inputEl: input, field });
 
-        return { input, isValidated: field.isValidated };
+        return { input, isUserValidated: field.isUserValidated };
       },
       template: `
         <form>
           <input ref="input" data-testid="input" required />
-          <span data-testid="validated">{{ isValidated }}</span>
+          <span data-testid="validated">{{ isUserValidated }}</span>
         </form>
       `,
     });
 
     // Initially false
-    expect(field.isValidated.value).toBe(false);
+    expect(field.isUserValidated.value).toBe(false);
 
     // User blurs the field (user interaction)
     await page.getByTestId('input').click();
     await userEvent.tab();
     await expect.element(page.getByTestId('validated')).toHaveTextContent('true');
 
-    // Now isValidated should be true
-    expect(field.isValidated.value).toBe(true);
+    // Now isUserValidated should be true
+    expect(field.isUserValidated.value).toBe(true);
   });
 
-  test('isValidated is set to true after change event triggers validation', async () => {
+  test('isUserValidated is set to true after change event triggers validation', async () => {
     const input = ref<HTMLInputElement>();
     let field!: FieldState<any>;
 
@@ -270,35 +270,35 @@ describe('isValidated tracking', () => {
         field = useFormField().state;
         useInputValidity({ inputEl: input, field });
 
-        return { input, isValidated: field.isValidated };
+        return { input, isUserValidated: field.isUserValidated };
       },
       template: `
         <form>
           <input ref="input" data-testid="input" required />
-          <span data-testid="validated">{{ isValidated }}</span>
+          <span data-testid="validated">{{ isUserValidated }}</span>
         </form>
       `,
     });
 
     // Initially false even after mount
-    await expect.poll(() => field.isValidated.value).toBe(false);
+    await expect.poll(() => field.isUserValidated.value).toBe(false);
 
     // User triggers change event (user interaction)
     await page.getByTestId('input').fill('test');
     await userEvent.tab();
-    await expect.poll(() => field.isValidated.value).toBe(true);
+    await expect.poll(() => field.isUserValidated.value).toBe(true);
 
     // Can be manually reset
-    field.setIsValidated(false);
-    await expect.poll(() => field.isValidated.value).toBe(false);
+    field.setIsUserValidated(false);
+    await expect.poll(() => field.isUserValidated.value).toBe(false);
 
     // And set again by user interaction
     await page.getByTestId('input').fill('test2');
     await userEvent.tab();
-    await expect.poll(() => field.isValidated.value).toBe(true);
+    await expect.poll(() => field.isUserValidated.value).toBe(true);
   });
 
-  test('isValidated helps prevent displaying initial validation errors', async () => {
+  test('isUserValidated helps prevent displaying initial validation errors', async () => {
     const input = ref<HTMLInputElement>();
     let field!: FieldState<any>;
 
@@ -309,7 +309,7 @@ describe('isValidated tracking', () => {
 
         // Computed that mimics user code for conditional error display
         const displayError = computed(() => {
-          return field.isValidated.value ? field.errorMessage.value : '';
+          return field.isUserValidated.value ? field.errorMessage.value : '';
         });
 
         return { input, displayError, errorMessage: field.errorMessage };
@@ -328,25 +328,25 @@ describe('isValidated tracking', () => {
       .element(page.getByTestId('raw-err'))
       .toHaveTextContent(/Constraints not satisfied|Please fill out this field\.?/);
 
-    // But displayError should NOT show because isValidated is still false (mount is not user interaction)
+    // But displayError should NOT show because isUserValidated is still false (mount is not user interaction)
     await expect.element(page.getByTestId('err')).toHaveTextContent('');
-    await expect.poll(() => field.isValidated.value).toBe(false);
+    await expect.poll(() => field.isUserValidated.value).toBe(false);
 
-    // User interaction (blur) sets isValidated to true (field is still empty/invalid)
+    // User interaction (blur) sets isUserValidated to true (field is still empty/invalid)
     await page.getByTestId('input').click();
     await userEvent.tab();
     await expect
       .element(page.getByTestId('err'))
       .toHaveTextContent(/Constraints not satisfied|Please fill out this field\.?/);
 
-    // Now errors should show because isValidated is true
-    await expect.poll(() => field.isValidated.value).toBe(true);
+    // Now errors should show because isUserValidated is true
+    await expect.poll(() => field.isUserValidated.value).toBe(true);
     await expect
       .element(page.getByTestId('err'))
       .toHaveTextContent(/Constraints not satisfied|Please fill out this field\.?/);
   });
 
-  test('isValidated with blur event allows showing errors after user interaction', async () => {
+  test('isUserValidated with blur event allows showing errors after user interaction', async () => {
     const input = ref<HTMLInputElement>();
     let field!: FieldState<any>;
 
@@ -355,9 +355,9 @@ describe('isValidated tracking', () => {
         field = useFormField().state;
         useInputValidity({ inputEl: input, field, events: ['blur'] });
 
-        // Computed that only shows errors after blur (isValidated)
+        // Computed that only shows errors after blur (isUserValidated)
         const displayError = computed(() => {
-          return field.isValidated.value && field.isBlurred.value ? field.errorMessage.value : '';
+          return field.isUserValidated.value && field.isBlurred.value ? field.errorMessage.value : '';
         });
 
         return { input, displayError };
@@ -380,8 +380,8 @@ describe('isValidated tracking', () => {
     // Manually set blurred state (in real usage, this would be done by the field's blur handler)
     field.setBlurred(true);
 
-    // The displayError computed requires both isValidated AND isBlurred to be true
-    await expect.poll(() => field.isValidated.value).toBe(true);
+    // The displayError computed requires both isUserValidated AND isBlurred to be true
+    await expect.poll(() => field.isUserValidated.value).toBe(true);
     await expect.poll(() => field.isBlurred.value).toBe(true);
     await expect
       .element(page.getByTestId('err'))

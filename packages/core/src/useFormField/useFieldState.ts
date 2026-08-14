@@ -43,7 +43,7 @@ export type FieldState<TValue> = {
   isDirty: Ref<boolean>;
   isBlurred: Ref<boolean>;
   isValid: Ref<boolean>;
-  isValidated: Ref<boolean>;
+  isUserValidated: Ref<boolean>;
   isDisabled: Ref<boolean>;
   errors: Ref<string[]>;
   errorMessage: Ref<string>;
@@ -57,7 +57,7 @@ export type FieldState<TValue> = {
   setTouched: (touched: boolean) => void;
   setBlurred: (blurred: boolean) => void;
   setErrors: (messages: Arrayable<string>) => void;
-  setIsValidated: (isValidated: boolean) => void;
+  setIsUserValidated: (isUserValidated: boolean) => void;
   form?: FormContext | null;
 };
 
@@ -75,7 +75,7 @@ export function useFieldState<TValue = unknown>(opts?: Partial<FieldStateInit<TV
   const { fieldValue, pathlessValue, setValue } = useFieldValue(getPath, form, initialValue);
   const { isTouched, pathlessTouched, setTouched } = useFieldTouched(getPath, form);
   const { isBlurred, pathlessBlurred, setBlurred } = useFieldBlurred(getPath, form);
-  const { isValidated, setIsValidated } = useFieldIsValidated();
+  const { isUserValidated, setIsUserValidated } = useFieldIsValidated();
 
   const { errors, setErrors, isValid, errorMessage, pathlessValidity, submitErrors, submitErrorMessage } =
     useFieldValidity(getPath, isDisabled, form);
@@ -136,7 +136,7 @@ export function useFieldState<TValue = unknown>(opts?: Partial<FieldStateInit<TV
     isBlurred: readonly(isBlurred) as Ref<boolean>,
     isDirty,
     isValid,
-    isValidated,
+    isUserValidated,
     errors,
     errorMessage,
     isDisabled,
@@ -148,7 +148,7 @@ export function useFieldState<TValue = unknown>(opts?: Partial<FieldStateInit<TV
     setTouched,
     setBlurred,
     setErrors,
-    setIsValidated,
+    setIsUserValidated,
     submitErrors,
     submitErrorMessage,
   };
@@ -171,7 +171,7 @@ export function useFieldState<TValue = unknown>(opts?: Partial<FieldStateInit<TV
   });
 
   form.onSubmitDone(() => {
-    setIsValidated(true);
+    setIsUserValidated(true);
   });
 
   tryOnScopeDispose(() => {
@@ -503,19 +503,19 @@ export function resolveFieldState<TValue = unknown, TInitialValue = TValue>(
 }
 
 /**
- * Tracks whether the field has been validated.
+ * Tracks whether the field has been validated by user interaction.
  * This is useful for determining whether to show validation errors or not.
  */
 export function useFieldIsValidated() {
   // Right now, there is no need to track it in a form.
-  const isValidated = ref(false);
+  const isUserValidated = ref(false);
 
-  function setIsValidated(value: boolean) {
-    isValidated.value = value;
+  function setIsUserValidated(value: boolean) {
+    isUserValidated.value = value;
   }
 
   return {
-    isValidated,
-    setIsValidated,
+    isUserValidated,
+    setIsUserValidated,
   };
 }
